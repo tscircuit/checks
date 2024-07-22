@@ -132,4 +132,53 @@ describe("checkEachPcbPortConnected", () => {
   test("should handle empty soup", () => {
     expect(checkEachPcbPortConnected([])).toEqual([])
   })
+
+  test("should automatically add start_pcb_port_id and end_pcb_port_id", () => {
+    const soup: AnySoupElement[] = [
+      {
+        type: "pcb_port",
+        pcb_port_id: "port1",
+        source_port_id: "source1",
+        x: 0,
+        y: 0,
+        pcb_component_id: "comp1",
+        layers: ["top"],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "port2",
+        source_port_id: "source2",
+        x: 4,
+        y: 4,
+        pcb_component_id: "comp2",
+        layers: ["top"],
+      },
+      {
+        type: "pcb_trace",
+        pcb_trace_id: "trace1",
+        route: [
+          {
+            route_type: "wire",
+            x: 0,
+            y: 0,
+            width: 0.1,
+            layer: "top",
+          },
+          {
+            route_type: "wire",
+            x: 4,
+            y: 4,
+            layer: "top",
+            width: 0.1,
+          },
+        ],
+      },
+    ]
+    expect(checkEachPcbPortConnected(soup)).toEqual([])
+    
+    // Check if start_pcb_port_id and end_pcb_port_id were added
+    const updatedTrace = soup.find(item => item.type === "pcb_trace") as PCBTrace
+    expect(updatedTrace.route[0].start_pcb_port_id).toBe("port1")
+    expect(updatedTrace.route[1].end_pcb_port_id).toBe("port2")
+  })
 })
