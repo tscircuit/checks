@@ -1,4 +1,4 @@
-import type { AnySoupElement } from "@tscircuit/soup"
+import type { AnySoupElement, PCBTrace } from "@tscircuit/soup"
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbPortConnected } from "lib/check-each-pcb-port-connected"
 
@@ -175,10 +175,14 @@ describe("checkEachPcbPortConnected", () => {
       },
     ]
     expect(checkEachPcbPortConnected(soup)).toEqual([])
-    
+
     // Check if start_pcb_port_id and end_pcb_port_id were added
-    const updatedTrace = soup.find(item => item.type === "pcb_trace") as PCBTrace
+    const updatedTrace = soup.find(
+      (item) => item.type === "pcb_trace"
+    ) as PCBTrace
+    // @ts-ignore
     expect(updatedTrace.route[0].start_pcb_port_id).toBe("port1")
+    // @ts-ignore
     expect(updatedTrace.route[1].end_pcb_port_id).toBe("port2")
   })
 })
