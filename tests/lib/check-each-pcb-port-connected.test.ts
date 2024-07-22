@@ -92,8 +92,8 @@ describe("checkEachPcbPortConnected", () => {
         ],
       },
     ]
-    console.log(checkEachPcbPortConnected(soup))
-    throw new Error("not implemented")
+    const errors = checkEachPcbPortConnected(soup)
+    expect(errors).toHaveLength(1)
   })
 
   test("should return errors for ports not connected by PCB traces", () => {
