@@ -1,0 +1,14 @@
+{
+  "name": "checks",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@tscircuit/soup": "^0.0.40",
+    "@tscircuit/soup-util": "^0.0.13",
+    "@types/bun": "latest",
+    "tsup": "^8.2.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.5.3"
+  }
+}
