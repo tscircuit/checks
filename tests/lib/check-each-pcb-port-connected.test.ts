@@ -96,7 +96,7 @@ describe("checkEachPcbPortConnected", () => {
     throw new Error("not implemented")
   })
 
-  test.only("should consider ports connected through source_trace", () => {
+  test("should return errors for ports not connected by PCB traces", () => {
     const soup: AnySoupElement[] = [
       {
         type: "pcb_port",
@@ -124,8 +124,9 @@ describe("checkEachPcbPortConnected", () => {
       },
     ]
     const errors = checkEachPcbPortConnected(soup)
-    expect(errors).toHaveLength(1)
-    throw new Error("not implemented") // should have error since there's no pcb_trace
+    expect(errors).toHaveLength(2)
+    expect(errors[0].message).toContain("port1")
+    expect(errors[1].message).toContain("port2")
   })
 
   test("should handle empty soup", () => {
