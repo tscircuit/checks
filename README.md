@@ -1,11 +1,11 @@
 # @tscircuit/checks
 
-## `checkEachPcbPortConnected(soup)`
+## `checkEachPcbPortConnected(soup: AnySoupElement[]) => PCBTraceError[]`
 
 Returns `pcb_trace_error` if any `source_port` is not connected to a net or it's other
 source ports.
 
-## `checkEachPcbTraceNonOverlapping(soup)`
+## `checkEachPcbTraceNonOverlapping(soup: AnySoupElement[]) => PCBTraceError[]`
 
 Returns `pcb_trace_error` if any `pcb_trace` is overlapping with another `pcb_trace`
 that is not connected to the same net.
@@ -23,7 +23,7 @@ and pcb traces here are the relevant elements (the types are produced below)
 
 ```ts
 // You can import these types from the @tscircuit/soup package e.g.
-// import type { PCBPort, PCBTrace } from "@tscircuit/soup"
+// import type { PCBPort, PCBTrace, AnySoupElement } from "@tscircuit/soup"
 
 import { z } from "zod"
 import { distance } from "../units"
@@ -100,4 +100,22 @@ export const source_net = z.object({
 
 export type SourceNet = z.infer<typeof source_net>
 export type SourceNetInput = z.input<typeof source_net>
+
+import { z } from "zod"
+
+export const pcb_trace_error = z
+  .object({
+    pcb_error_id: z.string(),
+    type: z.literal("pcb_error"),
+    error_type: z.literal("pcb_trace_error"),
+    message: z.string(),
+    pcb_trace_id: z.string(),
+    source_trace_id: z.string(),
+    pcb_component_ids: z.array(z.string()),
+    pcb_port_ids: z.array(z.string()),
+  })
+  .describe("Defines a trace error on the PCB")
+
+export type PCBTraceErrorInput = z.input<typeof pcb_trace_error>
+export type PCBTraceError = z.infer<typeof pcb_trace_error>
 ```
