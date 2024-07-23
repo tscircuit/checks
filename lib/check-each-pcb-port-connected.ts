@@ -14,7 +14,7 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
   const pcbPorts: PCBPort[] = soup.filter((item) => item.type === "pcb_port")
   const pcbTraces: PCBTrace[] = soup.filter((item) => item.type === "pcb_trace")
   const sourceTraces: SourceTrace[] = soup.filter(
-    (item) => item.type === "source_trace"
+    (item) => item.type === "source_trace",
   )
   const errors: PCBTraceError[] = []
 
@@ -24,8 +24,7 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
       if (segment.route_type === "wire") {
         if (!segment.start_pcb_port_id && index === 0) {
           const startPort = pcbPorts.find(
-            (port) =>
-              distance(port.x, port.y, segment.x, segment.y) < 0.001
+            (port) => distance(port.x, port.y, segment.x, segment.y) < 0.001,
           )
           if (startPort) {
             segment.start_pcb_port_id = startPort.pcb_port_id
@@ -33,8 +32,7 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
         }
         if (!segment.end_pcb_port_id && index === trace.route.length - 1) {
           const endPort = pcbPorts.find(
-            (port) =>
-              distance(port.x, port.y, segment.x, segment.y) < 0.001
+            (port) => distance(port.x, port.y, segment.x, segment.y) < 0.001,
           )
           if (endPort) {
             segment.end_pcb_port_id = endPort.pcb_port_id
@@ -50,13 +48,13 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
         (segment) =>
           segment.route_type === "wire" &&
           (segment.start_pcb_port_id === port.pcb_port_id ||
-            segment.end_pcb_port_id === port.pcb_port_id)
-      )
+            segment.end_pcb_port_id === port.pcb_port_id),
+      ),
     )
 
     if (connectedTraces.length === 0) {
       const sourceTrace = sourceTraces.find((trace) =>
-        trace.connected_source_port_ids.includes(port.source_port_id)
+        trace.connected_source_port_ids.includes(port.source_port_id),
       )
 
       errors.push({

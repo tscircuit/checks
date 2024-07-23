@@ -178,7 +178,7 @@ describe("checkEachPcbPortConnected", () => {
 
     // Check if start_pcb_port_id and end_pcb_port_id were added
     const updatedTrace = soup.find(
-      (item) => item.type === "pcb_trace"
+      (item) => item.type === "pcb_trace",
     ) as PCBTrace
     // @ts-ignore
     expect(updatedTrace.route[0].start_pcb_port_id).toBe("port1")

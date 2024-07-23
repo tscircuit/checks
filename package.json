@@ -4,13 +4,11 @@
   "type": "module",
   "main": "./dist/index.cjs",
   "version": "0.0.1",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup index.ts --dts --sourcemap",
     "format:check": "biome format .",
-    "format": "biome format ."
+    "format": "biome format . --write"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
