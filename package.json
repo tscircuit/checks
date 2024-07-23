@@ -8,9 +8,12 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup index.ts --dts --sourcemap"
+    "build": "tsup index.ts --dts --sourcemap",
+    "format:check": "biome format .",
+    "format": "biome format ."
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
     "@tscircuit/log-soup": "^1.0.2",
     "@tscircuit/soup": "^0.0.40",
     "@tscircuit/soup-util": "^0.0.13",
