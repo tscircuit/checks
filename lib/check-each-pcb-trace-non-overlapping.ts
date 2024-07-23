@@ -4,7 +4,12 @@ import type {
   AnySoupElement,
   PCBTraceError,
 } from "@tscircuit/soup"
+import { NetManager } from "./net-manager"
 
+/**
+ * Checks if lines given by (x1, y1) and (x2, y2) intersect with line
+ * given by (x3, y3) and (x4, y4)
+ */
 function lineIntersects(
   x1: number,
   y1: number,
@@ -38,7 +43,16 @@ function tracesOverlap(trace1: PCBTrace, trace2: PCBTrace): boolean {
         seg3.route_type === "wire" &&
         seg4.route_type === "wire" &&
         seg1.layer === seg3.layer &&
-        lineIntersects(seg1.x, seg1.y, seg2.x, seg2.y, seg3.x, seg3.y, seg4.x, seg4.y)
+        lineIntersects(
+          seg1.x,
+          seg1.y,
+          seg2.x,
+          seg2.y,
+          seg3.x,
+          seg3.y,
+          seg4.x,
+          seg4.y
+        )
       ) {
         return true
       }
@@ -52,17 +66,58 @@ function traceOverlapsWithPad(trace: PCBTrace, pad: PCBSMTPad): boolean {
     const seg1 = trace.route[i]
     const seg2 = trace.route[i + 1]
 
-    if (seg1.route_type === "wire" && seg2.route_type === "wire" && seg1.layer === pad.layer) {
+    if (
+      seg1.route_type === "wire" &&
+      seg2.route_type === "wire" &&
+      seg1.layer === pad.layer &&
+      pad.shape === "rect"
+    ) {
       const padLeft = pad.x - pad.width / 2
       const padRight = pad.x + pad.width / 2
       const padTop = pad.y - pad.height / 2
       const padBottom = pad.y + pad.height / 2
 
       if (
-        lineIntersects(seg1.x, seg1.y, seg2.x, seg2.y, padLeft, padTop, padRight, padTop) ||
-        lineIntersects(seg1.x, seg1.y, seg2.x, seg2.y, padRight, padTop, padRight, padBottom) ||
-        lineIntersects(seg1.x, seg1.y, seg2.x, seg2.y, padRight, padBottom, padLeft, padBottom) ||
-        lineIntersects(seg1.x, seg1.y, seg2.x, seg2.y, padLeft, padBottom, padLeft, padTop)
+        lineIntersects(
+          seg1.x,
+          seg1.y,
+          seg2.x,
+          seg2.y,
+          padLeft,
+          padTop,
+          padRight,
+          padTop
+        ) ||
+        lineIntersects(
+          seg1.x,
+          seg1.y,
+          seg2.x,
+          seg2.y,
+          padRight,
+          padTop,
+          padRight,
+          padBottom
+        ) ||
+        lineIntersects(
+          seg1.x,
+          seg1.y,
+          seg2.x,
+          seg2.y,
+          padRight,
+          padBottom,
+          padLeft,
+          padBottom
+        ) ||
+        lineIntersects(
+          seg1.x,
+          seg1.y,
+          seg2.x,
+          seg2.y,
+          padLeft,
+          padBottom,
+          padLeft,
+          padTop
+        )
       ) {
         return true
       }
@@ -71,13 +126,54 @@ function traceOverlapsWithPad(trace: PCBTrace, pad: PCBSMTPad): boolean {
   return false
 }
 
-function checkEachPcbTraceNonOverlapping(soup: AnySoupElement[]): PCBTraceError[] {
-  const pcbTraces: PCBTrace[] = soup.filter((item): item is PCBTrace => item.type === "pcb_trace")
-  const pcbSMTPads: PCBSMTPad[] = soup.filter((item): item is PCBSMTPad => item.type === "pcb_smtpad")
+function getPortIdsConnectedToTrace(trace: PCBTrace) {
+  const connectedPorts = new Set<string>()
+  for (const segment of trace.route) {
+    if (segment.route_type === "wire") {
+      if (segment.start_pcb_port_id)
+        connectedPorts.add(segment.start_pcb_port_id)
+      if (segment.end_pcb_port_id) connectedPorts.add(segment.end_pcb_port_id)
+    }
+  }
+  return Array.from(connectedPorts)
+}
+
+function getPortIdsConnectedToTraces(...traces: PCBTrace[]) {
+  const connectedPorts = new Set<string>()
+  for (const trace of traces) {
+    getPortIdsConnectedToTrace(trace).forEach((portId) =>
+      connectedPorts.add(portId)
+    )
+  }
+  return Array.from(connectedPorts)
+}
+
+function checkEachPcbTraceNonOverlapping(
+  soup: AnySoupElement[]
+): PCBTraceError[] {
+  const pcbTraces: PCBTrace[] = soup.filter(
+    (item): item is PCBTrace => item.type === "pcb_trace"
+  )
+  const pcbSMTPads: PCBSMTPad[] = soup.filter(
+    (item): item is PCBSMTPad => item.type === "pcb_smtpad"
+  )
   const errors: PCBTraceError[] = []
+  const netManager = new NetManager()
+
+  // TODO use source port ids instead of port ids, parse source ports for connections
+  pcbTraces.forEach((trace) =>
+    netManager.setConnected(getPortIdsConnectedToTrace(trace))
+  )
 
   for (let i = 0; i < pcbTraces.length; i++) {
     for (let j = i + 1; j < pcbTraces.length; j++) {
+      if (
+        netManager.isConnected(
+          getPortIdsConnectedToTraces(pcbTraces[i], pcbTraces[j])
+        )
+      ) {
+        continue
+      }
       if (tracesOverlap(pcbTraces[i], pcbTraces[j])) {
         errors.push({
           type: "pcb_error",
@@ -87,12 +183,20 @@ function checkEachPcbTraceNonOverlapping(soup: AnySoupElement[]): PCBTraceError[
           source_trace_id: "",
           pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pcbTraces[j].pcb_trace_id}`,
           pcb_component_ids: [],
-          pcb_port_ids: [],
+          pcb_port_ids: getPortIdsConnectedToTraces(pcbTraces[i], pcbTraces[j]),
         })
       }
     }
 
     for (const pad of pcbSMTPads) {
+      if (
+        pad.pcb_port_id &&
+        netManager.isConnected(
+          getPortIdsConnectedToTrace(pcbTraces[i]).concat([pad.pcb_port_id])
+        )
+      ) {
+        continue
+      }
       if (traceOverlapsWithPad(pcbTraces[i], pad)) {
         errors.push({
           type: "pcb_error",
@@ -102,7 +206,7 @@ function checkEachPcbTraceNonOverlapping(soup: AnySoupElement[]): PCBTraceError[
           source_trace_id: "",
           pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pad.pcb_smtpad_id}`,
           pcb_component_ids: [],
-          pcb_port_ids: [],
+          pcb_port_ids: getPortIdsConnectedToTrace(pcbTraces[i]),
         })
       }
     }
