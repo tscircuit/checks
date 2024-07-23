@@ -1,7 +1,6 @@
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping"
 import type { AnySoupElement, PCBTrace, PCBSMTPad } from "@tscircuit/soup"
-import { logSoup } from "@tscircuit/log-soup"
 
 describe("checkEachPcbTraceNonOverlapping", () => {
   test("should return no errors when traces don't overlap", () => {
@@ -26,7 +25,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
     expect(checkEachPcbTraceNonOverlapping(soup)).toEqual([])
   })
 
-  test.only("should return an error when traces overlap", async () => {
+  test("should return an error when traces overlap", async () => {
     const soup: AnySoupElement[] = [
       {
         type: "pcb_trace",
