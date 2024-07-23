@@ -2,6 +2,11 @@
   "name": "@tscircuit/checks",
   "module": "index.ts",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "version": "0.0.1",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup index.ts --dts --sourcemap"
   },
