@@ -17,6 +17,7 @@ jobs:
         with:
           bun-version: latest
       - run: bun install -g pver
+      - run: bun install
       - run: bun run build
       - run: pver release
         env:
