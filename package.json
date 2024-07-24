@@ -18,7 +18,7 @@
     "@tscircuit/soup": "^0.0.40",
     "@tscircuit/soup-util": "^0.0.13",
     "@types/bun": "latest",
-    "tsup": "^8.2.1"
+    "tsup": "^8.2.3"
   },
   "peerDependencies": {
     "typescript": "^5.5.3"
