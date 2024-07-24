@@ -18,6 +18,8 @@
     "@tscircuit/soup": "^0.0.40",
     "@tscircuit/soup-util": "^0.0.13",
     "@types/bun": "latest",
+    "@types/debug": "^4.1.12",
+    "debug": "^4.3.5",
     "tsup": "^8.2.3"
   },
   "peerDependencies": {

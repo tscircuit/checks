@@ -5,6 +5,10 @@ import type {
   PCBTraceError,
 } from "@tscircuit/soup"
 import { NetManager } from "./net-manager"
+import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
+import Debug from "debug"
+
+const debug = Debug("tscircuit:checks:check-each-pcb-trace-non-overlapping")
 
 /**
  * Checks if lines given by (x1, y1) and (x2, y2) intersect with line
@@ -42,8 +46,9 @@ function tracesOverlap(trace1: PCBTrace, trace2: PCBTrace): boolean {
         seg2.route_type === "wire" &&
         seg3.route_type === "wire" &&
         seg4.route_type === "wire" &&
-        seg1.layer === seg3.layer &&
-        lineIntersects(
+        seg1.layer === seg3.layer
+      ) {
+        const areLinesIntersecting = lineIntersects(
           seg1.x,
           seg1.y,
           seg2.x,
@@ -53,8 +58,7 @@ function tracesOverlap(trace1: PCBTrace, trace2: PCBTrace): boolean {
           seg4.x,
           seg4.y,
         )
-      ) {
-        return true
+        return areLinesIntersecting
       }
     }
   }
@@ -141,9 +145,9 @@ function getPortIdsConnectedToTrace(trace: PCBTrace) {
 function getPortIdsConnectedToTraces(...traces: PCBTrace[]) {
   const connectedPorts = new Set<string>()
   for (const trace of traces) {
-    getPortIdsConnectedToTrace(trace).forEach((portId) =>
-      connectedPorts.add(portId),
-    )
+    for (const portId of getPortIdsConnectedToTrace(trace)) {
+      connectedPorts.add(portId)
+    }
   }
   return Array.from(connectedPorts)
 }
@@ -151,6 +155,7 @@ function getPortIdsConnectedToTraces(...traces: PCBTrace[]) {
 function checkEachPcbTraceNonOverlapping(
   soup: AnySoupElement[],
 ): PCBTraceError[] {
+  addStartAndEndPortIdsIfMissing(soup)
   const pcbTraces: PCBTrace[] = soup.filter(
     (item): item is PCBTrace => item.type === "pcb_trace",
   )
@@ -161,12 +166,18 @@ function checkEachPcbTraceNonOverlapping(
   const netManager = new NetManager()
 
   // TODO use source port ids instead of port ids, parse source ports for connections
-  pcbTraces.forEach((trace) =>
-    netManager.setConnected(getPortIdsConnectedToTrace(trace)),
-  )
+  for (const trace of pcbTraces) {
+    netManager.setConnected(getPortIdsConnectedToTrace(trace))
+  }
 
   for (let i = 0; i < pcbTraces.length; i++) {
     for (let j = i + 1; j < pcbTraces.length; j++) {
+      debug(
+        `Checking overlap for ${pcbTraces[i].pcb_trace_id} and ${pcbTraces[j].pcb_trace_id}`,
+      )
+      debug(
+        `Connected ports: ${getPortIdsConnectedToTraces(pcbTraces[i], pcbTraces[j])}`,
+      )
       if (
         netManager.isConnected(
           getPortIdsConnectedToTraces(pcbTraces[i], pcbTraces[j]),
