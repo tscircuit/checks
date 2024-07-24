@@ -7,6 +7,7 @@ import type {
 import { NetManager } from "./net-manager"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import Debug from "debug"
+import { su } from "@tscircuit/soup-util"
 
 const debug = Debug("tscircuit:checks:check-each-pcb-trace-non-overlapping")
 
@@ -58,7 +59,7 @@ function tracesOverlap(trace1: PCBTrace, trace2: PCBTrace): boolean {
           seg4.x,
           seg4.y,
         )
-        return areLinesIntersecting
+        if (areLinesIntersecting) return true
       }
     }
   }
@@ -130,22 +131,24 @@ function traceOverlapsWithPad(trace: PCBTrace, pad: PCBSMTPad): boolean {
   return false
 }
 
-function getPortIdsConnectedToTrace(trace: PCBTrace) {
-  const connectedPorts = new Set<string>()
+function getPcbPortIdsConnectedToTrace(trace: PCBTrace) {
+  const connectedPcbPorts = new Set<string>()
   for (const segment of trace.route) {
     if (segment.route_type === "wire") {
       if (segment.start_pcb_port_id)
-        connectedPorts.add(segment.start_pcb_port_id)
-      if (segment.end_pcb_port_id) connectedPorts.add(segment.end_pcb_port_id)
+        connectedPcbPorts.add(segment.start_pcb_port_id)
+      if (segment.end_pcb_port_id)
+        connectedPcbPorts.add(segment.end_pcb_port_id)
     }
   }
-  return Array.from(connectedPorts)
+
+  return Array.from(connectedPcbPorts)
 }
 
-function getPortIdsConnectedToTraces(...traces: PCBTrace[]) {
+function getPcbPortIdsConnectedToTraces(traces: PCBTrace[]) {
   const connectedPorts = new Set<string>()
   for (const trace of traces) {
-    for (const portId of getPortIdsConnectedToTrace(trace)) {
+    for (const portId of getPcbPortIdsConnectedToTrace(trace)) {
       connectedPorts.add(portId)
     }
   }
@@ -167,7 +170,7 @@ function checkEachPcbTraceNonOverlapping(
 
   // TODO use source port ids instead of port ids, parse source ports for connections
   for (const trace of pcbTraces) {
-    netManager.setConnected(getPortIdsConnectedToTrace(trace))
+    netManager.setConnected(getPcbPortIdsConnectedToTrace(trace))
   }
 
   for (let i = 0; i < pcbTraces.length; i++) {
@@ -175,14 +178,23 @@ function checkEachPcbTraceNonOverlapping(
       debug(
         `Checking overlap for ${pcbTraces[i].pcb_trace_id} and ${pcbTraces[j].pcb_trace_id}`,
       )
-      debug(
-        `Connected ports: ${getPortIdsConnectedToTraces(pcbTraces[i], pcbTraces[j])}`,
-      )
-      if (
-        netManager.isConnected(
-          getPortIdsConnectedToTraces(pcbTraces[i], pcbTraces[j]),
-        )
-      ) {
+      const connectedPorts = getPcbPortIdsConnectedToTraces([
+        pcbTraces[i],
+        pcbTraces[j],
+      ])
+      debug(`Connected ports: ${connectedPorts.join(",")}`)
+
+      if (connectedPorts.length === 0) {
+        debug("No ports connected to trace, skipping")
+        continue
+      }
+
+      if (connectedPorts.length === 1) {
+        debug("Only one port connected, skipping")
+        continue
+      }
+
+      if (netManager.isConnected(connectedPorts)) {
         continue
       }
       if (tracesOverlap(pcbTraces[i], pcbTraces[j])) {
@@ -194,7 +206,10 @@ function checkEachPcbTraceNonOverlapping(
           source_trace_id: "",
           pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pcbTraces[j].pcb_trace_id}`,
           pcb_component_ids: [],
-          pcb_port_ids: getPortIdsConnectedToTraces(pcbTraces[i], pcbTraces[j]),
+          pcb_port_ids: getPcbPortIdsConnectedToTraces([
+            pcbTraces[i],
+            pcbTraces[j],
+          ]),
         })
       }
     }
@@ -203,7 +218,7 @@ function checkEachPcbTraceNonOverlapping(
       if (
         pad.pcb_port_id &&
         netManager.isConnected(
-          getPortIdsConnectedToTrace(pcbTraces[i]).concat([pad.pcb_port_id]),
+          getPcbPortIdsConnectedToTrace(pcbTraces[i]).concat([pad.pcb_port_id]),
         )
       ) {
         continue
@@ -217,7 +232,7 @@ function checkEachPcbTraceNonOverlapping(
           source_trace_id: "",
           pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pad.pcb_smtpad_id}`,
           pcb_component_ids: [],
-          pcb_port_ids: getPortIdsConnectedToTrace(pcbTraces[i]),
+          pcb_port_ids: getPcbPortIdsConnectedToTrace(pcbTraces[i]),
         })
       }
     }
