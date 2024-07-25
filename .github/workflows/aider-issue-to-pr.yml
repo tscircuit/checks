@@ -5,7 +5,7 @@ on:
 
 jobs:
   generate:
-    uses: mirrajabi/aider-github-action@main
+    uses: mirrajabi/aider-github-action@v1.0.1
     # Check if the label is 'aider'
     if: github.event.label.name == 'aider'
     with:
