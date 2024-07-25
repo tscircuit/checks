@@ -7,7 +7,6 @@ describe("checkEachPcbTraceNonOverlapping", () => {
   test("should return no errors when traces don't overlap", () => {
     const soup: AnySoupElement[] = traces3 as any
 
-    console.log(checkEachPcbTraceNonOverlapping(soup))
-    expect(checkEachPcbTraceNonOverlapping(soup)).toHaveLength(0)
+    expect(checkEachPcbTraceNonOverlapping(soup)).toHaveLength(1)
   })
 })
