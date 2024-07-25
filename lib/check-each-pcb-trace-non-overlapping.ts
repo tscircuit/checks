@@ -34,7 +34,10 @@ function lineIntersects(
   return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1
 }
 
-function tracesOverlap(trace1: PCBTrace, trace2: PCBTrace): boolean {
+function tracesOverlap(
+  trace1: PCBTrace,
+  trace2: PCBTrace,
+): { x: number; y: number } | false {
   for (let i = 0; i < trace1.route.length - 1; i++) {
     for (let j = 0; j < trace2.route.length - 1; j++) {
       const seg1 = trace1.route[i]
@@ -59,7 +62,12 @@ function tracesOverlap(trace1: PCBTrace, trace2: PCBTrace): boolean {
           seg4.x,
           seg4.y,
         )
-        if (areLinesIntersecting) return true
+        if (areLinesIntersecting)
+          return {
+            // return the intersection point
+            x: (seg1.x * seg2.y - seg2.x * seg1.y) / (seg2.y - seg1.y),
+            y: (seg1.x * seg2.y - seg2.x * seg1.y) / (seg2.y - seg1.y),
+          }
       }
     }
   }
@@ -197,7 +205,8 @@ function checkEachPcbTraceNonOverlapping(
       if (netManager.isConnected(connectedPorts)) {
         continue
       }
-      if (tracesOverlap(pcbTraces[i], pcbTraces[j])) {
+      const overlapPoint = tracesOverlap(pcbTraces[i], pcbTraces[j])
+      if (overlapPoint) {
         errors.push({
           type: "pcb_error",
           error_type: "pcb_trace_error",
@@ -206,6 +215,8 @@ function checkEachPcbTraceNonOverlapping(
           source_trace_id: "",
           pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pcbTraces[j].pcb_trace_id}`,
           pcb_component_ids: [],
+          // @ts-ignore this is available in a future version of @tscircuit/soup
+          center: overlapPoint,
           pcb_port_ids: getPcbPortIdsConnectedToTraces([
             pcbTraces[i],
             pcbTraces[j],
