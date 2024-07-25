@@ -19,9 +19,20 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Escape issue body
+      id: escape_body
+      run: |
+        body="${{ github.event.issue.body }}"
+        body="${body//'%'/'%25'}"
+        body="${body//$'\n'/'%0A'}"
+        body="${body//$'\r'/'%0D'}"
+        echo "::set-output name=escaped_body::$body"
+
     - name: Run Aider
       uses: tscircuit/aider-github-action@main
       timeout-minutes: 10 # Prevent accidental high usage
+      env:
+        ISSUE_BODY: ${{ steps.escape_body.outputs.escaped_body }}
       with:
         anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
         model: 'sonnet'
@@ -29,8 +40,7 @@ jobs:
         aider_args: >-
           --yes
           --model sonnet
-          --message "Apply changes based on issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}"
-          ${{ github.event.issue.body }}
+          --message "Apply changes based on issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }} '${{ env.ISSUE_BODY }}'"
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
