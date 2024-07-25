@@ -34,7 +34,7 @@ jobs:
       env:
         ISSUE_BODY: ${{ steps.escape_body.outputs.escaped_body }}
       with:
-        anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+        anthropic_api_key: ${{ secrets.TSCIRCUIT_BOT_ANTHROPIC_API_KEY }}
         branch: ${{ github.event.repository.default_branch }}
         aider_args: >-
           --yes
