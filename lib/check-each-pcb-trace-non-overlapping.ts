@@ -8,6 +8,7 @@ import { NetManager } from "./net-manager"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import Debug from "debug"
 import { su } from "@tscircuit/soup-util"
+import { deriveSelector } from "./utils/derive-selector"
 
 const debug = Debug("tscircuit:checks:check-each-pcb-trace-non-overlapping")
 
@@ -210,7 +211,7 @@ function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${pcbTraces[i].pcb_trace_id} overlaps with ${pcbTraces[j].pcb_trace_id}`,
+          message: `PCB trace ${deriveSelector(pcbTraces[i])} overlaps with ${deriveSelector(pcbTraces[j])}`,
           pcb_trace_id: pcbTraces[i].pcb_trace_id,
           source_trace_id: "",
           pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pcbTraces[j].pcb_trace_id}`,
@@ -238,7 +239,7 @@ function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${pcbTraces[i].pcb_trace_id} overlaps with pcb_smtpad ${pad.pcb_smtpad_id}`,
+          message: `PCB trace ${deriveSelector(pcbTraces[i])} overlaps with pcb_smtpad ${deriveSelector(pad)}`,
           pcb_trace_id: pcbTraces[i].pcb_trace_id,
           source_trace_id: "",
           pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pad.pcb_smtpad_id}`,
