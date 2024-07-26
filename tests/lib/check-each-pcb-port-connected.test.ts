@@ -3,6 +3,35 @@ import { expect, test, describe } from "bun:test"
 import { checkEachPcbPortConnected } from "lib/check-each-pcb-port-connected"
 
 describe("checkEachPcbPortConnected", () => {
+  test("should not return error for intentionally unconnected ports", () => {
+    const soup: AnySoupElement[] = [
+      {
+        type: "pcb_port",
+        pcb_port_id: "port1",
+        source_port_id: "source1",
+        x: 0,
+        y: 0,
+        pcb_component_id: "comp1",
+        layers: ["top"],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "port2",
+        source_port_id: "source2",
+        x: 1,
+        y: 1,
+        pcb_component_id: "comp2",
+        layers: ["top"],
+      },
+      {
+        type: "source_trace",
+        source_trace_id: "trace1",
+        connected_source_port_ids: [],
+      },
+    ]
+    const errors = checkEachPcbPortConnected(soup)
+    expect(errors).toHaveLength(0)
+  })
   test("should return null when all ports are connected", () => {
     const soup: AnySoupElement[] = [
       {
