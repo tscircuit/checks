@@ -31,7 +31,11 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
       trace.connected_source_port_ids?.includes(port.source_port_id),
     )
 
-    if (connectedTraces.length === 0 && sourceTrace && sourceTrace.connected_source_port_ids?.length > 0) {
+    if (
+      connectedTraces.length === 0 &&
+      sourceTrace &&
+      sourceTrace.connected_source_port_ids?.length > 0
+    ) {
       errors.push({
         type: "pcb_error",
         message: `pcb_trace_error: PCB port ${deriveSelector(port)} is not connected by a PCB trace`,
