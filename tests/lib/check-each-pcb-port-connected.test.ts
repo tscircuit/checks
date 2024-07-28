@@ -85,7 +85,7 @@ describe("checkEachPcbPortConnected", () => {
     expect(checkEachPcbPortConnected(soup)).toEqual([])
   })
 
-  test("should return error when a port is not connected", () => {
+  test.only("should return error when a port is not connected", () => {
     const soup: AnySoupElement[] = [
       {
         type: "pcb_port",
@@ -106,23 +106,73 @@ describe("checkEachPcbPortConnected", () => {
         layers: ["top"],
       },
       {
-        type: "pcb_trace",
-        pcb_trace_id: "trace1",
-        route: [
-          {
-            x: 0,
-            y: 0,
-            width: 1,
-            layer: "top",
-            route_type: "wire",
-            start_pcb_port_id: "port1",
-            end_pcb_port_id: "somewhere",
-          },
-        ],
+        type: "source_port",
+        name: "source1",
+        source_port_id: "source1",
+        source_component_id: "comp1",
+        pin_number: 1,
+        port_hints: ["1"],
+      },
+      {
+        type: "source_port",
+        name: "source2",
+        source_port_id: "source2",
+        source_component_id: "comp2",
+        pin_number: 2,
+        port_hints: ["2"],
+      },
+      {
+        type: "source_trace",
+        source_trace_id: "trace1",
+        connected_source_port_ids: ["source1", "source2"],
+        connected_source_net_ids: [],
+      },
+      {
+        type: "source_component",
+        ftype: "simple_resistor",
+        source_component_id: "comp1",
+        resistance: 1000,
+        name: "comp1",
+        supplier_part_numbers: {},
+      },
+      {
+        type: "source_component",
+        ftype: "simple_resistor",
+        source_component_id: "comp2",
+        resistance: 1000,
+        name: "comp2",
+        supplier_part_numbers: {},
+      },
+      {
+        type: "pcb_component",
+        source_component_id: "comp1",
+        pcb_component_id: "pcb1",
+        width: 1,
+        height: 1,
+        rotation: 0,
+        layer: "top",
+        center: {
+          x: 0,
+          y: 0,
+        },
+      },
+      {
+        type: "pcb_component",
+        source_component_id: "comp2",
+        pcb_component_id: "pcb2",
+        width: 1,
+        height: 1,
+        rotation: 0,
+        layer: "top",
+        center: {
+          x: 0,
+          y: 0,
+        },
       },
     ]
     const errors = checkEachPcbPortConnected(soup)
-    expect(errors).toHaveLength(1)
+    expect(errors.map((e) => e.message).join("\n")).toContain(".comp1 > .1")
+    expect(errors).toHaveLength(2)
   })
 
   test("should return errors for ports not connected by PCB traces", () => {
