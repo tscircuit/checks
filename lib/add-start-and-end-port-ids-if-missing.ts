@@ -29,8 +29,9 @@ export const addStartAndEndPortIdsIfMissing = (
       x: number
       y: number
     },
-    options: { isFirstOrLastPoint?: boolean } = {},
+    options: { isFirstOrLastPoint?: boolean; traceWidth?: number } = {},
   ): string | null {
+    const traceWidth = options.traceWidth || 0
     const directPort = pcbPorts.find(
       (port) => distance(port.x, port.y, point.x, point.y) < 0.01,
     )
@@ -41,8 +42,8 @@ export const addStartAndEndPortIdsIfMissing = (
       const smtPad = pcbSmtPads.find((pad) => {
         if (pad.shape === "rect") {
           return (
-            Math.abs(point.x - pad.x) < pad.width / 2 &&
-            Math.abs(point.y - pad.y) < pad.height / 2
+            Math.abs(point.x - pad.x) < pad.width / 2 + traceWidth / 2 &&
+            Math.abs(point.y - pad.y) < pad.height / 2 + traceWidth / 2
           )
           // biome-ignore lint/style/noUselessElse: <explanation>
         } else if (pad.shape === "circle") {
@@ -64,6 +65,7 @@ export const addStartAndEndPortIdsIfMissing = (
         if (!segment.start_pcb_port_id && index === 0) {
           const startPortId = findPortIdOverlappingPoint(segment, {
             isFirstOrLastPoint,
+            traceWidth: segment.width,
           })
           if (startPortId) {
             segment.start_pcb_port_id = startPortId
@@ -72,6 +74,7 @@ export const addStartAndEndPortIdsIfMissing = (
         if (!segment.end_pcb_port_id && index === trace.route.length - 1) {
           const endPortId = findPortIdOverlappingPoint(segment, {
             isFirstOrLastPoint,
+            traceWidth: segment.width,
           })
           if (endPortId) {
             segment.end_pcb_port_id = endPortId
