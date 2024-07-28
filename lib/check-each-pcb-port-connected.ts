@@ -6,6 +6,7 @@ import type {
   PCBTraceError,
 } from "@tscircuit/soup"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
+import { getReadableNameForPcbPort } from "@tscircuit/soup-util"
 
 function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
   addStartAndEndPortIdsIfMissing(soup)
@@ -30,10 +31,14 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
       trace.connected_source_port_ids?.includes(port.source_port_id),
     )
 
-    if (connectedTraces.length === 0 && sourceTrace && sourceTrace.connected_source_port_ids?.length > 0) {
+    if (
+      connectedTraces.length === 0 &&
+      sourceTrace &&
+      sourceTrace.connected_source_port_ids?.length > 0
+    ) {
       errors.push({
         type: "pcb_error",
-        message: `pcb_trace_error: PCB port ${port.pcb_port_id} is not connected by a PCB trace`,
+        message: `pcb_trace_error: PCB port ${getReadableNameForPcbPort(soup, port.pcb_port_id)} is not connected by a PCB trace`,
         source_trace_id: sourceTrace.source_trace_id,
         error_type: "pcb_trace_error",
         pcb_trace_id: "",

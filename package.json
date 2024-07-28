@@ -16,7 +16,6 @@
     "@biomejs/biome": "^1.8.3",
     "@tscircuit/log-soup": "^1.0.2",
     "@tscircuit/soup": "^0.0.40",
-    "@tscircuit/soup-util": "^0.0.13",
     "@types/bun": "latest",
     "@types/debug": "^4.1.12",
     "debug": "^4.3.5",
@@ -24,7 +23,9 @@
   },
   "peerDependencies": {
     "@tscircuit/soup": "*",
-    "@tscircuit/soup-util": "*",
     "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "@tscircuit/soup-util": "0.0.15"
   }
 }
