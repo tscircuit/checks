@@ -34,10 +34,7 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
     const hasSourceTraceWithConnections =
       sourceTrace && sourceTrace.connected_source_port_ids?.length > 0
 
-    if (
-      connectedTraces.length === 0 &&
-      hasSourceTraceWithConnections
-    ) {
+    if (connectedTraces.length === 0 && hasSourceTraceWithConnections) {
       errors.push({
         type: "pcb_error",
         message: `pcb_trace_error: PCB port ${getReadableNameForPcbPort(soup, port.pcb_port_id)} is not connected by a PCB trace`,
