@@ -36,8 +36,7 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
 
     if (
       connectedTraces.length === 0 &&
-      sourceTrace &&
-      sourceTrace.connected_source_port_ids?.length > 0
+      hasSourceTraceWithConnections
     ) {
       errors.push({
         type: "pcb_error",
