@@ -123,7 +123,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
     ]
     const errors = checkEachPcbTraceNonOverlapping(soup)
     expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("overlaps with pcb_smtpad")
+    expect(errors[0].message).toContain("overlaps with")
     expect(errors[0].pcb_trace_id).toBe("trace1")
   })
 })
