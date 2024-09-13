@@ -13,7 +13,7 @@
     "format": "biome format . --write"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.8.3",
+    "@biomejs/biome": "^1.9.0",
     "@tscircuit/log-soup": "^1.0.2",
     "@tscircuit/soup": "^0.0.40",
     "@types/bun": "latest",
