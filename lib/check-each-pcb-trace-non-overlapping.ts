@@ -8,6 +8,7 @@ import { NetManager } from "./net-manager"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import Debug from "debug"
 import { su, getReadableNameForElement } from "@tscircuit/soup-util"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 
 const debug = Debug("tscircuit:checks:check-each-pcb-trace-non-overlapping")
 
@@ -167,6 +168,7 @@ function checkEachPcbTraceNonOverlapping(
   soup: AnySoupElement[],
 ): PCBTraceError[] {
   addStartAndEndPortIdsIfMissing(soup)
+  const connMap = getFullConnectivityMapFromCircuitJson(soup)
   const pcbTraces: PCBTrace[] = soup.filter(
     (item): item is PCBTrace => item.type === "pcb_trace",
   )
@@ -174,12 +176,6 @@ function checkEachPcbTraceNonOverlapping(
     (item): item is PCBSMTPad => item.type === "pcb_smtpad",
   )
   const errors: PCBTraceError[] = []
-  const netManager = new NetManager()
-
-  // TODO use source port ids instead of port ids, parse source ports for connections
-  for (const trace of pcbTraces) {
-    netManager.setConnected(getPcbPortIdsConnectedToTrace(trace))
-  }
 
   for (let i = 0; i < pcbTraces.length; i++) {
     for (let j = i + 1; j < pcbTraces.length; j++) {
@@ -202,7 +198,7 @@ function checkEachPcbTraceNonOverlapping(
         continue
       }
 
-      if (netManager.isConnected(connectedPorts)) {
+      if (connMap.areAllIdsConnected(connectedPorts)) {
         continue
       }
       const overlapPoint = tracesOverlap(pcbTraces[i], pcbTraces[j])
@@ -228,7 +224,7 @@ function checkEachPcbTraceNonOverlapping(
     for (const pad of pcbSMTPads) {
       if (
         pad.pcb_port_id &&
-        netManager.isConnected(
+        connMap.areAllIdsConnected(
           getPcbPortIdsConnectedToTrace(pcbTraces[i]).concat([pad.pcb_port_id]),
         )
       ) {
