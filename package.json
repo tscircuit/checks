@@ -27,6 +27,6 @@
   },
   "dependencies": {
     "@tscircuit/soup-util": "0.0.15",
-    "circuit-json-to-connectivity-map": "^0.0.9"
+    "circuit-json-to-connectivity-map": "^0.0.10"
   }
 }
