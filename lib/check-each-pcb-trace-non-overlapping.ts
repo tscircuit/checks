@@ -1,13 +1,12 @@
 import type {
-  PCBTrace,
-  PCBSMTPad,
-  AnySoupElement,
-  PCBTraceError,
-} from "@tscircuit/soup"
-import { NetManager } from "./net-manager"
+  PcbTrace,
+  PcbSmtPad,
+  AnyCircuitElement,
+  PcbTraceError,
+} from "circuit-json"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import Debug from "debug"
-import { su, getReadableNameForElement } from "@tscircuit/soup-util"
+import { getReadableNameForElement } from "@tscircuit/soup-util"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 
 const debug = Debug("tscircuit:checks:check-each-pcb-trace-non-overlapping")
@@ -36,8 +35,8 @@ function lineIntersects(
 }
 
 function tracesOverlap(
-  trace1: PCBTrace,
-  trace2: PCBTrace,
+  trace1: PcbTrace,
+  trace2: PcbTrace,
 ): { x: number; y: number } | false {
   for (let i = 0; i < trace1.route.length - 1; i++) {
     for (let j = 0; j < trace2.route.length - 1; j++) {
@@ -75,7 +74,7 @@ function tracesOverlap(
   return false
 }
 
-function traceOverlapsWithPad(trace: PCBTrace, pad: PCBSMTPad): boolean {
+function traceOverlapsWithPad(trace: PcbTrace, pad: PcbSmtPad): boolean {
   for (let i = 0; i < trace.route.length - 1; i++) {
     const seg1 = trace.route[i]
     const seg2 = trace.route[i + 1]
@@ -140,7 +139,7 @@ function traceOverlapsWithPad(trace: PCBTrace, pad: PCBSMTPad): boolean {
   return false
 }
 
-function getPcbPortIdsConnectedToTrace(trace: PCBTrace) {
+function getPcbPortIdsConnectedToTrace(trace: PcbTrace) {
   const connectedPcbPorts = new Set<string>()
   for (const segment of trace.route) {
     if (segment.route_type === "wire") {
@@ -154,7 +153,7 @@ function getPcbPortIdsConnectedToTrace(trace: PCBTrace) {
   return Array.from(connectedPcbPorts)
 }
 
-function getPcbPortIdsConnectedToTraces(traces: PCBTrace[]) {
+function getPcbPortIdsConnectedToTraces(traces: PcbTrace[]) {
   const connectedPorts = new Set<string>()
   for (const trace of traces) {
     for (const portId of getPcbPortIdsConnectedToTrace(trace)) {
@@ -165,17 +164,17 @@ function getPcbPortIdsConnectedToTraces(traces: PCBTrace[]) {
 }
 
 function checkEachPcbTraceNonOverlapping(
-  soup: AnySoupElement[],
-): PCBTraceError[] {
+  soup: AnyCircuitElement[],
+): PcbTraceError[] {
   addStartAndEndPortIdsIfMissing(soup)
   const connMap = getFullConnectivityMapFromCircuitJson(soup)
-  const pcbTraces: PCBTrace[] = soup.filter(
-    (item): item is PCBTrace => item.type === "pcb_trace",
+  const pcbTraces: PcbTrace[] = soup.filter(
+    (item): item is PcbTrace => item.type === "pcb_trace",
   )
-  const pcbSMTPads: PCBSMTPad[] = soup.filter(
-    (item): item is PCBSMTPad => item.type === "pcb_smtpad",
+  const pcbSMTPads: PcbSmtPad[] = soup.filter(
+    (item): item is PcbSmtPad => item.type === "pcb_smtpad",
   )
-  const errors: PCBTraceError[] = []
+  const errors: PcbTraceError[] = []
 
   for (let i = 0; i < pcbTraces.length; i++) {
     for (let j = i + 1; j < pcbTraces.length; j++) {
@@ -204,12 +203,12 @@ function checkEachPcbTraceNonOverlapping(
       const overlapPoint = tracesOverlap(pcbTraces[i], pcbTraces[j])
       if (overlapPoint) {
         errors.push({
-          type: "pcb_error",
+          type: "pcb_trace_error",
           error_type: "pcb_trace_error",
           message: `PCB trace ${pcbTraces[i].pcb_trace_id} overlaps with ${pcbTraces[j].pcb_trace_id}`,
           pcb_trace_id: pcbTraces[i].pcb_trace_id,
           source_trace_id: "",
-          pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pcbTraces[j].pcb_trace_id}`,
+          pcb_trace_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pcbTraces[j].pcb_trace_id}`,
           pcb_component_ids: [],
           // @ts-ignore this is available in a future version of @tscircuit/soup
           center: overlapPoint,
@@ -232,12 +231,12 @@ function checkEachPcbTraceNonOverlapping(
       }
       if (traceOverlapsWithPad(pcbTraces[i], pad)) {
         errors.push({
-          type: "pcb_error",
+          type: "pcb_trace_error",
           error_type: "pcb_trace_error",
           message: `PCB trace ${getReadableNameForElement(soup, pcbTraces[i].pcb_trace_id)} overlaps with ${getReadableNameForElement(soup, pad.pcb_smtpad_id)}`,
           pcb_trace_id: pcbTraces[i].pcb_trace_id,
           source_trace_id: "",
-          pcb_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pad.pcb_smtpad_id}`,
+          pcb_trace_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pad.pcb_smtpad_id}`,
           pcb_component_ids: [],
           pcb_port_ids: getPcbPortIdsConnectedToTrace(pcbTraces[i]),
         })

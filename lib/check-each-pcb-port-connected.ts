@@ -1,21 +1,21 @@
 import type {
-  PCBPort,
-  PCBTrace,
+  PcbPort,
+  PcbTrace,
   SourceTrace,
-  AnySoupElement,
-  PCBTraceError,
-} from "@tscircuit/soup"
+  AnyCircuitElement,
+  PcbTraceError,
+} from "circuit-json"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { getReadableNameForPcbPort } from "@tscircuit/soup-util"
 
-function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
+function checkEachPcbPortConnected(soup: AnyCircuitElement[]): PcbTraceError[] {
   addStartAndEndPortIdsIfMissing(soup)
-  const pcbPorts: PCBPort[] = soup.filter((item) => item.type === "pcb_port")
-  const pcbTraces: PCBTrace[] = soup.filter((item) => item.type === "pcb_trace")
+  const pcbPorts: PcbPort[] = soup.filter((item) => item.type === "pcb_port")
+  const pcbTraces: PcbTrace[] = soup.filter((item) => item.type === "pcb_trace")
   const sourceTraces: SourceTrace[] = soup.filter(
     (item) => item.type === "source_trace",
   )
-  const errors: PCBTraceError[] = []
+  const errors: PcbTraceError[] = []
 
   for (const port of pcbPorts) {
     const connectedTraces = pcbTraces.filter((trace) =>
@@ -36,12 +36,12 @@ function checkEachPcbPortConnected(soup: AnySoupElement[]): PCBTraceError[] {
 
     if (connectedTraces.length === 0 && hasSourceTraceWithConnections) {
       errors.push({
-        type: "pcb_error",
+        type: "pcb_trace_error",
         message: `pcb_trace_error: PCB port ${getReadableNameForPcbPort(soup, port.pcb_port_id)} is not connected by a PCB trace`,
         source_trace_id: sourceTrace.source_trace_id,
         error_type: "pcb_trace_error",
         pcb_trace_id: "",
-        pcb_error_id: "", // Add appropriate ID generation if necessary
+        pcb_trace_error_id: "",
         pcb_component_ids: [],
         pcb_port_ids: [port.pcb_port_id],
       })
