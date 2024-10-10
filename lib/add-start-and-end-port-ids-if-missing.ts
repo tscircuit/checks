@@ -1,11 +1,9 @@
 import type {
-  PCBPort,
-  PCBTrace,
-  SourceTrace,
-  AnySoupElement,
-  PCBTraceError,
-  PCBSMTPad,
-} from "@tscircuit/soup"
+  PcbPort,
+  PcbTrace,
+  AnyCircuitElement,
+  PcbSmtPad,
+} from "circuit-json"
 
 function distance(x1: number, y1: number, x2: number, y2: number): number {
   return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
@@ -16,13 +14,13 @@ function distance(x1: number, y1: number, x2: number, y2: number): number {
  * https://github.com/tscircuit/tscircuit/issues/291
  */
 export const addStartAndEndPortIdsIfMissing = (
-  soup: AnySoupElement[],
+  soup: AnyCircuitElement[],
 ): void => {
-  const pcbPorts: PCBPort[] = soup.filter((item) => item.type === "pcb_port")
-  const pcbSmtPads: PCBSMTPad[] = soup.filter(
+  const pcbPorts: PcbPort[] = soup.filter((item) => item.type === "pcb_port")
+  const pcbSmtPads: PcbSmtPad[] = soup.filter(
     (item) => item.type === "pcb_smtpad",
   )
-  const pcbTraces: PCBTrace[] = soup.filter((item) => item.type === "pcb_trace")
+  const pcbTraces: PcbTrace[] = soup.filter((item) => item.type === "pcb_trace")
 
   function findPortIdOverlappingPoint(
     point: {
