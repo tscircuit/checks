@@ -1,10 +1,10 @@
-import type { AnySoupElement, PCBTrace } from "@tscircuit/soup"
-import { expect, test, describe } from "bun:test"
+import { describe, expect, test } from "bun:test"
+import type { AnyCircuitElement, PcbTrace } from "circuit-json"
 import { checkEachPcbPortConnected } from "lib/check-each-pcb-port-connected"
 
 describe("checkEachPcbPortConnected", () => {
   test("should not return error for intentionally unconnected ports", () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -27,13 +27,14 @@ describe("checkEachPcbPortConnected", () => {
         type: "source_trace",
         source_trace_id: "trace1",
         connected_source_port_ids: [],
+        connected_source_net_ids: [],
       },
     ]
     const errors = checkEachPcbPortConnected(soup)
     expect(errors).toHaveLength(0)
   })
   test("should return null when all ports are connected", () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -86,7 +87,7 @@ describe("checkEachPcbPortConnected", () => {
   })
 
   test.only("should return error when a port is not connected", () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -176,7 +177,7 @@ describe("checkEachPcbPortConnected", () => {
   })
 
   test("should return errors for ports not connected by PCB traces", () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -213,7 +214,7 @@ describe("checkEachPcbPortConnected", () => {
   })
 
   test("should automatically add start_pcb_port_id and end_pcb_port_id", () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -258,7 +259,7 @@ describe("checkEachPcbPortConnected", () => {
     // Check if start_pcb_port_id and end_pcb_port_id were added
     const updatedTrace = soup.find(
       (item) => item.type === "pcb_trace",
-    ) as PCBTrace
+    ) as PcbTrace
     // @ts-ignore
     expect(updatedTrace.route[0].start_pcb_port_id).toBe("port1")
     // @ts-ignore

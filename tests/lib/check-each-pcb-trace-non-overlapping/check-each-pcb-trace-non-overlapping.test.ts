@@ -1,11 +1,10 @@
-import { expect, test, describe } from "bun:test"
+import { describe, expect, test } from "bun:test"
+import type { AnyCircuitElement } from "circuit-json"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping"
-import type { AnySoupElement, PCBTrace, PCBSMTPad } from "@tscircuit/soup"
-import { logSoup } from "@tscircuit/log-soup"
 
 describe("checkEachPcbTraceNonOverlapping", () => {
   test("should return no errors when traces don't overlap", () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "pcb_trace",
         pcb_trace_id: "trace1",
@@ -27,7 +26,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
   })
 
   test.only("should return an error when traces overlap", async () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "source_trace",
         source_trace_id: "trace1",
@@ -92,7 +91,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
   })
 
   test("should not return an error when traces overlap but are on different layers", () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "pcb_trace",
         pcb_trace_id: "trace1",
@@ -114,7 +113,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
   })
 
   test("should return an error when a trace overlaps with a pcb_smtpad", () => {
-    const soup: AnySoupElement[] = [
+    const soup: AnyCircuitElement[] = [
       {
         type: "pcb_trace",
         pcb_trace_id: "trace1",
