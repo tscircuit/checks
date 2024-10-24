@@ -2,13 +2,13 @@
   "name": "@tscircuit/checks",
   "module": "index.ts",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "version": "0.0.27",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup index.ts --dts --sourcemap",
+    "build": "tsup-node index.ts --format esm --dts --sourcemap",
     "format:check": "biome format .",
     "format": "biome format . --write"
   },
@@ -23,10 +23,10 @@
   },
   "peerDependencies": {
     "circuit-json": "*",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "@tscircuit/soup-util": "*"
   },
   "dependencies": {
-    "@tscircuit/soup-util": "0.0.36",
-    "circuit-json-to-connectivity-map": "^0.0.17"
+    "circuit-json-to-connectivity-map": "^0.0.10"
   }
 }
