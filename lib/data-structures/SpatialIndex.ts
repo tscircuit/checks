@@ -105,15 +105,17 @@ export class SpatialObjectIndex<T> {
     return `${Math.floor(x / this.CELL_SIZE)}x${Math.floor(y / this.CELL_SIZE)}`
   }
 
-  getObjectsInBounds(bounds: Bounds): T[] {
+  getObjectsInBounds(bounds: Bounds, margin = 0): T[] {
     const objects: T[] = []
     const addedIds = new Set<string>()
 
-    const bucketMinX = Math.floor(bounds.minX / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMinY = Math.floor(bounds.minY / this.CELL_SIZE) * this.CELL_SIZE
+    const bucketMinX =
+      Math.floor((bounds.minX - margin) / this.CELL_SIZE) * this.CELL_SIZE
+    const bucketMinY =
+      Math.floor((bounds.minY - margin) / this.CELL_SIZE) * this.CELL_SIZE
 
-    for (let x = bucketMinX; x < bounds.maxX; x += this.CELL_SIZE) {
-      for (let y = bucketMinY; y < bounds.maxY; y += this.CELL_SIZE) {
+    for (let x = bucketMinX; x < bounds.maxX + margin; x += this.CELL_SIZE) {
+      for (let y = bucketMinY; y < bounds.maxY + margin; y += this.CELL_SIZE) {
         const bucketKey = this.getBucketKey(x, y)
         const bucket = this.buckets.get(bucketKey) || []
 

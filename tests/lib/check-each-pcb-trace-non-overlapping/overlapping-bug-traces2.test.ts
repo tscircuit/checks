@@ -9,6 +9,8 @@ describe("checkEachPcbTraceNonOverlapping", () => {
 
     const errors = checkEachPcbTraceNonOverlapping(soup)
 
-    expect(checkEachPcbTraceNonOverlapping(soup)).toHaveLength(14)
+    console.log(errors)
+
+    expect(checkEachPcbTraceNonOverlapping(soup)).toHaveLength(12)
   })
 })
