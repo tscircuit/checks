@@ -54,12 +54,16 @@ export class SpatialObjectIndex<T> {
     // Store in objectsById for quick lookup
     this.objectsById.set(spatialIndexId, objWithId)
 
-    const bucketMinX = Math.floor(bounds.minX / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMinY = Math.floor(bounds.minY / this.CELL_SIZE) * this.CELL_SIZE
+    // Calculate the bucket coordinates that cover the object's bounds
+    const minBucketX = Math.floor(bounds.minX / this.CELL_SIZE)
+    const minBucketY = Math.floor(bounds.minY / this.CELL_SIZE)
+    const maxBucketX = Math.floor(bounds.maxX / this.CELL_SIZE)
+    const maxBucketY = Math.floor(bounds.maxY / this.CELL_SIZE)
 
-    for (let x = bucketMinX; x < bounds.maxX; x += this.CELL_SIZE) {
-      for (let y = bucketMinY; y < bounds.maxY; y += this.CELL_SIZE) {
-        const bucketKey = this.getBucketKey(x, y)
+    // Add the object to all buckets it intersects with
+    for (let bx = minBucketX; bx <= maxBucketX; bx++) {
+      for (let by = minBucketY; by <= maxBucketY; by++) {
+        const bucketKey = `${bx}x${by}` as BucketCoordinate
         const bucket = this.buckets.get(bucketKey)
         if (!bucket) {
           this.buckets.set(bucketKey, [objWithId])
@@ -77,14 +81,17 @@ export class SpatialObjectIndex<T> {
     // Remove from objectsById
     this.objectsById.delete(id)
 
-    // Remove from all buckets
+    // Calculate the bucket coordinates that cover the object's bounds
     const bounds = this.getBounds(obj)
-    const bucketMinX = Math.floor(bounds.minX / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMinY = Math.floor(bounds.minY / this.CELL_SIZE) * this.CELL_SIZE
+    const minBucketX = Math.floor(bounds.minX / this.CELL_SIZE)
+    const minBucketY = Math.floor(bounds.minY / this.CELL_SIZE)
+    const maxBucketX = Math.floor(bounds.maxX / this.CELL_SIZE)
+    const maxBucketY = Math.floor(bounds.maxY / this.CELL_SIZE)
 
-    for (let x = bucketMinX; x < bounds.maxX; x += this.CELL_SIZE) {
-      for (let y = bucketMinY; y < bounds.maxY; y += this.CELL_SIZE) {
-        const bucketKey = this.getBucketKey(x, y)
+    // Remove the object from all buckets it might be in
+    for (let bx = minBucketX; bx <= maxBucketX; bx++) {
+      for (let by = minBucketY; by <= maxBucketY; by++) {
+        const bucketKey = `${bx}x${by}` as BucketCoordinate
         const bucket = this.buckets.get(bucketKey)
         if (bucket) {
           const index = bucket.findIndex((item) => item.spatialIndexId === id)
@@ -109,14 +116,16 @@ export class SpatialObjectIndex<T> {
     const objects: T[] = []
     const addedIds = new Set<string>()
 
-    const bucketMinX =
-      Math.floor((bounds.minX - margin) / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMinY =
-      Math.floor((bounds.minY - margin) / this.CELL_SIZE) * this.CELL_SIZE
+    // Calculate the bucket coordinates that cover the requested bounds with margin
+    const minBucketX = Math.floor((bounds.minX - margin) / this.CELL_SIZE)
+    const minBucketY = Math.floor((bounds.minY - margin) / this.CELL_SIZE)
+    const maxBucketX = Math.floor((bounds.maxX + margin) / this.CELL_SIZE)
+    const maxBucketY = Math.floor((bounds.maxY + margin) / this.CELL_SIZE)
 
-    for (let x = bucketMinX; x < bounds.maxX + margin; x += this.CELL_SIZE) {
-      for (let y = bucketMinY; y < bounds.maxY + margin; y += this.CELL_SIZE) {
-        const bucketKey = this.getBucketKey(x, y)
+    // Collect objects from all buckets that intersect the bounds
+    for (let bx = minBucketX; bx <= maxBucketX; bx++) {
+      for (let by = minBucketY; by <= maxBucketY; by++) {
+        const bucketKey = `${bx}x${by}` as BucketCoordinate
         const bucket = this.buckets.get(bucketKey) || []
 
         for (const obj of bucket) {
