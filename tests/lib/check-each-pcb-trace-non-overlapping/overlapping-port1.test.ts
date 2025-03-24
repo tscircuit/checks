@@ -1,6 +1,6 @@
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
-import type { AnySoupElement } from "@tscircuit/soup"
+import type { AnySoupElement } from "circuit-json"
 import overlappingPort1 from "./keyboards2-multilayer-ijump.solution.json"
 
 describe("checkEachPcbTraceNonOverlapping", () => {

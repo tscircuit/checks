@@ -11,8 +11,8 @@ export type GetBoundsFn<T> = (obj: T) => Bounds
 export type GetIdFn<T> = (obj: T) => string
 
 export class SpatialObjectIndex<T> {
-  buckets: Map<BucketCoordinate, Array<T & { id: string }>>
-  objectsById: Map<string, T & { id: string }>
+  buckets: Map<BucketCoordinate, Array<T & { spatialIndexId: string }>>
+  objectsById: Map<string, T & { spatialIndexId: string }>
   getBounds: GetBoundsFn<T>
   getId: GetIdFn<T>
   CELL_SIZE = 0.4
@@ -46,19 +46,19 @@ export class SpatialObjectIndex<T> {
 
   addObject(obj: T): void {
     const bounds = this.getBounds(obj)
-    const id = this.getId(obj)
-    const objWithId = { ...obj, id } as T & { id: string }
+    const spatialIndexId = this.getId(obj)
+    const objWithId = { ...obj, spatialIndexId } as T & {
+      spatialIndexId: string
+    }
 
     // Store in objectsById for quick lookup
-    this.objectsById.set(id, objWithId)
+    this.objectsById.set(spatialIndexId, objWithId)
 
     const bucketMinX = Math.floor(bounds.minX / this.CELL_SIZE) * this.CELL_SIZE
     const bucketMinY = Math.floor(bounds.minY / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMaxX = Math.ceil(bounds.maxX / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMaxY = Math.ceil(bounds.maxY / this.CELL_SIZE) * this.CELL_SIZE
 
-    for (let x = bucketMinX; x < bucketMaxX; x += this.CELL_SIZE) {
-      for (let y = bucketMinY; y < bucketMaxY; y += this.CELL_SIZE) {
+    for (let x = bucketMinX; x < bounds.maxX; x += this.CELL_SIZE) {
+      for (let y = bucketMinY; y < bounds.maxY; y += this.CELL_SIZE) {
         const bucketKey = this.getBucketKey(x, y)
         const bucket = this.buckets.get(bucketKey)
         if (!bucket) {
@@ -81,15 +81,13 @@ export class SpatialObjectIndex<T> {
     const bounds = this.getBounds(obj)
     const bucketMinX = Math.floor(bounds.minX / this.CELL_SIZE) * this.CELL_SIZE
     const bucketMinY = Math.floor(bounds.minY / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMaxX = Math.ceil(bounds.maxX / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMaxY = Math.ceil(bounds.maxY / this.CELL_SIZE) * this.CELL_SIZE
 
-    for (let x = bucketMinX; x < bucketMaxX; x += this.CELL_SIZE) {
-      for (let y = bucketMinY; y < bucketMaxY; y += this.CELL_SIZE) {
+    for (let x = bucketMinX; x < bounds.maxX; x += this.CELL_SIZE) {
+      for (let y = bucketMinY; y < bounds.maxY; y += this.CELL_SIZE) {
         const bucketKey = this.getBucketKey(x, y)
         const bucket = this.buckets.get(bucketKey)
         if (bucket) {
-          const index = bucket.findIndex((item) => item.id === id)
+          const index = bucket.findIndex((item) => item.spatialIndexId === id)
           if (index !== -1) {
             bucket.splice(index, 1)
             if (bucket.length === 0) {
@@ -113,16 +111,14 @@ export class SpatialObjectIndex<T> {
 
     const bucketMinX = Math.floor(bounds.minX / this.CELL_SIZE) * this.CELL_SIZE
     const bucketMinY = Math.floor(bounds.minY / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMaxX = Math.ceil(bounds.maxX / this.CELL_SIZE) * this.CELL_SIZE
-    const bucketMaxY = Math.ceil(bounds.maxY / this.CELL_SIZE) * this.CELL_SIZE
 
-    for (let x = bucketMinX; x < bucketMaxX; x += this.CELL_SIZE) {
-      for (let y = bucketMinY; y < bucketMaxY; y += this.CELL_SIZE) {
+    for (let x = bucketMinX; x < bounds.maxX; x += this.CELL_SIZE) {
+      for (let y = bucketMinY; y < bounds.maxY; y += this.CELL_SIZE) {
         const bucketKey = this.getBucketKey(x, y)
         const bucket = this.buckets.get(bucketKey) || []
 
         for (const obj of bucket) {
-          const id = obj.id
+          const id = obj.spatialIndexId
           if (addedIds.has(id)) continue
 
           addedIds.add(id)

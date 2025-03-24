@@ -1,4 +1,4 @@
-import type { AnySoupElement, PCBTrace } from "@tscircuit/soup"
+import type { AnySoupElement, PCBTrace } from "circuit-json"
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbPortConnected } from "lib/check-each-pcb-port-connected"
 

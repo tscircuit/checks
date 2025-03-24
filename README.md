@@ -26,7 +26,7 @@ and pcb traces here are the relevant elements (the types are produced below)
 
 ```ts
 // You can import these types from the @tscircuit/soup package e.g.
-// import type { PCBPort, PCBTrace, AnySoupElement } from "@tscircuit/soup"
+// import type { PCBPort, PCBTrace, AnySoupElement } from "circuit-json"
 
 import { z } from "zod"
 import { distance } from "../units"

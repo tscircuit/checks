@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
-    "@tscircuit/circuit-json-util": "^0.0.44",
+    "@tscircuit/circuit-json-util": "^0.0.45",
     "@tscircuit/log-soup": "^1.0.2",
     "@types/bun": "latest",
     "@types/debug": "^4.1.12",
@@ -23,11 +23,10 @@
   },
   "peerDependencies": {
     "circuit-json": "*",
-    "typescript": "^5.5.3",
-    "@tscircuit/soup-util": "^0.0.41"
+    "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@tscircuit/math-utils": "^0.0.11",
+    "@tscircuit/math-utils": "^0.0.12",
     "circuit-json-to-connectivity-map": "^0.0.19"
   }
 }

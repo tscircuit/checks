@@ -1,4 +1,4 @@
-import { getBoundsOfPcbElements } from "@tscircuit/soup-util"
+import { getBoundsOfPcbElements } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   PcbHole,
