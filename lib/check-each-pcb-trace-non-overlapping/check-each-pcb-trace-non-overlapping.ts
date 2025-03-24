@@ -96,18 +96,6 @@ export function checkEachPcbTraceNonOverlapping(
       requiredMargin + segmentA.thickness / 2,
     )
     if (segmentA.x1 === segmentA.x2 && segmentA.y1 === segmentA.y2) continue
-    if (
-      segmentA.pcb_trace_id === "pcb_trace_0" &&
-      segmentA.x1 < 0 &&
-      Math.min(segmentA.y1, segmentA.y2) < 0 &&
-      segmentA.y2 === 3
-    ) {
-      console.log(
-        { x1: segmentA.x1, y1: segmentA.y1, x2: segmentA.x2, y2: segmentA.y2 },
-        nearbyObjects.length,
-        { margin: requiredMargin + segmentA.thickness / 2, bounds },
-      )
-    }
 
     for (const obj of nearbyObjects) {
       if (obj.type === "pcb_trace_segment") {
@@ -161,14 +149,6 @@ export function checkEachPcbTraceNonOverlapping(
           getCollidableBounds(obj),
         ) -
         segmentA.thickness / 2
-      if (segmentA.pcb_trace_id === "pcb_trace_0") {
-        console.log(
-          getReadableName(segmentA.pcb_trace_id),
-          getReadableName(primaryObjId),
-          gap,
-          requiredMargin,
-        )
-      }
       if (
         !connMap.areIdsConnected(segmentA.pcb_trace_id, primaryObjId) &&
         gap + EPSILON < requiredMargin
