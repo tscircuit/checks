@@ -6,7 +6,7 @@ import type {
   PcbTraceError,
 } from "circuit-json"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
-import { getReadableNameForPcbPort } from "@tscircuit/soup-util"
+import { getReadableNameForPcbPort } from "@tscircuit/circuit-json-util"
 
 function checkEachPcbPortConnected(soup: AnyCircuitElement[]): PcbTraceError[] {
   addStartAndEndPortIdsIfMissing(soup)

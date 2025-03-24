@@ -1,11 +1,10 @@
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
-import traces3 from "tests/assets/traces3.solution.json"
+import traces4 from "tests/assets/traces4.solution.json"
 
 describe("checkEachPcbTraceNonOverlapping", () => {
-  test("should return no errors when traces don't overlap", () => {
-    const errors = checkEachPcbTraceNonOverlapping(traces3 as any)
-
-    expect(errors).toHaveLength(2)
+  test("traces4 should have no trace overlap errors", () => {
+    const errors = checkEachPcbTraceNonOverlapping(traces4 as any)
+    expect(errors).toHaveLength(0)
   })
 })
