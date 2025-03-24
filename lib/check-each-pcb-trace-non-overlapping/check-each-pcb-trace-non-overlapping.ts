@@ -4,10 +4,14 @@ import type {
   AnyCircuitElement,
   PcbTraceError,
 } from "circuit-json"
-import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
+import { addStartAndEndPortIdsIfMissing } from "../add-start-and-end-port-ids-if-missing"
 import Debug from "debug"
 import { getReadableNameForElement } from "@tscircuit/soup-util"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import {
+  getPcbPortIdsConnectedToTrace,
+  getPcbPortIdsConnectedToTraces,
+} from "./getPcbPortIdsConnectedToTraces"
 
 const debug = Debug("tscircuit:checks:check-each-pcb-trace-non-overlapping")
 
@@ -139,31 +143,7 @@ function traceOverlapsWithPad(trace: PcbTrace, pad: PcbSmtPad): boolean {
   return false
 }
 
-function getPcbPortIdsConnectedToTrace(trace: PcbTrace) {
-  const connectedPcbPorts = new Set<string>()
-  for (const segment of trace.route) {
-    if (segment.route_type === "wire") {
-      if (segment.start_pcb_port_id)
-        connectedPcbPorts.add(segment.start_pcb_port_id)
-      if (segment.end_pcb_port_id)
-        connectedPcbPorts.add(segment.end_pcb_port_id)
-    }
-  }
-
-  return Array.from(connectedPcbPorts)
-}
-
-function getPcbPortIdsConnectedToTraces(traces: PcbTrace[]) {
-  const connectedPorts = new Set<string>()
-  for (const trace of traces) {
-    for (const portId of getPcbPortIdsConnectedToTrace(trace)) {
-      connectedPorts.add(portId)
-    }
-  }
-  return Array.from(connectedPorts)
-}
-
-function checkEachPcbTraceNonOverlapping(
+export function checkEachPcbTraceNonOverlapping(
   soup: AnyCircuitElement[],
 ): PcbTraceError[] {
   addStartAndEndPortIdsIfMissing(soup)
@@ -246,5 +226,3 @@ function checkEachPcbTraceNonOverlapping(
 
   return errors
 }
-
-export { checkEachPcbTraceNonOverlapping }

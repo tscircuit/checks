@@ -23,9 +23,10 @@
   "peerDependencies": {
     "circuit-json": "*",
     "typescript": "^5.5.3",
-    "@tscircuit/soup-util": "*"
+    "@tscircuit/soup-util": "^0.0.41"
   },
   "dependencies": {
+    "@tscircuit/math-utils": "^0.0.11",
     "circuit-json-to-connectivity-map": "^0.0.19"
   }
 }

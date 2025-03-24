@@ -1,5 +1,5 @@
 import { expect, test, describe } from "bun:test"
-import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping"
+import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 import type { AnySoupElement, PCBTrace, PCBSMTPad } from "@tscircuit/soup"
 import { logSoup } from "@tscircuit/log-soup"
 
