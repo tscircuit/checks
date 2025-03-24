@@ -1,228 +1,148 @@
-import type {
-  PcbTrace,
-  PcbSmtPad,
-  AnyCircuitElement,
-  PcbTraceError,
-} from "circuit-json"
-import { addStartAndEndPortIdsIfMissing } from "../add-start-and-end-port-ids-if-missing"
-import Debug from "debug"
-import { getReadableNameForElement } from "@tscircuit/soup-util"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
+import { getReadableNameForElement, su } from "@tscircuit/soup-util"
 import {
-  getPcbPortIdsConnectedToTrace,
-  getPcbPortIdsConnectedToTraces,
-} from "./getPcbPortIdsConnectedToTraces"
-
-const debug = Debug("tscircuit:checks:check-each-pcb-trace-non-overlapping")
-
-/**
- * Checks if lines given by (x1, y1) and (x2, y2) intersect with line
- * given by (x3, y3) and (x4, y4)
- */
-function lineIntersects(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  x3: number,
-  y3: number,
-  x4: number,
-  y4: number,
-): boolean {
-  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-  if (denom === 0) return false // parallel lines
-
-  const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom
-  const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom
-
-  return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1
-}
-
-function tracesOverlap(
-  trace1: PcbTrace,
-  trace2: PcbTrace,
-): { x: number; y: number } | false {
-  for (let i = 0; i < trace1.route.length - 1; i++) {
-    for (let j = 0; j < trace2.route.length - 1; j++) {
-      const seg1 = trace1.route[i]
-      const seg2 = trace1.route[i + 1]
-      const seg3 = trace2.route[j]
-      const seg4 = trace2.route[j + 1]
-
-      if (
-        seg1.route_type === "wire" &&
-        seg2.route_type === "wire" &&
-        seg3.route_type === "wire" &&
-        seg4.route_type === "wire" &&
-        seg1.layer === seg3.layer
-      ) {
-        const areLinesIntersecting = lineIntersects(
-          seg1.x,
-          seg1.y,
-          seg2.x,
-          seg2.y,
-          seg3.x,
-          seg3.y,
-          seg4.x,
-          seg4.y,
-        )
-        if (areLinesIntersecting)
-          return {
-            // return the intersection point
-            x: (seg1.x * seg2.y - seg2.x * seg1.y) / (seg2.y - seg1.y),
-            y: (seg1.x * seg2.y - seg2.x * seg1.y) / (seg2.y - seg1.y),
-          }
-      }
-    }
-  }
-  return false
-}
-
-function traceOverlapsWithPad(trace: PcbTrace, pad: PcbSmtPad): boolean {
-  for (let i = 0; i < trace.route.length - 1; i++) {
-    const seg1 = trace.route[i]
-    const seg2 = trace.route[i + 1]
-
-    if (
-      seg1.route_type === "wire" &&
-      seg2.route_type === "wire" &&
-      seg1.layer === pad.layer &&
-      pad.shape === "rect"
-    ) {
-      const padLeft = pad.x - pad.width / 2
-      const padRight = pad.x + pad.width / 2
-      const padTop = pad.y - pad.height / 2
-      const padBottom = pad.y + pad.height / 2
-
-      if (
-        lineIntersects(
-          seg1.x,
-          seg1.y,
-          seg2.x,
-          seg2.y,
-          padLeft,
-          padTop,
-          padRight,
-          padTop,
-        ) ||
-        lineIntersects(
-          seg1.x,
-          seg1.y,
-          seg2.x,
-          seg2.y,
-          padRight,
-          padTop,
-          padRight,
-          padBottom,
-        ) ||
-        lineIntersects(
-          seg1.x,
-          seg1.y,
-          seg2.x,
-          seg2.y,
-          padRight,
-          padBottom,
-          padLeft,
-          padBottom,
-        ) ||
-        lineIntersects(
-          seg1.x,
-          seg1.y,
-          seg2.x,
-          seg2.y,
-          padLeft,
-          padBottom,
-          padLeft,
-          padTop,
-        )
-      ) {
-        return true
-      }
-    }
-  }
-  return false
-}
+  SpatialObjectIndex,
+  type Bounds,
+} from "lib/data-structures/SpatialIndex"
+import {
+  getFullConnectivityMapFromCircuitJson,
+  type ConnectivityMap,
+} from "circuit-json-to-connectivity-map"
+import {
+  getCollidableBounds,
+  type Collidable,
+  type PcbTraceSegment,
+} from "./getCollidableBounds"
+import { DEFAULT_TRACE_MARGIN, DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
+import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
+import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
+import { areBoundsOverlapping } from "./are-bounds-overlapping"
+import { getPrimaryId } from "@tscircuit/circuit-json-util"
 
 export function checkEachPcbTraceNonOverlapping(
-  soup: AnyCircuitElement[],
+  circuitJson: AnyCircuitElement[],
+  {
+    connMap,
+  }: {
+    connMap?: ConnectivityMap
+  },
 ): PcbTraceError[] {
-  addStartAndEndPortIdsIfMissing(soup)
-  const connMap = getFullConnectivityMapFromCircuitJson(soup)
-  const pcbTraces: PcbTrace[] = soup.filter(
-    (item): item is PcbTrace => item.type === "pcb_trace",
-  )
-  const pcbSMTPads: PcbSmtPad[] = soup.filter(
-    (item): item is PcbSmtPad => item.type === "pcb_smtpad",
-  )
   const errors: PcbTraceError[] = []
+  connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
 
-  for (let i = 0; i < pcbTraces.length; i++) {
-    for (let j = i + 1; j < pcbTraces.length; j++) {
-      debug(
-        `Checking overlap for ${pcbTraces[i].pcb_trace_id} and ${pcbTraces[j].pcb_trace_id}`,
-      )
-      const connectedPorts = getPcbPortIdsConnectedToTraces([
-        pcbTraces[i],
-        pcbTraces[j],
-      ])
-      debug(`Connected ports: ${connectedPorts.join(",")}`)
+  const pcbTraces = su(circuitJson).pcb_trace.list()
+  const pcbTraceSegments = pcbTraces.flatMap((pcbTrace) => {
+    const segments: PcbTraceSegment[] = []
+    for (let i = 0; i < pcbTrace.route.length - 1; i++) {
+      const p1 = pcbTrace.route[i]
+      const p2 = pcbTrace.route[i + 1]
+      segments.push({
+        type: "pcb_trace_segment",
+        pcb_trace_id: pcbTrace.pcb_trace_id,
+        _pcbTrace: pcbTrace,
+        thickness: DEFAULT_TRACE_THICKNESS,
+        x1: p1.x,
+        y1: p1.y,
+        x2: p2.x,
+        y2: p2.y,
+      } as PcbTraceSegment)
+    }
+    return segments
+  })
+  const pcbSmtPads = su(circuitJson).pcb_smtpad.list()
+  const pcbPlatedHoles = su(circuitJson).pcb_plated_hole.list()
+  const pcbHoles = su(circuitJson).pcb_hole.list()
+  const pcbVias = su(circuitJson).pcb_via.list()
+  const pcbKeepouts = su(circuitJson).pcb_keepout.list()
 
-      if (connectedPorts.length === 0) {
-        debug("No ports connected to trace, skipping")
-        continue
-      }
+  const spatialIndex = new SpatialObjectIndex<Collidable>({
+    objects: [
+      ...pcbTraceSegments,
+      ...pcbSmtPads,
+      ...pcbPlatedHoles,
+      ...pcbHoles,
+      ...pcbVias,
+      ...pcbKeepouts,
+    ],
+    getBounds: getCollidableBounds,
+  })
 
-      if (connectedPorts.length === 1) {
-        debug("Only one port connected, skipping")
-        continue
-      }
+  const getReadableName = (id: string) =>
+    getReadableNameForElement(circuitJson, id)
 
-      if (connMap.areAllIdsConnected(connectedPorts)) {
-        continue
-      }
-      const overlapPoint = tracesOverlap(pcbTraces[i], pcbTraces[j])
-      if (overlapPoint) {
+  const errorIds = new Set<string>()
+
+  // For each segment, check it if overlaps with anything collidable
+  for (const segmentA of pcbTraceSegments) {
+    const overlappingObjects = spatialIndex.getObjectsInBounds(
+      getCollidableBounds(segmentA),
+    )
+    for (const obj of overlappingObjects) {
+      if (obj.type === "pcb_trace_segment") {
+        const segmentB = obj
+        // Check if the segments are overlapping
+        if (
+          connMap.areIdsConnected(segmentA.pcb_trace_id, segmentB.pcb_trace_id)
+        )
+          continue
+
+        if (
+          segmentToSegmentMinDistance(
+            { x: segmentA.x1, y: segmentA.y1 },
+            { x: segmentA.x2, y: segmentA.y2 },
+            { x: segmentB.x1, y: segmentB.y1 },
+            { x: segmentB.x2, y: segmentB.y2 },
+          ) > DEFAULT_TRACE_MARGIN
+        )
+          continue
+
+        const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`
+        const pcb_trace_error_id_reverse = `overlap_${segmentB.pcb_trace_id}_${segmentA.pcb_trace_id}`
+        if (errorIds.has(pcb_trace_error_id_reverse)) continue
+
+        errorIds.add(pcb_trace_error_id)
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${pcbTraces[i].pcb_trace_id} overlaps with ${pcbTraces[j].pcb_trace_id}`,
-          pcb_trace_id: pcbTraces[i].pcb_trace_id,
+          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${getReadableName(segmentB.pcb_trace_id)}`,
+          pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
-          pcb_trace_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pcbTraces[j].pcb_trace_id}`,
+          pcb_trace_error_id,
           pcb_component_ids: [],
           // @ts-ignore this is available in a future version of @tscircuit/soup
           center: overlapPoint,
           pcb_port_ids: getPcbPortIdsConnectedToTraces([
-            pcbTraces[i],
-            pcbTraces[j],
+            segmentA._pcbTrace,
+            segmentB._pcbTrace,
           ]),
         })
-      }
-    }
-
-    for (const pad of pcbSMTPads) {
-      if (
-        pad.pcb_port_id &&
-        connMap.areAllIdsConnected(
-          getPcbPortIdsConnectedToTrace(pcbTraces[i]).concat([pad.pcb_port_id]),
-        )
-      ) {
         continue
       }
-      if (traceOverlapsWithPad(pcbTraces[i], pad)) {
+      // Check if the
+      if (
+        areBoundsOverlapping(
+          getCollidableBounds(segmentA),
+          getCollidableBounds(obj),
+          DEFAULT_TRACE_MARGIN,
+        )
+      ) {
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${getReadableNameForElement(soup, pcbTraces[i].pcb_trace_id)} overlaps with ${getReadableNameForElement(soup, pad.pcb_smtpad_id)}`,
-          pcb_trace_id: pcbTraces[i].pcb_trace_id,
+          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${obj.type} "${getReadableName(getReadableName(getPrimaryId(obj as any)))}"`,
+          pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
-          pcb_trace_error_id: `overlap_${pcbTraces[i].pcb_trace_id}_${pad.pcb_smtpad_id}`,
+          pcb_trace_error_id: `overlap_${segmentA.pcb_trace_id}_${getPrimaryId(obj as any)}`,
           pcb_component_ids: [],
-          pcb_port_ids: getPcbPortIdsConnectedToTrace(pcbTraces[i]),
+          // @ts-ignore this is available in a future version of @tscircuit/soup
+          center: overlapPoint,
+          pcb_port_ids: [
+            ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
+            "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
+          ].filter(Boolean) as string[],
         })
       }
     }
   }
-
   return errors
 }
