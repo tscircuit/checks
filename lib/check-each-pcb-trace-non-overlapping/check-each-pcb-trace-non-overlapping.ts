@@ -16,8 +16,11 @@ import {
 import { DEFAULT_TRACE_MARGIN, DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
 import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
-import { areBoundsOverlapping } from "./are-bounds-overlapping"
+import { areBoundsOverlapping } from "./areBoundsOverlapping"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
+import { getCenterOfBoundsPair } from "./getCenterOfBoundsPair"
+import { getCenterOfPcbTraceSegments } from "./getCenterOfPcbTraceSegments"
+import { getCenterOfBounds } from "./getCenterOfBounds"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -25,7 +28,7 @@ export function checkEachPcbTraceNonOverlapping(
     connMap,
   }: {
     connMap?: ConnectivityMap
-  },
+  } = {},
 ): PcbTraceError[] {
   const errors: PcbTraceError[] = []
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
@@ -109,8 +112,7 @@ export function checkEachPcbTraceNonOverlapping(
           source_trace_id: "",
           pcb_trace_error_id,
           pcb_component_ids: [],
-          // @ts-ignore this is available in a future version of @tscircuit/soup
-          center: overlapPoint,
+          center: getCenterOfPcbTraceSegments(segmentA, segmentB),
           pcb_port_ids: getPcbPortIdsConnectedToTraces([
             segmentA._pcbTrace,
             segmentB._pcbTrace,
@@ -134,8 +136,7 @@ export function checkEachPcbTraceNonOverlapping(
           source_trace_id: "",
           pcb_trace_error_id: `overlap_${segmentA.pcb_trace_id}_${getPrimaryId(obj as any)}`,
           pcb_component_ids: [],
-          // @ts-ignore this is available in a future version of @tscircuit/soup
-          center: overlapPoint,
+          center: getCenterOfBounds(getCollidableBounds(obj)),
           pcb_port_ids: [
             ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
             "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
