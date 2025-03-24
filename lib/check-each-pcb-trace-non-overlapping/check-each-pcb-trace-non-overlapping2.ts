@@ -1,5 +1,5 @@
 import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
-import { su } from "@tscircuit/soup-util"
+import { getReadableNameForElement, su } from "@tscircuit/soup-util"
 import {
   SpatialObjectIndex,
   type Bounds,
@@ -17,6 +17,7 @@ import { DEFAULT_TRACE_MARGIN, DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
 import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
 import { areBoundsOverlapping } from "./are-bounds-overlapping"
+import { getPrimaryId } from "@tscircuit/circuit-json-util"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -31,7 +32,7 @@ export function checkEachPcbTraceNonOverlapping(
 
   const pcbTraces = su(circuitJson).pcb_trace.list()
   const pcbTraceSegments = pcbTraces.flatMap((pcbTrace) => {
-    const segments = []
+    const segments: PcbTraceSegment[] = []
     for (let i = 0; i < pcbTrace.route.length - 1; i++) {
       const p1 = pcbTrace.route[i]
       const p2 = pcbTrace.route[i + 1]
@@ -66,6 +67,11 @@ export function checkEachPcbTraceNonOverlapping(
     getBounds: getCollidableBounds,
   })
 
+  const getReadableName = (id: string) =>
+    getReadableNameForElement(circuitJson, id)
+
+  const errorIds = new Set<string>()
+
   // For each segment, check it if overlaps with anything collidable
   for (const segmentA of pcbTraceSegments) {
     const overlappingObjects = spatialIndex.getObjectsInBounds(
@@ -90,13 +96,18 @@ export function checkEachPcbTraceNonOverlapping(
         )
           continue
 
+        const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`
+        const pcb_trace_error_id_reverse = `overlap_${segmentB.pcb_trace_id}_${segmentA.pcb_trace_id}`
+        if (errorIds.has(pcb_trace_error_id_reverse)) continue
+
+        errorIds.add(pcb_trace_error_id)
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${segmentA.pcb_trace_id} overlaps with ${segmentB.pcb_trace_id}`,
+          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${getReadableName(segmentB.pcb_trace_id)}`,
           pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
-          pcb_trace_error_id: `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`,
+          pcb_trace_error_id,
           pcb_component_ids: [],
           // @ts-ignore this is available in a future version of @tscircuit/soup
           center: overlapPoint,
@@ -117,7 +128,17 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${segmentA.pcb_trace_id} overlaps with ${obj.type} "${getPrimaryId()}"`,
+          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${obj.type} "${getReadableName(getReadableName(getPrimaryId(obj as any)))}"`,
+          pcb_trace_id: segmentA.pcb_trace_id,
+          source_trace_id: "",
+          pcb_trace_error_id: `overlap_${segmentA.pcb_trace_id}_${getPrimaryId(obj as any)}`,
+          pcb_component_ids: [],
+          // @ts-ignore this is available in a future version of @tscircuit/soup
+          center: overlapPoint,
+          pcb_port_ids: [
+            ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
+            "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
+          ].filter(Boolean) as string[],
         })
       }
     }
