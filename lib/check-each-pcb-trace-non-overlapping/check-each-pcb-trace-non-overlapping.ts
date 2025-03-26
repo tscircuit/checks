@@ -24,7 +24,7 @@ import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
 import { areBoundsOverlapping } from "./areBoundsOverlapping"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { getCenterOfBoundsPair } from "./getCenterOfBoundsPair"
-import { getCenterOfPcbTraceSegments } from "./getCenterOfPcbTraceSegments"
+import { getClosestPointBetweenSegments } from "./getClosestPointBetweenSegments"
 import { getCenterOfBounds } from "./getCenterOfBounds"
 
 export function checkEachPcbTraceNonOverlapping(
@@ -113,18 +113,16 @@ export function checkEachPcbTraceNonOverlapping(
         )
           continue
 
-        if (
+        const gap =
           segmentToSegmentMinDistance(
             { x: segmentA.x1, y: segmentA.y1 },
             { x: segmentA.x2, y: segmentA.y2 },
             { x: segmentB.x1, y: segmentB.y1 },
             { x: segmentB.x2, y: segmentB.y2 },
           ) -
-            segmentA.thickness / 2 -
-            segmentB.thickness / 2 >
-          DEFAULT_TRACE_MARGIN - EPSILON
-        )
-          continue
+          segmentA.thickness / 2 -
+          segmentB.thickness / 2
+        if (gap > DEFAULT_TRACE_MARGIN - EPSILON) continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`
         const pcb_trace_error_id_reverse = `overlap_${segmentB.pcb_trace_id}_${segmentA.pcb_trace_id}`
@@ -135,12 +133,12 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${getReadableName(segmentB.pcb_trace_id)}`,
+          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${getReadableName(segmentB.pcb_trace_id)} ${gap < 0 ? "(accidental contact)" : `(gap: ${gap.toFixed(3)}mm)`}`,
           pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
           pcb_trace_error_id,
           pcb_component_ids: [],
-          center: getCenterOfPcbTraceSegments(segmentA, segmentB),
+          center: getClosestPointBetweenSegments(segmentA, segmentB),
           pcb_port_ids: getPcbPortIdsConnectedToTraces([
             segmentA._pcbTrace,
             segmentB._pcbTrace,
