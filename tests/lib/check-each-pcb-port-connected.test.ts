@@ -27,6 +27,7 @@ describe("checkEachPcbPortConnected", () => {
         type: "source_trace",
         source_trace_id: "trace1",
         connected_source_port_ids: [],
+        connected_source_net_ids: [],
       },
     ]
     const errors = checkEachPcbPortConnected(soup)

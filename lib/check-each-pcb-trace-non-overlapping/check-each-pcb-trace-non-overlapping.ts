@@ -44,6 +44,9 @@ export function checkEachPcbTraceNonOverlapping(
     for (let i = 0; i < pcbTrace.route.length - 1; i++) {
       const p1 = pcbTrace.route[i]
       const p2 = pcbTrace.route[i + 1]
+      if (p1.route_type !== "wire") continue
+      if (p2.route_type !== "wire") continue
+      if (p1.layer !== p2.layer) continue
       segments.push({
         type: "pcb_trace_segment",
         pcb_trace_id: pcbTrace.pcb_trace_id,
@@ -54,6 +57,7 @@ export function checkEachPcbTraceNonOverlapping(
             : "width" in p2
               ? p2.width
               : DEFAULT_TRACE_THICKNESS,
+        layer: p1.layer,
         x1: p1.x,
         y1: p1.y,
         x2: p2.x,
@@ -100,6 +104,9 @@ export function checkEachPcbTraceNonOverlapping(
     for (const obj of nearbyObjects) {
       if (obj.type === "pcb_trace_segment") {
         const segmentB = obj
+
+        if (segmentA.layer !== segmentB.layer) continue
+
         // Check if the segments are overlapping
         if (
           connMap.areIdsConnected(segmentA.pcb_trace_id, segmentB.pcb_trace_id)
