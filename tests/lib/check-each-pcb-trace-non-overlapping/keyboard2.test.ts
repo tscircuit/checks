@@ -1,0 +1,208 @@
+import keyboard2 from "tests/assets/keyboard2.json"
+import { test, expect } from "bun:test"
+import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
+
+test("keyboard2", () => {
+  const errors = checkEachPcbTraceNonOverlapping(keyboard2 as any)
+
+  expect(errors).toMatchInlineSnapshot(`
+    [
+      {
+        "center": {
+          "x": -10.46875,
+          "y": -15.182291666666666,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_23_0] overlaps with pcb_via "pcb_via[#via_80]" (gap: 0.070mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_23_0_via_80",
+        "pcb_trace_id": "source_trace_23_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -14.8,
+          "y": 8.8,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_22_0] overlaps with pcb_via "pcb_via[#via_89]" (gap: 0.044mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_22_0_via_89",
+        "pcb_trace_id": "source_trace_22_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -1.6,
+          "y": 10.4,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_20_0] overlaps with pcb_via "pcb_via[#via_18]" (gap: 0.055mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_20_0_via_18",
+        "pcb_trace_id": "source_trace_20_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -2.4000000000000004,
+          "y": 4.000000000000001,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_19_0] overlaps with pcb_via "pcb_via[#via_12]" (gap: 0.066mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_19_0_via_12",
+        "pcb_trace_id": "source_trace_19_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -15.2,
+          "y": 1.2,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_19_0] overlaps with pcb_via "pcb_via[#via_59]" (gap: 0.014mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_19_0_via_59",
+        "pcb_trace_id": "source_trace_19_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -17.25625,
+          "y": 0.4,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_19_0] overlaps with pcb_via "pcb_via[#via_63]" (accidental contact)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_19_0_via_63",
+        "pcb_trace_id": "source_trace_19_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": 13.7890625,
+          "y": 8.4765625,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_18_0] overlaps with pcb_via "pcb_via[#via_1]" (gap: 0.038mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_18_0_via_1",
+        "pcb_trace_id": "source_trace_18_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -9.6,
+          "y": -7.999999999999997,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_17_0] overlaps with pcb_via "pcb_via[#via_15]" (gap: 0.066mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_17_0_via_15",
+        "pcb_trace_id": "source_trace_17_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -3.2,
+          "y": -1.6000000000000012,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_16_0] overlaps with pcb_via "pcb_via[#via_13]" (gap: 0.013mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_16_0_via_13",
+        "pcb_trace_id": "source_trace_16_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -8.8,
+          "y": 8.8,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_13_0] overlaps with pcb_via "pcb_via[#via_71]" (accidental contact)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_13_0_via_71",
+        "pcb_trace_id": "source_trace_13_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -14.856250000000005,
+          "y": 14.400000000000002,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_13_0] overlaps with pcb_via "pcb_via[#via_2]" (gap: 0.014mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_13_0_via_2",
+        "pcb_trace_id": "source_trace_13_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -4.8,
+          "y": 6.4,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_7_0] overlaps with pcb_via "pcb_via[#via_6]" (accidental contact)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_7_0_via_6",
+        "pcb_trace_id": "source_trace_7_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -16.000000000000007,
+          "y": -20.400000000000002,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_2_0] overlaps with pcb_via "pcb_via[#via_16]" (gap: 0.008mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_2_0_via_16",
+        "pcb_trace_id": "source_trace_2_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+      {
+        "center": {
+          "x": -17.199999999999996,
+          "y": 15.200000000000001,
+        },
+        "error_type": "pcb_trace_error",
+        "message": "PCB trace trace[source_trace_1_0] overlaps with pcb_via "pcb_via[#via_54]" (gap: 0.007mm)",
+        "pcb_component_ids": [],
+        "pcb_port_ids": [],
+        "pcb_trace_error_id": "overlap_source_trace_1_0_via_54",
+        "pcb_trace_id": "source_trace_1_0",
+        "source_trace_id": "",
+        "type": "pcb_trace_error",
+      },
+    ]
+  `)
+})
