@@ -24,7 +24,7 @@ describe("PCB vias in non-overlapping trace checks", () => {
         type: "pcb_via",
         pcb_via_id: "via1",
         x: 5,
-        y: 0.4,
+        y: 0.37,
         hole_diameter: 0.4,
         outer_diameter: 0.6,
         layers: ["top", "bottom"],
@@ -33,7 +33,20 @@ describe("PCB vias in non-overlapping trace checks", () => {
 
     // The via is directly on the trace and has a different net, so should generate an error
     const errors = checkEachPcbTraceNonOverlapping(testData)
-    expect(errors).toMatchInlineSnapshot(`[]`)
+    expect(errors).toMatchInlineSnapshot(`
+      [
+        {
+          "error_type": "pcb_trace_error",
+          "message": "PCB trace trace[trace1] overlaps with pcb_via "pcb_via[#via1]" (gap: 0.070mm)",
+          "pcb_component_ids": [],
+          "pcb_port_ids": [],
+          "pcb_trace_error_id": "overlap_trace1_via1",
+          "pcb_trace_id": "trace1",
+          "source_trace_id": "",
+          "type": "pcb_trace_error",
+        },
+      ]
+    `)
     expect(errors.length).toBeGreaterThan(0)
   })
 })

@@ -175,7 +175,6 @@ export function checkEachPcbTraceNonOverlapping(
         )
         if (gap > DEFAULT_TRACE_MARGIN - EPSILON) continue
 
-        console.log({ gap, obj, segmentA })
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
         if (errorIds.has(pcb_trace_error_id)) continue
         errorIds.add(pcb_trace_error_id)
