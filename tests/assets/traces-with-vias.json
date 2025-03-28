@@ -1,0 +1,62 @@
+[
+  {
+    "element_type": "pcb_trace",
+    "id": "trace1",
+    "pcb_trace_id": "trace1",
+    "net_id": "net1",
+    "layer": "F.Cu",
+    "width": 0.5,
+    "route": [
+      { "x": 0, "y": 0, "layer": "F.Cu", "route_type": "wire" },
+      { "x": 10, "y": 0, "layer": "F.Cu", "route_type": "wire" }
+    ]
+  },
+  {
+    "element_type": "pcb_trace",
+    "id": "trace2",
+    "pcb_trace_id": "trace2",
+    "net_id": "net2",
+    "layer": "F.Cu",
+    "width": 0.5,
+    "route": [
+      { "x": 0, "y": 3, "layer": "F.Cu", "route_type": "wire" },
+      { "x": 10, "y": 3, "layer": "F.Cu", "route_type": "wire" }
+    ]
+  },
+  {
+    "element_type": "pcb_via",
+    "id": "via1",
+    "pcb_via_id": "via1",
+    "net_id": "net1",
+    "x": 5,
+    "y": 0,
+    "diameter": 0.8,
+    "drill": 0.4,
+    "layers": ["F.Cu", "B.Cu"],
+    "type": "pcb_via"
+  },
+  {
+    "element_type": "pcb_via",
+    "id": "via2",
+    "pcb_via_id": "via2",
+    "net_id": "net2",
+    "x": 5,
+    "y": 3,
+    "diameter": 0.8,
+    "drill": 0.4,
+    "layers": ["F.Cu", "B.Cu"],
+    "type": "pcb_via"
+  },
+  {
+    "element_type": "pcb_via",
+    "id": "via3",
+    "pcb_via_id": "via3",
+    "net_id": "net3",
+    "x": 5,
+    "y": 0.3,
+    "diameter": 0.8,
+    "drill": 0.4,
+    "layers": ["F.Cu", "B.Cu"],
+    "type": "pcb_via"
+  }
+]
