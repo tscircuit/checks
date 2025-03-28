@@ -155,7 +155,10 @@ export function checkEachPcbTraceNonOverlapping(
         ) -
         segmentA.thickness / 2
       if (
-        !connMap.areIdsConnected(segmentA.pcb_trace_id, primaryObjId) &&
+        !connMap.areIdsConnected(
+          segmentA.pcb_trace_id,
+          "pcb_trace_id" in obj ? (obj.pcb_trace_id as string) : primaryObjId,
+        ) &&
         gap + EPSILON < requiredMargin
       ) {
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
