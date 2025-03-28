@@ -13,7 +13,10 @@ import {
   type Collidable,
   type PcbTraceSegment,
 } from "./getCollidableBounds"
-import { segmentToBoundsMinDistance } from "@tscircuit/math-utils"
+import {
+  segmentToBoundsMinDistance,
+  segmentToCircleMinDistance,
+} from "@tscircuit/math-utils"
 import {
   DEFAULT_TRACE_MARGIN,
   DEFAULT_TRACE_THICKNESS,
@@ -26,6 +29,7 @@ import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { getCenterOfBoundsPair } from "./getCenterOfBoundsPair"
 import { getClosestPointBetweenSegments } from "./getClosestPointBetweenSegments"
 import { getCenterOfBounds } from "./getCenterOfBounds"
+import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -146,7 +150,55 @@ export function checkEachPcbTraceNonOverlapping(
         })
         continue
       }
+
       const primaryObjId = getPrimaryId(obj as any)
+      if (
+        connMap.areIdsConnected(
+          segmentA.pcb_trace_id,
+          "pcb_trace_id" in obj ? (obj.pcb_trace_id as string) : primaryObjId,
+        )
+      )
+        continue
+
+      const isCircular =
+        obj.type === "pcb_via" ||
+        (obj.type === "pcb_plated_hole" && obj.shape === "circle") ||
+        obj.type === "pcb_hole" ||
+        (obj.type === "pcb_smtpad" && obj.shape === "circle")
+
+      if (isCircular) {
+        const radius = getRadiusOfCircuitJsonElement(obj)
+        const gap = segmentToCircleMinDistance(
+          { x: segmentA.x1, y: segmentA.y1 },
+          { x: segmentA.x2, y: segmentA.y2 },
+          { x: obj.x, y: obj.y, radius },
+        )
+        if (gap > DEFAULT_TRACE_MARGIN - EPSILON) continue
+
+        const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
+        if (errorIds.has(pcb_trace_error_id)) continue
+        errorIds.add(pcb_trace_error_id)
+        errors.push({
+          type: "pcb_trace_error",
+          error_type: "pcb_trace_error",
+          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${obj.type} "${getReadableName(getPrimaryId(obj as any))}" ${gap < 0 ? "(accidental contact)" : `(gap: ${gap.toFixed(3)}mm)`}`,
+          pcb_trace_id: segmentA.pcb_trace_id,
+          source_trace_id: "",
+          pcb_trace_error_id,
+          pcb_component_ids: [
+            "pcb_component_id" in obj
+              ? (obj.pcb_component_id as string)
+              : undefined,
+          ].filter(Boolean) as string[],
+          pcb_port_ids: [
+            ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
+            "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
+          ].filter(Boolean) as string[],
+        })
+      }
+
+      // Handle generic case of hitting the bounds of any collidable obstacle
+      // using the bounds of the collidable obstacle
       const gap =
         segmentToBoundsMinDistance(
           { x: segmentA.x1, y: segmentA.y1 },
@@ -154,13 +206,7 @@ export function checkEachPcbTraceNonOverlapping(
           getCollidableBounds(obj),
         ) -
         segmentA.thickness / 2
-      if (
-        !connMap.areIdsConnected(
-          segmentA.pcb_trace_id,
-          "pcb_trace_id" in obj ? (obj.pcb_trace_id as string) : primaryObjId,
-        ) &&
-        gap + EPSILON < requiredMargin
-      ) {
+      if (gap + EPSILON < requiredMargin) {
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
         if (errorIds.has(pcb_trace_error_id)) continue
         errorIds.add(pcb_trace_error_id)
