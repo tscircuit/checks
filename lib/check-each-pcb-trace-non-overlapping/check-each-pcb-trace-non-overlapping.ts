@@ -30,6 +30,7 @@ import { getCenterOfBoundsPair } from "./getCenterOfBoundsPair"
 import { getClosestPointBetweenSegments } from "./getClosestPointBetweenSegments"
 import { getCenterOfBounds } from "./getCenterOfBounds"
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
+import { getClosestPointBetweenSegmentAndBounds } from "./getClosestPointBetweenSegmentAndBounds"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -183,6 +184,10 @@ export function checkEachPcbTraceNonOverlapping(
           error_type: "pcb_trace_error",
           message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${obj.type} "${getReadableName(getPrimaryId(obj as any))}" ${gap < 0 ? "(accidental contact)" : `(gap: ${gap.toFixed(3)}mm)`}`,
           pcb_trace_id: segmentA.pcb_trace_id,
+          center: getClosestPointBetweenSegmentAndBounds(
+            segmentA,
+            getCollidableBounds(obj),
+          ),
           source_trace_id: "",
           pcb_trace_error_id,
           pcb_component_ids: [
@@ -220,7 +225,10 @@ export function checkEachPcbTraceNonOverlapping(
           pcb_component_ids: [
             "pcb_component_id" in obj ? obj.pcb_component_id : undefined,
           ].filter(Boolean) as string[],
-          center: getCenterOfBounds(getCollidableBounds(obj)),
+          center: getClosestPointBetweenSegmentAndBounds(
+            segmentA,
+            getCollidableBounds(obj),
+          ),
           pcb_port_ids: [
             ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
             "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
