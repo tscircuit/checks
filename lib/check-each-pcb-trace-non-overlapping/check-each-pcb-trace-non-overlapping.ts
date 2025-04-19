@@ -108,10 +108,7 @@ export function checkEachPcbTraceNonOverlapping(
 
     for (const obj of nearbyObjects) {
       // ignore obstacles not on the trace's layer (except vias)
-      if (
-        obj.type !== "pcb_via" &&
-        !getLayersOfPcbElement(obj).includes(segmentA.layer)
-      ) {
+      if (!getLayersOfPcbElement(obj).includes(segmentA.layer)) {
         continue
       }
 
