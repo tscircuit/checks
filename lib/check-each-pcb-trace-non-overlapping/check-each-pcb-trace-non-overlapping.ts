@@ -31,6 +31,7 @@ import { getClosestPointBetweenSegments } from "./getClosestPointBetweenSegments
 import { getCenterOfBounds } from "./getCenterOfBounds"
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
 import { getClosestPointBetweenSegmentAndBounds } from "./getClosestPointBetweenSegmentAndBounds"
+import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -107,6 +108,10 @@ export function checkEachPcbTraceNonOverlapping(
     if (segmentA.x1 === segmentA.x2 && segmentA.y1 === segmentA.y2) continue
 
     for (const obj of nearbyObjects) {
+      // ignore obstacles not on the trace's layer (except vias)
+      if (!getLayersOfPcbElement(obj).includes(segmentA.layer)) {
+        continue
+      }
       if (obj.type === "pcb_trace_segment") {
         const segmentB = obj
 
