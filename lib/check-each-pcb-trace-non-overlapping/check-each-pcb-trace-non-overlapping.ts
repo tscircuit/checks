@@ -50,7 +50,8 @@ export function checkEachPcbTraceNonOverlapping(
     for (let i = 0; i < pcbTrace.route.length - 1; i++) {
       const p1 = pcbTrace.route[i]
       const p2 = pcbTrace.route[i + 1]
-      if (p1.route_type !== "wire" || p2.route_type !== "wire") continue
+      if (p1.route_type !== "wire") continue
+      if (p2.route_type !== "wire") continue
       if (p1.layer !== p2.layer) continue
       segments.push({
         type: "pcb_trace_segment",
@@ -111,7 +112,6 @@ export function checkEachPcbTraceNonOverlapping(
       if (!getLayersOfPcbElement(obj).includes(segmentA.layer)) {
         continue
       }
-
       if (obj.type === "pcb_trace_segment") {
         const segmentB = obj
 
@@ -136,11 +136,8 @@ export function checkEachPcbTraceNonOverlapping(
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`
         const pcb_trace_error_id_reverse = `overlap_${segmentB.pcb_trace_id}_${segmentA.pcb_trace_id}`
-        if (
-          errorIds.has(pcb_trace_error_id) ||
-          errorIds.has(pcb_trace_error_id_reverse)
-        )
-          continue
+        if (errorIds.has(pcb_trace_error_id)) continue
+        if (errorIds.has(pcb_trace_error_id_reverse)) continue
 
         errorIds.add(pcb_trace_error_id)
         errors.push({
@@ -208,10 +205,10 @@ export function checkEachPcbTraceNonOverlapping(
             "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
           ].filter(Boolean) as string[],
         })
-        continue
       }
 
-      // generic bounds check
+      // Handle generic case of hitting the bounds of any collidable obstacle
+      // using the bounds of the collidable obstacle
       const gap =
         segmentToBoundsMinDistance(
           { x: segmentA.x1, y: segmentA.y1 },
@@ -219,15 +216,14 @@ export function checkEachPcbTraceNonOverlapping(
           getCollidableBounds(obj),
         ) -
         segmentA.thickness / 2
-      // apply EPSILON consistently
-      if (gap < requiredMargin - EPSILON) {
+      if (gap + EPSILON < requiredMargin) {
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
         if (errorIds.has(pcb_trace_error_id)) continue
         errorIds.add(pcb_trace_error_id)
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${obj.type} "${getReadableName(primaryObjId)}" ${gap < 0 ? "(accidental contact)" : `(gap: ${gap.toFixed(3)}mm)`}`,
+          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${obj.type} "${getReadableName(getPrimaryId(obj as any))}" ${gap < 0 ? "(accidental contact)" : `(gap: ${gap.toFixed(3)}mm)`}`,
           pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
           pcb_trace_error_id,
