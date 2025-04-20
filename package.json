@@ -26,7 +26,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@tscircuit/math-utils": "^0.0.13",
+    "@tscircuit/math-utils": "^0.0.15",
     "circuit-json-to-connectivity-map": "^0.0.20"
   }
 }
