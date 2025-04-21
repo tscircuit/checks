@@ -10,7 +10,11 @@ describe("testing checkTracesAreContiguous(", () => {
   })
   test("should error as a trace is not fully contiguous", () => {
     const errors = checkTracesAreContiguous(corruptedCircuitJson as any)
-    expect(errors[0].message).toContain("misaligned")
-    expect(errors[1].message).toContain("missing a connection")
+    expect(errors[0].message).toMatchInlineSnapshot(
+      `"Via in trace [.R1 > .pin1 to .C1 > .pin1] is misaligned at position {x: -1.875, y: 1.875}."`,
+    )
+    expect(errors[1].message).toMatchInlineSnapshot(
+      `"Trace [.R1 > .pin1 to .C1 > .pin1] is missing a connection to smtpad[.C1 > .anode]"`,
+    )
   })
 })

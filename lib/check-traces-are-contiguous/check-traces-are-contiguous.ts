@@ -117,7 +117,7 @@ function checkTracesAreContiguous(
           circuitJson,
           port.pcb_port_id,
         ).replace("pcb_port", "")
-        const padType = pad.type === "pcb_smtpad" ? "smtpad" : "platedHole"
+        const padType = pad.type.replace(/pcb_/, "")
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] is missing a connection to ${padType}${portName}`,
