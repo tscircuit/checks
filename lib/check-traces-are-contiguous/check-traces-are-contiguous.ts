@@ -8,6 +8,7 @@ import type {
   PcbPlatedHole,
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
+import { getReadableNameForPcbPort } from "@tscircuit/circuit-json-util"
 
 function checkTracesAreContiguous(
   circuitJson: AnyCircuitElement[],
@@ -79,9 +80,10 @@ function checkTracesAreContiguous(
             Math.abs(nextPoint.y - currentPoint.y) < 0.001
 
           if (!prevAligned || !nextAligned) {
+            const traceName = sourceTrace.display_name
             errors.push({
               type: "pcb_trace_error",
-              message: `PCB trace: ${trace.pcb_trace_id} has a misaligned via at position (${currentPoint.x}, ${currentPoint.y})`,
+              message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
               source_trace_id: sourceTrace.source_trace_id,
               error_type: "pcb_trace_error",
               pcb_trace_id: trace.pcb_trace_id,
@@ -110,9 +112,15 @@ function checkTracesAreContiguous(
         isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad)
 
       if (!isFirstPointConnected && !isLastPointConnected) {
+        const traceName = sourceTrace.display_name
+        const portName = getReadableNameForPcbPort(
+          circuitJson,
+          port.pcb_port_id,
+        ).replace("pcb_port", "")
+        const padType = pad.type === "pcb_smtpad" ? "smtpad" : "platedHole"
         errors.push({
           type: "pcb_trace_error",
-          message: `PCB trace: ${trace.pcb_trace_id} has a loose connection in one of its ends`,
+          message: `Trace [${traceName}] is missing a connection to ${padType}${portName}`,
           source_trace_id: sourceTrace.source_trace_id,
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,

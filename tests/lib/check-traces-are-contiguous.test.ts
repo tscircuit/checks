@@ -10,7 +10,7 @@ describe("testing checkTracesAreContiguous(", () => {
   })
   test("should error as a trace is not fully contiguous", () => {
     const errors = checkTracesAreContiguous(corruptedCircuitJson as any)
-    expect(errors[0].message).toContain("misaligned via")
-    expect(errors[1].message).toContain("loose connection")
+    expect(errors[0].message).toContain("misaligned")
+    expect(errors[1].message).toContain("missing a connection")
   })
 })
