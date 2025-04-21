@@ -1,0 +1,130 @@
+import type {
+  AnyCircuitElement,
+  PcbTraceError,
+  PcbPort,
+  PcbTrace,
+  SourceTrace,
+  PcbSmtPad,
+  PcbPlatedHole,
+} from "circuit-json"
+import { isPointInPad } from "./is-point-in-pad"
+
+function checkTracesAreContiguous(
+  circuitJson: AnyCircuitElement[],
+): PcbTraceError[] {
+  const errors: PcbTraceError[] = []
+
+  const pcbPorts = circuitJson.filter(
+    (el) => el.type === "pcb_port",
+  ) as PcbPort[]
+  const pcbTraces = circuitJson.filter(
+    (el) => el.type === "pcb_trace",
+  ) as PcbTrace[]
+  const sourceTraces = circuitJson.filter(
+    (el) => el.type === "source_trace",
+  ) as SourceTrace[]
+  const pcbSmtPads = circuitJson.filter(
+    (el) => el.type === "pcb_smtpad",
+  ) as PcbSmtPad[]
+  const pcbPlatedHoles = circuitJson.filter(
+    (el) => el.type === "pcb_plated_hole",
+  ) as PcbPlatedHole[]
+
+  const padMap = new Map<string, PcbSmtPad | PcbPlatedHole>()
+
+  for (const pad of pcbSmtPads) {
+    if (pad.pcb_port_id) {
+      padMap.set(pad.pcb_port_id, pad)
+    }
+  }
+
+  for (const hole of pcbPlatedHoles) {
+    if (hole.pcb_port_id) {
+      padMap.set(hole.pcb_port_id, hole)
+    }
+  }
+
+  for (const trace of pcbTraces) {
+    if (trace.route.length === 0) continue
+
+    const firstPoint = trace.route[0]
+    const lastPoint = trace.route[trace.route.length - 1]
+
+    const sourceTrace = sourceTraces.find(
+      (st) => st.source_trace_id === trace.source_trace_id,
+    )
+
+    if (!sourceTrace) continue
+
+    const expectedPorts = pcbPorts.filter((port) =>
+      sourceTrace.connected_source_port_ids?.includes(port.source_port_id),
+    )
+
+    for (let i = 1; i < trace.route.length - 1; i++) {
+      const prevPoint = trace.route[i - 1]
+      const currentPoint = trace.route[i]
+      const nextPoint = trace.route[i + 1]
+
+      if (currentPoint.route_type === "via") {
+        const prevIsWire = prevPoint.route_type === "wire"
+        const nextIsWire = nextPoint.route_type === "wire"
+
+        if (prevIsWire && nextIsWire) {
+          const prevAligned =
+            Math.abs(prevPoint.x - currentPoint.x) < 0.001 &&
+            Math.abs(prevPoint.y - currentPoint.y) < 0.001
+
+          const nextAligned =
+            Math.abs(nextPoint.x - currentPoint.x) < 0.001 &&
+            Math.abs(nextPoint.y - currentPoint.y) < 0.001
+
+          if (!prevAligned || !nextAligned) {
+            errors.push({
+              type: "pcb_trace_error",
+              message: `PCB trace: ${trace.pcb_trace_id} has a misaligned via at position (${currentPoint.x}, ${currentPoint.y})`,
+              source_trace_id: sourceTrace.source_trace_id,
+              error_type: "pcb_trace_error",
+              pcb_trace_id: trace.pcb_trace_id,
+              pcb_trace_error_id: "",
+              pcb_component_ids: [],
+              pcb_port_ids: [],
+            })
+          }
+        }
+      }
+    }
+
+    for (const port of expectedPorts) {
+      if (!port.pcb_port_id) continue
+
+      const pad = padMap.get(port.pcb_port_id)
+
+      if (!pad) continue
+
+      const isFirstPointConnected =
+        firstPoint.route_type === "wire" &&
+        isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad)
+
+      const isLastPointConnected =
+        lastPoint.route_type === "wire" &&
+        isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad)
+
+      if (!isFirstPointConnected && !isLastPointConnected) {
+        errors.push({
+          type: "pcb_trace_error",
+          message: `PCB trace: ${trace.pcb_trace_id} has a loose connection in one of its ends`,
+          source_trace_id: sourceTrace.source_trace_id,
+          error_type: "pcb_trace_error",
+          pcb_trace_id: trace.pcb_trace_id,
+          pcb_trace_error_id: "",
+          pcb_component_ids: [],
+          pcb_port_ids: [port.pcb_port_id],
+        })
+      }
+    }
+  }
+
+  return errors
+}
+
+export { checkTracesAreContiguous }
