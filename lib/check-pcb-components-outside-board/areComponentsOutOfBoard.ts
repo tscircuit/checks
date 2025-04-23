@@ -22,7 +22,6 @@ export function checkPcbComponentsOutOfBoard(
   const errors: PcbPlacementError[] = []
 
   for (const comp of components) {
-    console.log("comp", comp)
     const minX = comp.center.x - comp.width / 2
     const maxX = comp.center.x + comp.width / 2
     const minY = comp.center.y - comp.height / 2
