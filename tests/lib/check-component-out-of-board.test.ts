@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test"
 import componentOutOfBoard from "tests/assets/component-out-of-board.json"
-import { checkPcbComponentsOutOfBoard } from "lib/check-pcb-components-outside-board/areComponentsOutOfBoard"
+import { checkPcbComponentsOutOfBoard } from "lib/check-pcb-components-outside-board/checkPcbComponentsOutOfBoard"
 test("pcb component out of board", async () => {
   const pcbPlacementError = checkPcbComponentsOutOfBoard(
     componentOutOfBoard as any,
@@ -10,8 +10,8 @@ test("pcb component out of board", async () => {
     `
   [
     {
-      "message": "Component source_component_1 out of board",
-      "pcb_placement_error_id": "out_of_board_pcb_component_1",
+      "message": "Component resistor[R1] out of board",
+      "pcb_placement_error_id": "out_of_board_pcb_component_0",
       "type": "pcb_placement_error",
     },
   ]

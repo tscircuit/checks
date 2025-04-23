@@ -7,9 +7,8 @@ import type {
 export function checkPcbComponentsOutOfBoard(
   circuitJson: AnyCircuitElement[],
 ): PcbPlacementError[] {
-  const board = circuitJson.find(
-    (el): el is PcbBoard => "width" in el && "height" in el,
-  ) as PcbBoard
+  const board = circuitJson.find((el) => el.type === "pcb_board") as PcbBoard
+
   if (!board) return []
 
   const components = circuitJson.filter((el) => el.type === "pcb_component")
@@ -26,7 +25,6 @@ export function checkPcbComponentsOutOfBoard(
     const maxX = comp.center.x + comp.width / 2
     const minY = comp.center.y - comp.height / 2
     const maxY = comp.center.y + comp.height / 2
-    const sourceComponent = comp.source_component_id
 
     if (
       minX < boardMinX ||
@@ -34,10 +32,19 @@ export function checkPcbComponentsOutOfBoard(
       minY < boardMinY ||
       maxY > boardMaxY
     ) {
+      const sourceComponent = circuitJson.find(
+        (el) =>
+          el.type === "source_component" &&
+          el.source_component_id === comp.source_component_id,
+      ) as any
+      const componentType = (sourceComponent?.ftype || "unknown").replace(
+        /^simple_/,
+        "",
+      )
       errors.push({
         type: "pcb_placement_error",
         pcb_placement_error_id: `out_of_board_${comp.pcb_component_id}`,
-        message: `Component ${sourceComponent ?? "unknown"} out of board`,
+        message: `Component ${componentType}[${sourceComponent!.name}] out of board`,
       })
     }
   }
