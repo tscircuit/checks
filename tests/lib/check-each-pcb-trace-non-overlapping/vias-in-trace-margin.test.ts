@@ -4,10 +4,8 @@ import circuitJson from "../../assets/via-too-close-to-trace.json"
 
 describe("PCB vias in non-overlapping trace checks", () => {
   test("non-overlapping functionality should include vias as collidable objects", () => {
-    // Simple test to verify vias are included in the check
-
-    // The via is directly on the trace and has a different net, so should generate an error
     const errors = checkEachPcbTraceNonOverlapping(circuitJson as any)
+    
     expect(errors).toMatchInlineSnapshot(`
       [
         {
