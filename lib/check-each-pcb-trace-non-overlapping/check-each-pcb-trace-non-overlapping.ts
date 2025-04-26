@@ -180,7 +180,6 @@ export function checkEachPcbTraceNonOverlapping(
           { x: obj.x, y: obj.y, radius },
         )
         const gap = distance - segmentA.thickness / 2
-        // const gap = distance
         if (gap > DEFAULT_TRACE_MARGIN - EPSILON) continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
