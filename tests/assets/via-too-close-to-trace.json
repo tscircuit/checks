@@ -684,7 +684,7 @@
         "route_type": "wire",
         "x": 1.9,
         "y": -0.6,
-        "width": 0.4,
+        "width": 0.15,
         "layer": "bottom"
       },
       {
