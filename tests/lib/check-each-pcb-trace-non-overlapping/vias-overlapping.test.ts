@@ -41,7 +41,7 @@ describe("PCB vias in non-overlapping trace checks", () => {
             "y": 0,
           },
           "error_type": "pcb_trace_error",
-          "message": "PCB trace trace[trace1] overlaps with pcb_via "pcb_via[#via1]" (gap: 0.070mm)",
+          "message": "PCB trace trace[trace1] overlaps with pcb_via "pcb_via[#via1]" (accidental contact)",
           "pcb_component_ids": [],
           "pcb_port_ids": [],
           "pcb_trace_error_id": "overlap_trace1_via1",

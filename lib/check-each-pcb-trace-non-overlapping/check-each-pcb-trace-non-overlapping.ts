@@ -174,11 +174,12 @@ export function checkEachPcbTraceNonOverlapping(
 
       if (isCircular) {
         const radius = getRadiusOfCircuitJsonElement(obj)
-        const gap = segmentToCircleMinDistance(
+        const distance = segmentToCircleMinDistance(
           { x: segmentA.x1, y: segmentA.y1 },
           { x: segmentA.x2, y: segmentA.y2 },
           { x: obj.x, y: obj.y, radius },
         )
+        const gap = distance - segmentA.thickness / 2
         if (gap > DEFAULT_TRACE_MARGIN - EPSILON) continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
