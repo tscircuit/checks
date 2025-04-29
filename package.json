@@ -27,7 +27,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@tscircuit/math-utils": "^0.0.16",
+    "@tscircuit/math-utils": "^0.0.18",
     "circuit-json-to-connectivity-map": "^0.0.20",
     "circuit-to-svg": "^0.0.115"
   }
