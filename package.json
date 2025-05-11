@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@tscircuit/math-utils": "^0.0.18",
-    "circuit-json-to-connectivity-map": "^0.0.21",
+    "circuit-json-to-connectivity-map": "^0.0.22",
     "circuit-to-svg": "^0.0.115"
   }
 }
