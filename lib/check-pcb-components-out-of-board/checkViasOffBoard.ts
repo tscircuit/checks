@@ -5,8 +5,9 @@ import type {
   PcbPlacementError,
 } from "circuit-json"
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
+import { DEFAULT_VIA_BOARD_MARGIN } from "lib/drc-defaults"
 
-export function checkViasOutOfBoard(
+export function checkViasOffBoard(
   circuitJson: AnyCircuitElement[],
 ): PcbPlacementError[] {
   const board = circuitJson.find((el) => el.type === "pcb_board") as PcbBoard
@@ -32,10 +33,10 @@ export function checkViasOutOfBoard(
     const viaMaxY = via.y + viaRadius
 
     if (
-      viaMinX < boardMinX ||
-      viaMaxX > boardMaxX ||
-      viaMinY < boardMinY ||
-      viaMaxY > boardMaxY
+      viaMinX < boardMinX + DEFAULT_VIA_BOARD_MARGIN ||
+      viaMaxX > boardMaxX - DEFAULT_VIA_BOARD_MARGIN ||
+      viaMinY < boardMinY + DEFAULT_VIA_BOARD_MARGIN ||
+      viaMaxY > boardMaxY - DEFAULT_VIA_BOARD_MARGIN
     ) {
       const viaName = getReadableNameForElement(circuitJson, via.pcb_via_id)
       errors.push({

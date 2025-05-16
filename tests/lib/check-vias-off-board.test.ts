@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test"
 import type { AnyCircuitElement, PcbPlacementError } from "circuit-json"
-import { checkViasOutOfBoard } from "lib/check-pcb-components-out-of-board/checkViasOutOfBoard"
+import { checkViasOffBoard } from "lib/check-pcb-components-out-of-board/checkViasOffBoard"
 
 test("no board, should return no errors", () => {
   const soup: AnyCircuitElement[] = [
@@ -14,7 +14,7 @@ test("no board, should return no errors", () => {
       layers: ["top", "bottom"],
     },
   ]
-  const errors = checkViasOutOfBoard(soup)
+  const errors = checkViasOffBoard(soup)
   expect(errors).toEqual([])
 })
 
@@ -30,7 +30,7 @@ test("no vias, should return no errors", () => {
       thickness: 1.2,
     },
   ]
-  const errors = checkViasOutOfBoard(soup)
+  const errors = checkViasOffBoard(soup)
   expect(errors).toEqual([])
 })
 
@@ -55,7 +55,7 @@ test("via completely inside board, should return no errors", () => {
       layers: ["top", "bottom"],
     },
   ]
-  const errors = checkViasOutOfBoard(soup)
+  const errors = checkViasOffBoard(soup)
   expect(errors).toEqual([])
 })
 
@@ -80,7 +80,7 @@ test("via partially outside board (crossing boundary), should return an error", 
       layers: ["top", "bottom"],
     },
   ]
-  const errors = checkViasOutOfBoard(soup)
+  const errors = checkViasOffBoard(soup)
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain(
     "Via pcb_via[#via_partially_out] is outside or crossing the board boundary",
@@ -111,7 +111,7 @@ test("via completely outside board, should return an error", () => {
       layers: ["top", "bottom"],
     },
   ]
-  const errors = checkViasOutOfBoard(soup)
+  const errors = checkViasOffBoard(soup)
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain(
     "Via pcb_via[#via_completely_out] is outside or crossing the board boundary",
@@ -163,7 +163,7 @@ test("multiple vias, some in, some out", () => {
       layers: ["top", "bottom"],
     },
   ]
-  const errors = checkViasOutOfBoard(soup)
+  const errors = checkViasOffBoard(soup)
   expect(errors).toHaveLength(2)
   const errorMessages = errors.map((e) => e.message)
   expect(errorMessages).toContain(
