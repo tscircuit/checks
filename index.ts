@@ -3,3 +3,4 @@ export { checkEachPcbTraceNonOverlapping } from "./lib/check-each-pcb-trace-non-
 export { NetManager } from "./lib/net-manager"
 export { checkViasOffBoard } from "./lib/check-pcb-components-out-of-board/checkViasOffBoard"
 export { checkSameNetViaSpacing } from "./lib/check-same-net-via-spacing"
+export { runAllChecks } from "./lib/run-all-checks"

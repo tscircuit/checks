@@ -15,15 +15,16 @@
     "@biomejs/biome": "^1.9.0",
     "@tscircuit/circuit-json-util": "^0.0.50",
     "@tscircuit/log-soup": "^1.0.2",
+    "@tscircuit/math-utils": "^0.0.18",
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
     "circuit-json": "^0.0.153",
-    "debug": "^4.3.5",
-    "tsup": "^8.2.3",
-    "@tscircuit/math-utils": "^0.0.18",
     "circuit-json-to-connectivity-map": "^0.0.22",
-    "circuit-to-svg": "^0.0.115"
+    "circuit-to-svg": "^0.0.115",
+    "debug": "^4.3.5",
+    "tscircuit": "^0.0.513",
+    "tsup": "^8.2.3"
   },
   "peerDependencies": {
     "circuit-json": "*",
