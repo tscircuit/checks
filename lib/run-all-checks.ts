@@ -4,8 +4,9 @@ import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
+import type { AnyCircuitElement } from "circuit-json"
 
-export async function runAllChecks(circuitJson: any[]) {
+export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkEachPcbPortConnected(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson),
