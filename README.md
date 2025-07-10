@@ -33,11 +33,6 @@ area.
 Returns `pcb_trace_error` if a PCB trace is misaligned or does not properly
 connect to its expected pads.
 
-## `checkTraceSpacing(circuitJson: AnyCircuitElement[]) => PCBTraceError[]`
-
-Returns `pcb_trace_error` if two PCB traces are closer than the minimum given
-distance between them.
-
 ## Implementation Details
 
 > [!NOTE]
