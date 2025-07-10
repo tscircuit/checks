@@ -25,7 +25,6 @@ describe("checkTraceSpacing", () => {
     const errors = checkTraceSpacing(soup, { minSpacing: 0.2 })
     expect(errors).toHaveLength(1)
     expect(errors[0].message).toContain("too close")
-    
   })
 
   test("no error when traces are far enough", () => {
