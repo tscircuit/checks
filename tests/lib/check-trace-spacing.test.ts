@@ -4,7 +4,7 @@ import type { AnyCircuitElement } from "circuit-json"
 
 describe("checkTraceSpacing", () => {
   test("returns error when traces are too close", () => {
-    const soup: AnyCircuitElement[] = [
+    const circuitJson: AnyCircuitElement[] = [
       {
         type: "pcb_trace",
         pcb_trace_id: "trace1",
@@ -22,13 +22,13 @@ describe("checkTraceSpacing", () => {
         ],
       },
     ]
-    const errors = checkTraceSpacing(soup, { minSpacing: 0.2 })
+    const errors = checkTraceSpacing(circuitJson, { minSpacing: 0.2 })
     expect(errors).toHaveLength(1)
     expect(errors[0].message).toContain("too close")
   })
 
   test("no error when traces are far enough", () => {
-    const soup: AnyCircuitElement[] = [
+    const circuitJson: AnyCircuitElement[] = [
       {
         type: "pcb_trace",
         pcb_trace_id: "trace1",
@@ -46,7 +46,7 @@ describe("checkTraceSpacing", () => {
         ],
       },
     ]
-    const errors = checkTraceSpacing(soup, { minSpacing: 0.2 })
+    const errors = checkTraceSpacing(circuitJson, { minSpacing: 0.2 })
     expect(errors).toHaveLength(0)
   })
 })
