@@ -35,7 +35,7 @@ connect to its expected pads.
 
 ## `checkTraceSpacing(circuitJson: AnyCircuitElement[]) => PCBTraceError[]`
 
-Returns `pcb_trace_error` if two PCB traces are closer than the minium given
+Returns `pcb_trace_error` if two PCB traces are closer than the minimum given
 distance between them.
 
 ## Implementation Details
