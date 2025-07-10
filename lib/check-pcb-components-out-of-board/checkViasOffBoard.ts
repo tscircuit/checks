@@ -43,7 +43,6 @@ export function checkViasOffBoard(
         type: "pcb_placement_error",
         pcb_placement_error_id: `out_of_board_${via.pcb_via_id}`,
         message: `Via ${viaName} is outside or crossing the board boundary`,
-        error_type: "pcb_placement_error",
       })
     }
   }

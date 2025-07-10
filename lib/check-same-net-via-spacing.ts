@@ -44,7 +44,6 @@ export function checkSameNetViaSpacing(
           circuitJson,
           viaB.pcb_via_id,
         )} are too close together (gap: ${gap.toFixed(3)}mm)`,
-        error_type: "pcb_placement_error",
       })
     }
   }

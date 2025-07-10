@@ -28,7 +28,6 @@ test("no vias, should return no errors", () => {
       height: 10,
       num_layers: 2,
       thickness: 1.2,
-      material: "fr4",
     },
   ]
   const errors = checkViasOffBoard(soup)
@@ -45,7 +44,6 @@ test("via completely inside board, should return no errors", () => {
       height: 10,
       num_layers: 2,
       thickness: 1.2,
-      material: "fr4",
     },
     {
       type: "pcb_via",
@@ -71,7 +69,6 @@ test("via partially outside board (crossing boundary), should return an error", 
       height: 10,
       num_layers: 2,
       thickness: 1.2,
-      material: "fr4",
     },
     {
       type: "pcb_via",
@@ -103,7 +100,6 @@ test("via completely outside board, should return an error", () => {
       height: 10,
       num_layers: 2,
       thickness: 1.2,
-      material: "fr4",
     },
     {
       type: "pcb_via",
@@ -135,7 +131,6 @@ test("multiple vias, some in, some out", () => {
       height: 10,
       num_layers: 2,
       thickness: 1.2,
-      material: "fr4",
     },
     {
       // In
