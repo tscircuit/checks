@@ -10,6 +10,7 @@ test("pcb component out of board", async () => {
     `
   [
     {
+      "error_type": "pcb_placement_error",
       "message": "Component resistor[R1] out of board",
       "pcb_placement_error_id": "out_of_board_pcb_component_0",
       "type": "pcb_placement_error",

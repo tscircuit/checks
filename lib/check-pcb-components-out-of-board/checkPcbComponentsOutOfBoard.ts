@@ -45,6 +45,7 @@ export function checkPcbComponentsOutOfBoard(
         type: "pcb_placement_error",
         pcb_placement_error_id: `out_of_board_${comp.pcb_component_id}`,
         message: `Component ${componentType}[${sourceComponent!.name}] out of board`,
+        error_type: "pcb_placement_error",
       })
     }
   }

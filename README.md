@@ -13,6 +13,31 @@ source ports.
 Returns `pcb_trace_error` if any `pcb_trace` is overlapping with another `pcb_trace`
 that is not connected to the same net.
 
+## `checkSameNetViaSpacing(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
+
+Returns `pcb_placement_error` if any vias on the same net are placed closer
+than the allowed margin.
+
+## `checkViasOffBoard(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
+
+Returns `pcb_placement_error` if any PCB via lies outside or crosses the board
+boundary.
+
+## `checkPcbComponentsOutOfBoard(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
+
+Returns `pcb_placement_error` when a PCB component does not fit inside the board
+area.
+
+## `checkTracesAreContiguous(circuitJson: AnyCircuitElement[]) => PCBTraceError[]`
+
+Returns `pcb_trace_error` if a PCB trace is misaligned or does not properly
+connect to its expected pads.
+
+## `checkTraceSpacing(circuitJson: AnyCircuitElement[]) => PCBTraceError[]`
+
+Returns `pcb_trace_error` if two PCB traces are closer than the minimum given
+distance between them.
+
 ## Implementation Details
 
 > [!NOTE]
