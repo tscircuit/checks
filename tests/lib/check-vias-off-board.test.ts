@@ -135,6 +135,7 @@ test("multiple vias, some in, some out", () => {
       height: 10,
       num_layers: 2,
       thickness: 1.2,
+      material: "fr4",
     },
     {
       // In
