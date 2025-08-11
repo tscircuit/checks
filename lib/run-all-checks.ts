@@ -4,6 +4,7 @@ import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import type { AnyCircuitElement } from "circuit-json"
 
 export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
@@ -14,5 +15,6 @@ export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
     ...checkViasOffBoard(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkTracesAreContiguous(circuitJson),
+    ...checkSourceTracesHavePcbTraces(circuitJson),
   ]
 }
