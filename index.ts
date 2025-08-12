@@ -1,4 +1,4 @@
-export { checkEachPcbPortConnected } from "./lib/check-each-pcb-port-connected"
+export { checkEachPcbPortConnectedToPcbTraces } from "./lib/check-each-pcb-port-connected-to-pcb-trace"
 export { checkEachPcbTraceNonOverlapping } from "./lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 export { NetManager } from "./lib/net-manager"
 export { checkViasOffBoard } from "./lib/check-pcb-components-out-of-board/checkViasOffBoard"
