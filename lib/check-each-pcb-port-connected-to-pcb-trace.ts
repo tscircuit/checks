@@ -3,19 +3,25 @@ import type {
   PcbTrace,
   SourceTrace,
   AnyCircuitElement,
-  PcbTraceError,
+  PcbPortNotConnectedError,
 } from "circuit-json"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { getReadableNameForPcbPort } from "@tscircuit/circuit-json-util"
 
-function checkEachPcbPortConnected(soup: AnyCircuitElement[]): PcbTraceError[] {
-  addStartAndEndPortIdsIfMissing(soup)
-  const pcbPorts: PcbPort[] = soup.filter((item) => item.type === "pcb_port")
-  const pcbTraces: PcbTrace[] = soup.filter((item) => item.type === "pcb_trace")
-  const sourceTraces: SourceTrace[] = soup.filter(
+function checkEachPcbPortConnectedToPcbTraces(
+  circuitJson: AnyCircuitElement[],
+): PcbPortNotConnectedError[] {
+  addStartAndEndPortIdsIfMissing(circuitJson)
+  const pcbPorts: PcbPort[] = circuitJson.filter(
+    (item) => item.type === "pcb_port",
+  )
+  const pcbTraces: PcbTrace[] = circuitJson.filter(
+    (item) => item.type === "pcb_trace",
+  )
+  const sourceTraces: SourceTrace[] = circuitJson.filter(
     (item) => item.type === "source_trace",
   )
-  const errors: PcbTraceError[] = []
+  const errors: PcbPortNotConnectedError[] = []
 
   for (const port of pcbPorts) {
     const connectedTraces = pcbTraces.filter((trace) =>
@@ -36,14 +42,12 @@ function checkEachPcbPortConnected(soup: AnyCircuitElement[]): PcbTraceError[] {
 
     if (connectedTraces.length === 0 && hasSourceTraceWithConnections) {
       errors.push({
-        type: "pcb_trace_error",
-        message: `pcb_trace_error: PCB port ${getReadableNameForPcbPort(soup, port.pcb_port_id)} is not connected by a PCB trace`,
-        source_trace_id: sourceTrace.source_trace_id,
-        error_type: "pcb_trace_error",
-        pcb_trace_id: "",
-        pcb_trace_error_id: "",
-        pcb_component_ids: [],
+        type: "pcb_port_not_connected_error",
+        message: `pcb_port_not_connected_error: PCB port ${getReadableNameForPcbPort(circuitJson, port.pcb_port_id)} is not connected by a PCB trace`,
+        error_type: "pcb_port_not_connected_error",
         pcb_port_ids: [port.pcb_port_id],
+        pcb_component_ids: [port.pcb_component_id],
+        pcb_port_not_connected_error_id: `pcb_port_not_connected_error_${port.pcb_port_id}`,
       })
     }
   }
@@ -51,4 +55,4 @@ function checkEachPcbPortConnected(soup: AnyCircuitElement[]): PcbTraceError[] {
   return errors
 }
 
-export { checkEachPcbPortConnected }
+export { checkEachPcbPortConnectedToPcbTraces }
