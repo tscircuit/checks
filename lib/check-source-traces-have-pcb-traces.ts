@@ -1,8 +1,9 @@
 import type {
   AnyCircuitElement,
-  PcbTraceError,
+  PcbTraceMissingError,
   SourceTrace,
   PcbTrace,
+  PcbPort,
 } from "circuit-json"
 
 /**
@@ -11,13 +12,15 @@ import type {
  * pcb_trace, return an error for that source_trace.
  */
 function checkSourceTracesHavePcbTraces(
-  soup: AnyCircuitElement[],
-): PcbTraceError[] {
-  const errors: PcbTraceError[] = []
-  const sourceTraces = soup.filter(
+  circuitJson: AnyCircuitElement[],
+): PcbTraceMissingError[] {
+  const errors: PcbTraceMissingError[] = []
+  const sourceTraces = circuitJson.filter(
     (el) => el.type === "source_trace",
   ) as SourceTrace[]
-  const pcbTraces = soup.filter((el) => el.type === "pcb_trace") as PcbTrace[]
+  const pcbTraces = circuitJson.filter(
+    (el) => el.type === "pcb_trace",
+  ) as PcbTrace[]
 
   for (const sourceTrace of sourceTraces) {
     if (!sourceTrace.connected_source_port_ids?.length) continue
@@ -25,15 +28,26 @@ function checkSourceTracesHavePcbTraces(
       (pcbTrace) => pcbTrace.source_trace_id === sourceTrace.source_trace_id,
     )
     if (!hasPcbTrace) {
+      // Get PCB ports connected to this source trace
+      const connectedPcbPorts = circuitJson.filter(
+        (el) =>
+          el.type === "pcb_port" &&
+          sourceTrace.connected_source_port_ids.includes(el.source_port_id),
+      ) as PcbPort[]
+
+      // Find PCB components that these ports belong to
+      const connectedPcbComponentIds = Array.from(
+        new Set(connectedPcbPorts.map((port) => port.pcb_component_id)),
+      )
+
       errors.push({
-        type: "pcb_trace_error",
-        error_type: "pcb_trace_error",
-        message: `Trace [${sourceTrace.display_name ?? sourceTrace.source_trace_id}] has no PCB traces`,
+        type: "pcb_trace_missing_error",
+        pcb_trace_missing_error_id: `pcb_trace_missing_${sourceTrace.source_trace_id}`,
+        error_type: "pcb_trace_missing_error",
+        message: `Trace [${sourceTrace.display_name ?? sourceTrace.source_trace_id}] is not connected (it has no PCB trace)`,
         source_trace_id: sourceTrace.source_trace_id,
-        pcb_trace_id: "",
-        pcb_trace_error_id: "",
-        pcb_component_ids: [],
-        pcb_port_ids: [],
+        pcb_component_ids: connectedPcbComponentIds,
+        pcb_port_ids: connectedPcbPorts.map((port) => port.pcb_port_id),
       })
     }
   }
