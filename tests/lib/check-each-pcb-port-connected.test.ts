@@ -1,10 +1,10 @@
-import type { AnySoupElement, PCBTrace } from "circuit-json"
+import type { AnyCircuitElement, PcbTrace } from "circuit-json"
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbPortConnectedToPcbTraces } from "lib/check-each-pcb-port-connected-to-pcb-trace"
 
 describe("checkEachPcbPortConnectedToPcbTraces", () => {
   test("should not return error for intentionally unconnected ports", () => {
-    const soup: AnySoupElement[] = [
+    const circuitJson: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -30,11 +30,11 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
         connected_source_net_ids: [],
       },
     ]
-    const errors = checkEachPcbPortConnectedToPcbTraces(soup)
+    const errors = checkEachPcbPortConnectedToPcbTraces(circuitJson)
     expect(errors).toHaveLength(0)
   })
   test("should return null when all ports are connected", () => {
-    const soup: AnySoupElement[] = [
+    const circuitJson: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -83,11 +83,11 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
         ],
       },
     ]
-    expect(checkEachPcbPortConnectedToPcbTraces(soup)).toEqual([])
+    expect(checkEachPcbPortConnectedToPcbTraces(circuitJson)).toEqual([])
   })
 
   test("should return error when a port is not connected", () => {
-    const soup: AnySoupElement[] = [
+    const circuitJson: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -171,13 +171,29 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
         },
       },
     ]
-    const errors = checkEachPcbPortConnectedToPcbTraces(soup)
-    expect(errors.map((e) => e.message).join("\n")).toContain(".comp1 > .1")
-    expect(errors).toHaveLength(2)
+    const errors = checkEachPcbPortConnectedToPcbTraces(circuitJson)
+    expect(errors).toMatchInlineSnapshot(`
+      [
+        {
+          "error_type": "pcb_port_not_connected_error",
+          "message": "pcb_port_not_connected_error: Pcb ports [port1, port2] are not connected together through the same net.",
+          "pcb_component_ids": [
+            "pcb1",
+            "pcb2",
+          ],
+          "pcb_port_ids": [
+            "port1",
+            "port2",
+          ],
+          "pcb_port_not_connected_error_id": "pcb_port_not_connected_error_trace_trace1",
+          "type": "pcb_port_not_connected_error",
+        },
+      ]
+    `)
   })
 
   test("should return errors for ports not connected by PCB traces", () => {
-    const soup: AnySoupElement[] = [
+    const circuitJson: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -203,10 +219,26 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
         connected_source_net_ids: ["net1", "net2"],
       },
     ]
-    const errors = checkEachPcbPortConnectedToPcbTraces(soup)
-    expect(errors).toHaveLength(2)
-    expect(errors[0].message).toContain("port1")
-    expect(errors[1].message).toContain("port2")
+    const errors = checkEachPcbPortConnectedToPcbTraces(circuitJson)
+    expect(errors).toHaveLength(1)
+    expect(errors).toMatchInlineSnapshot(`
+      [
+        {
+          "error_type": "pcb_port_not_connected_error",
+          "message": "pcb_port_not_connected_error: Pcb ports [port1, port2] are not connected together through the same net.",
+          "pcb_component_ids": [
+            "comp1",
+            "comp2",
+          ],
+          "pcb_port_ids": [
+            "port1",
+            "port2",
+          ],
+          "pcb_port_not_connected_error_id": "pcb_port_not_connected_error_trace_trace1",
+          "type": "pcb_port_not_connected_error",
+        },
+      ]
+    `)
   })
 
   test("should handle empty soup", () => {
@@ -214,7 +246,7 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
   })
 
   test("should automatically add start_pcb_port_id and end_pcb_port_id", () => {
-    const soup: AnySoupElement[] = [
+    const circuitJson: AnyCircuitElement[] = [
       {
         type: "pcb_port",
         pcb_port_id: "port1",
@@ -254,12 +286,12 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
         ],
       },
     ]
-    expect(checkEachPcbPortConnectedToPcbTraces(soup)).toEqual([])
+    expect(checkEachPcbPortConnectedToPcbTraces(circuitJson)).toEqual([])
 
     // Check if start_pcb_port_id and end_pcb_port_id were added
-    const updatedTrace = soup.find(
+    const updatedTrace = circuitJson.find(
       (item) => item.type === "pcb_trace",
-    ) as PCBTrace
+    ) as PcbTrace
     // @ts-ignore
     expect(updatedTrace.route[0].start_pcb_port_id).toBe("port1")
     // @ts-ignore

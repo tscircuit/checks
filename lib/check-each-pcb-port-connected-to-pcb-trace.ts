@@ -1,54 +1,95 @@
 import type {
   PcbPort,
-  PcbTrace,
   SourceTrace,
   AnyCircuitElement,
   PcbPortNotConnectedError,
 } from "circuit-json"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
-import { getReadableNameForPcbPort } from "@tscircuit/circuit-json-util"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 
 function checkEachPcbPortConnectedToPcbTraces(
   circuitJson: AnyCircuitElement[],
 ): PcbPortNotConnectedError[] {
   addStartAndEndPortIdsIfMissing(circuitJson)
-  const pcbPorts: PcbPort[] = circuitJson.filter(
-    (item) => item.type === "pcb_port",
-  )
-  const pcbTraces: PcbTrace[] = circuitJson.filter(
-    (item) => item.type === "pcb_trace",
-  )
   const sourceTraces: SourceTrace[] = circuitJson.filter(
     (item) => item.type === "source_trace",
-  )
+  ) as SourceTrace[]
+
+  const pcbPorts: PcbPort[] = circuitJson.filter(
+    (item) => item.type === "pcb_port",
+  ) as PcbPort[]
+
   const errors: PcbPortNotConnectedError[] = []
 
-  for (const port of pcbPorts) {
-    const connectedTraces = pcbTraces.filter((trace) =>
-      trace.route.some(
-        (segment: any) =>
-          segment.route_type === "wire" &&
-          (segment.start_pcb_port_id === port.pcb_port_id ||
-            segment.end_pcb_port_id === port.pcb_port_id),
+  // Generate the connectivity map from the circuit
+  const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+
+  // Create a map from source_port_id to pcb_port for quick lookup
+  const sourcePortToPcbPort = new Map<string, PcbPort>()
+  for (const pcbPort of pcbPorts) {
+    sourcePortToPcbPort.set(pcbPort.source_port_id, pcbPort)
+  }
+
+  // Process each source trace
+  for (const sourceTrace of sourceTraces) {
+    const connectedSourcePortIds = sourceTrace.connected_source_port_ids
+
+    // Skip traces with less than 2 ports (nothing to connect)
+    if (connectedSourcePortIds.length < 2) {
+      continue
+    }
+
+    // Find corresponding PCB ports for all source ports in this trace
+    const pcbPortsInTrace: PcbPort[] = []
+    const missingPcbPorts: string[] = []
+
+    for (const sourcePortId of connectedSourcePortIds) {
+      const pcbPort = sourcePortToPcbPort.get(sourcePortId)
+      if (pcbPort) {
+        pcbPortsInTrace.push(pcbPort)
+      } else {
+        missingPcbPorts.push(sourcePortId)
+      }
+    }
+
+    // Skip if we don't have at least 2 PCB ports to connect
+    if (pcbPortsInTrace.length < 2) {
+      continue
+    }
+
+    // Get the net ID for the first PCB port as reference
+    const firstPcbPort = pcbPortsInTrace[0]
+    const referenceNetId = connectivityMap.getNetConnectedToId(
+      firstPcbPort.pcb_port_id,
+    )
+
+    const netElementIds = connectivityMap.getIdsConnectedToNet(referenceNetId!)
+    const pcbTraceIds = netElementIds.filter((id) =>
+      circuitJson.some(
+        (element) =>
+          element.type === "pcb_trace" &&
+          (("pcb_trace_id" in element && element.pcb_trace_id === id) ||
+            ("route_id" in element && element.route_id === id)),
       ),
     )
 
-    const sourceTrace = sourceTraces.find((trace) =>
-      trace.connected_source_port_ids?.includes(port.source_port_id),
-    )
+    if (pcbTraceIds.length === 0) {
+      // Check if this is a trivial case (only 2 ports on same component)
+      const uniqueComponentIds = new Set(
+        pcbPortsInTrace.map((p) => p.pcb_component_id),
+      )
 
-    const hasSourceTraceWithConnections =
-      sourceTrace && sourceTrace.connected_source_port_ids?.length > 0
-
-    if (connectedTraces.length === 0 && hasSourceTraceWithConnections) {
-      errors.push({
-        type: "pcb_port_not_connected_error",
-        message: `pcb_port_not_connected_error: PCB port ${getReadableNameForPcbPort(circuitJson, port.pcb_port_id)} is not connected by a PCB trace`,
-        error_type: "pcb_port_not_connected_error",
-        pcb_port_ids: [port.pcb_port_id],
-        pcb_component_ids: [port.pcb_component_id],
-        pcb_port_not_connected_error_id: `pcb_port_not_connected_error_${port.pcb_port_id}`,
-      })
+      if (uniqueComponentIds.size > 1) {
+        // Ports are on different components but no PCB traces connect them
+        errors.push({
+          type: "pcb_port_not_connected_error",
+          message: `pcb_port_not_connected_error: Pcb ports [${pcbPortsInTrace.map((p) => p.pcb_port_id).join(", ")}] are not connected together through the same net.`,
+          error_type: "pcb_port_not_connected_error",
+          pcb_port_ids: pcbPortsInTrace.map((p) => p.pcb_port_id),
+          pcb_component_ids: pcbPortsInTrace.map((p) => p.pcb_component_id),
+          pcb_port_not_connected_error_id: `pcb_port_not_connected_error_trace_${sourceTrace.source_trace_id}`,
+        })
+      }
     }
   }
 
