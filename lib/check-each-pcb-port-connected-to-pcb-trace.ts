@@ -73,7 +73,6 @@ function checkEachPcbPortConnectedToPcbTraces(
       ),
     )
 
-
     if (pcbTraceIds.length === 0) {
       // Check if this is a trivial case (only 2 ports on same component)
       const uniqueComponentIds = new Set(
