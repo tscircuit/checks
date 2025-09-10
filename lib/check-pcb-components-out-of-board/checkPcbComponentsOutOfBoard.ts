@@ -3,27 +3,10 @@ import type {
   PcbBoard,
   PcbComponent,
   AnySourceComponent,
+  PcbComponentOutsideBoardError,
 } from "circuit-json"
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import * as Flatten from "@flatten-js/core"
-
-export interface PcbComponentOutsideBoardErrorData {
-  type: "pcb_component_outside_board_error"
-  error_type: "pcb_component_outside_board_error"
-  pcb_component_outside_board_error_id: string
-  message: string
-  pcb_component_id: string
-  pcb_board_id: string
-  component_center: { x: number; y: number }
-  component_bounds: {
-    min_x: number
-    max_x: number
-    min_y: number
-    max_y: number
-  }
-  subcircuit_id?: string
-  source_component_id?: string
-}
 
 interface Point {
   x: number
@@ -313,7 +296,7 @@ function getComponentName(
 
 export function checkPcbComponentsOutOfBoard(
   circuitJson: AnyCircuitElement[],
-): PcbComponentOutsideBoardErrorData[] {
+): PcbComponentOutsideBoardError[] {
   const board = circuitJson.find(
     (el): el is PcbBoard => el.type === "pcb_board",
   )
@@ -337,7 +320,7 @@ export function checkPcbComponentsOutOfBoard(
     return [] // Skip if board bounds cannot be calculated
   }
 
-  const errors: PcbComponentOutsideBoardErrorData[] = []
+  const errors: PcbComponentOutsideBoardError[] = []
 
   for (const component of components) {
     // Skip components without required properties
