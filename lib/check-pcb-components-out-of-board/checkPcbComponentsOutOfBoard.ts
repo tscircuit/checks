@@ -251,11 +251,15 @@ export function checkPcbComponentsOutOfBoard(
     )
       continue
 
+    if (c.width <= 0 || c.height <= 0) continue
+
     const compPoly = rectanglePolygon({
       center: c.center,
       size: { width: c.width, height: c.height },
       rotationDeg: c.rotation || 0,
     })
+
+    if (compPoly.area() === 0) continue
 
     // If component is entirely inside board polygon -> OK
     // Flatten.Polygon.contains accepts shapes; this is the correct polygon containment check.
