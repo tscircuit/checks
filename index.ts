@@ -2,6 +2,7 @@ export { checkEachPcbPortConnectedToPcbTraces } from "./lib/check-each-pcb-port-
 export { checkEachPcbTraceNonOverlapping } from "./lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 export { NetManager } from "./lib/net-manager"
 export { checkViasOffBoard } from "./lib/check-pcb-components-out-of-board/checkViasOffBoard"
+export { checkPcbComponentsOutOfBoard } from "./lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 export { checkSameNetViaSpacing } from "./lib/check-same-net-via-spacing"
 export { checkSourceTracesHavePcbTraces } from "./lib/check-source-traces-have-pcb-traces"
 export { runAllChecks } from "./lib/run-all-checks"
