@@ -6,8 +6,6 @@ import type {
   PcbComponentOutsideBoardError,
 } from "circuit-json"
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
-
-// === use your math utils types (adjust the module path to your project) ===
 import type { Point } from "@tscircuit/math-utils"
 import * as Flatten from "@flatten-js/core"
 import { rotateDEG, applyToPoint } from "transformation-matrix"
@@ -16,6 +14,12 @@ import { rotateDEG, applyToPoint } from "transformation-matrix"
  * Create a rectangle polygon centered at (cx,cy) with given width/height and rotation (degrees).
  * Uses transformation-matrix to rotate around the center and returns a Flatten.Polygon.
  */
+
+function isPolygonCCW(poly: Flatten.Polygon): boolean {
+  // @ts-ignore
+  return poly.area() >= 0
+}
+
 function rectanglePolygon({
   center,
   size,
@@ -24,50 +28,50 @@ function rectanglePolygon({
   center: Point
   size: { width: number; height: number }
   rotationDeg?: number
-}) {
+}): Flatten.Polygon {
   const cx = center.x
   const cy = center.y
-  const width = size.width
-  const height = size.height
-  const hw = width / 2
-  const hh = height / 2
+  const hw = size.width / 2
+  const hh = size.height / 2
 
-  // 4 corners in CCW order (numeric pairs are accepted by Flatten.Polygon)
-  const corners: [number, number][] = [
-    [cx - hw, cy - hh],
-    [cx + hw, cy - hh],
-    [cx + hw, cy + hh],
-    [cx - hw, cy + hh],
+  const corners: Flatten.Point[] = [
+    new Flatten.Point(cx - hw, cy - hh),
+    new Flatten.Point(cx + hw, cy - hh),
+    new Flatten.Point(cx + hw, cy + hh),
+    new Flatten.Point(cx - hw, cy + hh),
   ]
 
-  if (!rotationDeg) {
-    return new Flatten.Polygon(corners)
+  let poly = new Flatten.Polygon(corners)
+
+  if (rotationDeg) {
+    const matrix = rotateDEG(rotationDeg, cx, cy)
+    const rotatedCorners = corners.map((pt) => {
+      const p = applyToPoint(matrix, { x: pt.x, y: pt.y })
+      return new Flatten.Point(p.x, p.y)
+    })
+    poly = new Flatten.Polygon(rotatedCorners)
   }
 
-  const matrix = rotateDEG(rotationDeg, cx, cy)
-  const rotatedCorners = corners.map(([x, y]) => {
-    const p = applyToPoint(matrix, { x, y })
-    return [p.x, p.y] as [number, number]
-  })
+  // Ensure CCW order
+  if (!isPolygonCCW(poly)) poly.reverse()
 
-  return new Flatten.Polygon(rotatedCorners)
+  return poly
 }
 
-/** Build board polygon (either from outline or rectangular properties) */
 function boardToPolygon({
   board,
 }: { board: PcbBoard }): Flatten.Polygon | null {
-  if (
-    board.outline &&
-    Array.isArray(board.outline) &&
-    board.outline.length > 0
-  ) {
-    // Flatten accepts array of [x,y] pairs
-    const loops = board.outline.map((p) => [p.x, p.y] as [number, number])
-    return new Flatten.Polygon(loops)
+  if (board.outline && board.outline.length > 0) {
+    const points = board.outline.map((p) => new Flatten.Point(p.x, p.y))
+    const poly = new Flatten.Polygon(points)
+
+    if (!isPolygonCCW(poly)) {
+      poly.reverse()
+    }
+
+    return poly
   }
 
-  // Rectangular board
   if (
     board.center &&
     typeof board.width === "number" &&

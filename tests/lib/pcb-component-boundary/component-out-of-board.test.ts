@@ -2,14 +2,14 @@ import { test, expect } from "bun:test"
 import { checkPcbComponentsOutOfBoard } from "lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import polygonBoardJson from "tests/assets/component-out-of-polygon-board.json"
+import rectBoardJson from "tests/assets/component-out-of-board.json"
 
-test("polygon board: component inside/outside", () => {
-  const circuitJson = polygonBoardJson as AnyCircuitElement[]
+test("rectangular board: component inside/outside", () => {
+  const circuitJson = rectBoardJson as AnyCircuitElement[]
   const errors = checkPcbComponentsOutOfBoard(circuitJson)
-  // pcb_component_1 is outside polygon
+  // R1 is outside
   expect(errors.length).toBe(1)
-  expect(errors[0].pcb_component_id).toBe("pcb_component_1")
+  expect(errors[0].pcb_component_id).toBe("pcb_component_0")
   expect(errors[0].message).toMatch(/extends outside board boundaries/)
   if (errors.length > 0) {
     circuitJson.push({
@@ -21,11 +21,11 @@ test("polygon board: component inside/outside", () => {
       font_size: 0.4,
       layer: "top",
       text: "component outside",
-      pcb_component_id: "pcb_component_1",
+      pcb_component_id: "pcb_component_0",
     })
   }
   // Snapshot SVG for visual verification
-  expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
-    import.meta.path,
-  )
+  expect(
+    convertCircuitJsonToPcbSvg(rectBoardJson as AnyCircuitElement[]),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
