@@ -3,6 +3,8 @@
 Validity check functions. These functions generally take [a tscircuit json array](https://github.com/tscircuit/soup)
 and output an array of arrays for any issues found.
 
+[Getting Started Contributor Video](https://share.cleanshot.com/pk216661)
+
 ## `checkEachPcbPortConnected(soup: AnySoupElement[]) => PCBTraceError[]`
 
 Returns `pcb_trace_error` if any `source_port` is not connected to a net or it's other
