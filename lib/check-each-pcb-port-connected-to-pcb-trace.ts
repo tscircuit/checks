@@ -32,7 +32,7 @@ function checkEachPcbPortConnectedToPcbTraces(
 
   // Process each source trace
   for (const sourceTrace of sourceTraces) {
-    const connectedSourcePortIds = sourceTrace.connected_source_port_ids
+    const connectedSourcePortIds = sourceTrace.connected_source_port_ids || []
 
     // Skip traces with less than 2 ports (nothing to connect)
     if (connectedSourcePortIds.length < 2) {
