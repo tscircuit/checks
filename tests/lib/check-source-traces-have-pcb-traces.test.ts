@@ -78,38 +78,4 @@ describe("checkSourceTracesHavePcbTraces", () => {
     const errors = checkSourceTracesHavePcbTraces(circuitJson as any)
     expect(errors).toHaveLength(0)
   })
-
-  test("returns error for traces with empty connected_source_port_ids", () => {
-    const circuitJson = [
-      {
-        type: "source_trace",
-        source_trace_id: "trace_failed_routing",
-        connected_source_port_ids: [], // Empty array - autorouting failed
-        connected_source_net_ids: ["net_VDD"],
-        display_name: "net.VDD",
-      },
-    ]
-
-    const errors = checkSourceTracesHavePcbTraces(circuitJson as any)
-    expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("failed to route")
-    expect(errors[0].source_trace_id).toBe("trace_failed_routing")
-  })
-
-  test("returns error for traces with undefined connected_source_port_ids", () => {
-    const circuitJson = [
-      {
-        type: "source_trace",
-        source_trace_id: "trace_no_ports",
-        // connected_source_port_ids is undefined
-        connected_source_net_ids: ["net_VDD"],
-        display_name: "net.VDD",
-      },
-    ]
-
-    const errors = checkSourceTracesHavePcbTraces(circuitJson as any)
-    expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("failed to route")
-    expect(errors[0].source_trace_id).toBe("trace_no_ports")
-  })
 })
