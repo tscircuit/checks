@@ -125,7 +125,7 @@ function pointToPolygonDistance(
 /**
  * Check if any trace segment leaves or intersects the board outline
  */
-export function checkTracesStayInsideBoard(
+export function checkPcbTracesOutOfBoard(
   circuitJson: AnyCircuitElement[],
 ): PcbTraceError[] {
   const errors: PcbTraceError[] = []

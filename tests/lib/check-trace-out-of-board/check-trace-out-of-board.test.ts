@@ -1,12 +1,12 @@
 import { test, expect } from "bun:test"
-import { checkTracesStayInsideBoard } from "lib/check-traces-stay-inside-board/check-traces-stay-inside-board"
+import { checkPcbTracesOutOfBoard } from "lib/check-trace-out-of-board/checkTraceOutOfBoard"
 import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import tracesOutsideBoardJson from "tests/assets/traces-outside-board.json"
 
 test("traces outside board comprehensive test with visual snapshot", () => {
   const circuitJson = tracesOutsideBoardJson as AnyCircuitElement[]
-  const errors = checkTracesStayInsideBoard(circuitJson)
+  const errors = checkPcbTracesOutOfBoard(circuitJson)
 
   // Should find multiple traces outside board
   expect(errors.length).toBeGreaterThanOrEqual(3)
