@@ -53,38 +53,8 @@ function getBoardPolygonPoints(board: PcbBoard): Polygon | null {
 }
 
 /**
- * Get minimum distance from a SEGMENT to polygon boundary
- * Uses @tscircuit/math-utils segmentToSegmentMinDistance function
- */
-function segmentToPolygonDistance(
-  segmentStart: Point,
-  segmentEnd: Point,
-  polygonPoints: Polygon,
-): number {
-  let minDistance = Infinity
-
-  // Check distance from trace segment to each polygon edge
-  for (let i = 0; i < polygonPoints.length; i++) {
-    const edgeStart = polygonPoints[i]
-    const edgeEnd = polygonPoints[(i + 1) % polygonPoints.length]
-
-    const distance = segmentToSegmentMinDistance(
-      segmentStart,
-      segmentEnd,
-      edgeStart,
-      edgeEnd,
-    )
-    if (distance < minDistance) {
-      minDistance = distance
-    }
-  }
-
-  return minDistance
-}
-
-/**
- * Check if any trace segment leaves or intersects the board outline
- * Uses only @tscircuit/math-utils functions with configurable margin
+ * Check if any trace segment is too close to or outside the board outline
+ * Uses segment-to-polygon distance with configurable margin
  */
 export function checkPcbTracesOutOfBoard(
   circuitJson: AnyCircuitElement[],
@@ -117,35 +87,41 @@ export function checkPcbTracesOutOfBoard(
       // Only check wire segments
       if (p1.route_type !== "wire" || p2.route_type !== "wire") continue
 
-      const segment = {
-        start: { x: p1.x, y: p1.y },
-        end: { x: p2.x, y: p2.y },
-      }
-
       const traceWidth =
         "width" in p1 ? p1.width : "width" in p2 ? p2.width : 0.1
+      const segmentStart: Point = { x: p1.x, y: p1.y }
+      const segmentEnd: Point = { x: p2.x, y: p2.y }
 
-      // Check segment-to-polygon distance
-      const distanceToBoard = segmentToPolygonDistance(
-        segment.start,
-        segment.end,
-        boardPoints,
-      )
+      // Calculate minimum distance from trace segment to board polygon
+      let minDistance = Infinity
+      for (let j = 0; j < boardPoints.length; j++) {
+        const edgeStart = boardPoints[j]
+        const edgeEnd = boardPoints[(j + 1) % boardPoints.length]
+        const distance = segmentToSegmentMinDistance(
+          segmentStart,
+          segmentEnd,
+          edgeStart,
+          edgeEnd,
+        )
+        if (distance < minDistance) {
+          minDistance = distance
+        }
+      }
+
       const minimumDistance = traceWidth / 2 + margin
 
-      if (distanceToBoard < minimumDistance) {
-        const midpoint: Point = {
-          x: (segment.start.x + segment.end.x) / 2,
-          y: (segment.start.y + segment.end.y) / 2,
-        }
+      if (minDistance < minimumDistance) {
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
           pcb_trace_error_id: `trace_too_close_to_board_${trace.pcb_trace_id}_segment_${i}`,
-          message: `Trace too close to board edge (${distanceToBoard.toFixed(3)}mm < ${minimumDistance.toFixed(3)}mm required, margin: ${margin}mm)`,
+          message: `Trace too close to board edge (${minDistance.toFixed(3)}mm < ${minimumDistance.toFixed(3)}mm required, margin: ${margin}mm)`,
           pcb_trace_id: trace.pcb_trace_id,
           source_trace_id: trace.source_trace_id || "",
-          center: midpoint,
+          center: {
+            x: (segmentStart.x + segmentEnd.x) / 2,
+            y: (segmentStart.y + segmentEnd.y) / 2,
+          },
           pcb_component_ids: [],
           pcb_port_ids: [],
         })
