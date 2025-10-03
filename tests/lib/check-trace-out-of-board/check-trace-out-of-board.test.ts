@@ -41,9 +41,4 @@ test("traces outside board comprehensive test with visual snapshot", () => {
   expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
     import.meta.path,
   )
-
-  console.log(`Found ${errors.length} trace boundary violations:`)
-  for (const error of errors) {
-    console.log(`- ${error.pcb_trace_id}: ${error.message}`)
-  }
 })
