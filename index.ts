@@ -5,4 +5,5 @@ export { checkViasOffBoard } from "./lib/check-pcb-components-out-of-board/check
 export { checkPcbComponentsOutOfBoard } from "./lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 export { checkSameNetViaSpacing } from "./lib/check-same-net-via-spacing"
 export { checkSourceTracesHavePcbTraces } from "./lib/check-source-traces-have-pcb-traces"
+export { checkTracesStayInsideBoard } from "./lib/check-traces-stay-inside-board/check-traces-stay-inside-board"
 export { runAllChecks } from "./lib/run-all-checks"
