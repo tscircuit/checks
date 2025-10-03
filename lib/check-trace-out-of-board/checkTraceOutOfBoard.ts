@@ -5,13 +5,8 @@ import type {
   PcbTraceError,
 } from "circuit-json"
 import { cju } from "@tscircuit/circuit-json-util"
-import type { Point } from "@tscircuit/math-utils"
-import {
-  doSegmentsIntersect,
-  onSegment,
-  pointToSegmentDistance,
-  segmentToSegmentMinDistance,
-} from "@tscircuit/math-utils"
+import type { Point, Polygon } from "@tscircuit/math-utils"
+import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
 
 /**
  * Default margin for trace clearance from board edge (in mm)
@@ -27,9 +22,9 @@ export interface TraceBoardCheckConfig {
 }
 
 /**
- * Create a board polygon representation using math-utils Point array
+ * Create a board polygon representation using math-utils Polygon type
  */
-function getBoardPolygonPoints(board: PcbBoard): Point[] | null {
+function getBoardPolygonPoints(board: PcbBoard): Polygon | null {
   if (board.outline && board.outline.length > 0) {
     // Use custom board outline
     return board.outline.map((p) => ({ x: p.x, y: p.y }))
@@ -58,70 +53,13 @@ function getBoardPolygonPoints(board: PcbBoard): Point[] | null {
 }
 
 /**
- * Check if a point is inside a polygon using ray casting algorithm
- * Available in math-utils v0.0.27+, but implementing here for v0.0.18 compatibility
- */
-function isPointInsidePolygon(point: Point, polygonPoints: Point[]): boolean {
-  const { x, y } = point
-  let isInside = false
-
-  for (
-    let i = 0, j = polygonPoints.length - 1;
-    i < polygonPoints.length;
-    j = i++
-  ) {
-    const xi = polygonPoints[i].x
-    const yi = polygonPoints[i].y
-    const xj = polygonPoints[j].x
-    const yj = polygonPoints[j].y
-
-    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
-      isInside = !isInside
-    }
-  }
-
-  return isInside
-}
-
-/**
- * Check if a line segment intersects with any edge of a polygon boundary
- * Uses @tscircuit/math-utils doSegmentsIntersect function
- */
-function segmentIntersectsPolygonBoundary(
-  segmentStart: Point,
-  segmentEnd: Point,
-  polygonPoints: Point[],
-): boolean {
-  // Check intersection with each polygon edge using math-utils
-  for (let i = 0; i < polygonPoints.length; i++) {
-    const edgeStart = polygonPoints[i]
-    const edgeEnd = polygonPoints[(i + 1) % polygonPoints.length]
-
-    // Use math-utils doSegmentsIntersect function
-    if (doSegmentsIntersect(segmentStart, segmentEnd, edgeStart, edgeEnd)) {
-      // Additional check: avoid false positives when segment endpoints
-      // are exactly on polygon boundary (which is acceptable)
-      const startOnBoundary = onSegment(edgeStart, segmentStart, edgeEnd)
-      const endOnBoundary = onSegment(edgeStart, segmentEnd, edgeEnd)
-
-      // Only report intersection if it's a proper crossing, not just touching at endpoints
-      if (!startOnBoundary && !endOnBoundary) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
-/**
  * Get minimum distance from a SEGMENT to polygon boundary
  * Uses @tscircuit/math-utils segmentToSegmentMinDistance function
- * This is the CORRECT approach - we need segment-to-segment distance!
  */
 function segmentToPolygonDistance(
   segmentStart: Point,
   segmentEnd: Point,
-  polygonPoints: Point[],
+  polygonPoints: Polygon,
 ): number {
   let minDistance = Infinity
 
@@ -187,58 +125,7 @@ export function checkPcbTracesOutOfBoard(
       const traceWidth =
         "width" in p1 ? p1.width : "width" in p2 ? p2.width : 0.1
 
-      // Check if both endpoints are inside the board
-      const startInside = isPointInsidePolygon(segment.start, boardPoints)
-      const endInside = isPointInsidePolygon(segment.end, boardPoints)
-
-      // If either endpoint is outside the board, it's a violation
-      if (!startInside || !endInside) {
-        errors.push({
-          type: "pcb_trace_error",
-          error_type: "pcb_trace_error",
-          pcb_trace_error_id: `trace_outside_board_${trace.pcb_trace_id}_segment_${i}`,
-          message: `Trace extends outside board boundaries`,
-          pcb_trace_id: trace.pcb_trace_id,
-          source_trace_id: trace.source_trace_id || "",
-          center: {
-            x: (segment.start.x + segment.end.x) / 2,
-            y: (segment.start.y + segment.end.y) / 2,
-          },
-          pcb_component_ids: [],
-          pcb_port_ids: [],
-        })
-        continue
-      }
-
-      // If both endpoints are inside, check if segment crosses board boundary
-      // This uses math-utils doSegmentsIntersect to catch traces that exit and re-enter
-      if (
-        segmentIntersectsPolygonBoundary(
-          segment.start,
-          segment.end,
-          boardPoints,
-        )
-      ) {
-        errors.push({
-          type: "pcb_trace_error",
-          error_type: "pcb_trace_error",
-          pcb_trace_error_id: `trace_crosses_board_${trace.pcb_trace_id}_segment_${i}`,
-          message: `Trace crosses board boundaries`,
-          pcb_trace_id: trace.pcb_trace_id,
-          source_trace_id: trace.source_trace_id || "",
-          center: {
-            x: (segment.start.x + segment.end.x) / 2,
-            y: (segment.start.y + segment.end.y) / 2,
-          },
-          pcb_component_ids: [],
-          pcb_port_ids: [],
-        })
-        continue
-      }
-
-      // Check if trace SEGMENT gets too close to board edge (configurable margin)
-      // CRITICAL: Use segment-to-segment distance, not point-to-segment!
-      // This correctly measures the closest distance between the trace segment and board edges
+      // Check segment-to-polygon distance
       const distanceToBoard = segmentToPolygonDistance(
         segment.start,
         segment.end,
