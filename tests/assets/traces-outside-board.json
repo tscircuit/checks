@@ -1,0 +1,84 @@
+[
+  {
+    "type": "pcb_board",
+    "pcb_board_id": "board1",
+    "width": 8,
+    "height": 6,
+    "thickness": 1.6,
+    "num_layers": 2,
+    "center": { "x": 0, "y": 0 },
+    "material": "fr4"
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "trace_inside",
+    "source_trace_id": "source_trace_1",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": -2.5,
+        "y": -2,
+        "width": 0.2,
+        "layer": "top"
+      },
+      { "route_type": "wire", "x": -0.5, "y": -2, "width": 0.2, "layer": "top" }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "trace_outside_right",
+    "source_trace_id": "source_trace_2",
+    "route": [
+      { "route_type": "wire", "x": 0, "y": 0, "width": 0.2, "layer": "top" },
+      { "route_type": "wire", "x": 5, "y": 0, "width": 0.2, "layer": "top" }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "trace_outside_top",
+    "source_trace_id": "source_trace_3",
+    "route": [
+      {
+        "route_type": "wire",
+        "x": -1,
+        "y": 0,
+        "width": 0.2,
+        "layer": "bottom"
+      },
+      { "route_type": "wire", "x": 1, "y": 4, "width": 0.2, "layer": "bottom" }
+    ]
+  },
+  {
+    "type": "pcb_trace",
+    "pcb_trace_id": "trace_crossing_boundary",
+    "source_trace_id": "source_trace_4",
+    "route": [
+      { "route_type": "wire", "x": -1, "y": -1, "width": 0.2, "layer": "top" },
+      { "route_type": "wire", "x": 4.5, "y": 2.5, "width": 0.2, "layer": "top" }
+    ]
+  },
+  {
+    "type": "source_trace",
+    "source_trace_id": "source_trace_1",
+    "connected_source_port_ids": ["port1", "port2"],
+    "connected_source_net_ids": []
+  },
+  {
+    "type": "source_trace",
+    "source_trace_id": "source_trace_2",
+    "connected_source_port_ids": ["port3", "port4"],
+    "connected_source_net_ids": []
+  },
+  {
+    "type": "source_trace",
+    "source_trace_id": "source_trace_3",
+    "connected_source_port_ids": ["port5", "port6"],
+    "connected_source_net_ids": []
+  },
+  {
+    "type": "source_trace",
+    "source_trace_id": "source_trace_4",
+    "connected_source_port_ids": ["port7", "port8"],
+    "connected_source_net_ids": []
+  }
+]
