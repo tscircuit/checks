@@ -20,25 +20,11 @@ test("traces outside board comprehensive test with visual snapshot", () => {
   // Trace inside should not be in errors
   expect(traceIds).not.toContain("trace_inside")
 
-  // Add error markers for visualization
-  for (const error of errors) {
-    if (error.center) {
-      circuitJson.push({
-        type: "pcb_silkscreen_text",
-        pcb_silkscreen_text_id: `error_${error.pcb_trace_error_id}`,
-        pcb_component_id: "error_marker",
-        text: "⚠️",
-        anchor_position: error.center,
-        anchor_alignment: "center",
-        font: "tscircuit2024",
-        font_size: 0.6,
-        layer: "top",
-      })
-    }
-  }
+  // Add errors to circuit JSON for visualization
+  circuitJson.push(...errors)
 
-  // Create visual snapshot
-  expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
-    import.meta.path,
-  )
+  // Create visual snapshot with error indicators
+  expect(
+    convertCircuitJsonToPcbSvg(circuitJson, { shouldDrawErrors: true }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })

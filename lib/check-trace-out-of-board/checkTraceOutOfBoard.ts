@@ -111,7 +111,7 @@ export function checkPcbTracesOutOfBoard(
       const minimumDistance = traceWidth / 2 + margin
 
       if (minDistance < minimumDistance) {
-        errors.push({
+        const error: PcbTraceError = {
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
           pcb_trace_error_id: `trace_too_close_to_board_${trace.pcb_trace_id}_segment_${i}`,
@@ -124,7 +124,8 @@ export function checkPcbTracesOutOfBoard(
           },
           pcb_component_ids: [],
           pcb_port_ids: [],
-        })
+        }
+        errors.push(error)
       }
     }
   }
