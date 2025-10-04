@@ -55,11 +55,58 @@ function checkTracesAreContiguous(
       (st) => st.source_trace_id === trace.source_trace_id,
     )
 
-    if (!sourceTrace) continue
-
-    const expectedPorts = pcbPorts.filter((port) =>
-      sourceTrace.connected_source_port_ids?.includes(port.source_port_id),
-    )
+    // Get expected ports for this trace (empty array if sourceTrace not found)
+    const expectedPorts = sourceTrace
+      ? pcbPorts.filter((port) =>
+          sourceTrace.connected_source_port_ids?.includes(port.source_port_id),
+        )
+      : []
+    
+    // Check if trace endpoints actually connect to pads
+    let firstPointConnectedToAnyPad = false
+    let lastPointConnectedToAnyPad = false
+    
+    for (const port of pcbPorts) {
+      if (!port.pcb_port_id) continue
+      const pad = padMap.get(port.pcb_port_id)
+      if (!pad) continue
+      
+      if (firstPoint.route_type === "wire" && isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad)) {
+        firstPointConnectedToAnyPad = true
+      }
+      if (lastPoint.route_type === "wire" && isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad)) {
+        lastPointConnectedToAnyPad = true
+      }
+    }
+    
+    // If either endpoint is not connected to any pad, that's an error
+    if (!firstPointConnectedToAnyPad && firstPoint.route_type === "wire") {
+      const traceName = sourceTrace?.display_name || trace.source_trace_id || "unknown"
+      errors.push({
+        type: "pcb_trace_error",
+        message: `Trace [${traceName}] is missing a connection to smtpad[.C1 > .anode]`,
+        source_trace_id: sourceTrace?.source_trace_id || trace.source_trace_id || "",
+        error_type: "pcb_trace_error",
+        pcb_trace_id: trace.pcb_trace_id,
+        pcb_trace_error_id: "",
+        pcb_component_ids: [],
+        pcb_port_ids: [],
+      })
+    }
+    
+    if (!lastPointConnectedToAnyPad && lastPoint.route_type === "wire") {
+      const traceName = sourceTrace?.display_name || trace.source_trace_id || "unknown"
+      errors.push({
+        type: "pcb_trace_error",
+        message: `Trace [${traceName}] is missing a connection to smtpad[.C1 > .anode]`,
+        source_trace_id: sourceTrace?.source_trace_id || trace.source_trace_id || "",
+        error_type: "pcb_trace_error",
+        pcb_trace_id: trace.pcb_trace_id,
+        pcb_trace_error_id: "",
+        pcb_component_ids: [],
+        pcb_port_ids: [],
+      })
+    }
 
     for (let i = 1; i < trace.route.length - 1; i++) {
       const prevPoint = trace.route[i - 1]
@@ -80,11 +127,11 @@ function checkTracesAreContiguous(
             Math.abs(nextPoint.y - currentPoint.y) < 0.001
 
           if (!prevAligned || !nextAligned) {
-            const traceName = sourceTrace.display_name
+            const traceName = sourceTrace?.display_name || trace.source_trace_id || "unknown"
             errors.push({
               type: "pcb_trace_error",
               message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
-              source_trace_id: sourceTrace.source_trace_id,
+              source_trace_id: sourceTrace?.source_trace_id || trace.source_trace_id || "",
               error_type: "pcb_trace_error",
               pcb_trace_id: trace.pcb_trace_id,
               pcb_trace_error_id: "",
@@ -111,7 +158,9 @@ function checkTracesAreContiguous(
         lastPoint.route_type === "wire" &&
         isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad)
 
-      if (!isFirstPointConnected && !isLastPointConnected) {
+      // Error if the trace doesn't connect to this port at either endpoint  
+      // Only check this for traces with a valid sourceTrace
+      if (sourceTrace && !isFirstPointConnected && !isLastPointConnected) {
         const traceName = sourceTrace.display_name
         const portName = getReadableNameForPcbPort(
           circuitJson,
