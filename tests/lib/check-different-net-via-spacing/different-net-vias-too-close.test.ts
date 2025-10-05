@@ -9,7 +9,8 @@ test("renders snapshot highlighting different-net vias that are too close", asyn
   const errors = checkDifferentNetViaSpacing(soup)
 
   expect(errors.length).toBeGreaterThan(0)
-  expect(errors[0].message).toContain("different nets are too close")
+  expect(errors[0].message).toContain("Different-net vias")
+  expect(errors[0].message).toContain("must have at least")
 
   const svg = convertCircuitJsonToPcbSvg([...soup, ...errors], {
     shouldDrawErrors: true,

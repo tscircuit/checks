@@ -3,7 +3,7 @@ import type {
   PcbVia,
   PcbViaClearanceError,
 } from "circuit-json"
-import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
+import { ViaClearanceErrorBuilder } from "./via-clearance-error-builder"
 import {
   getFullConnectivityMapFromCircuitJson,
   type ConnectivityMap,
@@ -38,25 +38,16 @@ export function checkDifferentNetViaSpacing(
       const pairId = [viaA.pcb_via_id, viaB.pcb_via_id].sort().join("_")
       if (reported.has(pairId)) continue
       reported.add(pairId)
-      errors.push({
-        type: "pcb_via_clearance_error",
-        pcb_error_id: `pcb_error_different_net_vias_close_${pairId}`,
-        error_type: "pcb_via_clearance_error",
-        message: `Vias ${getReadableNameForElement(
-          circuitJson,
-          viaA.pcb_via_id,
-        )} and ${getReadableNameForElement(
-          circuitJson,
-          viaB.pcb_via_id,
-        )} from different nets are too close together`,
-        pcb_via_ids: [viaA.pcb_via_id, viaB.pcb_via_id],
-        minimum_clearance: minSpacing,
-        actual_clearance: gap,
-        pcb_center: {
-          x: (viaA.x + viaB.x) / 2,
-          y: (viaA.y + viaB.y) / 2,
-        },
-      })
+
+      const errorBuilder = new ViaClearanceErrorBuilder(
+        viaA,
+        viaB,
+        gap,
+        minSpacing,
+        circuitJson,
+        "different",
+      )
+      errors.push(errorBuilder.build())
     }
   }
 
