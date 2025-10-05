@@ -29,7 +29,12 @@ describe("checkSameNetViaSpacing", () => {
     ]
     const errors = checkSameNetViaSpacing(soup)
     expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("are too close together")
+    const error = errors[0]
+    expect(error.type).toBe("pcb_via_clearance_error")
+    expect(error.pcb_via_ids).toEqual(["via1", "via2"])
+    expect(error.minimum_clearance).toBeCloseTo(0.2, 6)
+    expect(error.actual_clearance).toBeCloseTo(0.1, 6)
+    expect(error.message).toContain("Same-net vias")
   })
 
   test("no error when same-net vias are sufficiently spaced", () => {

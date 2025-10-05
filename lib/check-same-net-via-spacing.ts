@@ -1,4 +1,8 @@
-import type { AnyCircuitElement, PcbVia, PcbPlacementError } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbVia,
+  PcbViaClearanceError,
+} from "circuit-json"
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import {
   getFullConnectivityMapFromCircuitJson,
@@ -16,11 +20,11 @@ export function checkSameNetViaSpacing(
     connMap,
     minSpacing = DEFAULT_SAME_NET_VIA_MARGIN,
   }: { connMap?: ConnectivityMap; minSpacing?: number } = {},
-): PcbPlacementError[] {
+): PcbViaClearanceError[] {
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   if (vias.length < 2) return []
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
-  const errors: PcbPlacementError[] = []
+  const errors: PcbViaClearanceError[] = []
   const reported = new Set<string>()
 
   for (let i = 0; i < vias.length; i++) {
@@ -28,23 +32,37 @@ export function checkSameNetViaSpacing(
       const viaA = vias[i]
       const viaB = vias[j]
       if (!connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
-      const gap =
+      const clearance =
         distance(viaA, viaB) - viaA.outer_diameter / 2 - viaB.outer_diameter / 2
-      if (gap + EPSILON >= minSpacing) continue
+      if (clearance + EPSILON >= minSpacing) continue
       const pairId = [viaA.pcb_via_id, viaB.pcb_via_id].sort().join("_")
       if (reported.has(pairId)) continue
       reported.add(pairId)
+      const pcbCenterX = (viaA.x + viaB.x) / 2
+      const pcbCenterY = (viaA.y + viaB.y) / 2
+      const pcbCenter =
+        Number.isFinite(pcbCenterX) && Number.isFinite(pcbCenterY)
+          ? { x: pcbCenterX, y: pcbCenterY }
+          : undefined
+      const subcircuitId = viaA.subcircuit_id ?? viaB.subcircuit_id
       errors.push({
-        type: "pcb_placement_error",
-        pcb_placement_error_id: `same_net_vias_close_${pairId}`,
-        message: `Vias ${getReadableNameForElement(
+        type: "pcb_via_clearance_error",
+        pcb_error_id: `pcb_error_via_clearance_same_net_${pairId}`,
+        message: `Same-net vias ${getReadableNameForElement(
           circuitJson,
           viaA.pcb_via_id,
         )} and ${getReadableNameForElement(
           circuitJson,
           viaB.pcb_via_id,
-        )} are too close together (gap: ${gap.toFixed(3)}mm)`,
-        error_type: "pcb_placement_error",
+        )} must have at least ${minSpacing.toFixed(
+          3,
+        )}mm clearance but currently have ${clearance.toFixed(3)}mm clearance.`,
+        error_type: "pcb_via_clearance_error",
+        pcb_via_ids: [viaA.pcb_via_id, viaB.pcb_via_id].sort(),
+        minimum_clearance: minSpacing,
+        actual_clearance: clearance,
+        ...(pcbCenter ? { pcb_center: pcbCenter } : {}),
+        ...(subcircuitId ? { subcircuit_id: subcircuitId } : {}),
       })
     }
   }
