@@ -123,6 +123,9 @@ function checkTracesAreContiguous(
           port.pcb_port_id,
         ).replace("pcb_port", "")
         const padType = pad.type.replace(/pcb_/, "")
+        // Get pad center coordinates - all pad types have x, y
+        const padCenter =
+          "x" in pad && "y" in pad ? { x: pad.x, y: pad.y } : { x: 0, y: 0 }
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] is missing a connection to ${padType}${portName}`,
@@ -131,6 +134,7 @@ function checkTracesAreContiguous(
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
           pcb_trace_error_id: "",
+          center: padCenter,
           pcb_component_ids: [],
           pcb_port_ids: [port.pcb_port_id],
         })
@@ -166,6 +170,7 @@ function checkTracesAreContiguous(
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
           pcb_trace_error_id: "",
+          center: { x: firstPoint.x, y: firstPoint.y },
           pcb_component_ids: [],
           pcb_port_ids: [],
         })
@@ -179,6 +184,7 @@ function checkTracesAreContiguous(
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
           pcb_trace_error_id: "",
+          center: { x: lastPoint.x, y: lastPoint.y },
           pcb_component_ids: [],
           pcb_port_ids: [],
         })
