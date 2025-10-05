@@ -250,6 +250,21 @@ export interface PcbPlacementError {
   message: string
 }
 
+export interface PcbViaClearanceError {
+  type: "pcb_via_clearance_error"
+  pcb_error_id: string
+  error_type: "pcb_via_clearance_error"
+  message: string
+  pcb_via_ids: string[]
+  minimum_clearance?: Distance
+  actual_clearance?: Distance
+  pcb_center?: {
+    x?: number
+    y?: number
+  }
+  subcircuit_id?: string
+}
+
 export interface PcbPort {
   type: "pcb_port"
   pcb_port_id: string
