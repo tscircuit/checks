@@ -156,6 +156,7 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
           x: 0,
           y: 0,
         },
+        obstructs_within_bounds: false,
       },
       {
         type: "pcb_component",
@@ -169,6 +170,7 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
           x: 0,
           y: 0,
         },
+        obstructs_within_bounds: false,
       },
     ]
     const errors = checkEachPcbPortConnectedToPcbTraces(circuitJson)

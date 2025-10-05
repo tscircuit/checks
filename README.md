@@ -15,14 +15,14 @@ source ports.
 Returns `pcb_trace_error` if any `pcb_trace` is overlapping with another `pcb_trace`
 that is not connected to the same net.
 
-## `checkSameNetViaSpacing(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
+## `checkSameNetViaSpacing(circuitJson: AnyCircuitElement[]) => PcbViaClearanceError[]`
 
-Returns `pcb_placement_error` if any vias on the same net are placed closer
+Returns `pcb_via_clearance_error` if any vias on the same net are placed closer
 than the allowed margin.
 
-## `checkDifferentNetViaSpacing(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
+## `checkDifferentNetViaSpacing(circuitJson: AnyCircuitElement[]) => PcbViaClearanceError[]`
 
-Returns `pcb_placement_error` if any vias on different nets are placed closer
+Returns `pcb_via_clearance_error` if any vias on different nets are placed closer
 than the allowed margin.
 
 ## `checkViasOffBoard(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
