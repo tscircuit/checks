@@ -3,7 +3,7 @@ import type {
   PcbVia,
   PcbViaClearanceError,
 } from "circuit-json"
-import { ViaClearanceErrorBuilder } from "./via-clearance-error-builder"
+import { createViaClearanceError } from "./util/create-via-clearance-error"
 import {
   getFullConnectivityMapFromCircuitJson,
   type ConnectivityMap,
@@ -39,15 +39,16 @@ export function checkSameNetViaSpacing(
       if (reported.has(pairId)) continue
       reported.add(pairId)
 
-      const errorBuilder = new ViaClearanceErrorBuilder(
-        viaA,
-        viaB,
-        gap,
-        minSpacing,
-        circuitJson,
-        "same",
+      errors.push(
+        createViaClearanceError(
+          viaA,
+          viaB,
+          gap,
+          minSpacing,
+          circuitJson,
+          "same",
+        ),
       )
-      errors.push(errorBuilder.build())
     }
   }
 
