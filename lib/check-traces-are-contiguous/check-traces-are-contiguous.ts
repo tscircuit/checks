@@ -130,7 +130,9 @@ function checkTracesAreContiguous(
           type: "pcb_trace_error",
           message: `Trace [${traceName}] is missing a connection to ${padType}${portName}`,
           source_trace_id:
-            sourceTrace?.source_trace_id || trace.source_trace_id || "",
+            sourceTrace?.source_trace_id ||
+            trace.source_trace_id ||
+            `!${trace.pcb_trace_id}`,
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
           pcb_trace_error_id: "",
@@ -166,7 +168,9 @@ function checkTracesAreContiguous(
           type: "pcb_trace_error",
           message: `Trace [${traceName}] has disconnected endpoint at (${firstPoint.x}, ${firstPoint.y})`,
           source_trace_id:
-            sourceTrace?.source_trace_id || trace.source_trace_id || "",
+            sourceTrace?.source_trace_id ||
+            trace.source_trace_id ||
+            `!${trace.pcb_trace_id}`,
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
           pcb_trace_error_id: "",
@@ -180,7 +184,9 @@ function checkTracesAreContiguous(
           type: "pcb_trace_error",
           message: `Trace [${traceName}] has disconnected endpoint at (${lastPoint.x}, ${lastPoint.y})`,
           source_trace_id:
-            sourceTrace?.source_trace_id || trace.source_trace_id || "",
+            sourceTrace?.source_trace_id ||
+            trace.source_trace_id ||
+            `!${trace.pcb_trace_id}`,
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
           pcb_trace_error_id: "",
