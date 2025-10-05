@@ -86,7 +86,9 @@ function checkTracesAreContiguous(
               type: "pcb_trace_error",
               message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
               source_trace_id:
-                sourceTrace?.source_trace_id || trace.source_trace_id || "",
+                sourceTrace?.source_trace_id ||
+                trace.source_trace_id ||
+                `!${trace.pcb_trace_id}`,
               error_type: "pcb_trace_error",
               pcb_trace_id: trace.pcb_trace_id,
               pcb_trace_error_id: "",
