@@ -55,11 +55,11 @@ function checkTracesAreContiguous(
       (st) => st.source_trace_id === trace.source_trace_id,
     )
 
-    if (!sourceTrace) continue
-
-    const expectedPorts = pcbPorts.filter((port) =>
-      sourceTrace.connected_source_port_ids?.includes(port.source_port_id),
-    )
+    const expectedPorts = sourceTrace
+      ? pcbPorts.filter((port) =>
+          sourceTrace.connected_source_port_ids?.includes(port.source_port_id),
+        )
+      : []
 
     for (let i = 1; i < trace.route.length - 1; i++) {
       const prevPoint = trace.route[i - 1]
@@ -80,11 +80,15 @@ function checkTracesAreContiguous(
             Math.abs(nextPoint.y - currentPoint.y) < 0.001
 
           if (!prevAligned || !nextAligned) {
-            const traceName = sourceTrace.display_name
+            const traceName =
+              sourceTrace?.display_name || trace.source_trace_id || "unknown"
             errors.push({
               type: "pcb_trace_error",
               message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
-              source_trace_id: sourceTrace.source_trace_id,
+              source_trace_id:
+                sourceTrace?.source_trace_id ||
+                trace.source_trace_id ||
+                `!${trace.pcb_trace_id}`,
               error_type: "pcb_trace_error",
               pcb_trace_id: trace.pcb_trace_id,
               pcb_trace_error_id: "",
@@ -96,6 +100,10 @@ function checkTracesAreContiguous(
       }
     }
 
+    const traceName =
+      sourceTrace?.display_name || trace.source_trace_id || "unknown"
+
+    // For traces with known expected ports, check specific connections
     for (const port of expectedPorts) {
       if (!port.pcb_port_id) continue
 
@@ -112,21 +120,83 @@ function checkTracesAreContiguous(
         isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad)
 
       if (!isFirstPointConnected && !isLastPointConnected) {
-        const traceName = sourceTrace.display_name
         const portName = getReadableNameForPcbPort(
           circuitJson,
           port.pcb_port_id,
         ).replace("pcb_port", "")
         const padType = pad.type.replace(/pcb_/, "")
+        // Use the midpoint between trace endpoints as error location
+        const errorCenter = {
+          x: (firstPoint.x + lastPoint.x) / 2,
+          y: (firstPoint.y + lastPoint.y) / 2,
+        }
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] is missing a connection to ${padType}${portName}`,
-          source_trace_id: sourceTrace.source_trace_id,
+          source_trace_id:
+            sourceTrace?.source_trace_id ||
+            trace.source_trace_id ||
+            `!${trace.pcb_trace_id}`,
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
           pcb_trace_error_id: "",
+          center: errorCenter,
           pcb_component_ids: [],
           pcb_port_ids: [port.pcb_port_id],
+        })
+      }
+    }
+
+    // For net-level traces (no expected ports), check if endpoints are floating
+    if (expectedPorts.length === 0) {
+      let firstConnectsToAnyPad = false
+      let lastConnectsToAnyPad = false
+
+      for (const [portId, pad] of padMap) {
+        if (
+          firstPoint.route_type === "wire" &&
+          isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad)
+        ) {
+          firstConnectsToAnyPad = true
+        }
+        if (
+          lastPoint.route_type === "wire" &&
+          isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad)
+        ) {
+          lastConnectsToAnyPad = true
+        }
+      }
+
+      if (!firstConnectsToAnyPad && firstPoint.route_type === "wire") {
+        errors.push({
+          type: "pcb_trace_error",
+          message: `Trace [${traceName}] has disconnected endpoint at (${firstPoint.x}, ${firstPoint.y})`,
+          source_trace_id:
+            sourceTrace?.source_trace_id ||
+            trace.source_trace_id ||
+            `!${trace.pcb_trace_id}`,
+          error_type: "pcb_trace_error",
+          pcb_trace_id: trace.pcb_trace_id,
+          pcb_trace_error_id: "",
+          center: { x: firstPoint.x, y: firstPoint.y },
+          pcb_component_ids: [],
+          pcb_port_ids: [],
+        })
+      }
+      if (!lastConnectsToAnyPad && lastPoint.route_type === "wire") {
+        errors.push({
+          type: "pcb_trace_error",
+          message: `Trace [${traceName}] has disconnected endpoint at (${lastPoint.x}, ${lastPoint.y})`,
+          source_trace_id:
+            sourceTrace?.source_trace_id ||
+            trace.source_trace_id ||
+            `!${trace.pcb_trace_id}`,
+          error_type: "pcb_trace_error",
+          pcb_trace_id: trace.pcb_trace_id,
+          pcb_trace_error_id: "",
+          center: { x: lastPoint.x, y: lastPoint.y },
+          pcb_component_ids: [],
+          pcb_port_ids: [],
         })
       }
     }
