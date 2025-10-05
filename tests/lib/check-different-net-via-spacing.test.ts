@@ -30,7 +30,13 @@ describe("checkDifferentNetViaSpacing", () => {
     ]
     const errors = checkDifferentNetViaSpacing(soup)
     expect(errors).toHaveLength(1)
+    expect(errors[0].type).toBe("pcb_via_clearance_error")
+    expect(errors[0].error_type).toBe("pcb_via_clearance_error")
     expect(errors[0].message).toContain("different nets are too close")
+    expect(errors[0].pcb_via_ids).toEqual(["via1", "via2"])
+    expect(errors[0].minimum_clearance).toBeDefined()
+    expect(errors[0].actual_clearance).toBeDefined()
+    expect(errors[0].pcb_center).toBeDefined()
   })
 
   test("no error when different-net vias are sufficiently spaced", () => {
