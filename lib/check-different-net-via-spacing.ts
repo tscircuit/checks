@@ -56,9 +56,7 @@ export function checkDifferentNetViaSpacing(
           viaB.pcb_via_id,
         )} must have at least ${minSpacing.toFixed(
           3,
-        )}mm clearance but currently have ${clearance.toFixed(
-          3,
-        )}mm clearance.`,
+        )}mm clearance but currently have ${clearance.toFixed(3)}mm clearance.`,
         error_type: "pcb_via_clearance_error",
         pcb_via_ids: [viaA.pcb_via_id, viaB.pcb_via_id].sort(),
         minimum_clearance: minSpacing,
