@@ -20,6 +20,11 @@ that is not connected to the same net.
 Returns `pcb_placement_error` if any vias on the same net are placed closer
 than the allowed margin.
 
+## `checkDifferentNetViaSpacing(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
+
+Returns `pcb_placement_error` if any vias on different nets are placed closer
+than the allowed margin.
+
 ## `checkViasOffBoard(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
 
 Returns `pcb_placement_error` if any PCB via lies outside or crosses the board
