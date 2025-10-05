@@ -1,4 +1,8 @@
-import type { AnyCircuitElement, PcbVia, PcbViaClearanceError } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbVia,
+  PcbViaClearanceError,
+} from "circuit-json"
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import {
   getFullConnectivityMapFromCircuitJson,
