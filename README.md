@@ -5,6 +5,18 @@ and output an array of arrays for any issues found.
 
 [Getting Started Contributor Video](https://share.cleanshot.com/pk216661)
 
+## Function Overview
+
+| Function | Description |
+| --- | --- |
+| [`checkEachPcbPortConnected`](#checkeachpcbportconnectedsoup-anysoupelement--pcbtraceerror) | Verifies every `source_port` is connected to a net or its fellow source ports. |
+| [`checkEachPcbTraceNonOverlapping`](#checkeachpcbtracenonoverlappingsoup-anysoupelement--pcbtraceerror) | Detects overlapping `pcb_trace` segments that aren't on the same net. |
+| [`checkSameNetViaSpacing`](#checksamenetviaspacingcircuitjson-anycircuitelement--pcbviaclearanceerror) | Ensures vias sharing a net respect the minimum spacing margin. |
+| [`checkDifferentNetViaSpacing`](#checkdifferentnetviaspacingcircuitjson-anycircuitelement--pcbviaclearanceerror) | Flags vias on different nets that violate clearance requirements. |
+| [`checkViasOffBoard`](#checkviasoffboardcircuitjson-anycircuitelement--pcbplacementerror) | Checks for vias that extend beyond or cross the PCB boundary. |
+| [`checkPcbComponentsOutOfBoard`](#checkpcbcomponentsoutofboardcircuitjson-anycircuitelement--pcbplacementerror) | Identifies PCB components that don't fit entirely within the board outline. |
+| [`checkTracesAreContiguous`](#checktracesarecontiguouscircuitjson-anycircuitelement--pcbtraceerror) | Validates that traces align correctly and connect to their intended pads. |
+
 ## `checkEachPcbPortConnected(soup: AnySoupElement[]) => PCBTraceError[]`
 
 Returns `pcb_trace_error` if any `source_port` is not connected to a net or it's other
