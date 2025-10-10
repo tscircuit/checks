@@ -15,6 +15,7 @@ and output an array of arrays for any issues found.
 | [`checkDifferentNetViaSpacing`](#checkdifferentnetviaspacingcircuitjson-anycircuitelement--pcbviaclearanceerror) | Flags vias on different nets that violate clearance requirements. |
 | [`checkViasOffBoard`](#checkviasoffboardcircuitjson-anycircuitelement--pcbplacementerror) | Checks for vias that extend beyond or cross the PCB boundary. |
 | [`checkPcbComponentsOutOfBoard`](#checkpcbcomponentsoutofboardcircuitjson-anycircuitelement--pcbplacementerror) | Identifies PCB components that don't fit entirely within the board outline. |
+| [`checkPcbComponentOverlap`](#checkpcbcomponentoverlapcircuitjson-anycircuitelement--pcbfootprintoverlaperror) | Detects overlapping PCB footprint elements (pads, holes) from different components on different nets. |
 | [`checkTracesAreContiguous`](#checktracesarecontiguouscircuitjson-anycircuitelement--pcbtraceerror) | Validates that traces align correctly and connect to their intended pads. |
 
 ## `checkEachPcbPortConnected(soup: AnySoupElement[]) => PCBTraceError[]`
@@ -46,6 +47,10 @@ boundary.
 
 Returns `pcb_placement_error` when a PCB component does not fit inside the board
 area.
+
+## `checkPcbComponentOverlap(circuitJson: AnyCircuitElement[]) => PcbFootprintOverlapError[]`
+
+Returns `pcb_footprint_overlap_error` when PCB footprint elements (SMT pads, plated holes, or holes) from different components overlap. SMT pads on the same electrical net are allowed to overlap.
 
 ## `checkTracesAreContiguous(circuitJson: AnyCircuitElement[]) => PCBTraceError[]`
 
