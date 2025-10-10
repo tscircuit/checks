@@ -68,7 +68,7 @@ test("overlapping SMT pads on same net should not produce errors", () => {
   // No errors should be found for same-net pads
   expect(errors.length).toBe(0)
 
-  // Add annotation above the pads to show this is allowed
+  // Add annotation below the pads to show this is allowed
   soup.push({
     type: "pcb_silkscreen_text",
     pcb_silkscreen_text_id: "info_indicator_1",

@@ -58,7 +58,7 @@ test("mixed component types overlapping should show multiple errors", () => {
   expect(errors.some((e) => e.pcb_hole_ids?.includes("hole2"))).toBe(true)
 
   // Add visual error indicators for each overlap
-  // Position indicators above the overlapping components with spacing to avoid overlap
+  // Position indicators below the overlapping components with spacing to avoid overlap
   if (errors.length > 0) {
     soup.push({
       type: "pcb_silkscreen_text",

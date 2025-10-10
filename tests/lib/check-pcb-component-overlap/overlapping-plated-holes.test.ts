@@ -44,7 +44,7 @@ test("overlapping plated holes should show error", () => {
   expect(errors[0].type).toBe("pcb_footprint_overlap_error")
   expect(errors[0].pcb_plated_hole_ids).toEqual(["hole1", "hole2"])
 
-  // Add visual error indicator above the overlapping holes for visibility
+  // Add visual error indicator below the overlapping holes for visibility
   if (errors.length > 0) {
     soup.push({
       type: "pcb_silkscreen_text",

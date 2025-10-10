@@ -44,7 +44,7 @@ test("overlapping SMT pads from different nets should show error", () => {
   expect(errors[0].type).toBe("pcb_footprint_overlap_error")
   expect(errors[0].pcb_smtpad_ids).toEqual(["pad1", "pad2"])
 
-  // Add visual error indicator above the overlapping pads for visibility
+  // Add visual error indicator below the overlapping pads for visibility
   if (errors.length > 0) {
     soup.push({
       type: "pcb_silkscreen_text",
