@@ -7,6 +7,7 @@ import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-boar
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
+import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import type { AnyCircuitElement } from "circuit-json"
 
 export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
@@ -20,5 +21,6 @@ export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
     ...checkTracesAreContiguous(circuitJson),
     ...checkSourceTracesHavePcbTraces(circuitJson),
     ...checkPcbTracesOutOfBoard(circuitJson),
+    ...checkPcbComponentOverlap(circuitJson),
   ]
 }
