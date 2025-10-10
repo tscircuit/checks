@@ -44,21 +44,24 @@ test("overlapping plated holes should show error", () => {
   expect(errors[0].type).toBe("pcb_footprint_overlap_error")
   expect(errors[0].pcb_plated_hole_ids).toEqual(["hole1", "hole2"])
 
-  // Add visual error indicator below the overlapping holes for visibility
-  if (errors.length > 0) {
-    soup.push({
-      type: "pcb_silkscreen_text",
-      pcb_silkscreen_text_id: "error_indicator_1",
-      pcb_component_id: "",
-      anchor_position: { x: 0.75, y: -1.5 },
-      anchor_alignment: "center",
-      font: "tscircuit2024",
-      font_size: 0.7,
-      layer: "top",
-      text: "⚠ HOLE OVERLAP",
-    })
-  }
+  // Add errors to circuit JSON for shouldDrawErrors visualization
+  soup.push(...errors)
 
-  // Create visual snapshot with error indicators
-  expect(convertCircuitJsonToPcbSvg(soup)).toMatchSvgSnapshot(import.meta.path)
+  // Add visual error indicator below the overlapping holes for visibility
+  soup.push({
+    type: "pcb_silkscreen_text",
+    pcb_silkscreen_text_id: "error_indicator_1",
+    pcb_component_id: "",
+    anchor_position: { x: 0.75, y: -1.5 },
+    anchor_alignment: "center",
+    font: "tscircuit2024",
+    font_size: 0.7,
+    layer: "top",
+    text: "⚠ HOLE OVERLAP",
+  })
+
+  // Create visual snapshot with error indicators (both shouldDrawErrors and silkscreen)
+  expect(
+    convertCircuitJsonToPcbSvg(soup, { shouldDrawErrors: true }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })

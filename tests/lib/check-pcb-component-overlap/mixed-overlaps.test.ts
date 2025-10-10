@@ -57,33 +57,36 @@ test("mixed component types overlapping should show multiple errors", () => {
   )
   expect(errors.some((e) => e.pcb_hole_ids?.includes("hole2"))).toBe(true)
 
+  // Add errors to circuit JSON for shouldDrawErrors visualization
+  soup.push(...errors)
+
   // Add visual error indicators for each overlap
   // Position indicators below the overlapping components with spacing to avoid overlap
-  if (errors.length > 0) {
-    soup.push({
-      type: "pcb_silkscreen_text",
-      pcb_silkscreen_text_id: "error_indicator_1",
-      pcb_component_id: "",
-      anchor_position: { x: 0.8, y: -2 },
-      anchor_alignment: "center",
-      font: "tscircuit2024",
-      font_size: 0.5,
-      layer: "top",
-      text: "⚠ pad+hole",
-    })
-    soup.push({
-      type: "pcb_silkscreen_text",
-      pcb_silkscreen_text_id: "error_indicator_2",
-      pcb_component_id: "",
-      anchor_position: { x: -1, y: -2.5 },
-      anchor_alignment: "center",
-      font: "tscircuit2024",
-      font_size: 0.5,
-      layer: "top",
-      text: "⚠ hole+pad",
-    })
-  }
+  soup.push({
+    type: "pcb_silkscreen_text",
+    pcb_silkscreen_text_id: "error_indicator_1",
+    pcb_component_id: "",
+    anchor_position: { x: 0.8, y: -2 },
+    anchor_alignment: "center",
+    font: "tscircuit2024",
+    font_size: 0.5,
+    layer: "top",
+    text: "⚠ pad+hole",
+  })
+  soup.push({
+    type: "pcb_silkscreen_text",
+    pcb_silkscreen_text_id: "error_indicator_2",
+    pcb_component_id: "",
+    anchor_position: { x: -1, y: -2.5 },
+    anchor_alignment: "center",
+    font: "tscircuit2024",
+    font_size: 0.5,
+    layer: "top",
+    text: "⚠ hole+pad",
+  })
 
-  // Create visual snapshot with error indicators
-  expect(convertCircuitJsonToPcbSvg(soup)).toMatchSvgSnapshot(import.meta.path)
+  // Create visual snapshot with error indicators (both shouldDrawErrors and silkscreen)
+  expect(
+    convertCircuitJsonToPcbSvg(soup, { shouldDrawErrors: true }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })

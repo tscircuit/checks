@@ -82,5 +82,7 @@ test("overlapping SMT pads on same net should not produce errors", () => {
   })
 
   // Create visual snapshot showing pads can overlap on same net
-  expect(convertCircuitJsonToPcbSvg(soup)).toMatchSvgSnapshot(import.meta.path)
+  expect(
+    convertCircuitJsonToPcbSvg(soup, { shouldDrawErrors: true }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
