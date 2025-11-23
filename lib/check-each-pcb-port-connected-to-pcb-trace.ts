@@ -86,7 +86,9 @@ function checkEachPcbPortConnectedToPcbTraces(
           message: `pcb_port_not_connected_error: Pcb ports [${pcbPortsInTrace.map((p) => p.pcb_port_id).join(", ")}] are not connected together through the same net.`,
           error_type: "pcb_port_not_connected_error",
           pcb_port_ids: pcbPortsInTrace.map((p) => p.pcb_port_id),
-          pcb_component_ids: pcbPortsInTrace.map((p) => p.pcb_component_id),
+          pcb_component_ids: pcbPortsInTrace
+            .map((p) => p.pcb_component_id)
+            .filter((id): id is string => id !== undefined),
           pcb_port_not_connected_error_id: `pcb_port_not_connected_error_trace_${sourceTrace.source_trace_id}`,
         })
       }

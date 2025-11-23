@@ -37,7 +37,11 @@ function checkSourceTracesHavePcbTraces(
 
       // Find PCB components that these ports belong to
       const connectedPcbComponentIds = Array.from(
-        new Set(connectedPcbPorts.map((port) => port.pcb_component_id)),
+        new Set(
+          connectedPcbPorts
+            .map((port) => port.pcb_component_id)
+            .filter((id): id is string => id !== undefined),
+        ),
       )
 
       errors.push({
