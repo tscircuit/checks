@@ -25,7 +25,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
     expect(checkEachPcbTraceNonOverlapping(soup)).toEqual([])
   })
 
-  test.only("should return an error when traces overlap", async () => {
+  test("should return an error when traces overlap", async () => {
     const soup: AnySoupElement[] = [
       {
         type: "source_trace",

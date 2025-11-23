@@ -18,6 +18,8 @@ export function checkViasOffBoard(
 
   if (vias.length === 0) return []
 
+  if (board.width === undefined || board.height === undefined) return []
+
   const boardMinX = board.center.x - board.width / 2
   const boardMaxX = board.center.x + board.width / 2
   const boardMinY = board.center.y - board.height / 2
