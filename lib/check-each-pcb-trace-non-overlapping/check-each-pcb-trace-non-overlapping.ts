@@ -45,6 +45,58 @@ export function checkEachPcbTraceNonOverlapping(
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
 
   const pcbTraces = cju(circuitJson).pcb_trace.list()
+  const pcbSmtPads = cju(circuitJson).pcb_smtpad.list()
+  const pcbPlatedHoles = cju(circuitJson).pcb_plated_hole.list()
+
+  // Update connectivity map with route start/end connections using coordinates
+  const traceConnections: string[][] = []
+  for (const trace of pcbTraces) {
+    const wireSegments = trace.route.filter((s) => s.route_type === "wire")
+    if (wireSegments.length === 0) continue
+
+    const startPoint = wireSegments[0]
+    const endPoint = wireSegments[wireSegments.length - 1]
+
+    // Find pads at route start/end coordinates
+    for (const pad of pcbSmtPads) {
+      let padX: number
+      let padY: number
+      if (pad.shape === "polygon") {
+        // Use centroid of polygon points
+        const points = pad.points
+        padX = points.reduce((sum, p) => sum + p.x, 0) / points.length
+        padY = points.reduce((sum, p) => sum + p.y, 0) / points.length
+      } else {
+        padX = pad.x
+        padY = pad.y
+      }
+      const matchesStart =
+        Math.abs(padX - startPoint.x) < EPSILON &&
+        Math.abs(padY - startPoint.y) < EPSILON
+      const matchesEnd =
+        Math.abs(padX - endPoint.x) < EPSILON &&
+        Math.abs(padY - endPoint.y) < EPSILON
+      if (matchesStart || matchesEnd) {
+        traceConnections.push([trace.pcb_trace_id, pad.pcb_smtpad_id])
+      }
+    }
+
+    for (const hole of pcbPlatedHoles) {
+      const matchesStart =
+        Math.abs(hole.x - startPoint.x) < EPSILON &&
+        Math.abs(hole.y - startPoint.y) < EPSILON
+      const matchesEnd =
+        Math.abs(hole.x - endPoint.x) < EPSILON &&
+        Math.abs(hole.y - endPoint.y) < EPSILON
+      if (matchesStart || matchesEnd) {
+        traceConnections.push([trace.pcb_trace_id, hole.pcb_plated_hole_id])
+      }
+    }
+  }
+  if (traceConnections.length > 0) {
+    connMap.addConnections(traceConnections)
+  }
+
   const pcbTraceSegments = pcbTraces.flatMap((pcbTrace) => {
     const segments: PcbTraceSegment[] = []
     for (let i = 0; i < pcbTrace.route.length - 1; i++) {
@@ -72,8 +124,6 @@ export function checkEachPcbTraceNonOverlapping(
     }
     return segments
   })
-  const pcbSmtPads = cju(circuitJson).pcb_smtpad.list()
-  const pcbPlatedHoles = cju(circuitJson).pcb_plated_hole.list()
   const pcbHoles = cju(circuitJson).pcb_hole.list()
   const pcbVias = cju(circuitJson).pcb_via.list()
   const pcbKeepouts = cju(circuitJson).pcb_keepout.list()
@@ -165,40 +215,6 @@ export function checkEachPcbTraceNonOverlapping(
         )
       )
         continue
-
-      // Check connectivity via pcb_port_id (for smtpads and plated holes)
-      // (e.g., when source_trace_id is a combined net name that doesn't exist)
-      if ("pcb_port_id" in obj && obj.pcb_port_id) {
-        // First try using route segment port IDs (works when they're populated)
-        const tracePortIds = getPcbPortIdsConnectedToTraces([
-          segmentA._pcbTrace,
-        ])
-        if (tracePortIds.includes(obj.pcb_port_id as string)) {
-          continue
-        }
-
-        // Fallback: check if any trace endpoint is at the same location as the object
-        // This handles the case where port IDs aren't populated at DRC time
-        const route = segmentA._pcbTrace?.route
-        if (route && route.length > 0 && "x" in obj && "y" in obj) {
-          const firstPoint = route[0]
-          const lastPoint = route[route.length - 1]
-          const objX = (obj as any).x as number
-          const objY = (obj as any).y as number
-          const tolerance = 0.01 // 10 micron tolerance for coordinate matching
-
-          const isAtFirstPoint =
-            Math.abs(firstPoint.x - objX) < tolerance &&
-            Math.abs(firstPoint.y - objY) < tolerance
-          const isAtLastPoint =
-            Math.abs(lastPoint.x - objX) < tolerance &&
-            Math.abs(lastPoint.y - objY) < tolerance
-
-          if (isAtFirstPoint || isAtLastPoint) {
-            continue
-          }
-        }
-      }
 
       const isCircular =
         obj.type === "pcb_via" ||
