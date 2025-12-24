@@ -14,6 +14,7 @@ import {
   type PcbTraceSegment,
 } from "./getCollidableBounds"
 import {
+  distance,
   segmentToBoundsMinDistance,
   segmentToCircleMinDistance,
 } from "@tscircuit/math-utils"
@@ -59,36 +60,31 @@ export function checkEachPcbTraceNonOverlapping(
 
     // Find pads at route start/end coordinates
     for (const pad of pcbSmtPads) {
-      let padX: number
-      let padY: number
+      let padCenter: { x: number; y: number }
       if (pad.shape === "polygon") {
         // Use centroid of polygon points
         const points = pad.points
-        padX = points.reduce((sum, p) => sum + p.x, 0) / points.length
-        padY = points.reduce((sum, p) => sum + p.y, 0) / points.length
+        padCenter = {
+          x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+          y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+        }
       } else {
-        padX = pad.x
-        padY = pad.y
+        padCenter = { x: pad.x, y: pad.y }
       }
-      const matchesStart =
-        Math.abs(padX - startPoint.x) < EPSILON &&
-        Math.abs(padY - startPoint.y) < EPSILON
-      const matchesEnd =
-        Math.abs(padX - endPoint.x) < EPSILON &&
-        Math.abs(padY - endPoint.y) < EPSILON
-      if (matchesStart || matchesEnd) {
+      if (
+        distance(padCenter, startPoint) < EPSILON ||
+        distance(padCenter, endPoint) < EPSILON
+      ) {
         traceConnections.push([trace.pcb_trace_id, pad.pcb_smtpad_id])
       }
     }
 
     for (const hole of pcbPlatedHoles) {
-      const matchesStart =
-        Math.abs(hole.x - startPoint.x) < EPSILON &&
-        Math.abs(hole.y - startPoint.y) < EPSILON
-      const matchesEnd =
-        Math.abs(hole.x - endPoint.x) < EPSILON &&
-        Math.abs(hole.y - endPoint.y) < EPSILON
-      if (matchesStart || matchesEnd) {
+      const holeCenter = { x: hole.x, y: hole.y }
+      if (
+        distance(holeCenter, startPoint) < EPSILON ||
+        distance(holeCenter, endPoint) < EPSILON
+      ) {
         traceConnections.push([trace.pcb_trace_id, hole.pcb_plated_hole_id])
       }
     }
