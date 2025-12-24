@@ -15,6 +15,8 @@ import {
 } from "./getCollidableBounds"
 import {
   distance,
+  isPointInsidePolygon,
+  pointToBoundsDistance,
   segmentToBoundsMinDistance,
   segmentToCircleMinDistance,
 } from "@tscircuit/math-utils"
@@ -60,30 +62,38 @@ export function checkEachPcbTraceNonOverlapping(
 
     // Find pads at route start/end coordinates
     for (const pad of pcbSmtPads) {
-      let padCenter: { x: number; y: number }
+      let isConnected = false
       if (pad.shape === "polygon") {
-        // Use centroid of polygon points
-        const points = pad.points
-        padCenter = {
-          x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
-          y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
-        }
+        isConnected =
+          isPointInsidePolygon(startPoint, pad.points) ||
+          isPointInsidePolygon(endPoint, pad.points)
+      } else if (pad.shape === "circle") {
+        const padCenter = { x: pad.x, y: pad.y }
+        isConnected =
+          distance(startPoint, padCenter) <= pad.radius + EPSILON ||
+          distance(endPoint, padCenter) <= pad.radius + EPSILON
       } else {
-        padCenter = { x: pad.x, y: pad.y }
+        // rect pad - check if point is inside bounds
+        const padBounds = {
+          minX: pad.x - pad.width / 2,
+          maxX: pad.x + pad.width / 2,
+          minY: pad.y - pad.height / 2,
+          maxY: pad.y + pad.height / 2,
+        }
+        isConnected =
+          pointToBoundsDistance(startPoint, padBounds) < EPSILON ||
+          pointToBoundsDistance(endPoint, padBounds) < EPSILON
       }
-      if (
-        distance(padCenter, startPoint) < EPSILON ||
-        distance(padCenter, endPoint) < EPSILON
-      ) {
+      if (isConnected) {
         traceConnections.push([trace.pcb_trace_id, pad.pcb_smtpad_id])
       }
     }
 
     for (const hole of pcbPlatedHoles) {
-      const holeCenter = { x: hole.x, y: hole.y }
+      const holeBounds = getCollidableBounds(hole)
       if (
-        distance(holeCenter, startPoint) < EPSILON ||
-        distance(holeCenter, endPoint) < EPSILON
+        pointToBoundsDistance(startPoint, holeBounds) < EPSILON ||
+        pointToBoundsDistance(endPoint, holeBounds) < EPSILON
       ) {
         traceConnections.push([trace.pcb_trace_id, hole.pcb_plated_hole_id])
       }
