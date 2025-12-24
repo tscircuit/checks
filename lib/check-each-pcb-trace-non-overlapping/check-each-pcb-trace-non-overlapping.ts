@@ -166,6 +166,38 @@ export function checkEachPcbTraceNonOverlapping(
       )
         continue
 
+      // Check connectivity via pcb_port_id (for smtpads and plated holes)
+      // (e.g., when source_trace_id is a combined net name that doesn't exist)
+      if ("pcb_port_id" in obj && obj.pcb_port_id) {
+        // First try using route segment port IDs (works when they're populated)
+        const tracePortIds = getPcbPortIdsConnectedToTraces([segmentA._pcbTrace])
+        if (tracePortIds.includes(obj.pcb_port_id as string)) {
+          continue
+        }
+
+        // Fallback: check if any trace endpoint is at the same location as the object
+        // This handles the case where port IDs aren't populated at DRC time
+        const route = segmentA._pcbTrace?.route
+        if (route && route.length > 0 && "x" in obj && "y" in obj) {
+          const firstPoint = route[0]
+          const lastPoint = route[route.length - 1]
+          const objX = (obj as any).x as number
+          const objY = (obj as any).y as number
+          const tolerance = 0.01 // 10 micron tolerance for coordinate matching
+
+          const isAtFirstPoint =
+            Math.abs(firstPoint.x - objX) < tolerance &&
+            Math.abs(firstPoint.y - objY) < tolerance
+          const isAtLastPoint =
+            Math.abs(lastPoint.x - objX) < tolerance &&
+            Math.abs(lastPoint.y - objY) < tolerance
+
+          if (isAtFirstPoint || isAtLastPoint) {
+            continue
+          }
+        }
+      }
+
       const isCircular =
         obj.type === "pcb_via" ||
         (obj.type === "pcb_plated_hole" && obj.shape === "circle") ||
