@@ -170,7 +170,9 @@ export function checkEachPcbTraceNonOverlapping(
       // (e.g., when source_trace_id is a combined net name that doesn't exist)
       if ("pcb_port_id" in obj && obj.pcb_port_id) {
         // First try using route segment port IDs (works when they're populated)
-        const tracePortIds = getPcbPortIdsConnectedToTraces([segmentA._pcbTrace])
+        const tracePortIds = getPcbPortIdsConnectedToTraces([
+          segmentA._pcbTrace,
+        ])
         if (tracePortIds.includes(obj.pcb_port_id as string)) {
           continue
         }
