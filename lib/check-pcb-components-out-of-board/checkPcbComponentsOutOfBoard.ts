@@ -4,11 +4,15 @@ import type {
   PcbComponent,
   AnySourceComponent,
   PcbComponentOutsideBoardError,
+  SourceGroup,
+  SourceBoard,
 } from "circuit-json"
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import type { Point } from "@tscircuit/math-utils"
 import * as Flatten from "@flatten-js/core"
 import { rotateDEG, applyToPoint } from "transformation-matrix"
+import { findBoardForElement } from "lib/util/findBoardForElement"
+import { boardToPolygon } from "lib/util/boardToPolygon"
 
 /**
  * Create a rectangle polygon centered at (cx,cy) with given width/height and rotation (degrees).
@@ -56,35 +60,6 @@ function rectanglePolygon({
   if (!isPolygonCCW(poly)) poly.reverse()
 
   return poly
-}
-
-function boardToPolygon({
-  board,
-}: { board: PcbBoard }): Flatten.Polygon | null {
-  if (board.outline && board.outline.length > 0) {
-    const points = board.outline.map((p) => new Flatten.Point(p.x, p.y))
-    const poly = new Flatten.Polygon(points)
-
-    if (!isPolygonCCW(poly)) {
-      poly.reverse()
-    }
-
-    return poly
-  }
-
-  if (
-    board.center &&
-    typeof board.width === "number" &&
-    typeof board.height === "number"
-  ) {
-    return rectanglePolygon({
-      center: board.center,
-      size: { width: board.width, height: board.height },
-      rotationDeg: 0,
-    })
-  }
-
-  return null
 }
 
 /** Get human-readable component name from circuit JSON */
@@ -208,12 +183,9 @@ function computeOverlapDistance(
       const compWidth = Math.abs(componentWidth)
       const compHeight = Math.abs(componentHeight)
       return Math.min(compWidth, compHeight) * overlapRatio
-    } else if (intersectionArea === 0) {
-      // completely outside (should not happen here), return small epsilon
-      return 0.1
-    } else {
-      return 0.1
     }
+    // completely outside or fully inside (should not happen here), return small epsilon
+    return 0.1
   } catch {
     // If boolean ops fail (unlikely), return small epsilon
     return 0.1
@@ -223,22 +195,36 @@ function computeOverlapDistance(
 /**
  * Main function — polygon-first: construct polygons, test containment / intersection,
  * compute overlap distance using boolean intersection area or geometric distance.
+ *
+ * For panels with multiple boards, each component is checked against its own board
+ * (determined by subcircuit_id relationships). For single-board circuits, all
+ * components are checked against that board.
  */
 export function checkPcbComponentsOutOfBoard(
   circuitJson: AnyCircuitElement[],
 ): PcbComponentOutsideBoardError[] {
-  const board = circuitJson.find(
+  const boards = circuitJson.filter(
     (el): el is PcbBoard => el.type === "pcb_board",
   )
-  if (!board) return []
-
-  const boardPoly = boardToPolygon({ board })
-  if (!boardPoly) return []
+  if (boards.length === 0) return []
 
   const components = circuitJson.filter(
     (el): el is PcbComponent => el.type === "pcb_component",
   )
   if (components.length === 0) return []
+
+  const boardPolygons = new Map<string, Flatten.Polygon>()
+  for (const board of boards) {
+    const poly = boardToPolygon(board)
+    if (poly) {
+      boardPolygons.set(board.pcb_board_id, poly)
+    }
+  }
+
+  const singleBoard = boards.length === 1 ? boards[0] : null
+  const singleBoardPoly = singleBoard
+    ? boardPolygons.get(singleBoard.pcb_board_id)
+    : null
 
   const errors: PcbComponentOutsideBoardError[] = []
 
@@ -252,6 +238,25 @@ export function checkPcbComponentsOutOfBoard(
       continue
 
     if (c.width <= 0 || c.height <= 0) continue
+
+    // Find the board this component belongs to
+    let board: PcbBoard | null = null
+    let boardPoly: Flatten.Polygon | null | undefined = null
+
+    if (singleBoard && singleBoardPoly) {
+      // Single board case - use it for all components
+      board = singleBoard
+      boardPoly = singleBoardPoly
+    } else {
+      // Multiple boards - find the component's specific board
+      board = findBoardForElement(circuitJson, c)
+      if (board) {
+        boardPoly = boardPolygons.get(board.pcb_board_id)
+      }
+    }
+
+    // If we can't find a board for this component, skip it
+    if (!board || !boardPoly) continue
 
     const compPoly = rectanglePolygon({
       center: c.center,

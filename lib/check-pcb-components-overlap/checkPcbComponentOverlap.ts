@@ -22,6 +22,7 @@ type OverlappableElement = PcbSmtPad | PcbPlatedHole | PcbHole
 interface ComponentWithElements {
   component_id: string
   elements: OverlappableElement[]
+  subcircuit_id?: string
   bounds: {
     minX: number
     minY: number
@@ -72,6 +73,7 @@ export function checkPcbComponentOverlap(
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
+        subcircuit_id: pad.subcircuit_id,
         bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
@@ -86,6 +88,7 @@ export function checkPcbComponentOverlap(
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
+        subcircuit_id: hole.subcircuit_id,
         bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
@@ -98,6 +101,7 @@ export function checkPcbComponentOverlap(
     componentMap.set(componentId, {
       component_id: componentId,
       elements: [hole],
+      subcircuit_id: hole.subcircuit_id,
       bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
     })
   }
@@ -117,6 +121,15 @@ export function checkPcbComponentOverlap(
     for (let j = i + 1; j < componentsWithElements.length; j++) {
       const comp1 = componentsWithElements[i]
       const comp2 = componentsWithElements[j]
+
+      // Skip if components are on different boards (different subcircuit_ids)
+      if (
+        comp1.subcircuit_id &&
+        comp2.subcircuit_id &&
+        comp1.subcircuit_id !== comp2.subcircuit_id
+      ) {
+        continue
+      }
 
       // First check if component bounds overlap
       if (!doBoundsOverlap(comp1.bounds, comp2.bounds)) {

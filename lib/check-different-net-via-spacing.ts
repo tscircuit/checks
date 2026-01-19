@@ -9,6 +9,7 @@ import {
   type ConnectivityMap,
 } from "circuit-json-to-connectivity-map"
 import { DEFAULT_DIFFERENT_NET_VIA_MARGIN, EPSILON } from "lib/drc-defaults"
+import { areElementsOnSameBoard } from "./util/areElementsOnSameBoard"
 
 function distance(a: PcbVia, b: PcbVia): number {
   return Math.hypot(a.x - b.x, a.y - b.y)
@@ -31,6 +32,10 @@ export function checkDifferentNetViaSpacing(
     for (let j = i + 1; j < vias.length; j++) {
       const viaA = vias[i]
       const viaB = vias[j]
+
+      // Skip if vias are on different boards (different subcircuit_ids)
+      if (!areElementsOnSameBoard(viaA, viaB)) continue
+
       if (connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
       const gap =
         distance(viaA, viaB) - viaA.outer_diameter / 2 - viaB.outer_diameter / 2

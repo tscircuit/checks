@@ -27,6 +27,7 @@ export type PcbTraceSegment = {
   y1: number
   x2: number
   y2: number
+  subcircuit_id?: string
 }
 
 export type Collidable =

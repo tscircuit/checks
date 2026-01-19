@@ -7,6 +7,7 @@ import type {
 import { cju } from "@tscircuit/circuit-json-util"
 import type { Point, Polygon } from "@tscircuit/math-utils"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
+import { findBoardForElement } from "lib/util/findBoardForElement"
 
 /**
  * Default margin for trace clearance from board edge (in mm)
@@ -54,7 +55,11 @@ function getBoardPolygonPoints(board: PcbBoard): Polygon | null {
 
 /**
  * Check if any trace segment is too close to or outside the board outline
- * Uses segment-to-polygon distance with configurable margin
+ * Uses segment-to-polygon distance with configurable margin.
+ *
+ * For panels with multiple boards, each trace is checked against its own board
+ * (determined by subcircuit_id relationships). For single-board circuits, all
+ * traces are checked against that board.
  */
 export function checkPcbTracesOutOfBoard(
   circuitJson: AnyCircuitElement[],
@@ -63,21 +68,48 @@ export function checkPcbTracesOutOfBoard(
   const errors: PcbTraceError[] = []
   const margin = config.margin ?? DEFAULT_BOARD_MARGIN
 
-  // Find the board
-  const board = circuitJson.find(
+  // Find all boards
+  const boards = circuitJson.filter(
     (el): el is PcbBoard => el.type === "pcb_board",
   )
-  if (!board) return errors
+  if (boards.length === 0) return errors
 
   // Create board polygon using math-utils Point type
-  const boardPoints = getBoardPolygonPoints(board)
-  if (!boardPoints) return errors
+  const boardPolygonsMap = new Map<string, Polygon>()
+  for (const board of boards) {
+    const points = getBoardPolygonPoints(board)
+    if (points) {
+      boardPolygonsMap.set(board.pcb_board_id, points)
+    }
+  }
+
+  const singleBoard = boards.length === 1 ? boards[0] : null
+  const singleBoardPoints = singleBoard
+    ? boardPolygonsMap.get(singleBoard.pcb_board_id)
+    : null
 
   // Get all PCB traces
   const pcbTraces = cju(circuitJson).pcb_trace.list()
 
   for (const trace of pcbTraces) {
     if (trace.route.length < 2) continue
+
+    // Find the board this trace belongs to
+    let boardPoints: Polygon | null | undefined = null
+
+    if (singleBoard && singleBoardPoints) {
+      // Single board case - use it for all traces
+      boardPoints = singleBoardPoints
+    } else {
+      // Multiple boards - find the trace's specific board
+      const board = findBoardForElement(circuitJson, trace)
+      if (board) {
+        boardPoints = boardPolygonsMap.get(board.pcb_board_id)
+      }
+    }
+
+    // If we can't find a board for this trace, skip it
+    if (!boardPoints) continue
 
     // Check each segment of the trace
     for (let i = 0; i < trace.route.length - 1; i++) {

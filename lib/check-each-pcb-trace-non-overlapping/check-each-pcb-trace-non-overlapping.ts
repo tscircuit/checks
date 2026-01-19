@@ -32,6 +32,10 @@ import { getCenterOfBounds } from "./getCenterOfBounds"
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
 import { getClosestPointBetweenSegmentAndBounds } from "./getClosestPointBetweenSegmentAndBounds"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import {
+  areElementsOnSameBoard,
+  type ElementWithSubcircuitId,
+} from "lib/util/areElementsOnSameBoard"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -68,6 +72,7 @@ export function checkEachPcbTraceNonOverlapping(
         y1: p1.y,
         x2: p2.x,
         y2: p2.y,
+        subcircuit_id: pcbTrace.subcircuit_id,
       } as PcbTraceSegment)
     }
     return segments
@@ -108,6 +113,11 @@ export function checkEachPcbTraceNonOverlapping(
     if (segmentA.x1 === segmentA.x2 && segmentA.y1 === segmentA.y2) continue
 
     for (const obj of nearbyObjects) {
+      // Skip if objects are on different boards (different subcircuit_ids)
+      if (!areElementsOnSameBoard(segmentA, obj)) {
+        continue
+      }
+
       // ignore obstacles not on the trace's layer (except vias)
       if (!getLayersOfPcbElement(obj).includes(segmentA.layer)) {
         continue
