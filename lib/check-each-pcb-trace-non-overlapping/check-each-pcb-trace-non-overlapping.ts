@@ -32,6 +32,7 @@ import { getCenterOfBounds } from "./getCenterOfBounds"
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
 import { getClosestPointBetweenSegmentAndBounds } from "./getClosestPointBetweenSegmentAndBounds"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import { addStartAndEndPortIdsIfMissing } from "lib/add-start-and-end-port-ids-if-missing"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -42,6 +43,7 @@ export function checkEachPcbTraceNonOverlapping(
   } = {},
 ): PcbTraceError[] {
   const errors: PcbTraceError[] = []
+  addStartAndEndPortIdsIfMissing(circuitJson)
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
 
   const pcbTraces = cju(circuitJson).pcb_trace.list()
