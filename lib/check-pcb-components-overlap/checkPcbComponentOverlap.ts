@@ -11,6 +11,7 @@ import {
   getBoundsOfPcbElements,
   getPrimaryId,
 } from "@tscircuit/circuit-json-util"
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
 import {
   getFullConnectivityMapFromCircuitJson,
@@ -146,7 +147,7 @@ export function checkPcbComponentOverlap(
               type: "pcb_footprint_overlap_error",
               pcb_error_id: `pcb_footprint_overlap_${id1}_${id2}`,
               error_type: "pcb_footprint_overlap_error",
-              message: `PCB component ${elem1.type} "${id1}" overlaps with ${elem2.type} "${id2}"`,
+              message: `${elem1.type} ${getReadableNameForElementId(circuitJson, id1)} overlaps with ${elem2.type} ${getReadableNameForElementId(circuitJson, id2)}`,
             }
 
             // Add relevant IDs based on element types

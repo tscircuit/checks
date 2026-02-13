@@ -1,6 +1,7 @@
 import type { AnyCircuitElement, PcbTrace } from "circuit-json"
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbPortConnectedToPcbTraces } from "lib/check-each-pcb-port-connected-to-pcb-trace"
+import { containsCircuitJsonId } from "lib/util/get-readable-names"
 
 describe("checkEachPcbPortConnectedToPcbTraces", () => {
   test("should not return error for intentionally unconnected ports", () => {
@@ -178,7 +179,7 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
       [
         {
           "error_type": "pcb_port_not_connected_error",
-          "message": "pcb_port_not_connected_error: Pcb ports [port1, port2] are not connected together through the same net.",
+          "message": "Ports [port, port] are not connected together through the same net.",
           "pcb_component_ids": [
             "pcb1",
             "pcb2",
@@ -192,6 +193,7 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
         },
       ]
     `)
+    expect(containsCircuitJsonId(errors[0]!.message)).toBe(false)
   })
 
   test("should return errors for ports not connected by PCB traces", () => {
@@ -222,12 +224,11 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
       },
     ]
     const errors = checkEachPcbPortConnectedToPcbTraces(circuitJson)
-    expect(errors).toHaveLength(1)
     expect(errors).toMatchInlineSnapshot(`
       [
         {
           "error_type": "pcb_port_not_connected_error",
-          "message": "pcb_port_not_connected_error: Pcb ports [port1, port2] are not connected together through the same net.",
+          "message": "Ports [port, port] are not connected together through the same net.",
           "pcb_component_ids": [
             "comp1",
             "comp2",
@@ -241,6 +242,7 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
         },
       ]
     `)
+    expect(containsCircuitJsonId(errors[0]!.message)).toBe(false)
   })
 
   test("should handle empty soup", () => {
