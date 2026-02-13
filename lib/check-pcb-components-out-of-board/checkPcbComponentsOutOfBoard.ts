@@ -5,7 +5,7 @@ import type {
   AnySourceComponent,
   PcbComponentOutsideBoardError,
 } from "circuit-json"
-import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
+import { getReadableNameForComponent } from "lib/util/get-readable-names"
 import type { Point } from "@tscircuit/math-utils"
 import * as Flatten from "@flatten-js/core"
 import { rotateDEG, applyToPoint } from "transformation-matrix"
@@ -106,10 +106,7 @@ function getComponentName({
     }
   }
 
-  return (
-    getReadableNameForElement(circuitJson, component.pcb_component_id) ||
-    "Unknown"
-  )
+  return getReadableNameForComponent(circuitJson, component.pcb_component_id)
 }
 
 /**
@@ -220,6 +217,51 @@ function computeOverlapDistance(
   }
 }
 
+function getRepositionSuggestion({
+  componentPoly,
+  boardPoly,
+}: {
+  componentPoly: Flatten.Polygon
+  boardPoly: Flatten.Polygon
+}): string | null {
+  const boardBox = boardPoly.box
+  const componentBox = componentPoly.box
+
+  let deltaX = 0
+  let deltaY = 0
+
+  if (componentBox.xmin < boardBox.xmin) {
+    deltaX = boardBox.xmin - componentBox.xmin
+  } else if (componentBox.xmax > boardBox.xmax) {
+    deltaX = boardBox.xmax - componentBox.xmax
+  }
+
+  if (componentBox.ymin < boardBox.ymin) {
+    deltaY = boardBox.ymin - componentBox.ymin
+  } else if (componentBox.ymax > boardBox.ymax) {
+    deltaY = boardBox.ymax - componentBox.ymax
+  }
+
+  if (deltaX === 0 && deltaY === 0) {
+    return null
+  }
+
+  const xDir = deltaX >= 0 ? "right" : "left"
+  const yDir = deltaY >= 0 ? "up" : "down"
+  const absDx = Math.abs(Math.round(deltaX * 100) / 100)
+  const absDy = Math.abs(Math.round(deltaY * 100) / 100)
+
+  if (absDx > 0 && absDy > 0) {
+    return `Try moving it ${absDx}mm ${xDir} and ${absDy}mm ${yDir} to fit within the board edge.`
+  }
+
+  if (absDx > 0) {
+    return `Try moving it ${absDx}mm ${xDir} to fit within the board edge.`
+  }
+
+  return `Try moving it ${absDy}mm ${yDir} to fit within the board edge.`
+}
+
 /**
  * Main function — polygon-first: construct polygons, test containment / intersection,
  * compute overlap distance using boolean intersection area or geometric distance.
@@ -278,12 +320,16 @@ export function checkPcbComponentsOutOfBoard(
 
     const compName = getComponentName({ circuitJson, component: c })
     const overlapDistanceMm = Math.round(overlapDistance * 100) / 100
+    const repositionSuggestion = getRepositionSuggestion({
+      componentPoly: compPoly,
+      boardPoly,
+    })
 
     errors.push({
       type: "pcb_component_outside_board_error",
       error_type: "pcb_component_outside_board_error",
       pcb_component_outside_board_error_id: `pcb_component_outside_board_${c.pcb_component_id}`,
-      message: `Component ${compName} (${c.pcb_component_id}) extends outside board boundaries by ${overlapDistanceMm}mm`,
+      message: `Component ${compName} extends outside board boundaries by ${overlapDistanceMm}mm.${repositionSuggestion ? ` ${repositionSuggestion}` : ""}`,
       pcb_component_id: c.pcb_component_id,
       pcb_board_id: board.pcb_board_id,
       component_center: c.center,

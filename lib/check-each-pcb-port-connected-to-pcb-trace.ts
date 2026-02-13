@@ -6,6 +6,7 @@ import type {
 } from "circuit-json"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import { getReadableNameForPort } from "./util/get-readable-names"
 
 function checkEachPcbPortConnectedToPcbTraces(
   circuitJson: AnyCircuitElement[],
@@ -83,7 +84,7 @@ function checkEachPcbPortConnectedToPcbTraces(
         // Ports are on different components but no PCB traces connect them
         errors.push({
           type: "pcb_port_not_connected_error",
-          message: `pcb_port_not_connected_error: Pcb ports [${pcbPortsInTrace.map((p) => p.pcb_port_id).join(", ")}] are not connected together through the same net.`,
+          message: `Ports [${pcbPortsInTrace.map((p) => getReadableNameForPort(circuitJson, p.pcb_port_id)).join(", ")}] are not connected together through the same net.`,
           error_type: "pcb_port_not_connected_error",
           pcb_port_ids: pcbPortsInTrace.map((p) => p.pcb_port_id),
           pcb_component_ids: pcbPortsInTrace
