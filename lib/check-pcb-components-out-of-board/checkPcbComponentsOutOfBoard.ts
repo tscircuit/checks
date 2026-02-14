@@ -285,6 +285,8 @@ export function checkPcbComponentsOutOfBoard(
   const errors: PcbComponentOutsideBoardError[] = []
 
   for (const c of components) {
+    if (c.is_allowed_to_be_off_board) continue
+
     // need center, width, height
     if (
       !c.center ||
