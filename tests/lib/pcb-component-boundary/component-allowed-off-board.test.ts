@@ -4,9 +4,7 @@ import type { AnyCircuitElement, PcbComponent } from "circuit-json"
 import rectBoardJson from "tests/assets/component-out-of-board.json"
 
 test("rectangular board: component allowed off-board", () => {
-  const circuitJson = JSON.parse(
-    JSON.stringify(rectBoardJson),
-  ) as AnyCircuitElement[]
+  const circuitJson = structuredClone(rectBoardJson) as AnyCircuitElement[]
 
   // Verify initial state: R1 is outside and causes error
   let errors = checkPcbComponentsOutOfBoard(circuitJson)
@@ -18,6 +16,7 @@ test("rectangular board: component allowed off-board", () => {
     (el) =>
       el.type === "pcb_component" && el.pcb_component_id === "pcb_component_0",
   ) as PcbComponent
+
   r1.is_allowed_to_be_off_board = true
 
   // Verify no error
