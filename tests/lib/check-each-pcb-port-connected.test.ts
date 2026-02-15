@@ -179,7 +179,7 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
       [
         {
           "error_type": "pcb_port_not_connected_error",
-          "message": "Ports [port, port] are not connected together through the same net.",
+          "message": "Ports [1, 2] are not connected together through the same net.",
           "pcb_component_ids": [
             "pcb1",
             "pcb2",
@@ -194,6 +194,74 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
       ]
     `)
     expect(containsCircuitJsonId(errors[0]!.message)).toBe(false)
+  })
+
+  test("should prefer source component and source port names in errors", () => {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "pcb_port",
+        pcb_port_id: "port1",
+        source_port_id: "source_port_1",
+        x: 0,
+        y: 0,
+        pcb_component_id: "pcb_component_1",
+        layers: ["top"],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "port2",
+        source_port_id: "source_port_2",
+        x: 1,
+        y: 1,
+        pcb_component_id: "pcb_component_2",
+        layers: ["top"],
+      },
+      {
+        type: "source_component",
+        ftype: "simple_resistor",
+        source_component_id: "source_component_1",
+        name: "U1",
+        resistance: 1000,
+        supplier_part_numbers: {},
+      },
+      {
+        type: "source_component",
+        ftype: "simple_resistor",
+        source_component_id: "source_component_2",
+        name: "R5",
+        resistance: 1000,
+        supplier_part_numbers: {},
+      },
+      {
+        type: "source_port",
+        source_port_id: "source_port_1",
+        source_component_id: "source_component_1",
+        name: "A",
+        pin_number: 1,
+        port_hints: ["1"],
+      },
+      {
+        type: "source_port",
+        source_port_id: "source_port_2",
+        source_component_id: "source_component_2",
+        name: "K",
+        pin_number: 2,
+        port_hints: ["2"],
+      },
+      {
+        type: "source_trace",
+        source_trace_id: "trace1",
+        connected_source_port_ids: ["source_port_1", "source_port_2"],
+        connected_source_net_ids: [],
+      },
+    ]
+
+    const errors = checkEachPcbPortConnectedToPcbTraces(circuitJson)
+    expect(errors).toHaveLength(1)
+    expect(errors[0]!.message).toBe(
+      "Ports [U1.A, R5.K] are not connected together through the same net.",
+    )
+    expect(errors[0]!.message).not.toContain("Ports [port, port]")
   })
 
   test("should return errors for ports not connected by PCB traces", () => {
