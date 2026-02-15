@@ -22,6 +22,17 @@ const sanitizeReadableName = (
   return candidate
 }
 
+const firstReadableName = (
+  candidates: Array<string | null | undefined>,
+  id: string,
+): string => {
+  for (const candidate of candidates) {
+    const readableName = sanitizeReadableName(candidate, id, "")
+    if (readableName) return readableName
+  }
+  return ""
+}
+
 export const getReadableNameForComponent = (
   circuitJson: AnyCircuitElement[],
   pcbComponentId: string,
@@ -35,13 +46,65 @@ export const getReadableNameForComponent = (
 export const getReadableNameForPort = (
   circuitJson: AnyCircuitElement[],
   pcbPortId: string,
-): string =>
-  sanitizeReadableName(
+): string => {
+  const pcbPort = circuitJson.find(
+    (element) =>
+      element.type === "pcb_port" && element.pcb_port_id === pcbPortId,
+  )
+
+  if (pcbPort?.type === "pcb_port") {
+    const sourcePort = circuitJson.find(
+      (element) =>
+        element.type === "source_port" &&
+        element.source_port_id === pcbPort.source_port_id,
+    )
+
+    const sourceComponent =
+      sourcePort?.type === "source_port"
+        ? circuitJson.find(
+            (element) =>
+              element.type === "source_component" &&
+              element.source_component_id === sourcePort.source_component_id,
+          )
+        : null
+
+    const readableSourceComponentName = firstReadableName(
+      [
+        sourceComponent?.type === "source_component"
+          ? sourceComponent.name
+          : null,
+      ],
+      sourceComponent?.type === "source_component"
+        ? sourceComponent.source_component_id
+        : "",
+    )
+
+    const readableSourcePortName = firstReadableName(
+      [
+        sourcePort?.type === "source_port" ? sourcePort.name : null,
+        sourcePort?.type === "source_port"
+          ? sourcePort.pin_number?.toString()
+          : null,
+        sourcePort?.type === "source_port" ? sourcePort.port_hints?.[0] : null,
+      ],
+      sourcePort?.type === "source_port" ? sourcePort.source_port_id : "",
+    )
+
+    if (readableSourceComponentName && readableSourcePortName) {
+      return `${readableSourceComponentName}.${readableSourcePortName}`
+    }
+    if (readableSourcePortName) {
+      return readableSourcePortName
+    }
+  }
+
+  return sanitizeReadableName(
     getReadableNameForPcbPort(circuitJson, pcbPortId) ??
       getReadableNameForElement(circuitJson, pcbPortId),
     pcbPortId,
     "port",
   )
+}
 
 export const getReadableNameForElementId = (
   circuitJson: AnyCircuitElement[],
