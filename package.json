@@ -19,18 +19,19 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
+    "circuit-json": "^0.0.386",
+    "circuit-json-to-connectivity-map": "^0.0.23",
     "circuit-to-svg": "^0.0.166",
-    "circuit-json": "^0.0.380",
     "debug": "^4.3.5",
     "tscircuit": "^0.0.525",
-    "zod": "^3.23.8",
-    "tsup": "^8.2.3"
+    "tsup": "^8.2.3",
+    "zod": "^3.23.8"
   },
   "peerDependencies": {
-    "circuit-json": "*",
-    "@tscircuit/math-utils": "*",
-    "circuit-json-to-connectivity-map": "*",
     "@flatten-js/core": "*",
+    "@tscircuit/math-utils": "*",
+    "circuit-json": "*",
+    "circuit-json-to-connectivity-map": "^0.0.23",
     "typescript": "^5.5.3"
   }
 }
