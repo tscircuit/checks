@@ -20,7 +20,6 @@
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
     "circuit-json": "^0.0.386",
-    "circuit-json-to-connectivity-map": "^0.0.23",
     "circuit-to-svg": "^0.0.166",
     "debug": "^4.3.5",
     "tscircuit": "^0.0.525",
@@ -29,9 +28,8 @@
   },
   "peerDependencies": {
     "@flatten-js/core": "*",
-    "@tscircuit/math-utils": "*",
     "circuit-json": "*",
-    "circuit-json-to-connectivity-map": "^0.0.23",
+    "circuit-json-to-connectivity-map": "*",
     "typescript": "^5.5.3"
   }
 }
