@@ -9,7 +9,7 @@ test("checkI2cSdaConnectedToSclMisconfigured detects SDA connected to SCL", () =
       source_port_id: "port_sda",
       name: "SDA",
       is_configured_for_i2c_sda: true,
-      source_component_id: "comp_1"
+      source_component_id: "comp_1",
     },
     {
       type: "source_component",
@@ -21,7 +21,7 @@ test("checkI2cSdaConnectedToSclMisconfigured detects SDA connected to SCL", () =
       source_port_id: "port_scl",
       name: "SCL",
       is_configured_for_i2c_scl: true,
-      source_component_id: "comp_2"
+      source_component_id: "comp_2",
     },
     {
       type: "source_component",
