@@ -38,8 +38,8 @@ test("checkI2cSdaConnectedToSclMisconfigured detects SDA connected to SCL", () =
 
   const errors = checkI2cSdaConnectedToSclMisconfigured(circuitJson)
   expect(errors).toHaveLength(1)
-  expect(errors[0].message).toEqual(expect.stringContaining("Port SCL on U2"))
-  expect(errors[0].message).toEqual(expect.stringContaining("Port SDA on U1"))
+  expect(errors[0].message).toEqual(expect.stringContaining("U2.SCL (I2C SCL)"))
+  expect(errors[0].message).toEqual(expect.stringContaining("U1.SDA (I2C SDA)"))
   expect(errors[0].source_port_ids).toContain("port_sda")
   expect(errors[0].source_port_ids).toContain("port_scl")
 })

@@ -54,21 +54,26 @@ export function checkI2cSdaConnectedToSclMisconfigured(
             const sortedConflicts = [...conflictingPortIds].sort()
             const conflictIdStr = sortedConflicts.join("_")
 
-            const portDetails = sortedConflicts.map(portId => {
+            const portDetails = sortedConflicts.map((portId) => {
                 const port = portMap.get(portId)
                 const component = sourceComponents.find(
                     (c) => c.source_component_id === port?.source_component_id,
                 )
                 const componentName = component?.name ?? "Unknown"
                 const portName = port?.name ?? "Unknown"
-                return `Port ${portName} on ${componentName}`
+                const i2cRole = port?.is_configured_for_i2c_sda
+                    ? "I2C SDA"
+                    : port?.is_configured_for_i2c_scl
+                        ? "I2C SCL"
+                        : "Unknown"
+                return `${componentName}.${portName} (${i2cRole})`
             })
 
             errors.push({
                 type: "source_i2c_misconfigured_error",
                 source_i2c_misconfigured_error_id: `source_i2c_misconfigured_error_${conflictIdStr}`,
                 error_type: "source_i2c_misconfigured_error",
-                message: `I2C SDA and SCL pins are connected together on the same net. To fix this, ensure SDA and SCL are routed to separate nets. Conflicting ports: ${portDetails.join(", ")}`,
+                message: `${portDetails.join(" is connected to ")} on the same net. To fix this, ensure SDA and SCL are routed to separate nets.`,
                 source_port_ids: conflictingPortIds,
             })
         }
