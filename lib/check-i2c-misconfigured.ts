@@ -1,18 +1,13 @@
-import type { AnyCircuitElement } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  SourceI2cMisconfiguredError,
+} from "circuit-json"
 import { getSourcePortConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 
-export type InvalidPinConnectionError = {
-  type: "invalid_pin_connection_error"
-  invalid_pin_connection_error_id: string
-  error_type: "invalid_pin_connection_error"
-  message: string
-  source_port_ids: string[]
-}
-
-export function checkInvalidPinConnections(
+export function checkI2cMisconfigured(
   circuitJson: AnyCircuitElement[],
-): InvalidPinConnectionError[] {
-  const errors: InvalidPinConnectionError[] = []
+): SourceI2cMisconfiguredError[] {
+  const errors: SourceI2cMisconfiguredError[] = []
 
   // Get all source ports to easily look up their attributes
   const sourcePorts = circuitJson.filter(
@@ -45,9 +40,9 @@ export function checkInvalidPinConnections(
 
     if (hasSda && hasScl) {
       errors.push({
-        type: "invalid_pin_connection_error",
-        invalid_pin_connection_error_id: `invalid_pin_connection_error_${netId}`,
-        error_type: "invalid_pin_connection_error",
+        type: "source_i2c_misconfigured_error",
+        source_i2c_misconfigured_error_id: `source_i2c_misconfigured_error_${netId}`,
+        error_type: "source_i2c_misconfigured_error",
         message: "I2C SDA and SCL pins are connected together",
         source_port_ids: conflictingPortIds,
       })

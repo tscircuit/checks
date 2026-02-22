@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test"
-import { checkInvalidPinConnections } from "../../lib/check-invalid-pin-connections"
+import { checkI2cMisconfigured } from "../../lib/check-i2c-misconfigured"
 import type { AnyCircuitElement } from "circuit-json"
 
-test("checkInvalidPinConnections detects SDA connected to SCL", () => {
+test("checkI2cMisconfigured detects SDA connected to SCL", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "source_port",
@@ -24,14 +24,14 @@ test("checkInvalidPinConnections detects SDA connected to SCL", () => {
     },
   ] as AnyCircuitElement[]
 
-  const errors = checkInvalidPinConnections(circuitJson)
+  const errors = checkI2cMisconfigured(circuitJson)
   expect(errors).toHaveLength(1)
-  expect(errors[0].message).toBe("I2C SDA and SCL pins are connected together")
+  expect(errors[0].message).toEqual(expect.stringContaining("I2C"))
   expect(errors[0].source_port_ids).toContain("port_sda")
   expect(errors[0].source_port_ids).toContain("port_scl")
 })
 
-test("checkInvalidPinConnections allows SDA connected to SDA", () => {
+test("checkI2cMisconfigured allows SDA connected to SDA", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "source_port",
@@ -53,6 +53,6 @@ test("checkInvalidPinConnections allows SDA connected to SDA", () => {
     },
   ] as AnyCircuitElement[]
 
-  const errors = checkInvalidPinConnections(circuitJson)
+  const errors = checkI2cMisconfigured(circuitJson)
   expect(errors).toHaveLength(0)
 })

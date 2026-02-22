@@ -19,7 +19,7 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
-    "circuit-json": "^0.0.386",
+    "circuit-json": "^0.0.387",
     "circuit-to-svg": "^0.0.166",
     "debug": "^4.3.5",
     "tscircuit": "^0.0.525",
