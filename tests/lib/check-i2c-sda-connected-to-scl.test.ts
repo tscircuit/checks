@@ -1,20 +1,32 @@
 import { expect, test } from "bun:test"
-import { checkI2cMisconfigured } from "../../lib/check-i2c-misconfigured"
+import { checkI2cSdaConnectedToSclMisconfigured } from "../../lib/check-i2c-sda-connected-to-scl"
 import type { AnyCircuitElement } from "circuit-json"
 
-test("checkI2cMisconfigured detects SDA connected to SCL", () => {
+test("checkI2cSdaConnectedToSclMisconfigured detects SDA connected to SCL", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "source_port",
       source_port_id: "port_sda",
       name: "SDA",
       is_configured_for_i2c_sda: true,
+      source_component_id: "comp_1"
+    },
+    {
+      type: "source_component",
+      source_component_id: "comp_1",
+      name: "U1",
     },
     {
       type: "source_port",
       source_port_id: "port_scl",
       name: "SCL",
       is_configured_for_i2c_scl: true,
+      source_component_id: "comp_2"
+    },
+    {
+      type: "source_component",
+      source_component_id: "comp_2",
+      name: "U2",
     },
     {
       type: "source_trace",
@@ -24,14 +36,15 @@ test("checkI2cMisconfigured detects SDA connected to SCL", () => {
     },
   ] as AnyCircuitElement[]
 
-  const errors = checkI2cMisconfigured(circuitJson)
+  const errors = checkI2cSdaConnectedToSclMisconfigured(circuitJson)
   expect(errors).toHaveLength(1)
-  expect(errors[0].message).toEqual(expect.stringContaining("I2C"))
+  expect(errors[0].message).toEqual(expect.stringContaining("Port SCL on U2"))
+  expect(errors[0].message).toEqual(expect.stringContaining("Port SDA on U1"))
   expect(errors[0].source_port_ids).toContain("port_sda")
   expect(errors[0].source_port_ids).toContain("port_scl")
 })
 
-test("checkI2cMisconfigured allows SDA connected to SDA", () => {
+test("checkI2cSdaConnectedToSclMisconfigured allows SDA connected to SDA", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "source_port",
@@ -53,6 +66,6 @@ test("checkI2cMisconfigured allows SDA connected to SDA", () => {
     },
   ] as AnyCircuitElement[]
 
-  const errors = checkI2cMisconfigured(circuitJson)
+  const errors = checkI2cSdaConnectedToSclMisconfigured(circuitJson)
   expect(errors).toHaveLength(0)
 })

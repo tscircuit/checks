@@ -9,7 +9,7 @@ import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-t
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
-import { checkI2cMisconfigured } from "./check-i2c-misconfigured"
+import { checkI2cSdaConnectedToSclMisconfigured } from "./check-i2c-sda-connected-to-scl"
 import type { AnyCircuitElement } from "circuit-json"
 
 export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
@@ -25,6 +25,6 @@ export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPcbTracesOutOfBoard(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPinMustBeConnected(circuitJson),
-    ...checkI2cMisconfigured(circuitJson),
+    ...checkI2cSdaConnectedToSclMisconfigured(circuitJson),
   ]
 }
