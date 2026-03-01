@@ -11,18 +11,36 @@ import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPc
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import type { AnyCircuitElement } from "circuit-json"
 
-export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
+  return [
+    ...checkViasOffBoard(circuitJson),
+    ...checkPcbComponentsOutOfBoard(circuitJson),
+    ...checkPcbComponentOverlap(circuitJson),
+  ]
+}
+
+export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
+    ...checkSourceTracesHavePcbTraces(circuitJson),
+    ...checkPinMustBeConnected(circuitJson),
+  ]
+}
+
+export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
+  return [
     ...checkEachPcbTraceNonOverlapping(circuitJson),
     ...checkSameNetViaSpacing(circuitJson),
     ...checkDifferentNetViaSpacing(circuitJson),
-    ...checkViasOffBoard(circuitJson),
-    ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkTracesAreContiguous(circuitJson),
-    ...checkSourceTracesHavePcbTraces(circuitJson),
     ...checkPcbTracesOutOfBoard(circuitJson),
-    ...checkPcbComponentOverlap(circuitJson),
-    ...checkPinMustBeConnected(circuitJson),
+  ]
+}
+
+export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
+  return [
+    ...(await runAllPlacementChecks(circuitJson)),
+    ...(await runAllNetlistChecks(circuitJson)),
+    ...(await runAllRoutingChecks(circuitJson)),
   ]
 }
