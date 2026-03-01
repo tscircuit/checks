@@ -9,4 +9,9 @@ export { checkSourceTracesHavePcbTraces } from "./lib/check-source-traces-have-p
 export { checkPcbTracesOutOfBoard } from "./lib/check-trace-out-of-board/checkTraceOutOfBoard"
 export { checkPcbComponentOverlap } from "./lib/check-pcb-components-overlap/checkPcbComponentOverlap"
 export { checkPinMustBeConnected } from "./lib/check-pin-must-be-connected"
-export { runAllChecks } from "./lib/run-all-checks"
+export {
+  runAllChecks,
+  runAllNetlistChecks,
+  runAllPlacementChecks,
+  runAllRoutingChecks,
+} from "./lib/run-all-checks"
