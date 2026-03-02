@@ -30,7 +30,7 @@ test("overlapping pads in the same pcb_component should show an error", async ()
     [
       {
         "error_type": "pcb_footprint_overlap_error",
-        "message": "through-hole pad USB1.GND at (-0.05mm, 1.27mm) overlaps through-hole pad USB1.DM at (0.05mm, 1.27mm) in component; adjust footprint pad positions/sizes so copper pads do not intersect; you can also modify the footprint string to adjust the pad positions/sizes/rotations",
+        "message": "through-hole pad USB1.GND at (-0.05mm, 1.27mm) overlaps through-hole pad USB1.DM at (0.05mm, 1.27mm) in component; adjust footprint pad positions/sizes so copper pads do not intersect; you can also use the footprint string to adjust the pad positions/sizes",
         "pcb_error_id": "pcb_component_self_overlap_pcb_component_0_pcb_plated_hole_0_pcb_plated_hole_3",
         "pcb_plated_hole_ids": [
           "pcb_plated_hole_0",
