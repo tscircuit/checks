@@ -1,24 +1,16 @@
-import type {
-  AnyCircuitElement,
-  PcbFootprintOverlapError,
-  PcbSmtPad,
-  PcbPlatedHole,
-  PcbHole,
-  PcbComponent,
-} from "circuit-json"
 import {
   cju,
   getBoundsOfPcbElements,
   getPrimaryId,
 } from "@tscircuit/circuit-json-util"
-import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
+import type { AnyCircuitElement, PcbFootprintOverlapError } from "circuit-json"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import {
-  getFullConnectivityMapFromCircuitJson,
-  type ConnectivityMap,
-} from "circuit-json-to-connectivity-map"
-
-type OverlappableElement = PcbSmtPad | PcbPlatedHole | PcbHole
+  type OverlappableElement,
+  doPcbElementsOverlap,
+} from "./doPcbElementsOverlap"
 
 interface ComponentWithElements {
   component_id: string
@@ -29,20 +21,6 @@ interface ComponentWithElements {
     maxX: number
     maxY: number
   }
-}
-
-/**
- * Check if two PCB elements overlap
- * Currently uses simple bounds overlap, but can be extended to handle
- * more precise overlap detection for rotated rects, pills, circles, etc.
- */
-function doPcbElementsOverlap(
-  elem1: OverlappableElement,
-  elem2: OverlappableElement,
-): boolean {
-  const bounds1 = getBoundsOfPcbElements([elem1])
-  const bounds2 = getBoundsOfPcbElements([elem2])
-  return doBoundsOverlap(bounds1, bounds2)
 }
 
 /**

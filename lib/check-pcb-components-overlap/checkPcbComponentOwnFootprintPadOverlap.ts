@@ -1,9 +1,4 @@
-import {
-  cju,
-  getBoundsOfPcbElements,
-  getPrimaryId,
-} from "@tscircuit/circuit-json-util"
-import { doBoundsOverlap } from "@tscircuit/math-utils"
+import { cju, getPrimaryId } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   PcbFootprintOverlapError,
@@ -12,34 +7,11 @@ import type {
 } from "circuit-json"
 import {
   getReadableNameForComponent,
-  getReadableNameForPort,
+  getReadableNameForFootprintPad,
 } from "lib/util/get-readable-names"
+import { doPcbElementsOverlap } from "./doPcbElementsOverlap"
 
 type FootprintPad = PcbSmtPad | PcbPlatedHole
-
-function formatPadReference(
-  circuitJson: AnyCircuitElement[],
-  pad: FootprintPad,
-  ordinal: number,
-): string {
-  const padKind = pad.type === "pcb_smtpad" ? "SMD pad" : "through-hole pad"
-  const portRef = pad.pcb_port_id
-    ? getReadableNameForPort(circuitJson, pad.pcb_port_id)
-    : null
-  const bounds = getBoundsOfPcbElements([pad])
-  const centerX = (bounds.minX + bounds.maxX) / 2
-  const centerY = (bounds.minY + bounds.maxY) / 2
-  const location = `(${centerX.toFixed(2)}mm, ${centerY.toFixed(2)}mm)`
-
-  if (portRef) return `${padKind} ${portRef} at ${location}`
-  return `${padKind} #${ordinal + 1} at ${location}`
-}
-
-function doPcbPadsOverlap(pad1: FootprintPad, pad2: FootprintPad): boolean {
-  const bounds1 = getBoundsOfPcbElements([pad1])
-  const bounds2 = getBoundsOfPcbElements([pad2])
-  return doBoundsOverlap(bounds1, bounds2)
-}
 
 /**
  * Checks for overlapping pads that belong to the same pcb_component.
@@ -75,7 +47,7 @@ export function checkPcbComponentOwnFootprintPadOverlap(
         const pad1 = pads[i]
         const pad2 = pads[j]
 
-        if (!doPcbPadsOverlap(pad1, pad2)) continue
+        if (!doPcbElementsOverlap(pad1, pad2)) continue
 
         const pad1Id = getPrimaryId(pad1)
         const pad2Id = getPrimaryId(pad2)
@@ -83,8 +55,8 @@ export function checkPcbComponentOwnFootprintPadOverlap(
           circuitJson,
           componentId,
         )
-        const pad1Ref = formatPadReference(circuitJson, pad1, i)
-        const pad2Ref = formatPadReference(circuitJson, pad2, j)
+        const pad1Ref = getReadableNameForFootprintPad(circuitJson, pad1, i)
+        const pad2Ref = getReadableNameForFootprintPad(circuitJson, pad2, j)
 
         const error: PcbFootprintOverlapError = {
           type: "pcb_footprint_overlap_error",
