@@ -186,7 +186,7 @@ function checkTracesAreContiguous(
       if (!lastConnectsToAnyPad && lastPoint.route_type === "wire") {
         errors.push({
           type: "pcb_trace_error",
-          message: `Trace [${traceName}] has disconnected endpoint at (${lastPoint.x}, ${lastPoint.y})`,
+          message: `Trace [${traceName}] has disconnected endpoint at (${lastPoint.x.toFixed(2)}, ${lastPoint.y.toFixed(2)})`,
           source_trace_id:
             sourceTrace?.source_trace_id ||
             trace.source_trace_id ||

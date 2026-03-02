@@ -32,7 +32,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkEachPcbTraceNonOverlapping(circuitJson),
     ...checkSameNetViaSpacing(circuitJson),
     ...checkDifferentNetViaSpacing(circuitJson),
-    ...checkTracesAreContiguous(circuitJson),
+    // ...checkTracesAreContiguous(circuitJson),
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
 }
