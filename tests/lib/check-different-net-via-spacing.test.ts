@@ -63,7 +63,7 @@ describe("checkDifferentNetViaSpacing", () => {
   })
 
   test("no error for duplicate vias at the same location on different nets", () => {
-    const soup: AnyCircuitElement[] = [
+    const circuitJson: AnyCircuitElement[] = [
       { type: "pcb_trace", pcb_trace_id: "trace1", route: [] },
       { type: "pcb_trace", pcb_trace_id: "trace2", route: [] },
       {
@@ -88,7 +88,7 @@ describe("checkDifferentNetViaSpacing", () => {
       },
     ]
 
-    const errors = checkDifferentNetViaSpacing(soup)
+    const errors = checkDifferentNetViaSpacing(circuitJson)
     expect(errors).toHaveLength(0)
   })
 
