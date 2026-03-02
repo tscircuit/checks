@@ -72,12 +72,12 @@ function checkTracesAreContiguous(
 
         if (prevIsWire && nextIsWire) {
           const prevAligned =
-            Math.abs(prevPoint.x - currentPoint.x) < 0.001 &&
-            Math.abs(prevPoint.y - currentPoint.y) < 0.001
+            Math.abs(prevPoint.x - currentPoint.x) < 0.01 &&
+            Math.abs(prevPoint.y - currentPoint.y) < 0.01
 
           const nextAligned =
-            Math.abs(nextPoint.x - currentPoint.x) < 0.001 &&
-            Math.abs(nextPoint.y - currentPoint.y) < 0.001
+            Math.abs(nextPoint.x - currentPoint.x) < 0.01 &&
+            Math.abs(nextPoint.y - currentPoint.y) < 0.01
 
           if (!prevAligned || !nextAligned) {
             const traceName =
@@ -170,7 +170,7 @@ function checkTracesAreContiguous(
       if (!firstConnectsToAnyPad && firstPoint.route_type === "wire") {
         errors.push({
           type: "pcb_trace_error",
-          message: `Trace [${traceName}] has disconnected endpoint at (${firstPoint.x}, ${firstPoint.y})`,
+          message: `Trace [${traceName}] has disconnected endpoint at (${firstPoint.x.toFixed(2)}, ${firstPoint.y.toFixed(2)})`,
           source_trace_id:
             sourceTrace?.source_trace_id ||
             trace.source_trace_id ||
