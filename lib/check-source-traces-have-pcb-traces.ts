@@ -7,6 +7,17 @@ import type {
 } from "circuit-json"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
 
+const getSourceTraceIdsFromPcbTrace = (
+  pcbTraceSourceTraceId?: string,
+): string[] => {
+  if (!pcbTraceSourceTraceId) return []
+  if (!pcbTraceSourceTraceId.includes("__")) return [pcbTraceSourceTraceId]
+
+  return pcbTraceSourceTraceId
+    .split("__")
+    .filter((part) => part.startsWith("source_trace_"))
+}
+
 /**
  * Check that each source_trace which connects source ports has at least one
  * pcb_trace associated with it. If a source_trace has no corresponding
@@ -28,8 +39,10 @@ function checkSourceTracesHavePcbTraces(
     if ((sourceTrace.connected_source_net_ids?.length ?? 0) > 0) continue
     if (sourceTrace.connected_source_port_ids.length < 2) continue
 
-    const hasPcbTrace = pcbTraces.some(
-      (pcbTrace) => pcbTrace.source_trace_id === sourceTrace.source_trace_id,
+    const hasPcbTrace = pcbTraces.some((pcbTrace) =>
+      getSourceTraceIdsFromPcbTrace(pcbTrace.source_trace_id).includes(
+        sourceTrace.source_trace_id,
+      ),
     )
     if (!hasPcbTrace) {
       // Get PCB ports connected to this source trace
