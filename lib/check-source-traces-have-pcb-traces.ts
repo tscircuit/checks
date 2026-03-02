@@ -1,9 +1,9 @@
 import type {
   AnyCircuitElement,
+  PcbPort,
+  PcbTrace,
   PcbTraceMissingError,
   SourceTrace,
-  PcbTrace,
-  PcbPort,
 } from "circuit-json"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
 
@@ -25,6 +25,9 @@ function checkSourceTracesHavePcbTraces(
 
   for (const sourceTrace of sourceTraces) {
     if (!sourceTrace.connected_source_port_ids?.length) continue
+    if ((sourceTrace.connected_source_net_ids?.length ?? 0) > 0) continue
+    if (sourceTrace.connected_source_port_ids.length < 2) continue
+
     const hasPcbTrace = pcbTraces.some(
       (pcbTrace) => pcbTrace.source_trace_id === sourceTrace.source_trace_id,
     )

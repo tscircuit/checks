@@ -6,6 +6,7 @@
     "module": "ESNext",
     "moduleDetection": "force",
     "jsx": "react-jsx",
+    "types": ["bun-types", "tscircuit"],
     "allowJs": true,
     "baseUrl": ".",
     "paths": {

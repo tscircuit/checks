@@ -78,4 +78,28 @@ describe("checkSourceTracesHavePcbTraces", () => {
     const errors = checkSourceTracesHavePcbTraces(circuitJson as any)
     expect(errors).toHaveLength(0)
   })
+
+  test("does not return error for net-connected source trace", () => {
+    const circuitJson = [
+      {
+        type: "source_trace",
+        source_trace_id: "trace1",
+        connected_source_port_ids: ["p1"],
+        connected_source_net_ids: ["net.GND"],
+        display_name: "trace1",
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "pcb_port_1",
+        source_port_id: "p1",
+        pcb_component_id: "pcb_component_1",
+        x: 0,
+        y: 0,
+        layers: ["top"],
+      },
+    ]
+
+    const errors = checkSourceTracesHavePcbTraces(circuitJson as any)
+    expect(errors).toHaveLength(0)
+  })
 })
