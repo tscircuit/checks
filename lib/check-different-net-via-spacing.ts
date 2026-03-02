@@ -35,6 +35,7 @@ export function checkDifferentNetViaSpacing(
     for (let j = i + 1; j < vias.length; j++) {
       const viaA = vias[i]
       const viaB = vias[j]
+      // It is a very inefficient piece of code, the way to fix it is to use flatbush.
       if (areAtSameLocation(viaA, viaB)) continue
       if (connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
       const gap =
