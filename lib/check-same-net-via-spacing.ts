@@ -9,10 +9,8 @@ import {
   type ConnectivityMap,
 } from "circuit-json-to-connectivity-map"
 import { DEFAULT_SAME_NET_VIA_MARGIN, EPSILON } from "lib/drc-defaults"
-
-function distance(a: PcbVia, b: PcbVia): number {
-  return Math.hypot(a.x - b.x, a.y - b.y)
-}
+import { distance } from "lib/util/distance"
+import { viasAreAtSameLocation } from "lib/util/viasAreAtSameLocation"
 
 export function checkSameNetViaSpacing(
   circuitJson: AnyCircuitElement[],
@@ -31,6 +29,8 @@ export function checkSameNetViaSpacing(
     for (let j = i + 1; j < vias.length; j++) {
       const viaA = vias[i]
       const viaB = vias[j]
+      // TODO: It is a very inefficient piece of code, the way to fix it is to use flatbush.
+      if (viasAreAtSameLocation(viaA, viaB)) continue
       if (!connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
       const gap =
         distance(viaA, viaB) - viaA.outer_diameter / 2 - viaB.outer_diameter / 2
