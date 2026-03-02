@@ -1,21 +1,23 @@
+import type { AnyCircuitElement } from "circuit-json"
+import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
 import { checkEachPcbPortConnectedToPcbTraces } from "./check-each-pcb-port-connected-to-pcb-trace"
 import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
-import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
-import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
-import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
-import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
+import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
+import { checkPcbComponentOwnFootprintPadOverlap } from "./check-pcb-components-overlap/checkPcbComponentOwnFootprintPadOverlap"
+import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
+import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
-import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
-import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
-import type { AnyCircuitElement } from "circuit-json"
+import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkViasOffBoard(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
+    ...checkPcbComponentOwnFootprintPadOverlap(circuitJson),
   ]
 }
 

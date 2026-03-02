@@ -1,7 +1,8 @@
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, PcbPlatedHole, PcbSmtPad } from "circuit-json"
 import {
   getReadableNameForElement,
   getReadableNameForPcbPort,
+  getBoundsOfPcbElements,
 } from "@tscircuit/circuit-json-util"
 
 const CIRCUIT_JSON_ID_PATTERN =
@@ -128,3 +129,21 @@ export const getReadableNameForGroup = (
 
 export const containsCircuitJsonId = (message: string): boolean =>
   CIRCUIT_JSON_ID_PATTERN.test(message)
+
+export function getReadableNameForFootprintPad(
+  circuitJson: AnyCircuitElement[],
+  pad: PcbSmtPad | PcbPlatedHole,
+  ordinal: number,
+): string {
+  const padKind = pad.type === "pcb_smtpad" ? "SMD pad" : "through-hole pad"
+  const portRef = pad.pcb_port_id
+    ? getReadableNameForPort(circuitJson, pad.pcb_port_id)
+    : null
+  const bounds = getBoundsOfPcbElements([pad])
+  const centerX = (bounds.minX + bounds.maxX) / 2
+  const centerY = (bounds.minY + bounds.maxY) / 2
+  const location = `(${centerX.toFixed(2)}mm, ${centerY.toFixed(2)}mm)`
+
+  if (portRef) return `${padKind} ${portRef} at ${location}`
+  return `${padKind} #${ordinal + 1} at ${location}`
+}
