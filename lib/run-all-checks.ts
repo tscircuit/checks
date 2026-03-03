@@ -5,7 +5,6 @@ import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-over
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
-import { checkPcbComponentOwnFootprintPadOverlap } from "./check-pcb-components-overlap/checkPcbComponentOwnFootprintPadOverlap"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
@@ -17,7 +16,6 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
     ...checkViasOffBoard(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
-    ...checkPcbComponentOwnFootprintPadOverlap(circuitJson),
   ]
 }
 
