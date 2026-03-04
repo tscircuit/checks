@@ -6,7 +6,10 @@ import {
 import { doBoundsOverlap } from "@tscircuit/math-utils"
 import type { AnyCircuitElement, PcbFootprintOverlapError } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
-import { getReadableNameForElementId } from "lib/util/get-readable-names"
+import {
+  getReadableNameForElementId,
+  getReadableNameForPort,
+} from "lib/util/get-readable-names"
 import {
   type OverlappableElement,
   doPcbElementsOverlap,
@@ -21,6 +24,19 @@ interface ComponentWithElements {
     maxX: number
     maxY: number
   }
+}
+
+const formatOverlapElementDescription = (
+  circuitJson: AnyCircuitElement[],
+  element: OverlappableElement,
+): string => {
+  if ("pcb_port_id" in element && element.pcb_port_id) {
+    return getReadableNameForPort(circuitJson, element.pcb_port_id)
+  }
+
+  const id = getPrimaryId(element)
+  const readableName = getReadableNameForElementId(circuitJson, id)
+  return readableName === "element" ? `[${id}]` : readableName
 }
 
 /**
@@ -120,12 +136,21 @@ export function checkPcbComponentOverlap(
 
           // Check if element bounds overlap
           if (doPcbElementsOverlap(elem1, elem2)) {
+            const elem1Description = formatOverlapElementDescription(
+              circuitJson,
+              elem1,
+            )
+            const elem2Description = formatOverlapElementDescription(
+              circuitJson,
+              elem2,
+            )
+
             // Create error object
             const error: PcbFootprintOverlapError = {
               type: "pcb_footprint_overlap_error",
               pcb_error_id: `pcb_footprint_overlap_${id1}_${id2}`,
               error_type: "pcb_footprint_overlap_error",
-              message: `${elem1.type} ${getReadableNameForElementId(circuitJson, id1)} overlaps with ${elem2.type} ${getReadableNameForElementId(circuitJson, id2)}`,
+              message: `${elem1.type} ${elem1Description} overlaps with ${elem2.type} ${elem2Description}`,
             }
 
             // Add relevant IDs based on element types
