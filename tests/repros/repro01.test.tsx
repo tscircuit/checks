@@ -52,7 +52,7 @@ const OverlapRepro = () => (
   </board>
 )
 
-test("test.tsx reproduces overlapping pcb_smtpad error with specific message", async () => {
+test("repro01: overlapping pcb_smtpad error uses concise pin references", async () => {
   const circuit = new Circuit()
   circuit.add(<OverlapRepro />)
 
@@ -62,10 +62,9 @@ test("test.tsx reproduces overlapping pcb_smtpad error with specific message", a
   const errors = checkPcbComponentOverlap(circuitJson as any)
 
   expect(errors).toHaveLength(1)
-  expect(errors[0].message).toContain("pcb_smtpad")
-  expect(errors[0].message).toContain("USBC1")
-  expect(errors[0].message).toContain("U1")
-  expect(errors[0].message).toContain("mm")
+  expect(errors[0].message).toMatchInlineSnapshot(
+    `"pcb_smtpad USBC1.A4B9 overlaps with pcb_smtpad U1.USB_DP"`,
+  )
 
   const pcbSoupWithErrors = [...circuitJson, ...errors]
 

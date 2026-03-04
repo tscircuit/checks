@@ -7,7 +7,6 @@ import { doBoundsOverlap } from "@tscircuit/math-utils"
 import type { AnyCircuitElement, PcbFootprintOverlapError } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import {
-  getReadableNameForComponent,
   getReadableNameForElementId,
   getReadableNameForPort,
 } from "lib/util/get-readable-names"
@@ -31,33 +30,13 @@ const formatOverlapElementDescription = (
   circuitJson: AnyCircuitElement[],
   element: OverlappableElement,
 ): string => {
+  if ("pcb_port_id" in element && element.pcb_port_id) {
+    return getReadableNameForPort(circuitJson, element.pcb_port_id)
+  }
+
   const id = getPrimaryId(element)
   const readableName = getReadableNameForElementId(circuitJson, id)
-  const bounds = getBoundsOfPcbElements([element])
-  const centerX = ((bounds.minX + bounds.maxX) / 2).toFixed(2)
-  const centerY = ((bounds.minY + bounds.maxY) / 2).toFixed(2)
-
-  const nameWithId =
-    readableName === "element" ? `[${id}]` : `${readableName} [${id}]`
-
-  const componentRef =
-    "pcb_component_id" in element && element.pcb_component_id
-      ? getReadableNameForComponent(circuitJson, element.pcb_component_id)
-      : null
-
-  const portRef =
-    "pcb_port_id" in element && element.pcb_port_id
-      ? getReadableNameForPort(circuitJson, element.pcb_port_id)
-      : null
-
-  const contextParts = [
-    componentRef ? `component ${componentRef}` : null,
-    portRef ? `port ${portRef}` : null,
-  ].filter(Boolean)
-
-  const context = contextParts.length > 0 ? ` (${contextParts.join(", ")})` : ""
-
-  return `${element.type} ${nameWithId}${context} at (${centerX}mm, ${centerY}mm)`
+  return readableName === "element" ? `[${id}]` : readableName
 }
 
 /**
@@ -171,7 +150,7 @@ export function checkPcbComponentOverlap(
               type: "pcb_footprint_overlap_error",
               pcb_error_id: `pcb_footprint_overlap_${id1}_${id2}`,
               error_type: "pcb_footprint_overlap_error",
-              message: `${elem1Description} overlaps with ${elem2Description}`,
+              message: `${elem1.type} ${elem1Description} overlaps with ${elem2.type} ${elem2Description}`,
             }
 
             // Add relevant IDs based on element types
