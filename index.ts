@@ -15,3 +15,5 @@ export {
   runAllPlacementChecks,
   runAllRoutingChecks,
 } from "./lib/run-all-checks"
+
+export { checkPcbConnectorAccessibility } from "./lib/check-pcb-connector-accessibility"
