@@ -56,8 +56,8 @@ test("repro01: overlapping pcb_smtpad error uses concise pin references", async 
   const circuit = new Circuit({
     platform: {
       netlistDrcChecksDisabled: true,
-      placementDrcChecksDisabled: true
-    }
+      placementDrcChecksDisabled: true,
+    },
   })
   circuit.add(<OverlapRepro />)
 
