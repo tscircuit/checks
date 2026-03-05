@@ -4,10 +4,42 @@ import type {
   PcbComponent,
   PcbConnectorNotInAccessibleOrientationWarning,
 } from "circuit-json"
-import { getBoardBounds } from "@tscircuit/circuit-json-util"
 import { getReadableNameForComponent } from "./util/get-readable-names"
 
 type FacingDirection = "x-" | "x+" | "y+" | "y-"
+
+function getBoardBounds(board: PcbBoard): {
+  minX: number
+  maxX: number
+  minY: number
+  maxY: number
+} | null {
+  if (board.outline && board.outline.length > 0) {
+    const xs = board.outline.map((p) => p.x)
+    const ys = board.outline.map((p) => p.y)
+    return {
+      minX: Math.min(...xs),
+      maxX: Math.max(...xs),
+      minY: Math.min(...ys),
+      maxY: Math.max(...ys),
+    }
+  }
+
+  if (
+    board.center &&
+    typeof board.width === "number" &&
+    typeof board.height === "number"
+  ) {
+    return {
+      minX: board.center.x - board.width / 2,
+      maxX: board.center.x + board.width / 2,
+      minY: board.center.y - board.height / 2,
+      maxY: board.center.y + board.height / 2,
+    }
+  }
+
+  return null
+}
 
 function getFacingDirection(component: PcbComponent): FacingDirection | null {
   if (!component.center || !component.cable_insertion_center) return null
