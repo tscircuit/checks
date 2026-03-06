@@ -42,6 +42,46 @@ test("runAllChecks executes checks on tscircuit code", async () => {
   expect(errors.length).toBe(0)
 })
 
+test("runAllNetlistChecks excludes routing-only pcb trace connectivity checks", async () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "source_component",
+      source_component_id: "source_component_1",
+      ftype: "simple_resistor",
+      name: "R1",
+      resistance: 1000,
+      supplier_part_numbers: {},
+    },
+    {
+      type: "source_port",
+      source_port_id: "source_port_1",
+      source_component_id: "source_component_1",
+      name: "pin1",
+      pin_number: 1,
+      port_hints: ["1"],
+    },
+    {
+      type: "source_port",
+      source_port_id: "source_port_2",
+      source_component_id: "source_component_1",
+      name: "pin2",
+      pin_number: 2,
+      port_hints: ["2"],
+    },
+    {
+      type: "source_trace",
+      source_trace_id: "source_trace_1",
+      connected_source_port_ids: ["source_port_1", "source_port_2"],
+      connected_source_net_ids: [],
+    },
+  ]
+
+  const netlistErrors = await runAllNetlistChecks(circuitJson)
+  const routingErrors = await runAllRoutingChecks(circuitJson)
+
+  expect(netlistErrors).toEqual([])
+  expect(routingErrors.length).toBeGreaterThan(0)
+})
 test("runAllChecks equals placement + netlist + routing checks", async () => {
   const circuitJson: AnyCircuitElement[] = [
     {

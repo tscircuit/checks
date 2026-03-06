@@ -22,15 +22,13 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
 }
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
-  return [
-    ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
-    ...checkSourceTracesHavePcbTraces(circuitJson),
-    ...checkPinMustBeConnected(circuitJson),
-  ]
+  return [...checkPinMustBeConnected(circuitJson)]
 }
 
 export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   return [
+    ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
+    ...checkSourceTracesHavePcbTraces(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson),
     ...checkSameNetViaSpacing(circuitJson),
     ...checkDifferentNetViaSpacing(circuitJson),

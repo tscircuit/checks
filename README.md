@@ -27,8 +27,8 @@ and output an array of arrays for any issues found.
 | Function | Description |
 | --- | --- |
 | [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs all placement checks (`checkViasOffBoard`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverlap`, and `checkConnectorAccessibleOrientation`). |
-| [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs all netlist checks (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, and `checkPinMustBeConnected`). |
-| [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbTraceNonOverlapping`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). |
+| [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs all netlist checks (`checkPinMustBeConnected`). |
+| [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs all placement, netlist, and routing checks and returns a combined list of errors. |
 
 ## Implementation Details
