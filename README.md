@@ -9,53 +9,27 @@ and output an array of arrays for any issues found.
 
 | Function | Description |
 | --- | --- |
-| [`checkEachPcbPortConnected`](#checkeachpcbportconnectedsoup-anysoupelement--pcbtraceerror) | Verifies every `source_port` is connected to a net or its fellow source ports. |
-| [`checkEachPcbTraceNonOverlapping`](#checkeachpcbtracenonoverlappingsoup-anysoupelement--pcbtraceerror) | Detects overlapping `pcb_trace` segments that aren't on the same net. |
-| [`checkSameNetViaSpacing`](#checksamenetviaspacingcircuitjson-anycircuitelement--pcbviaclearanceerror) | Ensures vias sharing a net respect the minimum spacing margin. |
-| [`checkDifferentNetViaSpacing`](#checkdifferentnetviaspacingcircuitjson-anycircuitelement--pcbviaclearanceerror) | Flags vias on different nets that violate clearance requirements. |
-| [`checkViasOffBoard`](#checkviasoffboardcircuitjson-anycircuitelement--pcbplacementerror) | Checks for vias that extend beyond or cross the PCB boundary. |
-| [`checkPcbComponentsOutOfBoard`](#checkpcbcomponentsoutofboardcircuitjson-anycircuitelement--pcbplacementerror) | Identifies PCB components that don't fit entirely within the board outline. |
-| [`checkPcbComponentOverlap`](#checkpcbcomponentoverlapcircuitjson-anycircuitelement--pcbfootprintoverlaperror) | Detects overlapping PCB footprint elements (pads, holes) from different components on different nets. |
-| [`checkTracesAreContiguous`](#checktracesarecontiguouscircuitjson-anycircuitelement--pcbtraceerror) | Validates that traces align correctly and connect to their intended pads. |
+| [`checkConnectorAccessibleOrientation`](./lib/check-connector-accessible-orientation.ts) | Returns `pcb_accessibility_error` for connectors whose orientation makes them inaccessible. |
+| [`checkDifferentNetViaSpacing`](./lib/check-different-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on different nets are too close together. |
+| [`checkEachPcbPortConnectedToPcbTraces`](./lib/check-each-pcb-port-connected-to-pcb-trace.ts) | Returns `pcb_trace_error` if any `source_port` is not connected to its corresponding PCB traces. |
+| [`checkEachPcbTraceNonOverlapping`](./lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping.ts) | Returns `pcb_trace_error` when `pcb_trace` segments overlap incompatible geometry on the same layer. |
+| [`checkPcbComponentOverlap`](./lib/check-pcb-components-overlap/checkPcbComponentOverlap.ts) | Returns `pcb_footprint_overlap_error` when footprint elements from different components overlap in disallowed ways. |
+| [`checkPcbComponentsOutOfBoard`](./lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard.ts) | Returns `pcb_placement_error` when PCB components do not fit inside the board area. |
+| [`checkPcbTracesOutOfBoard`](./lib/check-trace-out-of-board/checkTraceOutOfBoard.ts) | Returns `pcb_trace_error` when any trace segment or via extends beyond the board boundary. |
+| [`checkPinMustBeConnected`](./lib/check-pin-must-be-connected.ts) | Returns `pcb_trace_error` when required source pins are not connected. |
+| [`checkSameNetViaSpacing`](./lib/check-same-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on the same net are closer than the allowed margin. |
+| [`checkSourceTracesHavePcbTraces`](./lib/check-source-traces-have-pcb-traces.ts) | Returns `pcb_trace_error` when source traces are missing corresponding `pcb_trace` routes. |
+| [`checkTracesAreContiguous`](./lib/check-traces-are-contiguous/check-traces-are-contiguous.ts) | Returns `pcb_trace_error` when trace endpoints are floating or do not connect as expected. |
+| [`checkViasOffBoard`](./lib/check-pcb-components-out-of-board/checkViasOffBoard.ts) | Returns `pcb_placement_error` if any PCB via lies outside or crosses the board boundary. |
 
-## `checkEachPcbPortConnected(soup: AnySoupElement[]) => PCBTraceError[]`
+## Aggregate check runner functions
 
-Returns `pcb_trace_error` if any `source_port` is not connected to a net or it's other
-source ports.
-
-## `checkEachPcbTraceNonOverlapping(soup: AnySoupElement[]) => PCBTraceError[]`
-
-Returns `pcb_trace_error` if any `pcb_trace` is overlapping with another `pcb_trace`
-that is not connected to the same net.
-
-## `checkSameNetViaSpacing(circuitJson: AnyCircuitElement[]) => PcbViaClearanceError[]`
-
-Returns `pcb_via_clearance_error` if any vias on the same net are placed closer
-than the allowed margin.
-
-## `checkDifferentNetViaSpacing(circuitJson: AnyCircuitElement[]) => PcbViaClearanceError[]`
-
-Returns `pcb_via_clearance_error` if any vias on different nets are placed closer
-than the allowed margin.
-
-## `checkViasOffBoard(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
-
-Returns `pcb_placement_error` if any PCB via lies outside or crosses the board
-boundary.
-
-## `checkPcbComponentsOutOfBoard(circuitJson: AnyCircuitElement[]) => PcbPlacementError[]`
-
-Returns `pcb_placement_error` when a PCB component does not fit inside the board
-area.
-
-## `checkPcbComponentOverlap(circuitJson: AnyCircuitElement[]) => PcbFootprintOverlapError[]`
-
-Returns `pcb_footprint_overlap_error` when PCB footprint elements (SMT pads, plated holes, or holes) from different components overlap. SMT pads on the same electrical net are allowed to overlap.
-
-## `checkTracesAreContiguous(circuitJson: AnyCircuitElement[]) => PCBTraceError[]`
-
-Returns `pcb_trace_error` if a PCB trace is misaligned or does not properly
-connect to its expected pads.
+| Function | Description |
+| --- | --- |
+| [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs all placement checks (`checkViasOffBoard`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverlap`, and `checkConnectorAccessibleOrientation`). |
+| [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs all netlist checks (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, and `checkPinMustBeConnected`). |
+| [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbTraceNonOverlapping`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). |
+| [`runAllChecks`](./lib/run-all-checks.ts) | Runs all placement, netlist, and routing checks and returns a combined list of errors. |
 
 ## Implementation Details
 
