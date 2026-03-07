@@ -17,6 +17,7 @@ and output an array of arrays for any issues found.
 | [`checkPcbComponentsOutOfBoard`](./lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard.ts) | Returns `pcb_placement_error` when PCB components do not fit inside the board area. |
 | [`checkPcbTracesOutOfBoard`](./lib/check-trace-out-of-board/checkTraceOutOfBoard.ts) | Returns `pcb_trace_error` when any trace segment or via extends beyond the board boundary. |
 | [`checkPinMustBeConnected`](./lib/check-pin-must-be-connected.ts) | Returns `pcb_trace_error` when required source pins are not connected. |
+| [`checkAllPinsInComponentAreUnderspecified`](./lib/check-all-pins-in-component-underspecified.ts) | Returns `source_component_all_pins_underspecified_error` when every `source_port` in a component is missing pin attributes and basic pin metadata (`pin_number`/`port_hints`). |
 | [`checkSameNetViaSpacing`](./lib/check-same-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on the same net are closer than the allowed margin. |
 | [`checkSourceTracesHavePcbTraces`](./lib/check-source-traces-have-pcb-traces.ts) | Returns `pcb_trace_error` when source traces are missing corresponding `pcb_trace` routes. |
 | [`checkTracesAreContiguous`](./lib/check-traces-are-contiguous/check-traces-are-contiguous.ts) | Returns `pcb_trace_error` when trace endpoints are floating or do not connect as expected. |
@@ -27,7 +28,7 @@ and output an array of arrays for any issues found.
 | Function | Description |
 | --- | --- |
 | [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs all placement checks (`checkViasOffBoard`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverlap`, and `checkConnectorAccessibleOrientation`). |
-| [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs all netlist checks (`checkPinMustBeConnected`). |
+| [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs all netlist checks (`checkAllPinsInComponentAreUnderspecified` and `checkPinMustBeConnected`). |
 | [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs all placement, netlist, and routing checks and returns a combined list of errors. |
 

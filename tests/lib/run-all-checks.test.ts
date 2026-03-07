@@ -82,6 +82,36 @@ test("runAllNetlistChecks excludes routing-only pcb trace connectivity checks", 
   expect(netlistErrors).toEqual([])
   expect(routingErrors.length).toBeGreaterThan(0)
 })
+
+test("runAllNetlistChecks includes underspecified pin errors", async () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "source_component",
+      source_component_id: "source_component_1",
+      ftype: "simple_chip",
+      name: "U1",
+      supplier_part_numbers: {},
+    },
+    {
+      type: "source_port",
+      source_port_id: "source_port_1",
+      source_component_id: "source_component_1",
+      name: "pin1",
+    },
+    {
+      type: "source_port",
+      source_port_id: "source_port_2",
+      source_component_id: "source_component_1",
+      name: "pin2",
+    },
+  ]
+
+  const netlistErrors = await runAllNetlistChecks(circuitJson)
+  expect(netlistErrors).toHaveLength(1)
+  expect(netlistErrors[0].error_type).toBe(
+    "source_component_all_pins_underspecified_error",
+  )
+})
 test("runAllChecks equals placement + netlist + routing checks", async () => {
   const circuitJson: AnyCircuitElement[] = [
     {

@@ -87,6 +87,6 @@ test("test.tsx builds and has no netlist errors", async () => {
 
   const circuitJson = circuit.getCircuitJson()
 
-  const netlistErrors = await runAllNetlistChecks(circuitJson as any)
+  const netlistErrors = await runAllNetlistChecks(circuitJson)
   expect(netlistErrors).toEqual([])
 })
