@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkViaToPadSpacing } from "lib/check-via-to-pad-spacing"
 import type { AnyCircuitElement } from "circuit-json"
 
-test("returns error when via is too close to a rectangular SMT pad", () => {
+test("returns error when via is too close to a rectangular SMT pad", async () => {
   const soup: AnyCircuitElement[] = [
     {
       type: "pcb_via",
@@ -28,4 +29,9 @@ test("returns error when via is too close to a rectangular SMT pad", () => {
   const errors = checkViaToPadSpacing(soup)
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain("too close to pad")
+
+  const svg = convertCircuitJsonToPcbSvg([...soup, ...errors], {
+    shouldDrawErrors: true,
+  })
+  await expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
