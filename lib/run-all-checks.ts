@@ -1,4 +1,5 @@
 import type { AnyCircuitElement } from "circuit-json"
+import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
 import { checkEachPcbPortConnectedToPcbTraces } from "./check-each-pcb-port-connected-to-pcb-trace"
 import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
@@ -22,7 +23,10 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
 }
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
-  return [...checkPinMustBeConnected(circuitJson)]
+  return [
+    ...checkPinMustBeConnected(circuitJson),
+    ...checkAllPinsInComponentAreUnderspecified(circuitJson),
+  ]
 }
 
 export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
