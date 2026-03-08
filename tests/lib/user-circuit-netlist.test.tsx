@@ -63,6 +63,9 @@ test("test.tsx builds and has no netlist errors", async () => {
     <board width="12mm" height="30mm">
       <SmdUsbC
         name="USBC"
+        pinAttributes={{
+          GND1: { mustBeConnected: false },
+        }}
         connections={{
           GND1: "net.GND",
           GND2: "net.GND",
@@ -72,8 +75,25 @@ test("test.tsx builds and has no netlist errors", async () => {
         pcbY={-10}
         schX={-4}
       />
-      <led name="LED" color="red" footprint="0603" pcbY={12} schY={2} />
-      <resistor name="R1" footprint="0603" resistance="1k" pcbY={7} />
+      <led
+        name="LED"
+        color="red"
+        footprint="0603"
+        pinAttributes={{
+          pos: { mustBeConnected: false },
+        }}
+        pcbY={12}
+        schY={2}
+      />
+      <resistor
+        name="R1"
+        footprint="0603"
+        resistance="1k"
+        pinAttributes={{
+          pos: { mustBeConnected: false },
+        }}
+        pcbY={7}
+      />
 
       <trace from=".USBC > .VBUS1" to=".R1 > .pos" />
       <trace from=".USBC > .VBUS2" to=".USBC > .VBUS1" />
