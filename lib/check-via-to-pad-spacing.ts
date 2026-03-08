@@ -24,7 +24,7 @@ function getPadRadius(pad: Pad): number {
       pad.shape === "pill" ||
       pad.shape === "rotated_pill"
     ) {
-      return Math.max(pad.width, pad.height) / 2
+      return Math.sqrt(pad.width ** 2 + pad.height ** 2) / 2
     }
     return 0
   }
