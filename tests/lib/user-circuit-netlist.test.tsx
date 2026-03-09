@@ -63,6 +63,9 @@ test("test.tsx builds and has no netlist errors", async () => {
     <board width="12mm" height="30mm">
       <SmdUsbC
         name="USBC"
+        pinAttributes={{
+          GND1: { mustBeConnected: false },
+        }}
         connections={{
           GND1: "net.GND",
           GND2: "net.GND",
