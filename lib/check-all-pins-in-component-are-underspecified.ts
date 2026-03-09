@@ -3,15 +3,14 @@ import type {
   AnyCircuitElement,
   SourcePinAttributes,
   SourcePort,
+  SourceComponentBase,
 } from "circuit-json"
 import { source_pin_attributes } from "circuit-json"
 
-type SourceComponent = Extract<AnyCircuitElement, { type: "source_component" }>
-
-type SourceComponentPinsUnderspecifiedError = {
-  type: "source_component_pins_underspecified_error"
-  source_component_pins_underspecified_error_id: string
-  error_type: "source_component_pins_underspecified_error"
+type SourceComponentPinsUnderspecifiedWarning = {
+  type: "source_component_pins_underspecified_warning"
+  source_component_pins_underspecified_warning_id: string
+  warning_type: "source_component_pins_underspecified_warning"
   message: string
   source_component_id: string
   source_port_ids: string[]
@@ -28,16 +27,16 @@ function hasAnyPinAttribute(port: SourcePort): boolean {
 
 /**
  * Check that each component with ports has at least one pin attribute
- * specified across its ports. Returns an error when all pins are
+ * specified across its ports. Returns a warning when all pins are
  * underspecified (no SourcePinAttributes fields set on any port).
  */
 export function checkAllPinsInComponentAreUnderspecified(
   circuitJson: AnyCircuitElement[],
-): SourceComponentPinsUnderspecifiedError[] {
-  const errors: SourceComponentPinsUnderspecifiedError[] = []
+): SourceComponentPinsUnderspecifiedWarning[] {
+  const warnings: SourceComponentPinsUnderspecifiedWarning[] = []
   const db = cju(circuitJson)
 
-  const sourceComponents = db.source_component.list() as SourceComponent[]
+  const sourceComponents = db.source_component.list() as SourceComponentBase[]
   const sourcePorts = db.source_port.list() as SourcePort[]
 
   const portsByComponent = new Map<string, SourcePort[]>()
@@ -61,10 +60,10 @@ export function checkAllPinsInComponentAreUnderspecified(
 
     if (hasAnySpecifiedAttributes) continue
 
-    errors.push({
-      type: "source_component_pins_underspecified_error",
-      source_component_pins_underspecified_error_id: `source_component_pins_underspecified_error_${component.source_component_id}`,
-      error_type: "source_component_pins_underspecified_error",
+    warnings.push({
+      type: "source_component_pins_underspecified_warning",
+      source_component_pins_underspecified_warning_id: `source_component_pins_underspecified_warning_${component.source_component_id}`,
+      warning_type: "source_component_pins_underspecified_warning",
       message: `All pins on ${component.name} are underspecified (no pinAttributes set)`,
       source_component_id: component.source_component_id,
       source_port_ids: componentPorts.map((port) => port.source_port_id),
@@ -72,5 +71,5 @@ export function checkAllPinsInComponentAreUnderspecified(
     })
   }
 
-  return errors
+  return warnings
 }

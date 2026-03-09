@@ -3,7 +3,7 @@ import type { AnyCircuitElement } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "lib/check-all-pins-in-component-are-underspecified"
 
 describe("checkAllPinsInComponentAreUnderspecified", () => {
-  test("returns an error when all ports on a component are missing pinAttributes", () => {
+  test("returns a warning when all ports on a component are missing pinAttributes", () => {
     const circuitJson: AnyCircuitElement[] = [
       {
         type: "source_component",
@@ -25,14 +25,20 @@ describe("checkAllPinsInComponentAreUnderspecified", () => {
       },
     ]
 
-    const errors = checkAllPinsInComponentAreUnderspecified(circuitJson)
-    expect(errors).toHaveLength(1)
-    expect(errors[0].source_component_id).toBe("component_1")
-    expect(errors[0].source_port_ids).toEqual(["port_1", "port_2"])
-    expect(errors[0].message).toContain("All pins on U1 are underspecified")
+    const warnings = checkAllPinsInComponentAreUnderspecified(circuitJson)
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0].type).toBe(
+      "source_component_pins_underspecified_warning",
+    )
+    expect(warnings[0].warning_type).toBe(
+      "source_component_pins_underspecified_warning",
+    )
+    expect(warnings[0].source_component_id).toBe("component_1")
+    expect(warnings[0].source_port_ids).toEqual(["port_1", "port_2"])
+    expect(warnings[0].message).toContain("All pins on U1 are underspecified")
   })
 
-  test("returns no error when at least one port on a component has pinAttributes", () => {
+  test("returns no warning when at least one port on a component has pinAttributes", () => {
     const circuitJson: AnyCircuitElement[] = [
       {
         type: "source_component",
@@ -55,11 +61,11 @@ describe("checkAllPinsInComponentAreUnderspecified", () => {
       },
     ]
 
-    const errors = checkAllPinsInComponentAreUnderspecified(circuitJson)
-    expect(errors).toHaveLength(0)
+    const warnings = checkAllPinsInComponentAreUnderspecified(circuitJson)
+    expect(warnings).toHaveLength(0)
   })
 
-  test("only returns errors for components whose all ports are underspecified", () => {
+  test("only returns warnings for components whose all ports are underspecified", () => {
     const circuitJson: AnyCircuitElement[] = [
       {
         type: "source_component",
@@ -88,9 +94,9 @@ describe("checkAllPinsInComponentAreUnderspecified", () => {
       },
     ]
 
-    const errors = checkAllPinsInComponentAreUnderspecified(circuitJson)
-    expect(errors).toHaveLength(1)
-    expect(errors[0].source_component_id).toBe("component_1")
+    const warnings = checkAllPinsInComponentAreUnderspecified(circuitJson)
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0].source_component_id).toBe("component_1")
   })
 
   test("ignores non-chip components", () => {
@@ -116,7 +122,7 @@ describe("checkAllPinsInComponentAreUnderspecified", () => {
       },
     ]
 
-    const errors = checkAllPinsInComponentAreUnderspecified(circuitJson)
-    expect(errors).toHaveLength(0)
+    const warnings = checkAllPinsInComponentAreUnderspecified(circuitJson)
+    expect(warnings).toHaveLength(0)
   })
 })
