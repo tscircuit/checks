@@ -92,4 +92,31 @@ describe("checkAllPinsInComponentAreUnderspecified", () => {
     expect(errors).toHaveLength(1)
     expect(errors[0].source_component_id).toBe("component_1")
   })
+
+  test("ignores non-chip components", () => {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "source_component",
+        source_component_id: "component_1",
+        name: "R1",
+        ftype: "simple_resistor",
+        resistance: 1000,
+      },
+      {
+        type: "source_port",
+        source_port_id: "port_1",
+        source_component_id: "component_1",
+        name: "pos",
+      },
+      {
+        type: "source_port",
+        source_port_id: "port_2",
+        source_component_id: "component_1",
+        name: "neg",
+      },
+    ]
+
+    const errors = checkAllPinsInComponentAreUnderspecified(circuitJson)
+    expect(errors).toHaveLength(0)
+  })
 })

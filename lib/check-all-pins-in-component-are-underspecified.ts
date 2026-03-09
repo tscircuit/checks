@@ -49,6 +49,8 @@ export function checkAllPinsInComponentAreUnderspecified(
   }
 
   for (const component of sourceComponents) {
+    if (component.ftype !== "simple_chip") continue
+
     const componentPorts =
       portsByComponent.get(component.source_component_id) ?? []
     if (componentPorts.length === 0) continue

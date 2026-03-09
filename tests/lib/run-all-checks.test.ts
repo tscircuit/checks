@@ -26,7 +26,6 @@ test("runAllChecks executes checks on tscircuit code", async () => {
       pin_number: 1,
       port_hints: ["1"],
       source_component_id: "R1",
-      must_be_connected: false,
     },
     {
       type: "source_port",
@@ -35,7 +34,6 @@ test("runAllChecks executes checks on tscircuit code", async () => {
       pin_number: 2,
       port_hints: ["2"],
       source_component_id: "R1",
-      must_be_connected: false,
     },
   ]
 
@@ -61,7 +59,6 @@ test("runAllNetlistChecks excludes routing-only pcb trace connectivity checks", 
       name: "pin1",
       pin_number: 1,
       port_hints: ["1"],
-      must_be_connected: false,
     },
     {
       type: "source_port",
@@ -70,7 +67,6 @@ test("runAllNetlistChecks excludes routing-only pcb trace connectivity checks", 
       name: "pin2",
       pin_number: 2,
       port_hints: ["2"],
-      must_be_connected: false,
     },
     {
       type: "source_trace",
@@ -124,7 +120,6 @@ test("runAllChecks equals placement + netlist + routing checks", async () => {
       name: "pin1",
       pin_number: 1,
       port_hints: ["1"],
-      must_be_connected: false,
     },
     {
       type: "source_port",
@@ -133,7 +128,6 @@ test("runAllChecks equals placement + netlist + routing checks", async () => {
       name: "pin2",
       pin_number: 2,
       port_hints: ["2"],
-      must_be_connected: false,
     },
     {
       type: "pcb_port",
@@ -211,7 +205,6 @@ test("runAllChecks error messages never expose circuit-json ids", async () => {
       name: "pin1",
       pin_number: 1,
       port_hints: ["1"],
-      must_be_connected: false,
     },
     {
       type: "source_port",
@@ -220,7 +213,6 @@ test("runAllChecks error messages never expose circuit-json ids", async () => {
       name: "pin2",
       pin_number: 2,
       port_hints: ["2"],
-      must_be_connected: false,
     },
     {
       type: "pcb_port",
