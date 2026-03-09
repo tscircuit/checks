@@ -8,6 +8,7 @@ import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkVias
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
+import { checkNoPowerPinDefinedForChip } from "./check-no-power-pin-defined-for-chip"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
@@ -26,6 +27,7 @@ export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkPinMustBeConnected(circuitJson),
     ...checkAllPinsInComponentAreUnderspecified(circuitJson),
+    ...checkNoPowerPinDefinedForChip(circuitJson),
   ]
 }
 

@@ -65,6 +65,8 @@ test("test.tsx builds and has no netlist errors", async () => {
         name="USBC"
         pinAttributes={{
           GND1: { mustBeConnected: false },
+          VBUS1: { requiresPower: true },
+          A4: { requiresPower: true },
         }}
         connections={{
           GND1: "net.GND",
@@ -90,6 +92,7 @@ test("test.tsx builds and has no netlist errors", async () => {
 
   const circuitJson = circuit.getCircuitJson()
 
-  const netlistErrors = await runAllNetlistChecks(circuitJson as any)
+  const netlistIssues = await runAllNetlistChecks(circuitJson)
+  const netlistErrors = netlistIssues.filter((issue) => "error_type" in issue)
   expect(netlistErrors).toEqual([])
 })
