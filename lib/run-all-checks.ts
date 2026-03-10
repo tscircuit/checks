@@ -9,6 +9,7 @@ import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPc
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
+import { checkViaToPadSpacing } from "./check-via-to-pad-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
@@ -36,6 +37,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkEachPcbTraceNonOverlapping(circuitJson),
     ...checkSameNetViaSpacing(circuitJson),
     ...checkDifferentNetViaSpacing(circuitJson),
+    ...checkViaToPadSpacing(circuitJson),
     // ...checkTracesAreContiguous(circuitJson),
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
