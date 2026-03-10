@@ -8,6 +8,8 @@ import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkVias
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
+import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
+import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
@@ -23,9 +25,16 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
 }
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
+  return [...checkPinMustBeConnected(circuitJson)]
+}
+
+export async function runAllPinSpecificationChecks(
+  circuitJson: AnyCircuitElement[],
+) {
   return [
-    ...checkPinMustBeConnected(circuitJson),
     ...checkAllPinsInComponentAreUnderspecified(circuitJson),
+    ...checkNoPowerPinDefined(circuitJson),
+    ...checkNoGroundPinDefined(circuitJson),
   ]
 }
 
@@ -45,6 +54,7 @@ export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...(await runAllPlacementChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
+    ...(await runAllPinSpecificationChecks(circuitJson)),
     ...(await runAllRoutingChecks(circuitJson)),
   ]
 }

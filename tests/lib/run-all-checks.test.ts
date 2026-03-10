@@ -2,6 +2,7 @@ import { expect, test } from "bun:test"
 import {
   runAllChecks,
   runAllNetlistChecks,
+  runAllPinSpecificationChecks,
   runAllPlacementChecks,
   runAllRoutingChecks,
 } from "../.." // index.ts when imported from root
@@ -82,7 +83,7 @@ test("runAllNetlistChecks excludes routing-only pcb trace connectivity checks", 
   expect(netlistErrors).toEqual([])
   expect(routingErrors.length).toBeGreaterThan(0)
 })
-test("runAllChecks equals placement + netlist + routing checks", async () => {
+test("runAllChecks equals placement + netlist + pin specification + routing checks", async () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "pcb_board",
@@ -158,11 +159,13 @@ test("runAllChecks equals placement + netlist + routing checks", async () => {
   const allChecksErrors = await runAllChecks(circuitJson)
   const placementErrors = await runAllPlacementChecks(circuitJson)
   const netlistErrors = await runAllNetlistChecks(circuitJson)
+  const pinSpecificationErrors = await runAllPinSpecificationChecks(circuitJson)
   const routingErrors = await runAllRoutingChecks(circuitJson)
 
   expect(allChecksErrors).toEqual([
     ...placementErrors,
     ...netlistErrors,
+    ...pinSpecificationErrors,
     ...routingErrors,
   ])
 })
