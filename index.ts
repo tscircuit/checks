@@ -10,10 +10,12 @@ export { checkPcbTracesOutOfBoard } from "./lib/check-trace-out-of-board/checkTr
 export { checkPcbComponentOverlap } from "./lib/check-pcb-components-overlap/checkPcbComponentOverlap"
 export { checkPinMustBeConnected } from "./lib/check-pin-must-be-connected"
 export { checkAllPinsInComponentAreUnderspecified } from "./lib/check-all-pins-in-component-are-underspecified"
-export { checkNoPowerPinDefinedForChip } from "./lib/check-no-power-pin-defined-for-chip"
+export { checkNoPowerPinDefined } from "./lib/check-no-power-pin-defined"
+export { checkNoGroundPinDefined } from "./lib/check-no-ground-pin-defined"
 export {
   runAllChecks,
   runAllNetlistChecks,
+  runAllPinSpecificationChecks,
   runAllPlacementChecks,
   runAllRoutingChecks,
 } from "./lib/run-all-checks"

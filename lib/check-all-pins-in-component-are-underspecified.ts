@@ -1,21 +1,12 @@
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
+  SourceComponentPinsUnderspecifiedWarning,
   SourcePinAttributes,
   SourcePort,
   SourceComponentBase,
 } from "circuit-json"
 import { source_pin_attributes } from "circuit-json"
-
-type SourceComponentPinsUnderspecifiedWarning = {
-  type: "source_component_pins_underspecified_warning"
-  source_component_pins_underspecified_warning_id: string
-  warning_type: "source_component_pins_underspecified_warning"
-  message: string
-  source_component_id: string
-  source_port_ids: string[]
-  subcircuit_id?: string
-}
 
 const PIN_ATTRIBUTE_KEYS = Object.keys(
   source_pin_attributes.shape,

@@ -2,27 +2,18 @@ import { cju } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   SourceComponentBase,
+  SourceNoPowerPinDefinedWarning,
   SourcePort,
 } from "circuit-json"
-
-type SourceChipNoPowerPinDefinedWarning = {
-  type: "source_chip_no_power_pin_defined_warning"
-  source_chip_no_power_pin_defined_warning_id: string
-  warning_type: "source_chip_no_power_pin_defined_warning"
-  message: string
-  source_component_id: string
-  source_port_ids: string[]
-  subcircuit_id?: string
-}
 
 /**
  * Check that each chip has at least one pin marked as requires_power=true.
  * Returns warnings for chips where no pin declares requires_power.
  */
-export function checkNoPowerPinDefinedForChip(
+export function checkNoPowerPinDefined(
   circuitJson: AnyCircuitElement[],
-): SourceChipNoPowerPinDefinedWarning[] {
-  const warnings: SourceChipNoPowerPinDefinedWarning[] = []
+): SourceNoPowerPinDefinedWarning[] {
+  const warnings: SourceNoPowerPinDefinedWarning[] = []
   const db = cju(circuitJson)
 
   const sourceComponents = db.source_component.list() as SourceComponentBase[]
@@ -49,9 +40,9 @@ export function checkNoPowerPinDefinedForChip(
     if (hasRequiredPowerPin) continue
 
     warnings.push({
-      type: "source_chip_no_power_pin_defined_warning",
-      source_chip_no_power_pin_defined_warning_id: `source_chip_no_power_pin_defined_warning_${component.source_component_id}`,
-      warning_type: "source_chip_no_power_pin_defined_warning",
+      type: "source_no_power_pin_defined_warning",
+      source_no_power_pin_defined_warning_id: `source_no_power_pin_defined_warning_${component.source_component_id}`,
+      warning_type: "source_no_power_pin_defined_warning",
       message: `${component.name} has no pin with requires_power=true`,
       source_component_id: component.source_component_id,
       source_port_ids: componentPorts.map((port) => port.source_port_id),

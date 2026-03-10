@@ -11,7 +11,8 @@ and output an array of arrays for any issues found.
 | --- | --- |
 | [`checkConnectorAccessibleOrientation`](./lib/check-connector-accessible-orientation.ts) | Returns `pcb_accessibility_error` for connectors whose orientation makes them inaccessible. |
 | [`checkAllPinsInComponentAreUnderspecified`](./lib/check-all-pins-in-component-are-underspecified.ts) | Returns `source_component_pins_underspecified_warning` when every pin on a chip lacks pin attributes. |
-| [`checkNoPowerPinDefinedForChip`](./lib/check-no-power-pin-defined-for-chip.ts) | Returns `source_chip_no_power_pin_defined_warning` when a chip has no pin with `requires_power=true`. |
+| [`checkNoPowerPinDefined`](./lib/check-no-power-pin-defined.ts) | Returns `source_no_power_pin_defined_warning` when a chip has no pin with `requires_power=true`. |
+| [`checkNoGroundPinDefined`](./lib/check-no-ground-pin-defined.ts) | Returns `source_no_ground_pin_defined_warning` when a chip has no pin with `requires_ground=true`. |
 | [`checkDifferentNetViaSpacing`](./lib/check-different-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on different nets are too close together. |
 | [`checkEachPcbPortConnectedToPcbTraces`](./lib/check-each-pcb-port-connected-to-pcb-trace.ts) | Returns `pcb_trace_error` if any `source_port` is not connected to its corresponding PCB traces. |
 | [`checkEachPcbTraceNonOverlapping`](./lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping.ts) | Returns `pcb_trace_error` when `pcb_trace` segments overlap incompatible geometry on the same layer. |
@@ -29,9 +30,10 @@ and output an array of arrays for any issues found.
 | Function | Description |
 | --- | --- |
 | [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs all placement checks (`checkViasOffBoard`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverlap`, and `checkConnectorAccessibleOrientation`). |
-| [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs all netlist checks (e.g. `checkPinMustBeConnected`, `checkAllPinsInComponentAreUnderspecified`, `checkNoPowerPinDefinedForChip`). |
+| [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs netlist connectivity checks (currently `checkPinMustBeConnected`). |
+| [`runAllPinSpecificationChecks`](./lib/run-all-checks.ts) | Runs pin specification checks (e.g. `checkAllPinsInComponentAreUnderspecified`, `checkNoPowerPinDefined`, and `checkNoGroundPinDefined`). |
 | [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). |
-| [`runAllChecks`](./lib/run-all-checks.ts) | Runs all placement, netlist, and routing checks and returns a combined list of errors. |
+| [`runAllChecks`](./lib/run-all-checks.ts) | Runs placement, netlist, pin specification, and routing checks and returns a combined list of issues. |
 
 ## Implementation Details
 
