@@ -6,11 +6,46 @@ import type {
   SourcePort,
   SourceComponentBase,
 } from "circuit-json"
-import { source_pin_attributes } from "circuit-json"
 
-const PIN_ATTRIBUTE_KEYS = Object.keys(
-  source_pin_attributes.shape,
-) as (keyof SourcePinAttributes)[]
+const PIN_ATTRIBUTE_KEYS = [
+  "must_be_connected",
+  "provides_power",
+  "requires_power",
+  "provides_ground",
+  "requires_ground",
+  "provides_voltage",
+  "requires_voltage",
+  "do_not_connect",
+  "include_in_board_pinout",
+  "can_use_internal_pullup",
+  "is_using_internal_pullup",
+  "needs_external_pullup",
+  "can_use_internal_pulldown",
+  "is_using_internal_pulldown",
+  "needs_external_pulldown",
+  "can_use_open_drain",
+  "is_using_open_drain",
+  "can_use_push_pull",
+  "is_using_push_pull",
+  "should_have_decoupling_capacitor",
+  "recommended_decoupling_capacitor_capacitance",
+  "is_configured_for_i2c_sda",
+  "is_configured_for_i2c_scl",
+  "is_configured_for_spi_mosi",
+  "is_configured_for_spi_miso",
+  "is_configured_for_spi_sck",
+  "is_configured_for_spi_cs",
+  "is_configured_for_uart_tx",
+  "is_configured_for_uart_rx",
+  "supports_i2c_sda",
+  "supports_i2c_scl",
+  "supports_spi_mosi",
+  "supports_spi_miso",
+  "supports_spi_sck",
+  "supports_spi_cs",
+  "supports_uart_tx",
+  "supports_uart_rx",
+] as const satisfies readonly (keyof SourcePinAttributes)[]
 
 function hasAnyPinAttribute(port: SourcePort): boolean {
   return PIN_ATTRIBUTE_KEYS.some((key) => port[key] !== undefined)
