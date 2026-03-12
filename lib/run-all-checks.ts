@@ -6,6 +6,7 @@ import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-over
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
+import { checkCourtyardOverlap } from "./check-courtyard-overlap/checkCourtyardOverlap"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
@@ -20,6 +21,7 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
     ...checkViasOffBoard(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
+    ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
   ]
 }
