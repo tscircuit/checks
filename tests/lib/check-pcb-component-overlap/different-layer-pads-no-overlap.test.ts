@@ -8,8 +8,13 @@ test("SMT pads on different layers at the same position should NOT be flagged as
   const errors = checkPcbComponentOverlap(circuitJson as AnyCircuitElement[])
   expect(errors).toHaveLength(0)
 
-  const circuitJsonWithErrors = [...(circuitJson as AnyCircuitElement[]), ...errors]
+  const circuitJsonWithErrors = [
+    ...(circuitJson as AnyCircuitElement[]),
+    ...errors,
+  ]
   expect(
-    convertCircuitJsonToPcbSvg(circuitJsonWithErrors, { shouldDrawErrors: true }),
+    convertCircuitJsonToPcbSvg(circuitJsonWithErrors, {
+      shouldDrawErrors: true,
+    }),
   ).toMatchSvgSnapshot(import.meta.path)
 })
