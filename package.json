@@ -21,7 +21,7 @@
     "circuit-to-svg": "^0.0.334",
     "circuit-json": "^0.0.400",
     "debug": "^4.3.5",
-    "tscircuit": "^0.0.1481",
+    "tscircuit": "^0.0.1487",
     "zod": "^3.23.8",
     "tsup": "^8.2.3"
   },
