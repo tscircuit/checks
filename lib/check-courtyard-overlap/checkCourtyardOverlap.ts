@@ -1,6 +1,6 @@
 import {
-  areBoundsOverlappingPolygon,
-  getBoundsFromPoints,
+  doSegmentsIntersect,
+  isPointInsidePolygon,
 } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
@@ -19,12 +19,19 @@ function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
   if (el.type === "pcb_courtyard_rect") {
     const hw = el.width / 2
     const hh = el.height / 2
-    return [
-      { x: el.center.x - hw, y: el.center.y - hh },
-      { x: el.center.x + hw, y: el.center.y - hh },
-      { x: el.center.x + hw, y: el.center.y + hh },
-      { x: el.center.x - hw, y: el.center.y + hh },
+    const corners = [
+      { x: -hw, y: -hh },
+      { x: +hw, y: -hh },
+      { x: +hw, y: +hh },
+      { x: -hw, y: +hh },
     ]
+    const angle = ((el.ccw_rotation ?? 0) * Math.PI) / 180
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    return corners.map(({ x, y }) => ({
+      x: el.center.x + x * cos - y * sin,
+      y: el.center.y + x * sin + y * cos,
+    }))
   }
   if (el.type === "pcb_courtyard_circle") {
     const N = 32
@@ -57,6 +64,25 @@ function getComponentName(
     return sourceComponent.name
   }
   return pcbComponentId
+}
+
+type Point = { x: number; y: number }
+
+function polygonsOverlap(polyA: Point[], polyB: Point[]): boolean {
+  // Check if any vertex of A is inside B or vice versa
+  if (polyA.some((p) => isPointInsidePolygon(p, polyB))) return true
+  if (polyB.some((p) => isPointInsidePolygon(p, polyA))) return true
+  // Check if any edge of A intersects any edge of B
+  for (let i = 0; i < polyA.length; i++) {
+    const a1 = polyA[i]
+    const a2 = polyA[(i + 1) % polyA.length]
+    for (let j = 0; j < polyB.length; j++) {
+      const b1 = polyB[j]
+      const b2 = polyB[(j + 1) % polyB.length]
+      if (doSegmentsIntersect(a1, a2, b1, b2)) return true
+    }
+  }
+  return false
 }
 
 /**
@@ -94,13 +120,7 @@ export function checkCourtyardOverlap(
         for (const b of byComponent.get(idB)!) {
           const polyA = getCourtyardPolygon(a)
           const polyB = getCourtyardPolygon(b)
-          const boundsA = getBoundsFromPoints(polyA)
-          const boundsB = getBoundsFromPoints(polyB)
-          if (!boundsA || !boundsB) continue
-          if (
-            areBoundsOverlappingPolygon(boundsA, polyB) ||
-            areBoundsOverlappingPolygon(boundsB, polyA)
-          ) {
+          if (polygonsOverlap(polyA, polyB)) {
             overlapping = true
             break outer
           }
