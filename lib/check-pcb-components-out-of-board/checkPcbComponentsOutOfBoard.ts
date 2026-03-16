@@ -297,10 +297,12 @@ export function checkPcbComponentsOutOfBoard(
 
     if (c.width <= 0 || c.height <= 0) continue
 
+    // c.width and c.height store the world-coordinate AABB dimensions (post-rotation),
+    // so we must NOT re-apply rotation here.
     const compPoly = rectanglePolygon({
       center: c.center,
       size: { width: c.width, height: c.height },
-      rotationDeg: c.rotation || 0,
+      rotationDeg: 0,
     })
 
     if (compPoly.area() === 0) continue
@@ -317,7 +319,7 @@ export function checkPcbComponentsOutOfBoard(
       c.center,
       c.width,
       c.height,
-      c.rotation || 0,
+      0,
     )
 
     const compName = getComponentName({ circuitJson, component: c })

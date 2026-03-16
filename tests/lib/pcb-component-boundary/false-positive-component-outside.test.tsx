@@ -17,5 +17,5 @@ test("no false positive: pinrow connectors rotated 90/270 inside board should no
     ),
   ).toMatchSvgSnapshot(import.meta.path)
 
-  expect(errors.length).toBe(2)
+  expect(errors.length).toBe(0)
 })
