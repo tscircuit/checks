@@ -13,7 +13,7 @@ test("no false positive: pinrow connectors rotated 90/270 inside board should no
       [...circuitJson, ...errors] as AnyCircuitElement[],
       {
         shouldDrawErrors: true,
-      }
+      },
     ),
   ).toMatchSvgSnapshot(import.meta.path)
 
