@@ -154,6 +154,29 @@ function rotatedRectToCircleGap(
   return rectToCircleGap(0, 0, w, h, localX, localY, cr)
 }
 
+/**
+ * Return the center point of any PcbSmtPad shape.
+ * Polygon pads use the bounding-box centroid; all others have x/y directly.
+ */
+function getPadCenter(pad: PcbSmtPad): { x: number; y: number } {
+  if (pad.shape === "polygon") {
+    const pts = pad.points ?? []
+    if (pts.length === 0) return { x: 0, y: 0 }
+    let minX = Number.POSITIVE_INFINITY
+    let maxX = Number.NEGATIVE_INFINITY
+    let minY = Number.POSITIVE_INFINITY
+    let maxY = Number.NEGATIVE_INFINITY
+    for (const p of pts) {
+      if (p.x < minX) minX = p.x
+      if (p.x > maxX) maxX = p.x
+      if (p.y < minY) minY = p.y
+      if (p.y > maxY) maxY = p.y
+    }
+    return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 }
+  }
+  return { x: pad.x, y: pad.y }
+}
+
 function doLayersOverlap(layersA: string[], layersB: string[]): boolean {
   if (layersA.length === 0 || layersB.length === 0) return true
   return layersA.some((l) => layersB.includes(l))
@@ -187,6 +210,7 @@ export function checkViaToPadSpacing(
       const viaName = getReadableNameForElement(circuitJson, via.pcb_via_id)
       const padName = getReadableNameForElement(circuitJson, pad.pcb_smtpad_id)
 
+      const padCenter = getPadCenter(pad)
       errors.push({
         type: "pcb_via_clearance_error",
         pcb_error_id: `via_to_pad_close_${pairId}`,
@@ -196,8 +220,8 @@ export function checkViaToPadSpacing(
         minimum_clearance: minSpacing,
         actual_clearance: gap,
         pcb_center: {
-          x: (via.x + pad.x) / 2,
-          y: (via.y + pad.y) / 2,
+          x: (via.x + padCenter.x) / 2,
+          y: (via.y + padCenter.y) / 2,
         },
       })
     }
