@@ -15,6 +15,13 @@ type CourtyardElement =
   | PcbCourtyardCircle
   | PcbCourtyardOutline
 
+function doCourtyardLayersOverlap(
+  layerA: CourtyardElement["layer"],
+  layerB: CourtyardElement["layer"],
+): boolean {
+  return layerA === layerB
+}
+
 function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
   if (el.type === "pcb_courtyard_rect") {
     const hw = el.width / 2
@@ -118,6 +125,8 @@ export function checkCourtyardOverlap(
       let overlapping = false
       outer: for (const a of byComponent.get(idA)!) {
         for (const b of byComponent.get(idB)!) {
+          if (!doCourtyardLayersOverlap(a.layer, b.layer)) continue
+
           const polyA = getCourtyardPolygon(a)
           const polyB = getCourtyardPolygon(b)
           if (polygonsOverlap(polyA, polyB)) {
