@@ -118,6 +118,10 @@ export function checkCourtyardOverlap(
       let overlapping = false
       outer: for (const a of byComponent.get(idA)!) {
         for (const b of byComponent.get(idB)!) {
+          // Skip overlap check if courtyards are on different layers
+          if ("layer" in a && "layer" in b && a.layer !== b.layer) {
+            continue
+          }
           const polyA = getCourtyardPolygon(a)
           const polyB = getCourtyardPolygon(b)
           if (polygonsOverlap(polyA, polyB)) {
