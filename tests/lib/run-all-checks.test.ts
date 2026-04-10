@@ -5,7 +5,7 @@ import {
   runAllPinSpecificationChecks,
   runAllPlacementChecks,
   runAllRoutingChecks,
-} from "../.." // index.ts when imported from root
+} from "../../index.ts"
 import type { AnyCircuitElement } from "circuit-json"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
 

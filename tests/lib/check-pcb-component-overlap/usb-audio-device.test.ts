@@ -31,7 +31,8 @@ const getSourceComponentIdByName = (
   name: string,
 ): string => {
   const component = circuitJson.find(
-    (element) => element.type === "source_component" && element.name === name,
+    (element): element is AnyCircuitElement & { source_component_id: string } =>
+      element.type === "source_component" && element.name === name,
   )
 
   if (!component) {
