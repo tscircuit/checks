@@ -1,0 +1,68 @@
+import { expect, test } from "bun:test"
+import type { AnyCircuitElement } from "circuit-json"
+import { checkPcbComponentOverlap } from "lib/check-pcb-components-overlap/checkPcbComponentOverlap"
+
+test("top and bottom components are analyzed separately for overlap", () => {
+  const soup: AnyCircuitElement[] = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "board1",
+      center: { x: 0, y: 0 },
+      width: 20,
+      height: 20,
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4" as const,
+    },
+    {
+      type: "pcb_component",
+      pcb_component_id: "comp_top",
+      source_component_id: "source_top",
+      center: { x: 0, y: 0 },
+      width: 4,
+      height: 4,
+      layer: "top",
+      rotation: 0,
+      subcircuit_id: "subcircuit_0",
+      do_not_place: false,
+      obstructs_within_bounds: true,
+    },
+    {
+      type: "pcb_component",
+      pcb_component_id: "comp_bottom",
+      source_component_id: "source_bottom",
+      center: { x: 0, y: 0 },
+      width: 4,
+      height: 4,
+      layer: "bottom",
+      rotation: 0,
+      subcircuit_id: "subcircuit_0",
+      do_not_place: false,
+      obstructs_within_bounds: true,
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad_top",
+      pcb_component_id: "comp_top",
+      shape: "rect",
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 2,
+      layer: "top",
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad_bottom",
+      pcb_component_id: "comp_bottom",
+      shape: "rect",
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 2,
+      layer: "bottom",
+    },
+  ]
+
+  expect(checkPcbComponentOverlap(soup)).toHaveLength(0)
+})

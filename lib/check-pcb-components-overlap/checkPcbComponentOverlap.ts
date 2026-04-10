@@ -6,6 +6,8 @@ import {
 import { doBoundsOverlap } from "@tscircuit/math-utils"
 import type { AnyCircuitElement, PcbFootprintOverlapError } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import type { Collidable } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
+import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   getReadableNameForElementId,
   getReadableNameForPort,
@@ -14,10 +16,16 @@ import {
   type OverlappableElement,
   doPcbElementsOverlap,
 } from "./doPcbElementsOverlap"
+import {
+  arePlacementLayerSetsSeparated,
+  getPlacementLayersFromLayerNames,
+  type PcbPlacementLayer,
+} from "lib/util/getPcbPlacementLayer"
 
 interface ComponentWithElements {
   component_id: string
   elements: OverlappableElement[]
+  placementLayers: PcbPlacementLayer[]
   bounds: {
     minX: number
     minY: number
@@ -38,6 +46,11 @@ const formatOverlapElementDescription = (
   const readableName = getReadableNameForElementId(circuitJson, id)
   return readableName === "element" ? `[${id}]` : readableName
 }
+
+const getPlacementLayersForOverlappableElement = (
+  element: OverlappableElement,
+): PcbPlacementLayer[] =>
+  getPlacementLayersFromLayerNames(getLayersOfPcbElement(element as Collidable))
 
 /**
  * Check for overlapping PCB components
@@ -63,36 +76,54 @@ export function checkPcbComponentOverlap(
   for (const pad of smtPads) {
     const componentId =
       pad.pcb_component_id || `standalone_pad_${getPrimaryId(pad)}`
+    const placementLayers = getPlacementLayersForOverlappableElement(pad)
     if (!componentMap.has(componentId)) {
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
+        placementLayers: [...placementLayers],
         bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
-    componentMap.get(componentId)!.elements.push(pad)
+    const componentData = componentMap.get(componentId)!
+    for (const layer of placementLayers) {
+      if (!componentData.placementLayers.includes(layer)) {
+        componentData.placementLayers.push(layer)
+      }
+    }
+    componentData.elements.push(pad)
   }
 
   // Group plated holes by component (or treat as standalone)
   for (const hole of platedHoles) {
     const componentId =
       hole.pcb_component_id || `standalone_plated_hole_${getPrimaryId(hole)}`
+    const placementLayers = getPlacementLayersForOverlappableElement(hole)
     if (!componentMap.has(componentId)) {
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
+        placementLayers: [...placementLayers],
         bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
-    componentMap.get(componentId)!.elements.push(hole)
+    const componentData = componentMap.get(componentId)!
+    for (const layer of placementLayers) {
+      if (!componentData.placementLayers.includes(layer)) {
+        componentData.placementLayers.push(layer)
+      }
+    }
+    componentData.elements.push(hole)
   }
 
   // Holes typically don't have pcb_component_id, treat each as standalone
   for (const hole of holes) {
+    const placementLayers = getPlacementLayersForOverlappableElement(hole)
     const componentId = `standalone_hole_${getPrimaryId(hole)}`
     componentMap.set(componentId, {
       component_id: componentId,
       elements: [hole],
+      placementLayers,
       bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
     })
   }
@@ -112,6 +143,15 @@ export function checkPcbComponentOverlap(
     for (let j = i + 1; j < componentsWithElements.length; j++) {
       const comp1 = componentsWithElements[i]
       const comp2 = componentsWithElements[j]
+
+      if (
+        arePlacementLayerSetsSeparated(
+          comp1.placementLayers,
+          comp2.placementLayers,
+        )
+      ) {
+        continue
+      }
 
       // First check if component bounds overlap
       if (!doBoundsOverlap(comp1.bounds, comp2.bounds)) {
