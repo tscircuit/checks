@@ -5,6 +5,7 @@ export { checkViasOffBoard } from "./lib/check-pcb-components-out-of-board/check
 export { checkPcbComponentsOutOfBoard } from "./lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 export { checkSameNetViaSpacing } from "./lib/check-same-net-via-spacing"
 export { checkDifferentNetViaSpacing } from "./lib/check-different-net-via-spacing"
+export { checkSourceTracesMatchPcbTraceThickness } from "./lib/check-source-traces-match-pcb-trace-thickness"
 export { checkSourceTracesHavePcbTraces } from "./lib/check-source-traces-have-pcb-traces"
 export { checkPcbTracesOutOfBoard } from "./lib/check-trace-out-of-board/checkTraceOutOfBoard"
 export { checkPcbComponentOverlap } from "./lib/check-pcb-components-overlap/checkPcbComponentOverlap"
