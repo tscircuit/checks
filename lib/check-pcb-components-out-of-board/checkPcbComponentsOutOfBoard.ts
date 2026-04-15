@@ -60,7 +60,9 @@ function rectanglePolygon({
 
 function boardToPolygon({
   board,
-}: { board: PcbBoard }): Flatten.Polygon | null {
+}: {
+  board: PcbBoard
+}): Flatten.Polygon | null {
   if (board.outline && board.outline.length > 0) {
     const points = board.outline.map((p) => new Flatten.Point(p.x, p.y))
     const poly = new Flatten.Polygon(points)
