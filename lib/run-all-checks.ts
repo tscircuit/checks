@@ -12,7 +12,6 @@ import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
 import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
-import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
@@ -43,7 +42,6 @@ export async function runAllPinSpecificationChecks(
 
 export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   return [
-    ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
     ...checkSourceTracesHavePcbTraces(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson),
