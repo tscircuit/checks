@@ -1,4 +1,9 @@
-import type { AnyCircuitElement, PcbPlatedHole, PcbSmtPad } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbPlatedHole,
+  PcbSmtPad,
+  SourceTrace,
+} from "circuit-json"
 import {
   getReadableNameForElement,
   getReadableNameForPcbPort,
@@ -105,6 +110,79 @@ export const getReadableNameForPort = (
     pcbPortId,
     "port",
   )
+}
+
+export const getReadableNameForSourceTrace = (
+  circuitJson: AnyCircuitElement[],
+  sourceTrace: SourceTrace,
+): string => {
+  const displayName = sanitizeReadableName(
+    sourceTrace.display_name,
+    sourceTrace.source_trace_id,
+    "",
+  )
+  if (displayName) return displayName
+
+  const connectedPortNames = (sourceTrace.connected_source_port_ids ?? [])
+    .map((sourcePortId) => {
+      const pcbPort = circuitJson.find(
+        (element) =>
+          element.type === "pcb_port" &&
+          element.source_port_id === sourcePortId,
+      )
+
+      if (pcbPort?.type === "pcb_port") {
+        return getReadableNameForPort(circuitJson, pcbPort.pcb_port_id)
+      }
+
+      const sourcePort = circuitJson.find(
+        (element) =>
+          element.type === "source_port" &&
+          element.source_port_id === sourcePortId,
+      )
+      if (sourcePort?.type !== "source_port") return null
+
+      const sourceComponent = circuitJson.find(
+        (element) =>
+          element.type === "source_component" &&
+          element.source_component_id === sourcePort.source_component_id,
+      )
+
+      const sourceComponentName =
+        sourceComponent?.type === "source_component"
+          ? sanitizeReadableName(
+              sourceComponent.name,
+              sourceComponent.source_component_id,
+              "",
+            )
+          : ""
+
+      const sourcePortName = firstReadableName(
+        [
+          sourcePort.name,
+          sourcePort.pin_number?.toString(),
+          sourcePort.port_hints?.[0],
+        ],
+        sourcePort.source_port_id,
+      )
+
+      if (sourceComponentName && sourcePortName) {
+        return `${sourceComponentName}.${sourcePortName}`
+      }
+
+      return sourcePortName || null
+    })
+    .filter((name): name is string => Boolean(name))
+
+  if (connectedPortNames.length >= 2) {
+    return `${connectedPortNames[0]} to ${connectedPortNames[1]}`
+  }
+
+  if (connectedPortNames.length === 1) {
+    return `trace connected to ${connectedPortNames[0]}`
+  }
+
+  return `trace ${sourceTrace.source_trace_id}`
 }
 
 export const getReadableNameForElementId = (

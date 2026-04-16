@@ -3,27 +3,16 @@ import type {
   AnyCircuitElement,
   PcbPort,
   PcbTrace,
+  PcbTraceWarning,
   SourceTrace,
 } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
-import { containsCircuitJsonId } from "lib/util/get-readable-names"
-
-export type PcbTraceThicknessWarning = {
-  type: "pcb_trace_thickness_warning"
-  pcb_trace_thickness_warning_id: string
-  warning_type: "pcb_trace_thickness_warning"
-  message: string
-  center: { x: number; y: number }
-  source_trace_id: string
-  pcb_trace_id: string
-  pcb_component_ids: string[]
-  pcb_port_ids: string[]
-}
+import { getReadableNameForSourceTrace } from "lib/util/get-readable-names"
 
 export function checkSourceTracesMatchPcbTraceThickness(
   circuitJson: AnyCircuitElement[],
-): PcbTraceThicknessWarning[] {
-  const warnings: PcbTraceThicknessWarning[] = []
+): PcbTraceWarning[] {
+  const warnings: PcbTraceWarning[] = []
   const db = cju(circuitJson)
 
   const sourceTraces = db.source_trace.list() as SourceTrace[]
@@ -61,43 +50,43 @@ export function checkSourceTracesMatchPcbTraceThickness(
     const actualThickness = Math.min(...actualWireWidths)
     if (actualThickness >= requestedThickness) continue
 
-    const undersizedSegment = relatedPcbTraces
-      .flatMap((pcbTrace) =>
-        pcbTrace.route.flatMap((point, index, route) => {
-          const nextPoint = route[index + 1]
-          if (point.route_type !== "wire" || nextPoint?.route_type !== "wire") {
-            return []
-          }
-          if (point.width !== actualThickness) return []
+    let undersizedSegment:
+      | { pcb_trace_id: string; center: { x: number; y: number } }
+      | undefined
 
-          return [
-            {
-              pcbTraceId: pcbTrace.pcb_trace_id,
-              center: {
-                x: (point.x + nextPoint.x) / 2,
-                y: (point.y + nextPoint.y) / 2,
-              },
-            },
-          ]
-        }),
-      )
-      .at(0)
+    for (const relatedPcbTrace of relatedPcbTraces) {
+      for (let i = 0; i < relatedPcbTrace.route.length - 1; i++) {
+        const point = relatedPcbTrace.route[i]
+        const nextPoint = relatedPcbTrace.route[i + 1]
+        if (!point || !nextPoint) continue
+        if (point.route_type !== "wire" || nextPoint.route_type !== "wire") {
+          continue
+        }
+        if (point.width !== actualThickness) continue
+
+        undersizedSegment = {
+          pcb_trace_id: relatedPcbTrace.pcb_trace_id,
+          center: {
+            x: (point.x + nextPoint.x) / 2,
+            y: (point.y + nextPoint.y) / 2,
+          },
+        }
+        break
+      }
+
+      if (undersizedSegment) break
+    }
+
     if (!undersizedSegment) continue
 
-    const traceLabel =
-      sourceTrace.display_name &&
-      !containsCircuitJsonId(sourceTrace.display_name)
-        ? sourceTrace.display_name
-        : "trace"
-
     warnings.push({
-      type: "pcb_trace_thickness_warning",
-      pcb_trace_thickness_warning_id: `pcb_trace_thickness_warning_${sourceTrace.source_trace_id}`,
-      warning_type: "pcb_trace_thickness_warning",
-      message: `Trace [${traceLabel}] is routed thinner than requested (requested: ${requestedThickness}mm, actual: ${actualThickness}mm).`,
+      type: "pcb_trace_warning",
+      pcb_trace_warning_id: `pcb_trace_warning_${sourceTrace.source_trace_id}`,
+      warning_type: "pcb_trace_warning",
+      message: `Trace [${getReadableNameForSourceTrace(circuitJson, sourceTrace)}] is routed thinner than requested (requested: ${requestedThickness}mm, actual: ${actualThickness}mm).`,
       center: undersizedSegment.center,
       source_trace_id: sourceTrace.source_trace_id,
-      pcb_trace_id: undersizedSegment.pcbTraceId,
+      pcb_trace_id: undersizedSegment.pcb_trace_id,
       pcb_component_ids: Array.from(
         new Set(
           connectedPcbPorts
