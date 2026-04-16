@@ -5,18 +5,8 @@ import type {
   PcbTraceError,
   SourceTrace,
 } from "circuit-json"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
-
-const getSourceTraceIdsFromPcbTrace = (
-  pcbTraceSourceTraceId?: string,
-): string[] => {
-  if (!pcbTraceSourceTraceId) return []
-  if (!pcbTraceSourceTraceId.includes("__")) return [pcbTraceSourceTraceId]
-
-  return pcbTraceSourceTraceId
-    .split("__")
-    .filter((part) => part.startsWith("source_trace_"))
-}
 
 export function checkSourceTracesMatchPcbTraceThickness(
   circuitJson: AnyCircuitElement[],
@@ -31,15 +21,25 @@ export function checkSourceTracesMatchPcbTraceThickness(
   const pcbPorts = circuitJson.filter(
     (el) => el.type === "pcb_port",
   ) as PcbPort[]
+  const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
 
   for (const sourceTrace of sourceTraces) {
     const requestedThickness = sourceTrace.min_trace_thickness
     if (requestedThickness === undefined) continue
 
+    const connectedPcbPorts = pcbPorts.filter((pcbPort) =>
+      sourceTrace.connected_source_port_ids?.includes(pcbPort.source_port_id),
+    )
+    if (connectedPcbPorts.length < 2) continue
+
+    const referenceNetId = connectivityMap.getNetConnectedToId(
+      connectedPcbPorts[0].pcb_port_id,
+    )
+    if (!referenceNetId) continue
+
+    const netElementIds = connectivityMap.getIdsConnectedToNet(referenceNetId)
     const relatedPcbTraces = pcbTraces.filter((pcbTrace) =>
-      getSourceTraceIdsFromPcbTrace(pcbTrace.source_trace_id).includes(
-        sourceTrace.source_trace_id,
-      ),
+      netElementIds.includes(pcbTrace.pcb_trace_id),
     )
     if (relatedPcbTraces.length === 0) continue
 
@@ -52,10 +52,6 @@ export function checkSourceTracesMatchPcbTraceThickness(
 
     const actualThickness = Math.min(...actualWireWidths)
     if (actualThickness >= requestedThickness) continue
-
-    const connectedPcbPorts = pcbPorts.filter((pcbPort) =>
-      sourceTrace.connected_source_port_ids?.includes(pcbPort.source_port_id),
-    )
 
     const traceLabel =
       sourceTrace.display_name &&
@@ -74,7 +70,7 @@ export function checkSourceTracesMatchPcbTraceThickness(
         new Set(
           connectedPcbPorts
             .map((pcbPort) => pcbPort.pcb_component_id)
-            .filter((id): id is string => Boolean(id)),
+            .filter((id): id is string => id !== undefined),
         ),
       ),
       pcb_port_ids: connectedPcbPorts.map((pcbPort) => pcbPort.pcb_port_id),

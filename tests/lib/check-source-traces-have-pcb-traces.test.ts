@@ -137,11 +137,25 @@ describe("checkSourceTracesMatchPcbTraceThickness", () => {
       {
         type: "pcb_trace",
         pcb_trace_id: "source_trace_0_0",
-        source_trace_id: "source_trace_0",
+        source_trace_id: "some_other_trace_id",
         route: [
-          { route_type: "wire", x: -10, y: 0, width: 0.15, layer: "top" },
+          {
+            route_type: "wire",
+            x: -10,
+            y: 0,
+            width: 0.15,
+            layer: "top",
+            start_pcb_port_id: "pcb_port_1",
+          },
           { route_type: "wire", x: 0, y: 0, width: 0.15, layer: "top" },
-          { route_type: "wire", x: 10, y: 0, width: 0.15, layer: "top" },
+          {
+            route_type: "wire",
+            x: 10,
+            y: 0,
+            width: 0.15,
+            layer: "top",
+            end_pcb_port_id: "pcb_port_2",
+          },
         ],
       },
     ]
@@ -176,11 +190,43 @@ describe("checkSourceTracesMatchPcbTraceThickness", () => {
       {
         type: "pcb_trace",
         pcb_trace_id: "source_trace_0_0",
-        source_trace_id: "source_trace_0",
+        source_trace_id: "some_other_trace_id",
         route: [
-          { route_type: "wire", x: -10, y: 0, width: 0.3, layer: "top" },
-          { route_type: "wire", x: 10, y: 0, width: 0.3, layer: "top" },
+          {
+            route_type: "wire",
+            x: -10,
+            y: 0,
+            width: 0.3,
+            layer: "top",
+            start_pcb_port_id: "pcb_port_1",
+          },
+          {
+            route_type: "wire",
+            x: 10,
+            y: 0,
+            width: 0.3,
+            layer: "top",
+            end_pcb_port_id: "pcb_port_2",
+          },
         ],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "pcb_port_1",
+        source_port_id: "source_port_1",
+        pcb_component_id: "pcb_component_1",
+        x: -10,
+        y: 0,
+        layers: ["top"],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "pcb_port_2",
+        source_port_id: "source_port_2",
+        pcb_component_id: "pcb_component_2",
+        x: 10,
+        y: 0,
+        layers: ["top"],
       },
     ]
 
