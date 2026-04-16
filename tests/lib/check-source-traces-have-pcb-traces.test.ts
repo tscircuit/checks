@@ -106,7 +106,7 @@ describe("checkSourceTracesHavePcbTraces", () => {
 })
 
 describe("checkSourceTracesMatchPcbTraceThickness", () => {
-  test("returns error when routed pcb trace is thinner than explicit source trace thickness", () => {
+  test("returns warning when routed pcb trace is thinner than explicit source trace thickness", () => {
     const circuitJson = [
       {
         type: "source_trace",
@@ -160,24 +160,27 @@ describe("checkSourceTracesMatchPcbTraceThickness", () => {
       },
     ]
 
-    const errors = checkSourceTracesMatchPcbTraceThickness(circuitJson as any)
+    const warnings = checkSourceTracesMatchPcbTraceThickness(circuitJson as any)
 
-    expect(errors).toHaveLength(1)
-    expect(errors[0].source_trace_id).toBe("source_trace_0")
-    expect(errors[0].pcb_trace_id).toBe("source_trace_0_0")
-    expect(errors[0].pcb_port_ids).toEqual(["pcb_port_1", "pcb_port_2"])
-    expect(errors[0].pcb_component_ids).toEqual([
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0].type).toBe("pcb_trace_thickness_warning")
+    expect(warnings[0].warning_type).toBe("pcb_trace_thickness_warning")
+    expect(warnings[0].source_trace_id).toBe("source_trace_0")
+    expect(warnings[0].pcb_trace_id).toBe("source_trace_0_0")
+    expect(warnings[0].center).toEqual({ x: -5, y: 0 })
+    expect(warnings[0].pcb_port_ids).toEqual(["pcb_port_1", "pcb_port_2"])
+    expect(warnings[0].pcb_component_ids).toEqual([
       "pcb_component_1",
       "pcb_component_2",
     ])
-    expect(errors[0].message).toContain(
+    expect(warnings[0].message).toContain(
       "Trace [PWR -> TINY_CHIP.VDD] is routed thinner than requested",
     )
-    expect(errors[0].message).toContain("requested: 1mm")
-    expect(errors[0].message).toContain("actual: 0.15mm")
+    expect(warnings[0].message).toContain("requested: 1mm")
+    expect(warnings[0].message).toContain("actual: 0.15mm")
   })
 
-  test("does not return error when routed pcb trace matches explicit source trace thickness", () => {
+  test("does not return warning when routed pcb trace matches explicit source trace thickness", () => {
     const circuitJson = [
       {
         type: "source_trace",
@@ -230,7 +233,7 @@ describe("checkSourceTracesMatchPcbTraceThickness", () => {
       },
     ]
 
-    const errors = checkSourceTracesMatchPcbTraceThickness(circuitJson as any)
-    expect(errors).toHaveLength(0)
+    const warnings = checkSourceTracesMatchPcbTraceThickness(circuitJson as any)
+    expect(warnings).toHaveLength(0)
   })
 })
