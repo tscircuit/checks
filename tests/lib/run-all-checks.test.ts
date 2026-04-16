@@ -92,6 +92,8 @@ test("runAllRoutingChecks excludes trace thickness warnings", async () => {
       source_component_id: "source_component_1",
       ftype: "simple_pin_header",
       name: "PWR",
+      pin_count: 1,
+      gender: "male",
     },
     {
       type: "source_component",
