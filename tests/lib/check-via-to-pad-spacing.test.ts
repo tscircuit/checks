@@ -103,7 +103,12 @@ describe("checkViaToPadSpacing", () => {
 
   test("no error when via and pad are on the same net", () => {
     const soup: AnyCircuitElement[] = [
-      { type: "pcb_trace", pcb_trace_id: "trace1", source_trace_id: "source_trace1", route: [] },
+      {
+        type: "pcb_trace",
+        pcb_trace_id: "trace1",
+        source_trace_id: "source_trace1",
+        route: [],
+      },
       {
         type: "pcb_via",
         pcb_via_id: "via1",
