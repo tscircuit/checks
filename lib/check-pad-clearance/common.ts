@@ -1,10 +1,9 @@
-import { cju, getBoundsOfPcbElements } from "@tscircuit/circuit-json-util"
 import {
-  boundsDistance,
-  distance,
-  midpoint,
-  pointToBoundsDistance,
-} from "@tscircuit/math-utils"
+  cju,
+  computeGapBetweenCopper,
+  getBoundsOfPcbElements,
+} from "@tscircuit/circuit-json-util"
+import { midpoint } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
   PcbPlatedHole,
@@ -25,8 +24,6 @@ export const formatMm = (value: number) => {
 export const getPadBounds = (pad: PadElement): Bounds =>
   getBoundsOfPcbElements([pad])
 
-export const isCircularPad = (pad: PadElement) => pad.shape === "circle"
-
 export const getPadCenter = (pad: PadElement) => {
   const bounds = getPadBounds(pad)
   return midpoint(
@@ -40,25 +37,10 @@ export const getPadRadius = (pad: PadElement) => {
   return Math.min(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) / 2
 }
 
-export const getCircleToRectDistance = (pad: PadElement, bounds: Bounds) => {
-  const center = getPadCenter(pad)
-  return pointToBoundsDistance(center, bounds) - getPadRadius(pad)
-}
+export const isCircularPad = (pad: PadElement) => pad.shape === "circle"
 
-export const getPadToPadGap = (padA: PadElement, padB: PadElement) => {
-  if (isCircularPad(padA) && isCircularPad(padB)) {
-    const centerA = getPadCenter(padA)
-    const centerB = getPadCenter(padB)
-    return distance(centerA, centerB) - getPadRadius(padA) - getPadRadius(padB)
-  }
-
-  if (isCircularPad(padA))
-    return getCircleToRectDistance(padA, getPadBounds(padB))
-  if (isCircularPad(padB))
-    return getCircleToRectDistance(padB, getPadBounds(padA))
-
-  return boundsDistance(getPadBounds(padA), getPadBounds(padB))
-}
+export const getPadToPadGap = (padA: PadElement, padB: PadElement) =>
+  computeGapBetweenCopper(padA, padB)
 
 export const getPads = (circuitJson: AnyCircuitElement[]) =>
   [
