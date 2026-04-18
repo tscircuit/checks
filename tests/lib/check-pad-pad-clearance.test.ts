@@ -18,7 +18,7 @@ test("checkPadPadClearance reports pads closer than 0.2mm", () => {
       type: "pcb_smtpad",
       pcb_smtpad_id: "pad2",
       shape: "rect",
-      x: 1.15,
+      x: 1.05,
       y: 0,
       width: 1,
       height: 1,
@@ -31,6 +31,6 @@ test("checkPadPadClearance reports pads closer than 0.2mm", () => {
   expect(errors).toHaveLength(1)
   expect(errors[0].type).toBe("pcb_pad_pad_clearance_error")
   expect(errors[0].pcb_pad_ids).toEqual(["pad1", "pad2"])
-  expect(errors[0].minimum_clearance).toBe(0.2)
-  expect(errors[0].actual_clearance).toBeCloseTo(0.15, 10)
+  expect(errors[0].minimum_clearance).toBe(0.1)
+  expect(errors[0].actual_clearance).toBeCloseTo(0.05, 10)
 })

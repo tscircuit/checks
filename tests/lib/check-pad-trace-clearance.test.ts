@@ -30,7 +30,7 @@ test("checkPadTraceClearance reports pad and trace closer than 0.2mm", () => {
   expect(errors[0].type).toBe("pcb_pad_trace_clearance_error")
   expect(errors[0].pcb_pad_id).toBe("pad1")
   expect(errors[0].pcb_trace_id).toBe("trace1")
-  expect(errors[0].minimum_clearance).toBe(0.2)
+  expect(errors[0].minimum_clearance).toBe(0.1)
   expect(errors[0].actual_clearance).toBeCloseTo(0.075, 10)
 })
 

@@ -5,7 +5,9 @@ export const DEFAULT_VIA_BOARD_MARGIN = 0.3
 
 export const DEFAULT_SAME_NET_VIA_MARGIN = 0.2
 export const DEFAULT_DIFFERENT_NET_VIA_MARGIN = 0.3
-export const DEFAULT_PAD_PAD_CLEARANCE = 0.2
-export const DEFAULT_PAD_TRACE_CLEARANCE = 0.2
+
+// jlcpcb default values (Might not pass kicad drc so change the project settings in kicad)
+export const DEFAULT_PAD_PAD_CLEARANCE = 0.1
+export const DEFAULT_PAD_TRACE_CLEARANCE = 0.1
 
 export const EPSILON = 0.005
