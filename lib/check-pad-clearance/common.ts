@@ -1,6 +1,8 @@
 import {
   cju,
-  computeGapBetweenCopper,
+  distanceBetweenCircleAndCircle,
+  distanceBetweenCircleAndPolygon,
+  distanceBetweenPolygonAndPolygon,
   getBoundsOfPcbElements,
 } from "@tscircuit/circuit-json-util"
 import { midpoint } from "@tscircuit/math-utils"
@@ -39,8 +41,56 @@ export const getPadRadius = (pad: PadElement) => {
 
 export const isCircularPad = (pad: PadElement) => pad.shape === "circle"
 
-export const getPadToPadGap = (padA: PadElement, padB: PadElement) =>
-  computeGapBetweenCopper(padA, padB)
+const getCircleShape = (pad: PadElement) => {
+  const center = getPadCenter(pad)
+  return {
+    kind: "circle" as const,
+    x: center.x,
+    y: center.y,
+    radius: getPadRadius(pad),
+  }
+}
+
+const getPolygonShape = (pad: PadElement) => {
+  const bounds = getPadBounds(pad)
+  return {
+    kind: "polygon" as const,
+    points: [
+      { x: bounds.minX, y: bounds.minY },
+      { x: bounds.maxX, y: bounds.minY },
+      { x: bounds.maxX, y: bounds.maxY },
+      { x: bounds.minX, y: bounds.maxY },
+    ],
+  }
+}
+
+export const getPadToPadGap = (padA: PadElement, padB: PadElement) => {
+  if (isCircularPad(padA) && isCircularPad(padB)) {
+    return distanceBetweenCircleAndCircle(
+      getCircleShape(padA),
+      getCircleShape(padB),
+    )
+  }
+
+  if (isCircularPad(padA)) {
+    return distanceBetweenCircleAndPolygon(
+      getCircleShape(padA),
+      getPolygonShape(padB),
+    )
+  }
+
+  if (isCircularPad(padB)) {
+    return distanceBetweenCircleAndPolygon(
+      getCircleShape(padB),
+      getPolygonShape(padA),
+    )
+  }
+
+  return distanceBetweenPolygonAndPolygon(
+    getPolygonShape(padA),
+    getPolygonShape(padB),
+  )
+}
 
 export const getPads = (circuitJson: AnyCircuitElement[]) =>
   [
