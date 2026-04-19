@@ -25,13 +25,17 @@ export function checkViaTraceClearance(
   if (vias.length === 0 || segments.length === 0) return []
 
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
-  const errors = new Map<string, { error: PcbViaTraceClearanceError; gap: number }>()
+  const errors = new Map<
+    string,
+    { error: PcbViaTraceClearanceError; gap: number }
+  >()
 
   for (const via of vias) {
     const viaRadius = via.outer_diameter / 2
     for (const segment of segments) {
       if (!getLayersOfPcbElement(via).includes(segment.layer)) continue
-      if (connMap.areIdsConnected(segment.pcb_trace_id, via.pcb_via_id)) continue
+      if (connMap.areIdsConnected(segment.pcb_trace_id, via.pcb_via_id))
+        continue
 
       const gap =
         segmentToCircleMinDistance(
@@ -42,7 +46,8 @@ export function checkViaTraceClearance(
             y: via.y,
             radius: viaRadius,
           },
-        ) - segment.thickness / 2
+        ) -
+        segment.thickness / 2
       if (gap + EPSILON >= minSpacing) continue
 
       const pairId = `${via.pcb_via_id}_${segment.pcb_trace_id}`
