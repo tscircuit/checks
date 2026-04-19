@@ -18,18 +18,18 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
+    "circuit-json": "^0.0.415",
     "circuit-to-svg": "^0.0.343",
-    "circuit-json": "^0.0.413",
     "debug": "^4.3.5",
     "tscircuit": "^0.0.1643",
-    "zod": "^3.23.8",
-    "tsup": "^8.2.3"
+    "tsup": "^8.2.3",
+    "zod": "^3.23.8"
   },
   "peerDependencies": {
-    "circuit-json": "*",
-    "@tscircuit/math-utils": "*",
-    "circuit-json-to-connectivity-map": "*",
     "@flatten-js/core": "*",
+    "@tscircuit/math-utils": "*",
+    "circuit-json": "*",
+    "circuit-json-to-connectivity-map": "*",
     "typescript": "^5.5.3"
   }
 }
