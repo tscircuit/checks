@@ -122,7 +122,7 @@ export const getTraceSegments = (
             ? p1.width
             : "width" in p2
               ? p2.width
-              : DEFAULT_TRACE_THICKNESS,
+              : DEFAULT_TRACE_THICKNESS!,
         layer: p1.layer,
         x1: p1.x,
         y1: p1.y,

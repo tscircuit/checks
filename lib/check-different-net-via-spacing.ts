@@ -16,8 +16,8 @@ export function checkDifferentNetViaSpacing(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minSpacing = DEFAULT_DIFFERENT_NET_VIA_MARGIN,
-  }: { connMap?: ConnectivityMap; minSpacing?: number } = {},
+    minClearance = DEFAULT_DIFFERENT_NET_VIA_MARGIN,
+  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbViaClearanceError[] {
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   if (vias.length < 2) return []
@@ -34,7 +34,7 @@ export function checkDifferentNetViaSpacing(
       if (connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
       const gap =
         distance(viaA, viaB) - viaA.outer_diameter / 2 - viaB.outer_diameter / 2
-      if (gap + EPSILON >= minSpacing) continue
+      if (gap + EPSILON >= minClearance!) continue
       const pairId = [viaA.pcb_via_id, viaB.pcb_via_id].sort().join("_")
       if (reported.has(pairId)) continue
       reported.add(pairId)
@@ -52,7 +52,7 @@ export function checkDifferentNetViaSpacing(
         )}mm)`,
         error_type: "pcb_via_clearance_error",
         pcb_via_ids: [viaA.pcb_via_id, viaB.pcb_via_id],
-        minimum_clearance: minSpacing,
+        minimum_clearance: minClearance,
         actual_clearance: gap,
         pcb_center: {
           x: (viaA.x + viaB.x) / 2,

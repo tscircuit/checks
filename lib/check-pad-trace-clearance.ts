@@ -30,8 +30,8 @@ export function checkPadTraceClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minSpacing = DEFAULT_PAD_TRACE_CLEARANCE,
-  }: { connMap?: ConnectivityMap; minSpacing?: number } = {},
+    minClearance = DEFAULT_PAD_TRACE_CLEARANCE,
+  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbPadTraceClearanceError[] {
   const pads = getPads(circuitJson)
   const segments = getTraceSegments(circuitJson)
@@ -52,7 +52,7 @@ export function checkPadTraceClearance(
   for (const segment of segments) {
     const nearbyPads = spatialIndex.getObjectsInBounds(
       getCollidableBounds(segment),
-      minSpacing + segment.thickness / 2,
+      minClearance! + segment.thickness / 2,
     )
 
     for (const pad of nearbyPads) {
@@ -74,17 +74,17 @@ export function checkPadTraceClearance(
             getPadBounds(pad),
           ) -
           segment.thickness / 2
-      if (gap + EPSILON >= minSpacing) continue
+      if (gap + EPSILON >= minClearance!) continue
 
       const pairId = `${padId}_${segment.pcb_trace_id}`
       const nextError: PcbPadTraceClearanceError = {
         type: "pcb_pad_trace_clearance_error" as const,
         pcb_pad_trace_clearance_error_id: `pad_trace_clearance_${pairId}`,
         error_type: "pcb_pad_trace_clearance_error",
-        message: `Pad ${getReadableNameForElement(circuitJson, padId)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minSpacing)})`,
+        message: `Pad ${getReadableNameForElement(circuitJson, padId)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
         pcb_pad_id: padId,
         pcb_trace_id: segment.pcb_trace_id,
-        minimum_clearance: minSpacing,
+        minimum_clearance: minClearance,
         actual_clearance: gap,
         center: {
           x: (center.x + (segment.x1 + segment.x2) / 2) / 2,

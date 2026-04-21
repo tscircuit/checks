@@ -38,10 +38,10 @@ export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minSpacing = DEFAULT_TRACE_MARGIN,
+    minClearance = DEFAULT_TRACE_MARGIN,
   }: {
     connMap?: ConnectivityMap
-    minSpacing?: number
+    minClearance?: number
   } = {},
 ): PcbTraceError[] {
   const errors: PcbTraceError[] = []
@@ -103,7 +103,7 @@ export function checkEachPcbTraceNonOverlapping(
 
   // For each segment, check it if overlaps with anything collidable
   for (const segmentA of pcbTraceSegments) {
-    const requiredMargin = minSpacing
+    const requiredMargin = minClearance
     const bounds = getCollidableBounds(segmentA)
     const nearbyObjects = spatialIndex.getObjectsInBounds(
       bounds,
@@ -136,7 +136,7 @@ export function checkEachPcbTraceNonOverlapping(
           ) -
           segmentA.thickness / 2 -
           segmentB.thickness / 2
-        if (gap > minSpacing - EPSILON) continue
+        if (gap > minClearance - EPSILON) continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`
         const pcb_trace_error_id_reverse = `overlap_${segmentB.pcb_trace_id}_${segmentA.pcb_trace_id}`
@@ -184,7 +184,7 @@ export function checkEachPcbTraceNonOverlapping(
           { x: obj.x, y: obj.y, radius },
         )
         const gap = distance - segmentA.thickness / 2
-        if (gap > minSpacing - EPSILON) continue
+        if (gap > minClearance - EPSILON) continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
         if (errorIds.has(pcb_trace_error_id)) continue

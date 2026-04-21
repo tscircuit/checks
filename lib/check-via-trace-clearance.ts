@@ -43,8 +43,8 @@ export function checkViaTraceClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minSpacing = DEFAULT_PAD_TRACE_CLEARANCE,
-  }: { connMap?: ConnectivityMap; minSpacing?: number } = {},
+    minClearance = DEFAULT_PAD_TRACE_CLEARANCE,
+  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbViaTraceClearanceError[] {
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   const segments = getTraceSegments(circuitJson)
@@ -74,7 +74,7 @@ export function checkViaTraceClearance(
           },
         ) -
         segment.thickness / 2
-      if (gap + EPSILON >= minSpacing) continue
+      if (gap + EPSILON >= minClearance!) continue
 
       const closestPoint = getClosestPointOnSegment(
         { x: via.x, y: via.y },
@@ -87,10 +87,10 @@ export function checkViaTraceClearance(
         type: "pcb_via_trace_clearance_error",
         pcb_via_trace_clearance_error_id: `via_trace_clearance_${pairId}`,
         error_type: "pcb_via_trace_clearance_error",
-        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minSpacing)})`,
+        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
         pcb_via_id: via.pcb_via_id,
         pcb_trace_id: segment.pcb_trace_id,
-        minimum_clearance: minSpacing,
+        minimum_clearance: minClearance,
         actual_clearance: gap,
         center: {
           x: (via.x + closestPoint.x) / 2,
