@@ -2,8 +2,6 @@ import { expect, test, describe } from "bun:test"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 import type {
   AnySoupElement,
-  PCBTrace,
-  PCBSMTPad,
   AnyCircuitElement,
 } from "circuit-json"
 
@@ -206,7 +204,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
 
     expect(checkEachPcbTraceNonOverlapping(circuitJson)).toHaveLength(1)
     expect(
-      checkEachPcbTraceNonOverlapping(circuitJson, { minSpacing: 0 }),
+      checkEachPcbTraceNonOverlapping(circuitJson, { minClearance: 0 }),
     ).toEqual([])
   })
 })
