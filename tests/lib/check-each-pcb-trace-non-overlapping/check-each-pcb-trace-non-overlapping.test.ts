@@ -1,9 +1,6 @@
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
-import type {
-  AnySoupElement,
-  AnyCircuitElement,
-} from "circuit-json"
+import type { AnySoupElement, AnyCircuitElement } from "circuit-json"
 
 describe("checkEachPcbTraceNonOverlapping", () => {
   test("should return no errors when traces don't overlap", () => {
