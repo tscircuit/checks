@@ -21,7 +21,7 @@ describe("checkDifferentNetViaSpacing", () => {
         type: "pcb_via",
         pcb_via_id: "via2",
         pcb_trace_id: "trace2",
-        x: 0.7,
+        x: 0.5,
         y: 0,
         hole_diameter: 0.3,
         outer_diameter: 0.6,
