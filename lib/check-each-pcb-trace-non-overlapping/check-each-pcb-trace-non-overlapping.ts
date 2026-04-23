@@ -21,6 +21,7 @@ import {
   DEFAULT_TRACE_MARGIN,
   DEFAULT_TRACE_THICKNESS,
   EPSILON,
+  getBoardDrcValue,
 } from "lib/drc-defaults"
 import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
@@ -38,12 +39,18 @@ export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minClearance = DEFAULT_TRACE_MARGIN,
+    minClearance,
   }: {
     connMap?: ConnectivityMap
     minClearance?: number
   } = {},
 ): PcbTraceError[] {
+  minClearance ??= DEFAULT_TRACE_MARGIN
+  const defaultTraceThickness = getBoardDrcValue(
+    circuitJson,
+    "min_trace_width",
+    DEFAULT_TRACE_THICKNESS,
+  )
   const errors: PcbTraceError[] = []
   addStartAndEndPortIdsIfMissing(circuitJson)
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
@@ -66,7 +73,7 @@ export function checkEachPcbTraceNonOverlapping(
             ? p1.width
             : "width" in p2
               ? p2.width
-              : DEFAULT_TRACE_THICKNESS,
+              : defaultTraceThickness,
         layer: p1.layer,
         x1: p1.x,
         y1: p1.y,

@@ -8,7 +8,11 @@ import {
   getFullConnectivityMapFromCircuitJson,
   type ConnectivityMap,
 } from "circuit-json-to-connectivity-map"
-import { DEFAULT_DIFFERENT_NET_VIA_MARGIN, EPSILON } from "lib/drc-defaults"
+import {
+  DEFAULT_DIFFERENT_NET_VIA_MARGIN,
+  EPSILON,
+  getBoardDrcValue,
+} from "lib/drc-defaults"
 import { viasAreAtSameLocation } from "lib/util/viasAreAtSameLocation"
 import { distance } from "lib/util/distance"
 
@@ -16,9 +20,14 @@ export function checkDifferentNetViaSpacing(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minClearance = DEFAULT_DIFFERENT_NET_VIA_MARGIN,
+    minClearance,
   }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbViaClearanceError[] {
+  minClearance ??= getBoardDrcValue(
+    circuitJson,
+    "min_via_to_via_clearance",
+    DEFAULT_DIFFERENT_NET_VIA_MARGIN,
+  )
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   if (vias.length < 2) return []
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)

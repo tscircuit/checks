@@ -9,7 +9,11 @@ import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
-import { DEFAULT_PAD_TRACE_CLEARANCE, EPSILON } from "lib/drc-defaults"
+import {
+  DEFAULT_PAD_TRACE_CLEARANCE,
+  EPSILON,
+  getBoardDrcValue,
+} from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import { formatMm, getTraceSegments } from "./check-pad-clearance/common"
 
@@ -43,9 +47,14 @@ export function checkViaTraceClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minClearance = DEFAULT_PAD_TRACE_CLEARANCE,
+    minClearance,
   }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbViaTraceClearanceError[] {
+  minClearance ??= getBoardDrcValue(
+    circuitJson,
+    "min_trace_to_pad_clearance",
+    DEFAULT_PAD_TRACE_CLEARANCE,
+  )
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   const segments = getTraceSegments(circuitJson)
   if (vias.length === 0 || segments.length === 0) return []

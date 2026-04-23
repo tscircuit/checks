@@ -14,7 +14,7 @@ import type {
 } from "circuit-json"
 import type { PcbTraceSegment } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import type { Bounds } from "lib/data-structures/SpatialIndex"
-import { DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
+import { DEFAULT_TRACE_THICKNESS, getBoardDrcValue } from "lib/drc-defaults"
 
 export type PadElement = PcbSmtPad | PcbPlatedHole
 
@@ -101,6 +101,11 @@ export const getPads = (circuitJson: AnyCircuitElement[]) =>
 export const getTraceSegments = (
   circuitJson: AnyCircuitElement[],
 ): PcbTraceSegment[] => {
+  const defaultTraceThickness = getBoardDrcValue(
+    circuitJson,
+    "min_trace_width",
+    DEFAULT_TRACE_THICKNESS,
+  )
   const pcbTraces = cju(circuitJson).pcb_trace.list()
 
   return pcbTraces.flatMap((pcbTrace) => {
@@ -122,7 +127,7 @@ export const getTraceSegments = (
             ? p1.width
             : "width" in p2
               ? p2.width
-              : DEFAULT_TRACE_THICKNESS!,
+              : defaultTraceThickness,
         layer: p1.layer,
         x1: p1.x,
         y1: p1.y,

@@ -14,7 +14,6 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
     "@tscircuit/circuit-json-util": "^0.0.93",
-    "@tscircuit/jlcpcb-manufacturing-specs": "git+https://github.com/tscircuit/jlcpcb-manufacturing-specs#5644e294acfdd545ceb468c3b95c9ed82cb9a00b",
     "@tscircuit/log-soup": "^1.0.2",
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
