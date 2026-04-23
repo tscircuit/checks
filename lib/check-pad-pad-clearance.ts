@@ -8,7 +8,7 @@ import {
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
-import { DEFAULT_PAD_PAD_CLEARANCE, EPSILON } from "lib/drc-defaults"
+import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   type PadElement,
@@ -23,12 +23,14 @@ export function checkPadPadClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minClearance = DEFAULT_PAD_PAD_CLEARANCE,
+    minClearance,
   }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbPadPadClearanceError[] {
   const pads = getPads(circuitJson)
   if (pads.length < 2) return []
 
+  const board = getPcbBoard(circuitJson)
+  minClearance ??= getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance")
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const spatialIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,

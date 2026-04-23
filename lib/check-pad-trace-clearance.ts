@@ -13,7 +13,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { getCollidableBounds } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
-import { DEFAULT_PAD_TRACE_CLEARANCE, EPSILON } from "lib/drc-defaults"
+import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   type PadElement,
@@ -30,13 +30,15 @@ export function checkPadTraceClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minClearance = DEFAULT_PAD_TRACE_CLEARANCE,
+    minClearance,
   }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbPadTraceClearanceError[] {
   const pads = getPads(circuitJson)
   const segments = getTraceSegments(circuitJson)
   if (pads.length === 0 || segments.length === 0) return []
 
+  const board = getPcbBoard(circuitJson)
+  minClearance ??= getBoardDrcValue(board, "min_trace_to_pad_edge_clearance")
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const spatialIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,

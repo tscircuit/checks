@@ -1,26 +1,31 @@
+import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   PcbVia,
   PcbViaClearanceError,
 } from "circuit-json"
-import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import {
-  getFullConnectivityMapFromCircuitJson,
   type ConnectivityMap,
+  getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
-import { DEFAULT_DIFFERENT_NET_VIA_MARGIN, EPSILON } from "lib/drc-defaults"
-import { viasAreAtSameLocation } from "lib/util/viasAreAtSameLocation"
+import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { distance } from "lib/util/distance"
+import { viasAreAtSameLocation } from "lib/util/viasAreAtSameLocation"
 
 export function checkDifferentNetViaSpacing(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minClearance = DEFAULT_DIFFERENT_NET_VIA_MARGIN,
+    minClearance,
   }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbViaClearanceError[] {
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   if (vias.length < 2) return []
+  const board = getPcbBoard(circuitJson)
+  minClearance ??= getBoardDrcValue(
+    board,
+    "min_via_hole_edge_to_via_hole_edge_clearance",
+  )
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const errors: PcbViaClearanceError[] = []
   const reported = new Set<string>()
@@ -33,7 +38,7 @@ export function checkDifferentNetViaSpacing(
       if (viasAreAtSameLocation(viaA, viaB)) continue
       if (connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
       const gap =
-        distance(viaA, viaB) - viaA.outer_diameter / 2 - viaB.outer_diameter / 2
+        distance(viaA, viaB) - viaA.hole_diameter / 2 - viaB.hole_diameter / 2
       if (gap + EPSILON >= minClearance!) continue
       const pairId = [viaA.pcb_via_id, viaB.pcb_via_id].sort().join("_")
       if (reported.has(pairId)) continue

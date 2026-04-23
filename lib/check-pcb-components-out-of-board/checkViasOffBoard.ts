@@ -1,17 +1,11 @@
-import type {
-  AnyCircuitElement,
-  PcbBoard,
-  PcbVia,
-  PcbPlacementError,
-} from "circuit-json"
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
-import { DEFAULT_VIA_BOARD_MARGIN } from "lib/drc-defaults"
+import type { AnyCircuitElement, PcbPlacementError, PcbVia } from "circuit-json"
+import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 
 export function checkViasOffBoard(
   circuitJson: AnyCircuitElement[],
 ): PcbPlacementError[] {
-  const board = circuitJson.find((el) => el.type === "pcb_board") as PcbBoard
-
+  const board = getPcbBoard(circuitJson)
   if (!board) return []
 
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
@@ -19,6 +13,7 @@ export function checkViasOffBoard(
   if (vias.length === 0) return []
 
   if (board.width === undefined || board.height === undefined) return []
+  const boardEdgeClearance = getBoardDrcValue(board, "min_board_edge_clearance")
 
   const boardMinX = board.center.x - board.width / 2
   const boardMaxX = board.center.x + board.width / 2
@@ -35,10 +30,10 @@ export function checkViasOffBoard(
     const viaMaxY = via.y + viaRadius
 
     if (
-      viaMinX < boardMinX + DEFAULT_VIA_BOARD_MARGIN ||
-      viaMaxX > boardMaxX - DEFAULT_VIA_BOARD_MARGIN ||
-      viaMinY < boardMinY + DEFAULT_VIA_BOARD_MARGIN ||
-      viaMaxY > boardMaxY - DEFAULT_VIA_BOARD_MARGIN
+      viaMinX < boardMinX + boardEdgeClearance! ||
+      viaMaxX > boardMaxX - boardEdgeClearance! ||
+      viaMinY < boardMinY + boardEdgeClearance! ||
+      viaMaxY > boardMaxY - boardEdgeClearance!
     ) {
       const viaName = getReadableNameForElement(circuitJson, via.pcb_via_id)
       errors.push({
