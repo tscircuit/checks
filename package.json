@@ -7,7 +7,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup-node index.ts --format esm --dts --sourcemap",
+    "build": "tsup-node",
     "format:check": "biome format .",
     "format": "biome format . --write"
   },
