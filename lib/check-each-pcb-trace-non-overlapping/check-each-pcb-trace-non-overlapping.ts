@@ -1,38 +1,35 @@
-import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
-import { getReadableNameForElement, cju } from "@tscircuit/circuit-json-util"
-import {
-  SpatialObjectIndex,
-  type Bounds,
-} from "lib/data-structures/SpatialIndex"
-import {
-  getFullConnectivityMapFromCircuitJson,
-  type ConnectivityMap,
-} from "circuit-json-to-connectivity-map"
-import {
-  getCollidableBounds,
-  type Collidable,
-  type PcbTraceSegment,
-} from "./getCollidableBounds"
+import { cju, getReadableNameForElement } from "@tscircuit/circuit-json-util"
+import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import {
   segmentToBoundsMinDistance,
   segmentToCircleMinDistance,
 } from "@tscircuit/math-utils"
+import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
+import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
+import {
+  type ConnectivityMap,
+  getFullConnectivityMapFromCircuitJson,
+} from "circuit-json-to-connectivity-map"
+import { addStartAndEndPortIdsIfMissing } from "lib/add-start-and-end-port-ids-if-missing"
+import {
+  type Bounds,
+  SpatialObjectIndex,
+} from "lib/data-structures/SpatialIndex"
 import {
   DEFAULT_TRACE_MARGIN,
   DEFAULT_TRACE_THICKNESS,
   EPSILON,
 } from "lib/drc-defaults"
-import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
-import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
-import { areBoundsOverlapping } from "./areBoundsOverlapping"
-import { getPrimaryId } from "@tscircuit/circuit-json-util"
-import { getCenterOfBoundsPair } from "./getCenterOfBoundsPair"
-import { getClosestPointBetweenSegments } from "./getClosestPointBetweenSegments"
-import { getCenterOfBounds } from "./getCenterOfBounds"
-import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
-import { getClosestPointBetweenSegmentAndBounds } from "./getClosestPointBetweenSegmentAndBounds"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
-import { addStartAndEndPortIdsIfMissing } from "lib/add-start-and-end-port-ids-if-missing"
+import { getClosestPointBetweenSegmentAndBounds } from "./getClosestPointBetweenSegmentAndBounds"
+import { getClosestPointBetweenSegments } from "./getClosestPointBetweenSegments"
+import {
+  type Collidable,
+  type PcbTraceSegment,
+  getCollidableBounds,
+} from "./getCollidableBounds"
+import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
+import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -99,6 +96,18 @@ export function checkEachPcbTraceNonOverlapping(
   const getReadableName = (id: string) =>
     getReadableNameForElement(circuitJson, id)
 
+  const constructErrorMessage = (
+    traceName: string,
+    otherName: string,
+    gap: number,
+  ) => {
+    if (gap < 0) {
+      return `PCB trace ${traceName} overlaps with ${otherName} (accidental contact)`
+    }
+
+    return `PCB trace ${traceName} is too close to ${otherName} (gap: ${gap.toFixed(3)}mm)`
+  }
+
   const errorIds = new Set<string>()
 
   // For each segment, check it if overlaps with anything collidable
@@ -147,7 +156,11 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${getReadableName(segmentB.pcb_trace_id)} ${gap < 0 ? "(accidental contact)" : `(gap: ${gap.toFixed(3)}mm)`}`,
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            getReadableName(segmentB.pcb_trace_id),
+            gap,
+          ),
           pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
           pcb_trace_error_id,
@@ -192,7 +205,11 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${obj.type} "${getReadableName(getPrimaryId(obj as any))}" ${gap < 0 ? "(accidental contact)" : `(gap: ${gap.toFixed(3)}mm)`}`,
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            `${obj.type} "${getReadableName(getPrimaryId(obj))}"`,
+            gap,
+          ),
           pcb_trace_id: segmentA.pcb_trace_id,
           center: getClosestPointBetweenSegmentAndBounds(
             segmentA,
@@ -228,7 +245,11 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} overlaps with ${obj.type} "${getReadableName(getPrimaryId(obj as any))}" ${gap < 0 ? "(accidental contact)" : `(gap: ${gap.toFixed(3)}mm)`}`,
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            `${obj.type} "${getReadableName(getPrimaryId(obj))}"`,
+            gap,
+          ),
           pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
           pcb_trace_error_id,

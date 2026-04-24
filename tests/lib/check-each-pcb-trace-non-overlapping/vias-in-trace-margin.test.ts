@@ -1,7 +1,7 @@
-import { expect, test, describe } from "bun:test"
+import { describe, expect, test } from "bun:test"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 import circuitJson from "../../assets/via-too-close-to-trace.json"
-import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 
 describe("PCB vias in non-overlapping trace checks", () => {
   test("non-overlapping functionality should include vias as collidable objects", async () => {
@@ -15,7 +15,7 @@ describe("PCB vias in non-overlapping trace checks", () => {
             "y": -0.13905158630535422,
           },
           "error_type": "pcb_trace_error",
-          "message": "PCB trace trace[.R1 > port.neg, .C1 > port.neg] overlaps with pcb_via "pcb_via[#pcb_via_0]" (gap: 0.086mm)",
+          "message": "PCB trace trace[.R1 > port.neg, .C1 > port.neg] is too close to pcb_via "pcb_via[#pcb_via_0]" (gap: 0.086mm)",
           "pcb_component_ids": [],
           "pcb_port_ids": [
             "pcb_port_1",
