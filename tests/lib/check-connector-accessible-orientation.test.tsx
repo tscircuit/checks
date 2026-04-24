@@ -2,6 +2,7 @@ import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
 import { checkConnectorAccessibleOrientation } from "lib/check-connector-accessible-orientation"
+import type { AnyCircuitElement } from "circuit-json"
 
 const TYPE_C_6P_FOOTPRINT = (
   <footprint>
@@ -140,5 +141,112 @@ test("connector orientation check skips components without cable_insertion_cente
   const circuitJson = circuit.getCircuitJson()
 
   const warnings = checkConnectorAccessibleOrientation(circuitJson as any)
+  expect(warnings).toHaveLength(0)
+})
+
+test("connector orientation check uses insertion_direction when present", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "pcb_board_0",
+      outline: [
+        { x: -15, y: -10 },
+        { x: 15, y: -10 },
+        { x: 15, y: 10 },
+        { x: -15, y: 10 },
+      ],
+      center: { x: 0, y: 0 },
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+    },
+    {
+      type: "source_component",
+      source_component_id: "source_component_0",
+      ftype: "simple_connector",
+      name: "J1",
+    },
+    {
+      type: "pcb_component",
+      pcb_component_id: "pcb_component_0",
+      source_component_id: "source_component_0",
+      center: { x: -14, y: 0 },
+      width: 4,
+      height: 4,
+      layer: "top",
+      rotation: 0,
+      insertion_direction: "from_left",
+      cable_insertion_center: { x: -14, y: -2 },
+      obstructs_within_bounds: true,
+    },
+    {
+      type: "source_component",
+      source_component_id: "source_component_1",
+      ftype: "simple_connector",
+      name: "J2",
+    },
+    {
+      type: "pcb_component",
+      pcb_component_id: "pcb_component_1",
+      source_component_id: "source_component_1",
+      center: { x: -14, y: 4 },
+      width: 4,
+      height: 4,
+      layer: "top",
+      rotation: 0,
+      insertion_direction: "from_back",
+      obstructs_within_bounds: true,
+    },
+  ]
+
+  const warnings = checkConnectorAccessibleOrientation(circuitJson)
+
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0]).toMatchObject({
+    type: "pcb_connector_not_in_accessible_orientation_warning",
+    pcb_component_id: "pcb_component_1",
+    facing_direction: "y-",
+    recommended_facing_direction: "x-",
+  })
+})
+
+test("connector orientation check skips from_above insertion direction", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "pcb_board_0",
+      outline: [
+        { x: -15, y: -10 },
+        { x: 15, y: -10 },
+        { x: 15, y: 10 },
+        { x: -15, y: 10 },
+      ],
+      center: { x: 0, y: 0 },
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+    },
+    {
+      type: "source_component",
+      source_component_id: "source_component_0",
+      ftype: "simple_connector",
+      name: "J1",
+    },
+    {
+      type: "pcb_component",
+      pcb_component_id: "pcb_component_0",
+      source_component_id: "source_component_0",
+      center: { x: -14, y: 0 },
+      width: 4,
+      height: 4,
+      layer: "top",
+      rotation: 0,
+      insertion_direction: "from_above",
+      cable_insertion_center: { x: -14, y: -2 },
+      obstructs_within_bounds: true,
+    },
+  ]
+
+  const warnings = checkConnectorAccessibleOrientation(circuitJson)
   expect(warnings).toHaveLength(0)
 })

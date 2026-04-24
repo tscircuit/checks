@@ -9,7 +9,30 @@ import { getReadableNameForComponent } from "./util/get-readable-names"
 
 type FacingDirection = "x-" | "x+" | "y+" | "y-"
 
+function getFacingDirectionFromInsertionDirection(
+  component: PcbComponent,
+): FacingDirection | null {
+  switch (component.insertion_direction) {
+    case "from_left":
+      return "x-"
+    case "from_right":
+      return "x+"
+    case "from_front":
+      return "y+"
+    case "from_back":
+      return "y-"
+    case "from_above":
+      return null
+    default:
+      return null
+  }
+}
+
 function getFacingDirection(component: PcbComponent): FacingDirection | null {
+  if (component.insertion_direction) {
+    return getFacingDirectionFromInsertionDirection(component)
+  }
+
   if (!component.center || !component.cable_insertion_center) return null
 
   const dx = component.cable_insertion_center.x - component.center.x
@@ -65,8 +88,6 @@ export function checkConnectorAccessibleOrientation(
   )
 
   for (const component of components) {
-    if (!component.cable_insertion_center) continue
-
     const facingDirection = getFacingDirection(component)
     const recommendedFacingDirection = getRecommendedFacingDirection(
       component,
