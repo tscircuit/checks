@@ -1,6 +1,7 @@
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbPlacementError, PcbVia } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 export function checkViasOffBoard(
   circuitJson: AnyCircuitElement[],
@@ -13,7 +14,9 @@ export function checkViasOffBoard(
   if (vias.length === 0) return []
 
   if (board.width === undefined || board.height === undefined) return []
-  const boardEdgeClearance = getBoardDrcValue(board, "min_board_edge_clearance")
+  const boardEdgeClearance =
+    getBoardDrcValue(board, "min_board_edge_clearance") ??
+    jlcMinTolerances.min_board_edge_clearance
 
   const boardMinX = board.center.x - board.width / 2
   const boardMaxX = board.center.x + board.width / 2

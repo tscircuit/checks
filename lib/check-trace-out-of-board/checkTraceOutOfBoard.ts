@@ -8,6 +8,7 @@ import type {
   PcbTraceError,
 } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 /**
  * Default margin for trace clearance from board edge (in mm)
@@ -67,9 +68,7 @@ export function checkPcbTracesOutOfBoard(
   const margin =
     config.margin ??
     getBoardDrcValue(board, "min_board_edge_clearance") ??
-    DEFAULT_BOARD_MARGIN
-
-  // Create board polygon using math-utils Point type
+    jlcMinTolerances.min_board_edge_clearance
   const boardPoints = getBoardPolygonPoints(board)
   if (!boardPoints) return errors
 
@@ -108,7 +107,7 @@ export function checkPcbTracesOutOfBoard(
         }
       }
 
-      const minimumDistance = traceWidth / 2 + margin
+      const minimumDistance = traceWidth / 2 + margin!
 
       if (minDistance < minimumDistance) {
         const error: PcbTraceError = {

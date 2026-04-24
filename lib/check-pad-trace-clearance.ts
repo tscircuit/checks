@@ -25,6 +25,7 @@ import {
   getTraceSegments,
   isCircularPad,
 } from "./check-pad-clearance/common"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 export function checkPadTraceClearance(
   circuitJson: AnyCircuitElement[],
@@ -38,7 +39,9 @@ export function checkPadTraceClearance(
   if (pads.length === 0 || segments.length === 0) return []
 
   const board = getPcbBoard(circuitJson)
-  minClearance ??= getBoardDrcValue(board, "min_trace_to_pad_edge_clearance")
+  minClearance ??=
+    getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
+    jlcMinTolerances.min_trace_to_pad_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const spatialIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,

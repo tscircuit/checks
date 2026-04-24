@@ -65,8 +65,8 @@
     "type": "pcb_via",
     "pcb_via_id": "via_b",
     "pcb_trace_id": "trace_b",
-    "x": 0.2,
-    "y": -0.1,
+    "x": 0.05,
+    "y": 0.1,
     "hole_diameter": 0.3,
     "outer_diameter": 0.6,
     "layers": ["top", "bottom"]

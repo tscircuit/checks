@@ -1,6 +1,6 @@
-import { expect, test, describe } from "bun:test"
-import { checkDifferentNetViaSpacing } from "lib/check-different-net-via-spacing"
+import { describe, expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { checkDifferentNetViaSpacing } from "lib/check-different-net-via-spacing"
 
 describe("checkDifferentNetViaSpacing", () => {
   test("returns error when different-net vias are too close", () => {
@@ -21,7 +21,7 @@ describe("checkDifferentNetViaSpacing", () => {
         type: "pcb_via",
         pcb_via_id: "via2",
         pcb_trace_id: "trace2",
-        x: 0.5,
+        x: 0.35,
         y: 0,
         hole_diameter: 0.3,
         outer_diameter: 0.6,

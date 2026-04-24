@@ -1,6 +1,6 @@
-import { expect, test, describe } from "bun:test"
-import { checkSameNetViaSpacing } from "lib/check-same-net-via-spacing"
+import { describe, expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { checkSameNetViaSpacing } from "lib/check-same-net-via-spacing"
 
 describe("checkSameNetViaSpacing", () => {
   test("returns error when same-net vias are too close", () => {
@@ -20,7 +20,7 @@ describe("checkSameNetViaSpacing", () => {
         type: "pcb_via",
         pcb_via_id: "via2",
         pcb_trace_id: "trace1",
-        x: 0.5,
+        x: 0.35,
         y: 0,
         hole_diameter: 0.3,
         outer_diameter: 0.6,

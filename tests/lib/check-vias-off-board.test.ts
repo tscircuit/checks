@@ -1,4 +1,4 @@
-import { test, expect } from "bun:test"
+import { expect, test } from "bun:test"
 import type { AnyCircuitElement, PcbPlacementError } from "circuit-json"
 import { checkViasOffBoard } from "lib/check-pcb-components-out-of-board/checkViasOffBoard"
 
@@ -29,6 +29,7 @@ test("no vias, should return no errors", () => {
       num_layers: 2,
       thickness: 1.2,
       material: "fr4",
+      min_board_edge_clearance: 0.2,
     },
   ]
   const errors = checkViasOffBoard(soup)
@@ -46,6 +47,7 @@ test("via completely inside board, should return no errors", () => {
       num_layers: 2,
       thickness: 1.2,
       material: "fr4",
+      min_board_edge_clearance: 0.2,
     },
     {
       type: "pcb_via",
@@ -72,11 +74,12 @@ test("via partially outside board (crossing boundary), should return an error", 
       num_layers: 2,
       thickness: 1.2,
       material: "fr4",
+      min_board_edge_clearance: 0.2,
     },
     {
       type: "pcb_via",
       pcb_via_id: "via_partially_out",
-      x: 4.9, // Board edge is at 5.0, via radius is 0.3. So via extends to 5.2
+      x: 4.6, // Board edge is at 5.0, 0.2mm clearance and 0.3mm radius leaves 4.5 max
       y: 0,
       outer_diameter: 0.6,
       hole_diameter: 0.3,
@@ -104,6 +107,7 @@ test("via completely outside board, should return an error", () => {
       num_layers: 2,
       thickness: 1.2,
       material: "fr4",
+      min_board_edge_clearance: 0.2,
     },
     {
       type: "pcb_via",
@@ -136,6 +140,7 @@ test("multiple vias, some in, some out", () => {
       num_layers: 2,
       thickness: 1.2,
       material: "fr4",
+      min_board_edge_clearance: 0.2,
     },
     {
       // In
@@ -152,7 +157,7 @@ test("multiple vias, some in, some out", () => {
       type: "pcb_via",
       pcb_via_id: "via_part_out_top",
       x: 0,
-      y: 4.9, // Board edge at 5.0, radius 0.3
+      y: 4.6, // Board edge at 5.0, 0.2mm clearance and 0.3mm radius leaves 4.5 max
       outer_diameter: 0.6,
       hole_diameter: 0.3,
       layers: ["top", "bottom"],

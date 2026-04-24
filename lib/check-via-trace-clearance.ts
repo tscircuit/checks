@@ -12,6 +12,7 @@ import {
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import { formatMm, getTraceSegments } from "./check-pad-clearance/common"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 const getClosestPointOnSegment = (
   point: { x: number; y: number },
@@ -51,7 +52,9 @@ export function checkViaTraceClearance(
   if (vias.length === 0 || segments.length === 0) return []
 
   const board = getPcbBoard(circuitJson)
-  minClearance ??= getBoardDrcValue(board, "min_trace_to_pad_edge_clearance")
+  minClearance ??=
+    getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
+    jlcMinTolerances.min_trace_to_pad_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const errors = new Map<
     string,

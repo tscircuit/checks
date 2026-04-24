@@ -11,6 +11,7 @@ import {
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { distance } from "lib/util/distance"
 import { viasAreAtSameLocation } from "lib/util/viasAreAtSameLocation"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 export function checkDifferentNetViaSpacing(
   circuitJson: AnyCircuitElement[],
@@ -22,10 +23,9 @@ export function checkDifferentNetViaSpacing(
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   if (vias.length < 2) return []
   const board = getPcbBoard(circuitJson)
-  minClearance ??= getBoardDrcValue(
-    board,
-    "min_via_hole_edge_to_via_hole_edge_clearance",
-  )
+  minClearance ??=
+    getBoardDrcValue(board, "min_via_hole_edge_to_via_hole_edge_clearance") ??
+    jlcMinTolerances.min_via_hole_edge_to_via_hole_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const errors: PcbViaClearanceError[] = []
   const reported = new Set<string>()
