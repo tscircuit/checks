@@ -6,6 +6,7 @@ import type {
   SourceTrace,
   PcbSmtPad,
   PcbPlatedHole,
+  SourceNet,
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
 import { getReadableNameForPcbPort } from "@tscircuit/circuit-json-util"
@@ -24,6 +25,9 @@ function checkTracesAreContiguous(
   const sourceTraces = circuitJson.filter(
     (el) => el.type === "source_trace",
   ) as SourceTrace[]
+  const sourceNets = circuitJson.filter(
+    (el) => el.type === "source_net",
+  ) as SourceNet[]
   const pcbSmtPads = circuitJson.filter(
     (el) => el.type === "pcb_smtpad",
   ) as PcbSmtPad[]
@@ -43,6 +47,17 @@ function checkTracesAreContiguous(
     if (hole.pcb_port_id) {
       padMap.set(hole.pcb_port_id, hole)
     }
+  }
+
+  const getTraceName = (trace: PcbTrace, sourceTrace?: SourceTrace) => {
+    if (sourceTrace?.display_name) return sourceTrace.display_name
+
+    const sourceNet = sourceNets.find(
+      (net) => net.source_net_id === trace.source_trace_id,
+    )
+    if (sourceNet?.name) return `net.${sourceNet.name}`
+
+    return trace.source_trace_id || "unknown"
   }
 
   for (const trace of pcbTraces) {
@@ -80,8 +95,7 @@ function checkTracesAreContiguous(
             Math.abs(nextPoint.y - currentPoint.y) < 0.01
 
           if (!prevAligned || !nextAligned) {
-            const traceName =
-              sourceTrace?.display_name || trace.source_trace_id || "unknown"
+            const traceName = getTraceName(trace, sourceTrace)
             errors.push({
               type: "pcb_trace_error",
               message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
@@ -91,7 +105,7 @@ function checkTracesAreContiguous(
                 `!${trace.pcb_trace_id}`,
               error_type: "pcb_trace_error",
               pcb_trace_id: trace.pcb_trace_id,
-              pcb_trace_error_id: "",
+              pcb_trace_error_id: `misaligned_via_${trace.pcb_trace_id}_${i}`,
               pcb_component_ids: [],
               pcb_port_ids: [],
             })
@@ -100,8 +114,7 @@ function checkTracesAreContiguous(
       }
     }
 
-    const traceName =
-      sourceTrace?.display_name || trace.source_trace_id || "unknown"
+    const traceName = getTraceName(trace, sourceTrace)
 
     // For traces with known expected ports, check specific connections
     for (const port of expectedPorts) {
@@ -139,7 +152,7 @@ function checkTracesAreContiguous(
             `!${trace.pcb_trace_id}`,
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
-          pcb_trace_error_id: "",
+          pcb_trace_error_id: `missing_connection_${trace.pcb_trace_id}_${port.pcb_port_id}`,
           center: errorCenter,
           pcb_component_ids: [],
           pcb_port_ids: [port.pcb_port_id],
@@ -151,6 +164,11 @@ function checkTracesAreContiguous(
     if (expectedPorts.length === 0) {
       let firstConnectsToAnyPad = false
       let lastConnectsToAnyPad = false
+      const endpointsAreSame =
+        firstPoint.route_type === "wire" &&
+        lastPoint.route_type === "wire" &&
+        Math.abs(firstPoint.x - lastPoint.x) < 0.01 &&
+        Math.abs(firstPoint.y - lastPoint.y) < 0.01
 
       for (const [portId, pad] of padMap) {
         if (
@@ -177,13 +195,17 @@ function checkTracesAreContiguous(
             `!${trace.pcb_trace_id}`,
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
-          pcb_trace_error_id: "",
+          pcb_trace_error_id: `disconnected_endpoint_${trace.pcb_trace_id}_start`,
           center: { x: firstPoint.x, y: firstPoint.y },
           pcb_component_ids: [],
           pcb_port_ids: [],
         })
       }
-      if (!lastConnectsToAnyPad && lastPoint.route_type === "wire") {
+      if (
+        !lastConnectsToAnyPad &&
+        lastPoint.route_type === "wire" &&
+        !(endpointsAreSame && !firstConnectsToAnyPad)
+      ) {
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] has disconnected endpoint at (${lastPoint.x.toFixed(2)}, ${lastPoint.y.toFixed(2)})`,
@@ -193,7 +215,7 @@ function checkTracesAreContiguous(
             `!${trace.pcb_trace_id}`,
           error_type: "pcb_trace_error",
           pcb_trace_id: trace.pcb_trace_id,
-          pcb_trace_error_id: "",
+          pcb_trace_error_id: `disconnected_endpoint_${trace.pcb_trace_id}_end`,
           center: { x: lastPoint.x, y: lastPoint.y },
           pcb_component_ids: [],
           pcb_port_ids: [],
