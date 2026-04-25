@@ -6,10 +6,12 @@ import type {
   SourceTrace,
   PcbSmtPad,
   PcbPlatedHole,
-  SourceNet,
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
-import { getReadableNameForPcbPort } from "@tscircuit/circuit-json-util"
+import {
+  getReadableNameForPcbPort,
+  getReadableNameForPcbTrace,
+} from "@tscircuit/circuit-json-util"
 
 function checkTracesAreContiguous(
   circuitJson: AnyCircuitElement[],
@@ -25,9 +27,6 @@ function checkTracesAreContiguous(
   const sourceTraces = circuitJson.filter(
     (el) => el.type === "source_trace",
   ) as SourceTrace[]
-  const sourceNets = circuitJson.filter(
-    (el) => el.type === "source_net",
-  ) as SourceNet[]
   const pcbSmtPads = circuitJson.filter(
     (el) => el.type === "pcb_smtpad",
   ) as PcbSmtPad[]
@@ -47,17 +46,6 @@ function checkTracesAreContiguous(
     if (hole.pcb_port_id) {
       padMap.set(hole.pcb_port_id, hole)
     }
-  }
-
-  const getTraceName = (trace: PcbTrace, sourceTrace?: SourceTrace) => {
-    if (sourceTrace?.display_name) return sourceTrace.display_name
-
-    const sourceNet = sourceNets.find(
-      (net) => net.source_net_id === trace.source_trace_id,
-    )
-    if (sourceNet?.name) return `net.${sourceNet.name}`
-
-    return trace.source_trace_id || "unknown"
   }
 
   for (const trace of pcbTraces) {
@@ -95,7 +83,10 @@ function checkTracesAreContiguous(
             Math.abs(nextPoint.y - currentPoint.y) < 0.01
 
           if (!prevAligned || !nextAligned) {
-            const traceName = getTraceName(trace, sourceTrace)
+            const traceName = getReadableNameForPcbTrace(
+              circuitJson,
+              trace.pcb_trace_id,
+            )
             errors.push({
               type: "pcb_trace_error",
               message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
@@ -114,7 +105,10 @@ function checkTracesAreContiguous(
       }
     }
 
-    const traceName = getTraceName(trace, sourceTrace)
+    const traceName = getReadableNameForPcbTrace(
+      circuitJson,
+      trace.pcb_trace_id,
+    )
 
     // For traces with known expected ports, check specific connections
     for (const port of expectedPorts) {
