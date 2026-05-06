@@ -56,6 +56,23 @@ export function isPointInPad(
       )
       return cornerX * cornerX + cornerY * cornerY <= radius * radius
     }
+
+    if (pad.shape === "polygon") {
+      let inside = false
+      for (
+        let i = 0, j = pad.points.length - 1;
+        i < pad.points.length;
+        j = i++
+      ) {
+        const pi = pad.points[i]
+        const pj = pad.points[j]
+        const intersects =
+          pi.y > point.y !== pj.y > point.y &&
+          point.x < ((pj.x - pi.x) * (point.y - pi.y)) / (pj.y - pi.y) + pi.x
+        if (intersects) inside = !inside
+      }
+      return inside
+    }
   }
 
   if (pad.type === "pcb_plated_hole") {

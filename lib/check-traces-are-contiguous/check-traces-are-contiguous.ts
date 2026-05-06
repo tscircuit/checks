@@ -34,17 +34,20 @@ function checkTracesAreContiguous(
     (el) => el.type === "pcb_plated_hole",
   ) as PcbPlatedHole[]
 
-  const padMap = new Map<string, PcbSmtPad | PcbPlatedHole>()
+  const padMap = new Map<string, Array<PcbSmtPad | PcbPlatedHole>>()
 
   for (const pad of pcbSmtPads) {
     if (pad.pcb_port_id) {
-      padMap.set(pad.pcb_port_id, pad)
+      padMap.set(pad.pcb_port_id, [...(padMap.get(pad.pcb_port_id) ?? []), pad])
     }
   }
 
   for (const hole of pcbPlatedHoles) {
     if (hole.pcb_port_id) {
-      padMap.set(hole.pcb_port_id, hole)
+      padMap.set(hole.pcb_port_id, [
+        ...(padMap.get(hole.pcb_port_id) ?? []),
+        hole,
+      ])
     }
   }
 
@@ -114,24 +117,28 @@ function checkTracesAreContiguous(
     for (const port of expectedPorts) {
       if (!port.pcb_port_id) continue
 
-      const pad = padMap.get(port.pcb_port_id)
+      const pads = padMap.get(port.pcb_port_id)
 
-      if (!pad) continue
+      if (!pads?.length) continue
 
       const isFirstPointConnected =
         firstPoint.route_type === "wire" &&
-        isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad)
+        pads.some((pad) =>
+          isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad),
+        )
 
       const isLastPointConnected =
         lastPoint.route_type === "wire" &&
-        isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad)
+        pads.some((pad) =>
+          isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad),
+        )
 
       if (!isFirstPointConnected && !isLastPointConnected) {
         const portName = getReadableNameForPcbPort(
           circuitJson,
           port.pcb_port_id,
         ).replace("pcb_port", "")
-        const padType = pad.type.replace(/pcb_/, "")
+        const padType = pads[0].type.replace(/pcb_/, "")
         // Use the midpoint between trace endpoints as error location
         const errorCenter = {
           x: (firstPoint.x + lastPoint.x) / 2,
@@ -164,16 +171,20 @@ function checkTracesAreContiguous(
         Math.abs(firstPoint.x - lastPoint.x) < 0.01 &&
         Math.abs(firstPoint.y - lastPoint.y) < 0.01
 
-      for (const [portId, pad] of padMap) {
+      for (const pads of padMap.values()) {
         if (
           firstPoint.route_type === "wire" &&
-          isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad)
+          pads.some((pad) =>
+            isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad),
+          )
         ) {
           firstConnectsToAnyPad = true
         }
         if (
           lastPoint.route_type === "wire" &&
-          isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad)
+          pads.some((pad) =>
+            isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad),
+          )
         ) {
           lastConnectsToAnyPad = true
         }
