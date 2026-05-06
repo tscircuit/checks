@@ -9,6 +9,7 @@ import type {
   PcbTraceError,
   PcbVia,
 } from "circuit-json"
+import { getPolygonPointsForPad } from "./segment-to-polygon-clearance"
 
 interface Bounds {
   minX: number
@@ -46,5 +47,21 @@ export const getCollidableBounds = (collidable: Collidable): Bounds => {
       maxY: Math.max(collidable.y1, collidable.y2),
     }
   }
+
+  if (
+    collidable.type === "pcb_smtpad" ||
+    collidable.type === "pcb_plated_hole"
+  ) {
+    const polygonPoints = getPolygonPointsForPad(collidable)
+    if (polygonPoints && polygonPoints.length > 0) {
+      return {
+        minX: Math.min(...polygonPoints.map((point) => point.x)),
+        minY: Math.min(...polygonPoints.map((point) => point.y)),
+        maxX: Math.max(...polygonPoints.map((point) => point.x)),
+        maxY: Math.max(...polygonPoints.map((point) => point.y)),
+      }
+    }
+  }
+
   return getBoundsOfPcbElements([collidable as any])
 }
