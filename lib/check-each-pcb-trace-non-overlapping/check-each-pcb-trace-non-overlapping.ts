@@ -233,15 +233,18 @@ export function checkEachPcbTraceNonOverlapping(
         })
       }
 
-      const polygonPoints =
-        obj.type === "pcb_smtpad" || obj.type === "pcb_plated_hole"
-          ? getPolygonPointsForPad(obj)
-          : null
+      const isPolygon =
+        (obj.type === "pcb_smtpad" &&
+          (obj.shape === "rotated_rect" || obj.shape === "polygon")) ||
+        (obj.type === "pcb_plated_hole" &&
+          "rect_pad_width" in obj &&
+          "rect_pad_height" in obj)
 
-      if (polygonPoints) {
+      if (isPolygon) {
+        const padOutline = getPolygonPointsForPad(obj)
         const { distance, center } = getSegmentToPolygonClearance(
           segmentA,
-          polygonPoints,
+          padOutline,
         )
         const gap = distance - segmentA.thickness / 2
         if (gap > minClearance - EPSILON) continue

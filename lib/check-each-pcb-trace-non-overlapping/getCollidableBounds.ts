@@ -52,8 +52,16 @@ export const getCollidableBounds = (collidable: Collidable): Bounds => {
     collidable.type === "pcb_smtpad" ||
     collidable.type === "pcb_plated_hole"
   ) {
-    const polygonPoints = getPolygonPointsForPad(collidable)
-    if (polygonPoints && polygonPoints.length > 0) {
+    const isPolygon =
+      (collidable.type === "pcb_smtpad" &&
+        (collidable.shape === "rotated_rect" ||
+          collidable.shape === "polygon")) ||
+      (collidable.type === "pcb_plated_hole" &&
+        "rect_pad_width" in collidable &&
+        "rect_pad_height" in collidable)
+
+    if (isPolygon) {
+      const polygonPoints = getPolygonPointsForPad(collidable)
       return {
         minX: Math.min(...polygonPoints.map((point) => point.x)),
         minY: Math.min(...polygonPoints.map((point) => point.y)),
