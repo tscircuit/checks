@@ -34,7 +34,7 @@ function checkTracesAreContiguous(
     (el) => el.type === "pcb_plated_hole",
   ) as PcbPlatedHole[]
 
-  const padMap = new Map<PcbPortId, Array<PcbSmtPad | PcbPlatedHole>>()
+  const padMap = new Map<string, Array<PcbSmtPad | PcbPlatedHole>>()
 
   for (const pad of pcbSmtPads) {
     if (pad.pcb_port_id) {
