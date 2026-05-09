@@ -4,6 +4,28 @@ function distance(x1: number, y1: number, x2: number, y2: number): number {
   return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 }
 
+const POINT_ON_SEGMENT_TOLERANCE = 1e-9
+
+function isPointOnSegment(
+  point: { x: number; y: number },
+  segment: { start: { x: number; y: number }; end: { x: number; y: number } },
+) {
+  const crossProduct =
+    (point.y - segment.start.y) * (segment.end.x - segment.start.x) -
+    (point.x - segment.start.x) * (segment.end.y - segment.start.y)
+  if (Math.abs(crossProduct) > POINT_ON_SEGMENT_TOLERANCE) return false
+
+  const dotProduct =
+    (point.x - segment.start.x) * (segment.end.x - segment.start.x) +
+    (point.y - segment.start.y) * (segment.end.y - segment.start.y)
+  if (dotProduct < -POINT_ON_SEGMENT_TOLERANCE) return false
+
+  const squaredLength =
+    (segment.end.x - segment.start.x) ** 2 +
+    (segment.end.y - segment.start.y) ** 2
+  return dotProduct <= squaredLength + POINT_ON_SEGMENT_TOLERANCE
+}
+
 export function isPointInPad(
   point: { x: number; y: number },
   pad: PcbSmtPad | PcbPlatedHole,
@@ -66,6 +88,8 @@ export function isPointInPad(
       ) {
         const pi = pad.points[i]
         const pj = pad.points[j]
+        if (isPointOnSegment(point, { start: pi, end: pj })) return true
+
         const intersects =
           pi.y > point.y !== pj.y > point.y &&
           point.x < ((pj.x - pi.x) * (point.y - pi.y)) / (pj.y - pi.y) + pi.x
