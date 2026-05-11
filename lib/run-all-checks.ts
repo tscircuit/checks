@@ -18,6 +18,7 @@ import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-t
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
+import { checkViaPadClearance } from "./check-via-pad-clearance"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
   return [
@@ -26,6 +27,7 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPadPadClearance(circuitJson),
     ...checkPadTraceClearance(circuitJson),
+    ...checkViaPadClearance(circuitJson),
     ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
   ]
