@@ -1,13 +1,20 @@
 import type { PcbTrace } from "circuit-json"
 
+export function getPcbPortIdsConnectedToRoutePoint(
+  routePoint: PcbTrace["route"][number],
+) {
+  if (routePoint.route_type !== "wire") return []
+
+  return [routePoint.start_pcb_port_id, routePoint.end_pcb_port_id].filter(
+    (portId): portId is string => Boolean(portId),
+  )
+}
+
 export function getPcbPortIdsConnectedToTrace(trace: PcbTrace) {
   const connectedPcbPorts = new Set<string>()
   for (const segment of trace.route) {
-    if (segment.route_type === "wire") {
-      if (segment.start_pcb_port_id)
-        connectedPcbPorts.add(segment.start_pcb_port_id)
-      if (segment.end_pcb_port_id)
-        connectedPcbPorts.add(segment.end_pcb_port_id)
+    for (const portId of getPcbPortIdsConnectedToRoutePoint(segment)) {
+      connectedPcbPorts.add(portId)
     }
   }
 

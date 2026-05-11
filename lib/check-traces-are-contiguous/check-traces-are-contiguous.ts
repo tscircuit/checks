@@ -8,12 +8,108 @@ import type {
   PcbPlatedHole,
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
+import { getPcbPortIdsConnectedToRoutePoint } from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
+import { distance } from "../util/distance"
 import {
   getReadableNameForPcbPort,
   getReadableNameForPcbTrace,
 } from "@tscircuit/circuit-json-util"
 
 type PcbPortId = PcbPort["pcb_port_id"]
+
+function routePointConnectsToAnotherExpectedPort(
+  point: PcbTrace["route"][number],
+  expectedPorts: PcbPort[],
+  missingPcbPortId: PcbPortId,
+  padMap: Map<PcbPortId, Array<PcbSmtPad | PcbPlatedHole>>,
+) {
+  if (point.route_type !== "wire") return false
+
+  return expectedPorts.some((expectedPort) => {
+    if (
+      !expectedPort.pcb_port_id ||
+      expectedPort.pcb_port_id === missingPcbPortId
+    ) {
+      return false
+    }
+
+    const expectedPads = padMap.get(expectedPort.pcb_port_id)
+    return (
+      expectedPads?.some((pad) =>
+        isPointInPad({ x: point.x, y: point.y }, pad),
+      ) ?? false
+    )
+  })
+}
+
+function getMissingConnectionErrorCenter({
+  firstPoint,
+  lastPoint,
+  port,
+  expectedPorts,
+  padMap,
+}: {
+  firstPoint: PcbTrace["route"][number]
+  lastPoint: PcbTrace["route"][number]
+  port: PcbPort
+  expectedPorts: PcbPort[]
+  padMap: Map<PcbPortId, Array<PcbSmtPad | PcbPlatedHole>>
+}) {
+  let errorLocation:
+    | Extract<PcbTrace["route"][number], { route_type: "wire" }>
+    | undefined
+  const firstWirePoint =
+    firstPoint.route_type === "wire" ? firstPoint : undefined
+  const lastWirePoint = lastPoint.route_type === "wire" ? lastPoint : undefined
+  const firstWirePointReferencesPort = getPcbPortIdsConnectedToRoutePoint(
+    firstPoint,
+  ).includes(port.pcb_port_id)
+  const lastWirePointReferencesPort = getPcbPortIdsConnectedToRoutePoint(
+    lastPoint,
+  ).includes(port.pcb_port_id)
+
+  if (firstWirePointReferencesPort && firstWirePoint) {
+    errorLocation = firstWirePoint
+  } else if (lastWirePointReferencesPort && lastWirePoint) {
+    errorLocation = lastWirePoint
+  } else if (
+    routePointConnectsToAnotherExpectedPort(
+      firstPoint,
+      expectedPorts,
+      port.pcb_port_id,
+      padMap,
+    ) &&
+    lastWirePoint
+  ) {
+    errorLocation = lastWirePoint
+  } else if (
+    routePointConnectsToAnotherExpectedPort(
+      lastPoint,
+      expectedPorts,
+      port.pcb_port_id,
+      padMap,
+    ) &&
+    firstWirePoint
+  ) {
+    errorLocation = firstWirePoint
+  } else if (firstWirePoint && lastWirePoint) {
+    errorLocation =
+      distance(firstWirePoint, port) <= distance(lastWirePoint, port)
+        ? firstWirePoint
+        : lastWirePoint
+  } else if (firstWirePoint) {
+    errorLocation = firstWirePoint
+  } else if (lastWirePoint) {
+    errorLocation = lastWirePoint
+  }
+
+  return errorLocation
+    ? { x: errorLocation.x, y: errorLocation.y }
+    : {
+        x: (firstPoint.x + lastPoint.x) / 2,
+        y: (firstPoint.y + lastPoint.y) / 2,
+      }
+}
 
 function checkTracesAreContiguous(
   circuitJson: AnyCircuitElement[],
@@ -141,11 +237,13 @@ function checkTracesAreContiguous(
           port.pcb_port_id,
         ).replace("pcb_port", "")
         const padType = pads[0].type.replace(/pcb_/, "")
-        // Use the midpoint between trace endpoints as error location
-        const errorCenter = {
-          x: (firstPoint.x + lastPoint.x) / 2,
-          y: (firstPoint.y + lastPoint.y) / 2,
-        }
+        const errorCenter = getMissingConnectionErrorCenter({
+          firstPoint,
+          lastPoint,
+          port,
+          expectedPorts,
+          padMap,
+        })
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] is missing a connection to ${padType}${portName}`,
