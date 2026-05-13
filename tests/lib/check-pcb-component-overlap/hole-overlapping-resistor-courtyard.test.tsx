@@ -7,34 +7,28 @@ test("hole overlapping resistor courtyard should show footprint overlap error", 
   const circuit = new Circuit()
 
   circuit.add(
-     <board width="10mm" height="10mm">
-    <resistor
-      resistance="1k"
-      footprint="0402"
-      name="R1"
-      pcbY={2.5}
-    />
-  <hole diameter="3mm" pcbX={0} pcbY={0}  />
-  <chip
-    pcbX={-2}
-    pcbY={-1}
-    name="ANT1"
-    footprint={
-      <footprint>
-        <courtyardoutline
-          outline={[
-            { x: -1, y: 0 },
-            { x: 1, y: 0 },
-            { x: 1, y: 1 },
-            { x: 0, y: 2 },
-            { x: -1, y: 1 },
-          ]}
-        />
-      </footprint>
-    }
-  />
-    
-  </board>,
+    <board width="10mm" height="10mm">
+      <resistor resistance="1k" footprint="0402" name="R1" pcbY={2.5} />
+      <hole diameter="3mm" pcbX={0} pcbY={0} />
+      <chip
+        pcbX={-2}
+        pcbY={-1}
+        name="ANT1"
+        footprint={
+          <footprint>
+            <courtyardoutline
+              outline={[
+                { x: -1, y: 0 },
+                { x: 1, y: 0 },
+                { x: 1, y: 1 },
+                { x: 0, y: 2 },
+                { x: -1, y: 1 },
+              ]}
+            />
+          </footprint>
+        }
+      />
+    </board>,
   )
 
   await circuit.renderUntilSettled()
