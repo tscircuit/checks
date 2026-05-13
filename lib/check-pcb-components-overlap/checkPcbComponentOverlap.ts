@@ -25,7 +25,7 @@ import {
 interface ComponentWithElements {
   component_id: string
   elements: OverlappableElement[]
-  bounds: {
+  bounds?: {
     minX: number
     minY: number
     maxX: number
@@ -89,7 +89,6 @@ export function checkPcbComponentOverlap(
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
-        bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
     componentMap.get(componentId)!.elements.push(pad)
@@ -103,7 +102,6 @@ export function checkPcbComponentOverlap(
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
-        bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
     componentMap.get(componentId)!.elements.push(hole)
@@ -115,7 +113,6 @@ export function checkPcbComponentOverlap(
     componentMap.set(componentId, {
       component_id: componentId,
       elements: [hole],
-      bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
     })
   }
 
@@ -125,7 +122,6 @@ export function checkPcbComponentOverlap(
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
-        bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
     componentMap.get(componentId)!.elements.push(courtyard)
@@ -148,6 +144,10 @@ export function checkPcbComponentOverlap(
       const comp2 = componentsWithElements[j]
 
       // First check if component bounds overlap
+      if (!comp1.bounds || !comp2.bounds) {
+        continue
+      }
+
       if (!doBoundsOverlap(comp1.bounds, comp2.bounds)) {
         continue
       }
