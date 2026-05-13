@@ -1,12 +1,36 @@
 import { getBoundsOfPcbElements } from "@tscircuit/circuit-json-util"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
-import type { PcbHole, PcbPlatedHole, PcbSmtPad } from "circuit-json"
+import type {
+  PcbCourtyardCircle,
+  PcbCourtyardOutline,
+  PcbCourtyardPolygon,
+  PcbCourtyardRect,
+  PcbHole,
+  PcbPlatedHole,
+  PcbSmtPad,
+} from "circuit-json"
 import type { Collidable } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 
-export type OverlappableElement = PcbSmtPad | PcbPlatedHole | PcbHole
+export type OverlappableElement =
+  | PcbSmtPad
+  | PcbPlatedHole
+  | PcbHole
+  | PcbCourtyardCircle
+  | PcbCourtyardOutline
+  | PcbCourtyardPolygon
+  | PcbCourtyardRect
 
 function getElementLayers(elem: OverlappableElement): string[] {
+  if (
+    elem.type === "pcb_courtyard_circle" ||
+    elem.type === "pcb_courtyard_outline" ||
+    elem.type === "pcb_courtyard_polygon" ||
+    elem.type === "pcb_courtyard_rect"
+  ) {
+    return [elem.layer]
+  }
+
   return getLayersOfPcbElement(elem as Collidable)
 }
 

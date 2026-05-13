@@ -4,7 +4,14 @@ import {
   getPrimaryId,
 } from "@tscircuit/circuit-json-util"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
-import type { AnyCircuitElement, PcbFootprintOverlapError } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbCourtyardCircle,
+  PcbCourtyardOutline,
+  PcbCourtyardPolygon,
+  PcbCourtyardRect,
+  PcbFootprintOverlapError,
+} from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import {
   getReadableNameForElementId,
@@ -18,13 +25,27 @@ import {
 interface ComponentWithElements {
   component_id: string
   elements: OverlappableElement[]
-  bounds: {
+  bounds?: {
     minX: number
     minY: number
     maxX: number
     maxY: number
   }
 }
+
+type CourtyardElement =
+  | PcbCourtyardCircle
+  | PcbCourtyardOutline
+  | PcbCourtyardPolygon
+  | PcbCourtyardRect
+
+const isCourtyardElement = (
+  element: AnyCircuitElement,
+): element is CourtyardElement =>
+  element.type === "pcb_courtyard_circle" ||
+  element.type === "pcb_courtyard_outline" ||
+  element.type === "pcb_courtyard_polygon" ||
+  element.type === "pcb_courtyard_rect"
 
 const formatOverlapElementDescription = (
   circuitJson: AnyCircuitElement[],
@@ -55,6 +76,7 @@ export function checkPcbComponentOverlap(
   const smtPads = cju(circuitJson).pcb_smtpad.list()
   const platedHoles = cju(circuitJson).pcb_plated_hole.list()
   const holes = cju(circuitJson).pcb_hole.list()
+  const courtyards = circuitJson.filter(isCourtyardElement)
 
   // Group elements by component (or treat standalone elements as their own "component")
   const componentMap = new Map<string, ComponentWithElements>()
@@ -67,7 +89,6 @@ export function checkPcbComponentOverlap(
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
-        bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
     componentMap.get(componentId)!.elements.push(pad)
@@ -81,7 +102,6 @@ export function checkPcbComponentOverlap(
       componentMap.set(componentId, {
         component_id: componentId,
         elements: [],
-        bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
       })
     }
     componentMap.get(componentId)!.elements.push(hole)
@@ -93,8 +113,18 @@ export function checkPcbComponentOverlap(
     componentMap.set(componentId, {
       component_id: componentId,
       elements: [hole],
-      bounds: { minX: 0, minY: 0, maxX: 0, maxY: 0 },
     })
+  }
+
+  for (const courtyard of courtyards) {
+    const componentId = courtyard.pcb_component_id
+    if (!componentMap.has(componentId)) {
+      componentMap.set(componentId, {
+        component_id: componentId,
+        elements: [],
+      })
+    }
+    componentMap.get(componentId)!.elements.push(courtyard)
   }
 
   // Compute bounds for each component
@@ -114,6 +144,10 @@ export function checkPcbComponentOverlap(
       const comp2 = componentsWithElements[j]
 
       // First check if component bounds overlap
+      if (!comp1.bounds || !comp2.bounds) {
+        continue
+      }
+
       if (!doBoundsOverlap(comp1.bounds, comp2.bounds)) {
         continue
       }
@@ -123,6 +157,14 @@ export function checkPcbComponentOverlap(
         for (const elem2 of comp2.elements) {
           const id1 = getPrimaryId(elem1)
           const id2 = getPrimaryId(elem2)
+
+          if (
+            (isCourtyardElement(elem1) || isCourtyardElement(elem2)) &&
+            elem1.type !== "pcb_hole" &&
+            elem2.type !== "pcb_hole"
+          ) {
+            continue
+          }
 
           // Check if both are SMT pads and are electrically connected (same net) - if so, skip
           // This allows pads with the same subcircuit connectivity to be in contact
