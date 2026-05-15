@@ -131,17 +131,6 @@ export function checkPcbComponentOverlap(
     componentMap.get(componentId)!.elements.push(courtyard)
   }
 
-  for (const courtyard of courtyards) {
-    const componentId = courtyard.pcb_component_id
-    if (!componentMap.has(componentId)) {
-      componentMap.set(componentId, {
-        component_id: componentId,
-        elements: [],
-      })
-    }
-    componentMap.get(componentId)!.elements.push(courtyard)
-  }
-
   // Compute bounds for each component
   for (const [componentId, componentData] of componentMap) {
     if (componentData.elements.length > 0) {
