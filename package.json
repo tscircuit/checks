@@ -2,7 +2,7 @@
   "name": "@tscircuit/checks",
   "type": "module",
   "main": "./dist/index.js",
-  "version": "0.0.129",
+  "version": "0.0.130",
   "files": [
     "dist"
   ],
