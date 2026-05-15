@@ -107,13 +107,17 @@ export function checkPcbComponentOverlap(
     componentMap.get(componentId)!.elements.push(hole)
   }
 
-  // Holes typically don't have pcb_component_id, treat each as standalone
+  // Group holes by component when possible, otherwise treat each as standalone
   for (const hole of holes) {
-    const componentId = `standalone_hole_${getPrimaryId(hole)}`
-    componentMap.set(componentId, {
-      component_id: componentId,
-      elements: [hole],
-    })
+    const componentId =
+      hole.pcb_component_id || `standalone_hole_${getPrimaryId(hole)}`
+    if (!componentMap.has(componentId)) {
+      componentMap.set(componentId, {
+        component_id: componentId,
+        elements: [],
+      })
+    }
+    componentMap.get(componentId)!.elements.push(hole)
   }
 
   for (const courtyard of courtyards) {

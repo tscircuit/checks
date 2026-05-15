@@ -245,7 +245,7 @@ test("type-c footprint mounting holes inside own courtyard do not cause placemen
 
   const circuitJson = circuit.getCircuitJson()
   const placementErrors = await runAllPlacementChecks(circuitJson)
-  // expect(placementErrors).toHaveLength(0)
+  expect(placementErrors).toHaveLength(0)
 
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...placementErrors], {
