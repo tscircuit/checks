@@ -80,6 +80,61 @@ describe("checkSourceTracesHavePcbTraces", () => {
     expect(errors).toHaveLength(0)
   })
 
+  test("does not return error when unlabeled pcb trace physically connects source trace ports", () => {
+    const circuitJson = [
+      {
+        type: "source_trace",
+        source_trace_id: "trace1",
+        connected_source_port_ids: ["source_port_1", "source_port_2"],
+        connected_source_net_ids: [],
+        display_name: "trace1",
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "pcb_port_1",
+        source_port_id: "source_port_1",
+        pcb_component_id: "pcb_component_1",
+        x: -1,
+        y: 0,
+        layers: ["top"],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "pcb_port_2",
+        source_port_id: "source_port_2",
+        pcb_component_id: "pcb_component_2",
+        x: 1,
+        y: 0,
+        layers: ["top"],
+      },
+      {
+        type: "pcb_trace",
+        pcb_trace_id: "unlabeled_trace",
+        route: [
+          {
+            route_type: "wire",
+            x: -1,
+            y: 0,
+            width: 0.15,
+            layer: "top",
+            start_pcb_port_id: "pcb_port_1",
+          },
+          {
+            route_type: "wire",
+            x: 1,
+            y: 0,
+            width: 0.15,
+            layer: "top",
+            end_pcb_port_id: "pcb_port_2",
+          },
+        ],
+      },
+    ]
+
+    const errors = checkSourceTracesHavePcbTraces(circuitJson as any)
+    expect(errors).toHaveLength(0)
+  })
+
   test("does not return error for net-connected source trace", () => {
     const circuitJson = [
       {

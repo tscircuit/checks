@@ -5,18 +5,8 @@ import type {
   PcbTraceMissingError,
   SourceTrace,
 } from "circuit-json"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
-
-const getSourceTraceIdsFromPcbTrace = (
-  pcbTraceSourceTraceId?: string,
-): string[] => {
-  if (!pcbTraceSourceTraceId) return []
-  if (!pcbTraceSourceTraceId.includes("__")) return [pcbTraceSourceTraceId]
-
-  return pcbTraceSourceTraceId
-    .split("__")
-    .filter((part) => part.startsWith("source_trace_"))
-}
 
 /**
  * Check that each source_trace which connects source ports has at least one
@@ -33,6 +23,13 @@ function checkSourceTracesHavePcbTraces(
   const pcbTraces = circuitJson.filter(
     (el) => el.type === "pcb_trace",
   ) as PcbTrace[]
+  const pcbPorts = circuitJson.filter(
+    (el) => el.type === "pcb_port",
+  ) as PcbPort[]
+  const sourcePortToPcbPort = new Map(
+    pcbPorts.map((pcbPort) => [pcbPort.source_port_id, pcbPort]),
+  )
+  const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
 
   for (const sourceTrace of sourceTraces) {
     if (!sourceTrace.connected_source_port_ids?.length) continue
@@ -40,17 +37,16 @@ function checkSourceTracesHavePcbTraces(
     if (sourceTrace.connected_source_port_ids.length < 2) continue
 
     const hasPcbTrace = pcbTraces.some((pcbTrace) =>
-      getSourceTraceIdsFromPcbTrace(pcbTrace.source_trace_id).includes(
+      connectivityMap.areIdsConnected(
         sourceTrace.source_trace_id,
+        pcbTrace.pcb_trace_id,
       ),
     )
+
     if (!hasPcbTrace) {
-      // Get PCB ports connected to this source trace
-      const connectedPcbPorts = circuitJson.filter(
-        (el) =>
-          el.type === "pcb_port" &&
-          sourceTrace.connected_source_port_ids.includes(el.source_port_id),
-      ) as PcbPort[]
+      const connectedPcbPorts = sourceTrace.connected_source_port_ids
+        .map((sourcePortId) => sourcePortToPcbPort.get(sourcePortId))
+        .filter((pcbPort): pcbPort is PcbPort => pcbPort !== undefined)
 
       // Find PCB components that these ports belong to
       const connectedPcbComponentIds = Array.from(

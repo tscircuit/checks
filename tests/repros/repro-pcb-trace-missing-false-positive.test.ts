@@ -12,7 +12,7 @@ test("reproduces false-positive pcb_trace_missing_error issues", () => {
   expect(fixtureErrors).toHaveLength(0)
 
   const errors = checkSourceTracesHavePcbTraces(circuitJson)
-  expect(errors).toHaveLength(21)
+  expect(errors).toHaveLength(0)
 
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
