@@ -5,6 +5,7 @@ import type {
   PcbTraceMissingError,
   SourceTrace,
 } from "circuit-json"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
 
 const getSourceTraceIdsFromPcbTrace = (
@@ -33,25 +34,53 @@ function checkSourceTracesHavePcbTraces(
   const pcbTraces = circuitJson.filter(
     (el) => el.type === "pcb_trace",
   ) as PcbTrace[]
+  const pcbPorts = circuitJson.filter(
+    (el) => el.type === "pcb_port",
+  ) as PcbPort[]
+  const sourcePortToPcbPort = new Map(
+    pcbPorts.map((pcbPort) => [pcbPort.source_port_id, pcbPort]),
+  )
+  const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
 
   for (const sourceTrace of sourceTraces) {
     if (!sourceTrace.connected_source_port_ids?.length) continue
     if ((sourceTrace.connected_source_net_ids?.length ?? 0) > 0) continue
     if (sourceTrace.connected_source_port_ids.length < 2) continue
 
-    const hasPcbTrace = pcbTraces.some((pcbTrace) =>
+    const connectedPcbPorts = sourceTrace.connected_source_port_ids
+      .map((sourcePortId) => sourcePortToPcbPort.get(sourcePortId))
+      .filter((pcbPort): pcbPort is PcbPort => pcbPort !== undefined)
+
+    const hasExplicitlyAssociatedPcbTrace = pcbTraces.some((pcbTrace) =>
       getSourceTraceIdsFromPcbTrace(pcbTrace.source_trace_id).includes(
         sourceTrace.source_trace_id,
       ),
     )
-    if (!hasPcbTrace) {
-      // Get PCB ports connected to this source trace
-      const connectedPcbPorts = circuitJson.filter(
-        (el) =>
-          el.type === "pcb_port" &&
-          sourceTrace.connected_source_port_ids.includes(el.source_port_id),
-      ) as PcbPort[]
 
+    let hasConnectedPcbTrace = false
+    if (connectedPcbPorts.length >= 2) {
+      const referencePcbPortId = connectedPcbPorts[0].pcb_port_id
+      const referenceNetId =
+        connectivityMap.getNetConnectedToId(referencePcbPortId)
+
+      if (
+        referenceNetId &&
+        connectedPcbPorts.every((pcbPort) =>
+          connectivityMap.areIdsConnected(
+            referencePcbPortId,
+            pcbPort.pcb_port_id,
+          ),
+        )
+      ) {
+        const netElementIds =
+          connectivityMap.getIdsConnectedToNet(referenceNetId)
+        hasConnectedPcbTrace = pcbTraces.some((pcbTrace) =>
+          netElementIds.includes(pcbTrace.pcb_trace_id),
+        )
+      }
+    }
+
+    if (!hasExplicitlyAssociatedPcbTrace && !hasConnectedPcbTrace) {
       // Find PCB components that these ports belong to
       const connectedPcbComponentIds = Array.from(
         new Set(
