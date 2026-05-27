@@ -16,9 +16,21 @@ import {
 } from "@tscircuit/circuit-json-util"
 
 type PcbPortId = PcbPort["pcb_port_id"]
+type PcbTraceRoutePoint = PcbTrace["route"][number]
+
+function getRoutePointCenter(point: PcbTraceRoutePoint) {
+  if (point.route_type === "through_pad") {
+    return {
+      x: (point.start.x + point.end.x) / 2,
+      y: (point.start.y + point.end.y) / 2,
+    }
+  }
+
+  return { x: point.x, y: point.y }
+}
 
 function routePointConnectsToAnotherExpectedPort(
-  point: PcbTrace["route"][number],
+  point: PcbTraceRoutePoint,
   expectedPorts: PcbPort[],
   missingPcbPortId: PcbPortId,
   padMap: Map<PcbPortId, Array<PcbSmtPad | PcbPlatedHole>>,
@@ -103,11 +115,14 @@ function getMissingConnectionErrorCenter({
     errorLocation = lastWirePoint
   }
 
+  const firstPointCenter = getRoutePointCenter(firstPoint)
+  const lastPointCenter = getRoutePointCenter(lastPoint)
+
   return errorLocation
     ? { x: errorLocation.x, y: errorLocation.y }
     : {
-        x: (firstPoint.x + lastPoint.x) / 2,
-        y: (firstPoint.y + lastPoint.y) / 2,
+        x: (firstPointCenter.x + lastPointCenter.x) / 2,
+        y: (firstPointCenter.y + lastPointCenter.y) / 2,
       }
 }
 
