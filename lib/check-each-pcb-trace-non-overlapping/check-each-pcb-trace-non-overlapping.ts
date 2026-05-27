@@ -19,6 +19,8 @@ import {
   DEFAULT_TRACE_MARGIN,
   DEFAULT_TRACE_THICKNESS,
   EPSILON,
+  getBoardDrcValue,
+  getPcbBoard,
 } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 import { getClosestPointBetweenSegmentAndBounds } from "./getClosestPointBetweenSegmentAndBounds"
@@ -39,7 +41,7 @@ export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
-    minClearance = DEFAULT_TRACE_MARGIN,
+    minClearance,
   }: {
     connMap?: ConnectivityMap
     minClearance?: number
@@ -48,6 +50,10 @@ export function checkEachPcbTraceNonOverlapping(
   const errors: PcbTraceError[] = []
   addStartAndEndPortIdsIfMissing(circuitJson)
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  const board = getPcbBoard(circuitJson)
+  minClearance ??=
+    getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
+    DEFAULT_TRACE_MARGIN
 
   const pcbTraces = cju(circuitJson).pcb_trace.list()
   const pcbTraceSegments = pcbTraces.flatMap((pcbTrace) => {
