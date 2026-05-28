@@ -41,7 +41,7 @@ export const getPadRadius = (pad: PadElement) => {
 
 export const isCircularPad = (pad: PadElement) => pad.shape === "circle"
 
-const getCircleShape = (pad: PadElement) => {
+export const getCircleShape = (pad: PadElement) => {
   const center = getPadCenter(pad)
   return {
     kind: "circle" as const,
@@ -51,7 +51,7 @@ const getCircleShape = (pad: PadElement) => {
   }
 }
 
-const getPolygonShape = (pad: PadElement) => {
+export const getPolygonShape = (pad: PadElement) => {
   const bounds = getPadBounds(pad)
   return {
     kind: "polygon" as const,
