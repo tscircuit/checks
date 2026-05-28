@@ -17,6 +17,7 @@ import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
@@ -50,6 +51,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
     ...checkSourceTracesHavePcbTraces(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson),
+    ...checkViaPadClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson),
     ...checkSameNetViaSpacing(circuitJson),
     ...checkDifferentNetViaSpacing(circuitJson),
