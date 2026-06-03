@@ -11,7 +11,7 @@ test("repro breakout sot23 regulator overlap routing checks snapshot", async () 
 
   const errors = await runAllRoutingChecks(circuitJson)
 
-  expect(errors).toHaveLength(9)
+  expect(errors).toHaveLength(2)
   expect(
     errors.filter((error) => error.message.includes("overlaps with")),
   ).toHaveLength(0)
@@ -23,7 +23,7 @@ test("repro breakout sot23 regulator overlap routing checks snapshot", async () 
   ).toHaveLength(0)
   expect(
     errors.filter((error) => error.message.includes("missing a connection")),
-  ).toHaveLength(7)
+  ).toHaveLength(0)
 
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
