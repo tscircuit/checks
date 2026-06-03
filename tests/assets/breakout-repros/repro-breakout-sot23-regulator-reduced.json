@@ -2,7 +2,7 @@
   {
     "type": "source_project_metadata",
     "source_project_metadata_id": "source_project_metadata_0",
-    "software_used_string": "@tscircuit/core@0.0.1282"
+    "software_used_string": "@tscircuit/core@0.0.1287"
   },
   {
     "type": "source_group",
@@ -1196,8 +1196,8 @@
         "end_pcb_port_id": "pcb_port_1"
       }
     ],
-    "source_trace_id": "source_trace_1",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_1"
   },
   {
     "type": "pcb_trace",
@@ -1227,8 +1227,8 @@
         "end_pcb_port_id": "pcb_port_1"
       }
     ],
-    "source_trace_id": "source_trace_1",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_1"
   },
   {
     "type": "pcb_trace",
@@ -1258,8 +1258,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_0",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_0"
   },
   {
     "type": "pcb_trace",
@@ -1371,8 +1371,8 @@
         "end_pcb_port_id": "pcb_port_3"
       }
     ],
-    "source_trace_id": "source_trace_0",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_0"
   },
   {
     "type": "pcb_via",
@@ -1440,8 +1440,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_3",
-    "subcircuit_id": "subcircuit_source_group_1"
+    "subcircuit_id": "subcircuit_source_group_1",
+    "source_trace_id": "source_trace_3"
   },
   {
     "type": "pcb_trace",
@@ -1534,8 +1534,120 @@
         "layer": "top"
       }
     ],
+    "subcircuit_id": "subcircuit_source_group_1",
+    "source_trace_id": "source_trace_2"
+  },
+  {
+    "type": "pcb_trace_error",
+    "error_type": "pcb_trace_error",
+    "message": "PCB trace trace[.CIN > port.pos] is too close to pcb_plated_hole \"pcb_plated_hole[#pcb_plated_hole_1]\" (gap: 0.001mm)",
+    "pcb_trace_id": "source_trace_0__source_port_0_mst0_0",
+    "center": {
+      "x": -4.68,
+      "y": -0.25
+    },
+    "source_trace_id": "",
+    "pcb_trace_error_id": "pcb_trace_error_0",
+    "pcb_component_ids": ["pcb_component_2"],
+    "pcb_port_ids": ["pcb_port_3", "pcb_port_6"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "error_type": "pcb_trace_error",
+    "message": "PCB trace trace[.JIN > port.pin1] is too close to pcb_plated_hole \"pcb_plated_hole[#pcb_plated_hole_1]\" (gap: 0.000mm)",
+    "pcb_trace_id": "source_trace_2_0",
+    "center": {
+      "x": -4.68,
+      "y": -0.25
+    },
+    "source_trace_id": "",
+    "pcb_trace_error_id": "pcb_trace_error_1",
+    "pcb_component_ids": ["pcb_component_2"],
+    "pcb_port_ids": ["pcb_port_5", "pcb_port_6"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.U1 > port.pin2]] is missing a connection to smtpad[.CIN > .pin2]",
+    "source_trace_id": "source_trace_1",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_trace_1__source_port_1_mst1_0",
+    "pcb_trace_error_id": "pcb_trace_error_2",
+    "center": {
+      "x": -4.68,
+      "y": -1.95
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_4"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.CIN > port.pos]] is missing a connection to smtpad[.U1 > .VIN]",
+    "source_trace_id": "source_trace_0",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_trace_0__source_port_0_mst0_0",
+    "pcb_trace_error_id": "pcb_trace_error_3",
+    "center": {
+      "x": -4.68,
+      "y": -0.176
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_0"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.JIN > port.pin2]] is missing a connection to smtpad[.U1 > .GND]",
+    "source_trace_id": "source_trace_3",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_trace_3_0",
+    "pcb_trace_error_id": "pcb_trace_error_4",
+    "center": {
+      "x": -4.68,
+      "y": -1.95
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_1"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.JIN > port.pin1]] is missing a connection to smtpad[.U1 > .VIN]",
     "source_trace_id": "source_trace_2",
-    "subcircuit_id": "subcircuit_source_group_1"
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_trace_2_0",
+    "pcb_trace_error_id": "pcb_trace_error_5",
+    "center": {
+      "x": -4.68,
+      "y": -0.17643701589889926
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_0"]
+  },
+  {
+    "type": "pcb_pad_trace_clearance_error",
+    "pcb_pad_trace_clearance_error_id": "pcb_pad_trace_clearance_error_0",
+    "error_type": "pcb_pad_trace_clearance_error",
+    "message": "Pad pcb_plated_hole[#pcb_plated_hole_1] and trace trace[.CIN > port.pos] are too close (clearance: 0.001mm, minimum: 0.1mm)",
+    "pcb_pad_id": "pcb_plated_hole_1",
+    "pcb_trace_id": "source_trace_0__source_port_0_mst0_0",
+    "minimum_clearance": 0.1,
+    "actual_clearance": 0.000515596460781767,
+    "center": {
+      "x": -4.4625,
+      "y": -0.34550000000000003
+    }
+  },
+  {
+    "type": "pcb_pad_trace_clearance_error",
+    "pcb_pad_trace_clearance_error_id": "pcb_pad_trace_clearance_error_1",
+    "error_type": "pcb_pad_trace_clearance_error",
+    "message": "Pad pcb_plated_hole[#pcb_plated_hole_1] and trace trace[.JIN > port.pin1] are too close (clearance: 0mm, minimum: 0.1mm)",
+    "pcb_pad_id": "pcb_plated_hole_1",
+    "pcb_trace_id": "source_trace_2_0",
+    "minimum_clearance": 0.1,
+    "actual_clearance": 0.00007938332108987922,
+    "center": {
+      "x": -4.765758252147248,
+      "y": -0.5591092539747248
+    }
   },
   {
     "type": "source_component_pins_underspecified_warning",

@@ -5,7 +5,9 @@ import { runAllRoutingChecks } from "lib/run-all-checks"
 import circuitJsonFixture from "../../assets/breakout-repros/repro-breakout-qfp16-header-reduced.json"
 
 test("repro breakout qfp16 header reduced routing checks snapshot", async () => {
-  const circuitJson = circuitJsonFixture as AnyCircuitElement[]
+  const circuitJson = (circuitJsonFixture as AnyCircuitElement[]).filter(
+    (element) => !element.type.endsWith("_error"),
+  )
 
   const errors = await runAllRoutingChecks(circuitJson)
 
