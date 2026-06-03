@@ -2,7 +2,7 @@
   {
     "type": "source_project_metadata",
     "source_project_metadata_id": "source_project_metadata_0",
-    "software_used_string": "@tscircuit/core@0.0.1282"
+    "software_used_string": "@tscircuit/core@0.0.1287"
   },
   {
     "type": "source_group",
@@ -2467,8 +2467,8 @@
         "end_pcb_port_id": "pcb_port_7"
       }
     ],
-    "source_trace_id": "source_trace_5",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_5"
   },
   {
     "type": "pcb_trace",
@@ -2512,8 +2512,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_4",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_4"
   },
   {
     "type": "pcb_trace",
@@ -2543,8 +2543,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_3",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_3"
   },
   {
     "type": "pcb_trace",
@@ -2662,8 +2662,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_2",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_2"
   },
   {
     "type": "pcb_trace",
@@ -2782,8 +2782,8 @@
         "end_pcb_port_id": "pcb_port_17"
       }
     ],
-    "source_trace_id": "source_trace_1",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_1"
   },
   {
     "type": "pcb_trace",
@@ -2828,8 +2828,8 @@
         "end_pcb_port_id": "pcb_port_16"
       }
     ],
-    "source_trace_id": "source_trace_0",
-    "subcircuit_id": "subcircuit_source_group_0"
+    "subcircuit_id": "subcircuit_source_group_0",
+    "source_trace_id": "source_trace_0"
   },
   {
     "type": "pcb_via",
@@ -2942,8 +2942,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_5",
-    "subcircuit_id": "subcircuit_source_group_1"
+    "subcircuit_id": "subcircuit_source_group_1",
+    "source_trace_id": "source_trace_5"
   },
   {
     "type": "pcb_trace",
@@ -3017,8 +3017,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_4",
-    "subcircuit_id": "subcircuit_source_group_1"
+    "subcircuit_id": "subcircuit_source_group_1",
+    "source_trace_id": "source_trace_4"
   },
   {
     "type": "pcb_trace",
@@ -3062,8 +3062,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_3",
-    "subcircuit_id": "subcircuit_source_group_1"
+    "subcircuit_id": "subcircuit_source_group_1",
+    "source_trace_id": "source_trace_3"
   },
   {
     "type": "pcb_trace",
@@ -3137,8 +3137,8 @@
         "layer": "top"
       }
     ],
-    "source_trace_id": "source_trace_2",
-    "subcircuit_id": "subcircuit_source_group_1"
+    "subcircuit_id": "subcircuit_source_group_1",
+    "source_trace_id": "source_trace_2"
   },
   {
     "type": "pcb_via",
@@ -3163,6 +3163,118 @@
     "layers": ["bottom", "top"],
     "from_layer": "bottom",
     "to_layer": "top"
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.U1 > port.pin8]] is missing a connection to plated_hole[.J1 > .SCL]",
+    "source_trace_id": "source_trace_5",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_port_7_0",
+    "pcb_trace_error_id": "pcb_trace_error_0",
+    "center": {
+      "x": 3.9000000000000004,
+      "y": -0.3999999999999999
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_21"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.U1 > port.pin7]] is missing a connection to plated_hole[.J1 > .SDA]",
+    "source_trace_id": "source_trace_4",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_port_6_0",
+    "pcb_trace_error_id": "pcb_trace_error_1",
+    "center": {
+      "x": 3.22,
+      "y": 3.9
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_20"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.U1 > port.pin6]] is missing a connection to plated_hole[.J1 > .GND]",
+    "source_trace_id": "source_trace_3",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_port_5_0",
+    "pcb_trace_error_id": "pcb_trace_error_2",
+    "center": {
+      "x": 0.72,
+      "y": -3.9
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_19"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.U1 > port.pin5]] is missing a connection to plated_hole[.J1 > .VCC]",
+    "source_trace_id": "source_trace_2",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_port_4_0",
+    "pcb_trace_error_id": "pcb_trace_error_3",
+    "center": {
+      "x": 3.9,
+      "y": 3.9
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_18"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.J1 > port.pin4]] is missing a connection to smtpad[.U1 > .SCL]",
+    "source_trace_id": "source_trace_5",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_trace_5_0",
+    "pcb_trace_error_id": "pcb_trace_error_4",
+    "center": {
+      "x": 3.9000000000000004,
+      "y": -0.3999999999999999
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_7"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.J1 > port.pin3]] is missing a connection to smtpad[.U1 > .SDA]",
+    "source_trace_id": "source_trace_4",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_trace_4_0",
+    "pcb_trace_error_id": "pcb_trace_error_5",
+    "center": {
+      "x": 3.2200000000000006,
+      "y": 3.9
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_6"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.J1 > port.pin2]] is missing a connection to smtpad[.U1 > .GND]",
+    "source_trace_id": "source_trace_3",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_trace_3_0",
+    "pcb_trace_error_id": "pcb_trace_error_6",
+    "center": {
+      "x": 0.7200000000000006,
+      "y": -3.9
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_5"]
+  },
+  {
+    "type": "pcb_trace_error",
+    "message": "Trace [trace[.J1 > port.pin1]] is missing a connection to smtpad[.U1 > .VCC]",
+    "source_trace_id": "source_trace_2",
+    "error_type": "pcb_trace_error",
+    "pcb_trace_id": "source_trace_2_0",
+    "pcb_trace_error_id": "pcb_trace_error_7",
+    "center": {
+      "x": 3.9000000000000004,
+      "y": 3.9
+    },
+    "pcb_component_ids": [],
+    "pcb_port_ids": ["pcb_port_4"]
   },
   {
     "type": "source_component_pins_underspecified_warning",
