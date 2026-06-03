@@ -8,12 +8,16 @@ import type {
   PcbPlatedHole,
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
-import { getPcbPortIdsConnectedToRoutePoint } from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
 import { distance } from "../util/distance"
+import {
+  getPcbPortIdsConnectedToRoutePoint,
+  getPcbPortIdsConnectedToTrace,
+} from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
 import {
   getReadableNameForPcbPort,
   getReadableNameForPcbTrace,
 } from "@tscircuit/circuit-json-util"
+import { PcbConnectivityMap } from "circuit-json-to-connectivity-map"
 
 type PcbPortId = PcbPort["pcb_port_id"]
 type PcbTraceRoutePoint = PcbTrace["route"][number]
@@ -148,6 +152,7 @@ function checkTracesAreContiguous(
   ) as PcbPlatedHole[]
 
   const padMap = new Map<PcbPortId, Array<PcbSmtPad | PcbPlatedHole>>()
+  const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
 
   for (const pad of pcbSmtPads) {
     if (pad.pcb_port_id) {
@@ -233,6 +238,37 @@ function checkTracesAreContiguous(
       const pads = padMap.get(port.pcb_port_id)
 
       if (!pads?.length) continue
+
+      let isConnectedByRoutedSourceTrace = false
+      for (const candidateTrace of pcbConnectivityMap.getAllTracesConnectedToTrace(
+        trace.pcb_trace_id,
+      )) {
+        if (candidateTrace.pcb_trace_id === trace.pcb_trace_id) continue
+        if (!candidateTrace.source_trace_id) continue
+        const candidateSourceTrace = sourceTraces.find(
+          (st) => st.source_trace_id === candidateTrace.source_trace_id,
+        )
+        if (
+          !sourceTrace ||
+          (candidateTrace.source_trace_id !== sourceTrace.source_trace_id &&
+            !candidateSourceTrace?.connected_source_port_ids.includes(
+              port.source_port_id,
+            ))
+        ) {
+          continue
+        }
+        if (
+          getPcbPortIdsConnectedToTrace(candidateTrace).includes(
+            port.pcb_port_id,
+          )
+        ) {
+          isConnectedByRoutedSourceTrace = true
+          break
+        }
+      }
+      if (isConnectedByRoutedSourceTrace) {
+        continue
+      }
 
       const isFirstPointConnected =
         firstPoint.route_type === "wire" &&

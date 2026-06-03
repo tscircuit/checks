@@ -195,3 +195,198 @@ test("repro02 should report the J_VMOTOR GND trace disconnected endpoint", async
     }),
   )
 })
+
+test("does not require each source-trace branch segment to touch every port", () => {
+  const circuitJson = [
+    {
+      type: "source_trace",
+      source_trace_id: "source_trace_branch",
+      connected_source_port_ids: [
+        "source_port_a",
+        "source_port_b",
+        "source_port_c",
+      ],
+      connected_source_net_ids: [],
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_a",
+      source_port_id: "source_port_a",
+      x: -4,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_b",
+      source_port_id: "source_port_b",
+      x: 0,
+      y: 4,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_c",
+      source_port_id: "source_port_c",
+      x: 4,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_a",
+      pcb_port_id: "pcb_port_a",
+      shape: "rect",
+      x: -4,
+      y: 0,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_b",
+      pcb_port_id: "pcb_port_b",
+      shape: "rect",
+      x: 0,
+      y: 4,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_c",
+      pcb_port_id: "pcb_port_c",
+      shape: "rect",
+      x: 4,
+      y: 0,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_a",
+      source_trace_id: "source_trace_branch",
+      route: [
+        {
+          route_type: "wire",
+          x: -4,
+          y: 0,
+          layer: "top",
+          width: 0.2,
+          start_pcb_port_id: "pcb_port_a",
+        },
+        { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+      ],
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_b",
+      source_trace_id: "source_trace_branch",
+      route: [
+        {
+          route_type: "wire",
+          x: 0,
+          y: 4,
+          layer: "top",
+          width: 0.2,
+          start_pcb_port_id: "pcb_port_b",
+        },
+        { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+      ],
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_c",
+      source_trace_id: "source_trace_branch",
+      route: [
+        {
+          route_type: "wire",
+          x: 4,
+          y: 0,
+          layer: "top",
+          width: 0.2,
+          start_pcb_port_id: "pcb_port_c",
+        },
+        { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+      ],
+    },
+  ] as AnyCircuitElement[]
+
+  expect(checkTracesAreContiguous(circuitJson)).toHaveLength(0)
+})
+
+test("still reports a source-trace branch that does not reach a required port", () => {
+  const circuitJson = [
+    {
+      type: "source_trace",
+      source_trace_id: "source_trace_half",
+      connected_source_port_ids: ["source_port_a", "source_port_b"],
+      connected_source_net_ids: [],
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_a",
+      source_port_id: "source_port_a",
+      x: -4,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_b",
+      source_port_id: "source_port_b",
+      x: 4,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_a",
+      pcb_port_id: "pcb_port_a",
+      shape: "rect",
+      x: -4,
+      y: 0,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_b",
+      pcb_port_id: "pcb_port_b",
+      shape: "rect",
+      x: 4,
+      y: 0,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_half",
+      source_trace_id: "source_trace_half",
+      route: [
+        {
+          route_type: "wire",
+          x: -4,
+          y: 0,
+          layer: "top",
+          width: 0.2,
+          start_pcb_port_id: "pcb_port_a",
+        },
+        { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+      ],
+    },
+  ] as AnyCircuitElement[]
+
+  expect(checkTracesAreContiguous(circuitJson)).toContainEqual(
+    expect.objectContaining({
+      message:
+        "Trace [trace[port[pcb_port_a]]] is missing a connection to smtpad[#pcb_port_b]",
+      pcb_port_ids: ["pcb_port_b"],
+    }),
+  )
+})
