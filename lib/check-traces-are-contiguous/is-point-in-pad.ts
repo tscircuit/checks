@@ -1,4 +1,6 @@
 import type { PcbSmtPad, PcbPlatedHole } from "circuit-json"
+import { pointToSegmentDistance } from "@tscircuit/math-utils"
+import { getPillCenterLineForPad } from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
 
 function getDistanceBetweenPoints(
   pointA: { x: number; y: number },
@@ -59,7 +61,14 @@ export function isPointInPad(
       )
     }
 
-    if (pad.shape === "pill") {
+    if (pad.shape === "pill" || pad.shape === "rotated_pill") {
+      if (pad.shape === "rotated_pill") {
+        const pill = getPillCenterLineForPad(pad)
+        return (
+          pointToSegmentDistance(point, pill.start, pill.end) <= pill.radius
+        )
+      }
+
       const halfWidth = pad.width / 2
       const halfHeight = pad.height / 2
       const radius = pad.radius

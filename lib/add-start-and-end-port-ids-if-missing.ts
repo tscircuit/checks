@@ -4,6 +4,7 @@ import type {
   AnyCircuitElement,
   PcbSmtPad,
 } from "circuit-json"
+import { isPointInPad } from "lib/check-traces-are-contiguous/is-point-in-pad"
 
 function distance(x1: number, y1: number, x2: number, y2: number): number {
   return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
@@ -46,6 +47,8 @@ export const addStartAndEndPortIdsIfMissing = (
           // biome-ignore lint/style/noUselessElse: <explanation>
         } else if (pad.shape === "circle") {
           return distance(point.x, point.y, pad.x, pad.y) < pad.radius
+        } else if (pad.shape === "pill" || pad.shape === "rotated_pill") {
+          return isPointInPad(point, pad)
         }
       })
       if (smtPad) return smtPad.pcb_port_id ?? null

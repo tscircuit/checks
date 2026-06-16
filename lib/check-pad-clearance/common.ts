@@ -5,13 +5,22 @@ import {
   distanceBetweenPolygonAndPolygon,
   getBoundsOfPcbElements,
 } from "@tscircuit/circuit-json-util"
-import { midpoint } from "@tscircuit/math-utils"
+import {
+  midpoint,
+  segmentToCircleMinDistance,
+  segmentToSegmentMinDistance,
+} from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
   PcbPlatedHole,
   PcbSmtPad,
   PcbTrace,
 } from "circuit-json"
+import {
+  getPillCenterLineForPad,
+  getPolygonPointsForPad,
+  getSegmentToPolygonClearanceFromPoints,
+} from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
 import type { PcbTraceSegment } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import type { Bounds } from "lib/data-structures/SpatialIndex"
 import { DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
@@ -41,6 +50,12 @@ export const getPadRadius = (pad: PadElement) => {
 
 export const isCircularPad = (pad: PadElement) => pad.shape === "circle"
 
+const isPillPad = (
+  pad: PadElement,
+): pad is Extract<PcbSmtPad, { shape: "pill" | "rotated_pill" }> =>
+  pad.type === "pcb_smtpad" &&
+  (pad.shape === "pill" || pad.shape === "rotated_pill")
+
 const getCircleShape = (pad: PadElement) => {
   const center = getPadCenter(pad)
   return {
@@ -52,6 +67,27 @@ const getCircleShape = (pad: PadElement) => {
 }
 
 const getPolygonShape = (pad: PadElement) => {
+  if (
+    pad.type === "pcb_smtpad" &&
+    (pad.shape === "polygon" || pad.shape === "rotated_rect")
+  ) {
+    return {
+      kind: "polygon" as const,
+      points: getPolygonPointsForPad(pad),
+    }
+  }
+
+  if (
+    pad.type === "pcb_plated_hole" &&
+    "rect_pad_width" in pad &&
+    "rect_pad_height" in pad
+  ) {
+    return {
+      kind: "polygon" as const,
+      points: getPolygonPointsForPad(pad),
+    }
+  }
+
   const bounds = getPadBounds(pad)
   return {
     kind: "polygon" as const,
@@ -65,6 +101,59 @@ const getPolygonShape = (pad: PadElement) => {
 }
 
 export const getPadToPadGap = (padA: PadElement, padB: PadElement) => {
+  if (isPillPad(padA) && isPillPad(padB)) {
+    const pillA = getPillCenterLineForPad(padA)
+    const pillB = getPillCenterLineForPad(padB)
+    return (
+      segmentToSegmentMinDistance(
+        pillA.start,
+        pillA.end,
+        pillB.start,
+        pillB.end,
+      ) -
+      pillA.radius -
+      pillB.radius
+    )
+  }
+
+  if (isPillPad(padA) && isCircularPad(padB)) {
+    const pill = getPillCenterLineForPad(padA)
+    return (
+      segmentToCircleMinDistance(pill.start, pill.end, getCircleShape(padB)) -
+      pill.radius
+    )
+  }
+
+  if (isCircularPad(padA) && isPillPad(padB)) {
+    const pill = getPillCenterLineForPad(padB)
+    return (
+      segmentToCircleMinDistance(pill.start, pill.end, getCircleShape(padA)) -
+      pill.radius
+    )
+  }
+
+  if (isPillPad(padA)) {
+    const pill = getPillCenterLineForPad(padA)
+    return (
+      getSegmentToPolygonClearanceFromPoints(
+        pill.start,
+        pill.end,
+        getPolygonShape(padB).points,
+      ).distance - pill.radius
+    )
+  }
+
+  if (isPillPad(padB)) {
+    const pill = getPillCenterLineForPad(padB)
+    return (
+      getSegmentToPolygonClearanceFromPoints(
+        pill.start,
+        pill.end,
+        getPolygonShape(padA).points,
+      ).distance - pill.radius
+    )
+  }
+
   if (isCircularPad(padA) && isCircularPad(padB)) {
     return distanceBetweenCircleAndCircle(
       getCircleShape(padA),

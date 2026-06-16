@@ -10,6 +10,7 @@ import type { PcbPlatedHole, PcbSmtPad } from "circuit-json"
 import type { PcbTraceSegment } from "./getCollidableBounds"
 
 type PolygonalPad = PcbSmtPad | PcbPlatedHole
+type PillPad = Extract<PcbSmtPad, { shape: "pill" | "rotated_pill" }>
 
 const rotatePoint = (point: Point, angleDegrees: number): Point => {
   const angle = (angleDegrees * Math.PI) / 180
@@ -44,6 +45,25 @@ export const getRotatedRectPoints = ({
     const rotated = rotatePoint(point, ccwRotation)
     return { x: x + rotated.x, y: y + rotated.y }
   })
+}
+
+export const getPillCenterLineForPad = (pad: PillPad) => {
+  const ccwRotation = pad.shape === "rotated_pill" ? pad.ccw_rotation : 0
+  const halfLineLength = Math.max(
+    Math.max(pad.width, pad.height) / 2 - pad.radius,
+    0,
+  )
+  const axis =
+    pad.width >= pad.height
+      ? { x: halfLineLength, y: 0 }
+      : { x: 0, y: halfLineLength }
+  const rotatedAxis = rotatePoint(axis, ccwRotation)
+
+  return {
+    start: { x: pad.x - rotatedAxis.x, y: pad.y - rotatedAxis.y },
+    end: { x: pad.x + rotatedAxis.x, y: pad.y + rotatedAxis.y },
+    radius: pad.radius,
+  }
 }
 
 export const getPolygonPointsForPad = (pad: PolygonalPad): Point[] => {
@@ -135,13 +155,11 @@ const getClosestPointsBetweenSegments = (
   }
 }
 
-export const getSegmentToPolygonClearance = (
-  segment: PcbTraceSegment,
+export const getSegmentToPolygonClearanceFromPoints = (
+  start: Point,
+  end: Point,
   polygon: Point[],
 ) => {
-  const start = { x: segment.x1, y: segment.y1 }
-  const end = { x: segment.x2, y: segment.y2 }
-
   if (polygon.length < 3) {
     return { distance: Number.POSITIVE_INFINITY, center: start }
   }
@@ -196,4 +214,33 @@ export const getSegmentToPolygonClearance = (
   }
 
   return { distance: best.distance, center: best.center }
+}
+
+export const getSegmentToPolygonClearance = (
+  segment: PcbTraceSegment,
+  polygon: Point[],
+) =>
+  getSegmentToPolygonClearanceFromPoints(
+    { x: segment.x1, y: segment.y1 },
+    { x: segment.x2, y: segment.y2 },
+    polygon,
+  )
+
+export const getSegmentToPillClearance = (
+  segment: PcbTraceSegment,
+  pad: PillPad,
+) => {
+  const pill = getPillCenterLineForPad(pad)
+  const closest = getClosestPointsBetweenSegments(
+    { x: segment.x1, y: segment.y1 },
+    { x: segment.x2, y: segment.y2 },
+    pill.start,
+    pill.end,
+  )
+
+  return {
+    distance: closest.distance,
+    center: closest.center,
+    radius: pill.radius,
+  }
 }

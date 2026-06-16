@@ -2,6 +2,7 @@ import type { AnyCircuitElement, PcbTrace } from "circuit-json"
 import { expect, test, describe } from "bun:test"
 import { checkEachPcbPortConnectedToPcbTraces } from "lib/check-each-pcb-port-connected-to-pcb-trace"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
+import { addStartAndEndPortIdsIfMissing } from "lib/add-start-and-end-port-ids-if-missing"
 
 describe("checkEachPcbPortConnectedToPcbTraces", () => {
   test("should not return error for intentionally unconnected ports", () => {
@@ -368,5 +369,63 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
     expect(updatedTrace.route[0].start_pcb_port_id).toBe("port1")
     // @ts-ignore
     expect(updatedTrace.route[1].end_pcb_port_id).toBe("port2")
+  })
+
+  test("should add port ids for endpoints inside rotated pill pads", () => {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "pcb_port",
+        pcb_port_id: "port1",
+        source_port_id: "source1",
+        x: 0,
+        y: 0,
+        pcb_component_id: "U3",
+        layers: ["top"],
+      },
+      {
+        type: "pcb_smtpad",
+        pcb_smtpad_id: "pad1",
+        pcb_port_id: "port1",
+        pcb_component_id: "U3",
+        shape: "rotated_pill",
+        x: 0,
+        y: 0,
+        width: 0.6299962,
+        height: 2.2500082,
+        radius: 0.3149981,
+        ccw_rotation: 90,
+        layer: "top",
+      },
+      {
+        type: "pcb_trace",
+        pcb_trace_id: "trace1",
+        route: [
+          {
+            route_type: "wire",
+            x: 0.8,
+            y: 0,
+            width: 0.1,
+            layer: "top",
+          },
+          {
+            route_type: "wire",
+            x: 2,
+            y: 0,
+            width: 0.1,
+            layer: "top",
+          },
+        ],
+      },
+    ]
+
+    addStartAndEndPortIdsIfMissing(circuitJson)
+
+    const updatedTrace = circuitJson.find(
+      (item) => item.type === "pcb_trace",
+    ) as PcbTrace
+    const startPoint = updatedTrace.route[0]
+    expect(startPoint.route_type).toBe("wire")
+    if (startPoint.route_type !== "wire") throw new Error("Expected wire route")
+    expect(startPoint.start_pcb_port_id).toBe("port1")
   })
 })

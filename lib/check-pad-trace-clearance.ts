@@ -12,6 +12,7 @@ import {
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
 import { getCollidableBounds } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
+import { getSegmentToPillClearance } from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
@@ -66,19 +67,28 @@ export function checkPadTraceClearance(
       if (connMap.areIdsConnected(segment.pcb_trace_id, padId)) continue
       const center = getPadCenter(pad)
 
-      const gap = isCircularPad(pad)
-        ? segmentToCircleMinDistance(
-            { x: segment.x1, y: segment.y1 },
-            { x: segment.x2, y: segment.y2 },
-            { x: center.x, y: center.y, radius: getPadRadius(pad) },
-          ) -
-          segment.thickness / 2
-        : segmentToBoundsMinDistance(
-            { x: segment.x1, y: segment.y1 },
-            { x: segment.x2, y: segment.y2 },
-            getPadBounds(pad),
-          ) -
-          segment.thickness / 2
+      const gap =
+        pad.type === "pcb_smtpad" && pad.shape === "rotated_pill"
+          ? (() => {
+              const { distance, radius } = getSegmentToPillClearance(
+                segment,
+                pad,
+              )
+              return distance - segment.thickness / 2 - radius
+            })()
+          : isCircularPad(pad)
+            ? segmentToCircleMinDistance(
+                { x: segment.x1, y: segment.y1 },
+                { x: segment.x2, y: segment.y2 },
+                { x: center.x, y: center.y, radius: getPadRadius(pad) },
+              ) -
+              segment.thickness / 2
+            : segmentToBoundsMinDistance(
+                { x: segment.x1, y: segment.y1 },
+                { x: segment.x2, y: segment.y2 },
+                getPadBounds(pad),
+              ) -
+              segment.thickness / 2
       if (gap + EPSILON >= minClearance!) continue
 
       const pairId = `${padId}_${segment.pcb_trace_id}`

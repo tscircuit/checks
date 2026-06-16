@@ -65,3 +65,30 @@ test("checkPadTraceClearance deduplicates multiple close segments for one pad-tr
   expect(errors[0].pcb_trace_id).toBe("trace1")
   expect(errors[0].actual_clearance).toBeCloseTo(0.075, 10)
 })
+
+test("checkPadTraceClearance ignores rotated pill pad bounding-box false positives", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad1",
+      shape: "rotated_pill",
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 0.4,
+      radius: 0.2,
+      ccw_rotation: 45,
+      layer: "top",
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "trace1",
+      route: [
+        { route_type: "wire", x: -0.75, y: 0.7, width: 0.1, layer: "top" },
+        { route_type: "wire", x: -0.25, y: 0.7, width: 0.1, layer: "top" },
+      ],
+    },
+  ]
+
+  expect(checkPadTraceClearance(circuitJson, { minClearance: 0.1 })).toEqual([])
+})
