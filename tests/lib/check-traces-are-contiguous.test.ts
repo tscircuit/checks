@@ -6,6 +6,7 @@ import repro02 from "tests/assets/motor-controller-1.json"
 import type { AnyCircuitElement } from "circuit-json"
 import { runAllRoutingChecks } from "lib/run-all-checks"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { isPointInPad } from "lib/check-traces-are-contiguous/is-point-in-pad"
 
 describe("testing checkTracesAreContiguous(", () => {
   test("should not error as traces are contiguous", () => {
@@ -179,6 +180,24 @@ test("does not report missing connection for ports with multiple smtpads includi
   expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
     import.meta.path,
   )
+})
+
+test("isPointInPad supports rotated pill pads", () => {
+  const pad = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "rotated_pill_pad",
+    shape: "rotated_pill",
+    x: 0,
+    y: 0,
+    width: 0.6299962,
+    height: 2.2500082,
+    radius: 0.3149981,
+    ccw_rotation: 90,
+    layer: "top",
+  } as const
+
+  expect(isPointInPad({ x: 0.8, y: 0 }, pad)).toBe(true)
+  expect(isPointInPad({ x: 0, y: 0.8 }, pad)).toBe(false)
 })
 
 test("repro02 should report the J_VMOTOR GND trace disconnected endpoint", async () => {

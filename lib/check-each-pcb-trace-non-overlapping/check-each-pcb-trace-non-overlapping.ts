@@ -34,6 +34,7 @@ import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
 import {
   getPolygonPointsForPad,
+  getSegmentToPillClearance,
   getSegmentToPolygonClearance,
 } from "./segment-to-polygon-clearance"
 
@@ -237,6 +238,42 @@ export function checkEachPcbTraceNonOverlapping(
             "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
           ].filter(Boolean) as string[],
         })
+      }
+
+      if (obj.type === "pcb_smtpad" && obj.shape === "rotated_pill") {
+        const { distance, center, radius } = getSegmentToPillClearance(
+          segmentA,
+          obj,
+        )
+        const gap = distance - segmentA.thickness / 2 - radius
+        if (gap > minClearance - EPSILON) continue
+
+        const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
+        if (errorIds.has(pcb_trace_error_id)) continue
+        errorIds.add(pcb_trace_error_id)
+        errors.push({
+          type: "pcb_trace_error",
+          error_type: "pcb_trace_error",
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            `${obj.type} "${getReadableName(getPrimaryId(obj))}"`,
+            gap,
+          ),
+          pcb_trace_id: segmentA.pcb_trace_id,
+          center,
+          source_trace_id: "",
+          pcb_trace_error_id,
+          pcb_component_ids: [
+            "pcb_component_id" in obj
+              ? (obj.pcb_component_id as string)
+              : undefined,
+          ].filter(Boolean) as string[],
+          pcb_port_ids: [
+            ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
+            "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
+          ].filter(Boolean) as string[],
+        })
+        continue
       }
 
       const isPolygon =
