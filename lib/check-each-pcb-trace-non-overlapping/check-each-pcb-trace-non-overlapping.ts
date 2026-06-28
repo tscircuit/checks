@@ -240,7 +240,10 @@ export function checkEachPcbTraceNonOverlapping(
         })
       }
 
-      if (obj.type === "pcb_smtpad" && obj.shape === "rotated_pill") {
+      if (
+        obj.type === "pcb_smtpad" &&
+        (obj.shape === "pill" || obj.shape === "rotated_pill")
+      ) {
         const { distance, center, radius } = getSegmentToPillClearance(
           segmentA,
           obj,

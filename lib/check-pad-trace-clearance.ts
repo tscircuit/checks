@@ -68,7 +68,8 @@ export function checkPadTraceClearance(
       const center = getPadCenter(pad)
 
       const gap =
-        pad.type === "pcb_smtpad" && pad.shape === "rotated_pill"
+        pad.type === "pcb_smtpad" &&
+        (pad.shape === "pill" || pad.shape === "rotated_pill")
           ? (() => {
               const { distance, radius } = getSegmentToPillClearance(
                 segment,
