@@ -92,3 +92,59 @@ test("checkPadTraceClearance ignores rotated pill pad bounding-box false positiv
 
   expect(checkPadTraceClearance(circuitJson, { minClearance: 0.1 })).toEqual([])
 })
+
+test("checkPadTraceClearance ignores (non-rotated) pill pad bounding-box false positives", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad1",
+      shape: "pill",
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 1,
+      radius: 0.5,
+      layer: "top",
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "trace1",
+      // Near the rounded corner: bounding-box says contact, true pill gap is ~0.115mm.
+      route: [
+        { route_type: "wire", x: -1.07, y: 0.57, width: 0.1, layer: "top" },
+        { route_type: "wire", x: -0.97, y: 0.47, width: 0.1, layer: "top" },
+      ],
+    },
+  ]
+
+  expect(checkPadTraceClearance(circuitJson, { minClearance: 0.1 })).toEqual([])
+})
+
+test("checkPadTraceClearance still flags a real (non-rotated) pill pad clearance violation", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad1",
+      shape: "pill",
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 1,
+      radius: 0.5,
+      layer: "top",
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "trace1",
+      // Just above the flat edge (gap ~0.02mm < 0.1mm) -> must still be reported.
+      route: [
+        { route_type: "wire", x: -0.2, y: 0.57, width: 0.1, layer: "top" },
+        { route_type: "wire", x: 0.2, y: 0.57, width: 0.1, layer: "top" },
+      ],
+    },
+  ]
+
+  expect(
+    checkPadTraceClearance(circuitJson, { minClearance: 0.1 }),
+  ).toHaveLength(1)
+})
