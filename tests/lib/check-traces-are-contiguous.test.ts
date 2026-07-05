@@ -474,3 +474,84 @@ test.failing(
     expect(errors.length).toBeGreaterThan(0)
   },
 )
+
+test.failing(
+  "draws an error where a trace endpoint touches a pad on a different layer",
+  () => {
+    // Same scenario rendered with shouldDrawErrors: a top-layer wire ends on
+    // the BOTTOM-layer pad on the right. On unfixed code the check misses it,
+    // so no error is drawn; the fix makes the error marker appear.
+    const circuitJson = [
+      {
+        type: "pcb_board",
+        pcb_board_id: "board_1",
+        center: { x: 0.5, y: 0 },
+        width: 3,
+        height: 2,
+        thickness: 1.6,
+        num_layers: 2,
+        material: "fr4",
+      },
+      {
+        type: "source_trace",
+        source_trace_id: "trace_1",
+        connected_source_port_ids: ["port_1", "port_2"],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "pp1",
+        source_port_id: "port_1",
+        x: 0,
+        y: 0,
+        layers: ["top"],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "pp2",
+        source_port_id: "port_2",
+        x: 1,
+        y: 0,
+        layers: ["top"],
+      },
+      {
+        type: "pcb_smtpad",
+        pcb_smtpad_id: "pad_1",
+        pcb_port_id: "pp1",
+        shape: "rect",
+        x: 0,
+        y: 0,
+        width: 0.5,
+        height: 0.5,
+        layer: "top",
+      },
+      {
+        type: "pcb_smtpad",
+        pcb_smtpad_id: "pad_2",
+        pcb_port_id: "pp2",
+        shape: "rect",
+        x: 1,
+        y: 0,
+        width: 0.5,
+        height: 0.5,
+        layer: "bottom",
+      },
+      {
+        type: "pcb_trace",
+        pcb_trace_id: "t1",
+        source_trace_id: "trace_1",
+        route: [
+          { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+          { route_type: "wire", x: 1, y: 0, layer: "top", width: 0.2 },
+        ],
+      },
+    ] as AnyCircuitElement[]
+
+    const errors = checkTracesAreContiguous(circuitJson)
+    expect(
+      convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+        shouldDrawErrors: true,
+      }),
+    ).toMatchSvgSnapshot(import.meta.path, "trace-endpoint-on-different-layer")
+    expect(errors.length).toBeGreaterThan(0)
+  },
+)
