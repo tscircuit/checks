@@ -34,7 +34,18 @@ function isPointOnSegment(
 export function isPointInPad(
   point: { x: number; y: number },
   pad: PcbSmtPad | PcbPlatedHole,
+  layer?: string,
 ): boolean {
+  // A trace endpoint only connects to a pad on the same layer (a top-layer
+  // wire can't land on a bottom-layer smt pad without a via).
+  if (layer !== undefined) {
+    const padIsOnLayer =
+      pad.type === "pcb_smtpad"
+        ? pad.layer === layer
+        : pad.layers.some((padLayer) => padLayer === layer)
+    if (!padIsOnLayer) return false
+  }
+
   if (pad.type === "pcb_smtpad") {
     if (pad.shape === "circle") {
       return getDistanceBetweenPoints(point, pad) <= pad.radius
