@@ -116,11 +116,28 @@ export function isPointInPad(
       return getDistanceBetweenPoints(point, pad) <= pad.outer_diameter / 2
     }
 
-    if (pad.shape === "oval" || pad.shape === "pill") {
-      return (
-        Math.abs(point.x - pad.x) <= pad.outer_width / 2 &&
-        Math.abs(point.y - pad.y) <= pad.outer_height / 2
+    if (pad.shape === "oval") {
+      const nx = (point.x - pad.x) / (pad.outer_width / 2)
+      const ny = (point.y - pad.y) / (pad.outer_height / 2)
+      return nx * nx + ny * ny <= 1
+    }
+
+    if (pad.shape === "pill") {
+      const halfWidth = pad.outer_width / 2
+      const halfHeight = pad.outer_height / 2
+      const radius = Math.min(halfWidth, halfHeight)
+      // clamp the point to the pill's central segment, then distance-to-that <= radius
+      const dx = Math.max(
+        -(halfWidth - radius),
+        Math.min(halfWidth - radius, point.x - pad.x),
       )
+      const dy = Math.max(
+        -(halfHeight - radius),
+        Math.min(halfHeight - radius, point.y - pad.y),
+      )
+      const cx = pad.x + dx
+      const cy = pad.y + dy
+      return Math.hypot(point.x - cx, point.y - cy) <= radius
     }
 
     if (pad.shape === "circular_hole_with_rect_pad") {
