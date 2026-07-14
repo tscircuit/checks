@@ -18,6 +18,7 @@ import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-t
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
+import { dedupePcbDrcErrors } from "./dedupe-pcb-drc-errors"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
   return [
@@ -46,7 +47,7 @@ export async function runAllPinSpecificationChecks(
 }
 
 export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
-  return [
+  return dedupePcbDrcErrors([
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
     ...checkSourceTracesHavePcbTraces(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson),
@@ -55,14 +56,14 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkDifferentNetViaSpacing(circuitJson),
     ...checkTracesAreContiguous(circuitJson),
     ...checkPcbTracesOutOfBoard(circuitJson),
-  ]
+  ])
 }
 
 export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
-  return [
+  return dedupePcbDrcErrors([
     ...(await runAllPlacementChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
     ...(await runAllRoutingChecks(circuitJson)),
-  ]
+  ])
 }
