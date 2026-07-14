@@ -1,6 +1,9 @@
 import type { PcbSmtPad, PcbPlatedHole } from "circuit-json"
 import { pointToSegmentDistance } from "@tscircuit/math-utils"
-import { getPillCenterLineForPad } from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
+import {
+  getPillCenterLineForPad,
+  getPolygonPointsForPad,
+} from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
 
 function getDistanceBetweenPoints(
   pointA: { x: number; y: number },
@@ -31,6 +34,24 @@ function isPointOnSegment(
   return dotProduct <= squaredLength + POINT_ON_SEGMENT_TOLERANCE_MM
 }
 
+function isPointInPolygon(
+  point: { x: number; y: number },
+  polygon: Array<{ x: number; y: number }>,
+): boolean {
+  let inside = false
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const pi = polygon[i]
+    const pj = polygon[j]
+    if (isPointOnSegment(point, { start: pi, end: pj })) return true
+
+    const intersects =
+      pi.y > point.y !== pj.y > point.y &&
+      point.x < ((pj.x - pi.x) * (point.y - pi.y)) / (pj.y - pi.y) + pi.x
+    if (intersects) inside = !inside
+  }
+  return inside
+}
+
 export function isPointInPad(
   point: { x: number; y: number },
   pad: PcbSmtPad | PcbPlatedHole,
@@ -50,15 +71,7 @@ export function isPointInPad(
     }
 
     if (pad.shape === "rotated_rect") {
-      const dx = point.x - pad.x
-      const dy = point.y - pad.y
-      const angle = -pad.ccw_rotation
-      const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle)
-      const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle)
-      return (
-        Math.abs(rotatedX) <= pad.width / 2 &&
-        Math.abs(rotatedY) <= pad.height / 2
-      )
+      return isPointInPolygon(point, getPolygonPointsForPad(pad))
     }
 
     if (pad.shape === "pill" || pad.shape === "rotated_pill") {
@@ -92,22 +105,7 @@ export function isPointInPad(
     }
 
     if (pad.shape === "polygon") {
-      let inside = false
-      for (
-        let i = 0, j = pad.points.length - 1;
-        i < pad.points.length;
-        j = i++
-      ) {
-        const pi = pad.points[i]
-        const pj = pad.points[j]
-        if (isPointOnSegment(point, { start: pi, end: pj })) return true
-
-        const intersects =
-          pi.y > point.y !== pj.y > point.y &&
-          point.x < ((pj.x - pi.x) * (point.y - pi.y)) / (pj.y - pi.y) + pi.x
-        if (intersects) inside = !inside
-      }
-      return inside
+      return isPointInPolygon(point, pad.points)
     }
   }
 
@@ -116,24 +114,14 @@ export function isPointInPad(
       return getDistanceBetweenPoints(point, pad) <= pad.outer_diameter / 2
     }
 
+    if ("rect_pad_width" in pad && "rect_pad_height" in pad) {
+      return isPointInPolygon(point, getPolygonPointsForPad(pad))
+    }
+
     if (pad.shape === "oval" || pad.shape === "pill") {
       return (
         Math.abs(point.x - pad.x) <= pad.outer_width / 2 &&
         Math.abs(point.y - pad.y) <= pad.outer_height / 2
-      )
-    }
-
-    if (pad.shape === "circular_hole_with_rect_pad") {
-      return (
-        Math.abs(point.x - pad.x) <= pad.rect_pad_width / 2 &&
-        Math.abs(point.y - pad.y) <= pad.rect_pad_height / 2
-      )
-    }
-
-    if (pad.shape === "pill_hole_with_rect_pad") {
-      return (
-        Math.abs(point.x - pad.x) <= pad.rect_pad_width / 2 &&
-        Math.abs(point.y - pad.y) <= pad.rect_pad_height / 2
       )
     }
   }
