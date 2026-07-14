@@ -215,7 +215,7 @@ test("repro02 should report the J_VMOTOR GND trace disconnected endpoint", async
   )
 })
 
-test("does not require each source-trace branch segment to touch every port", () => {
+test("checks multi-port source-trace branches once through a shared pad", () => {
   const circuitJson = [
     {
       type: "source_trace",
@@ -275,6 +275,17 @@ test("does not require each source-trace branch segment to touch every port", ()
     },
     {
       type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_branch_join",
+      pcb_port_id: "pcb_port_b",
+      shape: "rect",
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_smtpad",
       pcb_smtpad_id: "pcb_smtpad_c",
       pcb_port_id: "pcb_port_c",
       shape: "rect",
@@ -297,7 +308,7 @@ test("does not require each source-trace branch segment to touch every port", ()
           width: 0.2,
           start_pcb_port_id: "pcb_port_a",
         },
-        { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+        { route_type: "wire", x: -0.2, y: 0, layer: "top", width: 0.2 },
       ],
     },
     {
@@ -313,7 +324,7 @@ test("does not require each source-trace branch segment to touch every port", ()
           width: 0.2,
           start_pcb_port_id: "pcb_port_b",
         },
-        { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+        { route_type: "wire", x: 0, y: 0.2, layer: "top", width: 0.2 },
       ],
     },
     {
@@ -329,7 +340,7 @@ test("does not require each source-trace branch segment to touch every port", ()
           width: 0.2,
           start_pcb_port_id: "pcb_port_c",
         },
-        { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+        { route_type: "wire", x: 0.2, y: 0, layer: "top", width: 0.2 },
       ],
     },
   ] as AnyCircuitElement[]

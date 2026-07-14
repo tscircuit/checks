@@ -153,6 +153,7 @@ function checkTracesAreContiguous(
 
   const padMap = new Map<PcbPortId, Array<PcbSmtPad | PcbPlatedHole>>()
   const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
+  const checkedSourceTraceIds = new Set<string>()
 
   for (const pad of pcbSmtPads) {
     if (pad.pcb_port_id) {
@@ -231,7 +232,12 @@ function checkTracesAreContiguous(
       trace.pcb_trace_id,
     )
 
-    // For traces with known expected ports, check specific connections
+    // Validate required ports once for the complete routed source trace.
+    if (sourceTrace && expectedPorts.length > 0) {
+      if (checkedSourceTraceIds.has(sourceTrace.source_trace_id)) continue
+      checkedSourceTraceIds.add(sourceTrace.source_trace_id)
+    }
+
     for (const port of expectedPorts) {
       if (!port.pcb_port_id) continue
 
@@ -240,9 +246,14 @@ function checkTracesAreContiguous(
       if (!pads?.length) continue
 
       let isConnectedByRoutedSourceTrace = false
-      for (const candidateTrace of pcbConnectivityMap.getAllTracesConnectedToTrace(
-        trace.pcb_trace_id,
-      )) {
+      const candidateTraces = [
+        ...pcbConnectivityMap.getAllTracesConnectedToTrace(trace.pcb_trace_id),
+        ...pcbTraces.filter(
+          (candidateTrace) =>
+            candidateTrace.source_trace_id === sourceTrace?.source_trace_id,
+        ),
+      ]
+      for (const candidateTrace of candidateTraces) {
         if (candidateTrace.pcb_trace_id === trace.pcb_trace_id) continue
         if (!candidateTrace.source_trace_id) continue
         const candidateSourceTrace = sourceTraces.find(
@@ -257,18 +268,22 @@ function checkTracesAreContiguous(
         ) {
           continue
         }
+        const candidateFirstPoint = candidateTrace.route[0]
+        const candidateLastPoint = candidateTrace.route.at(-1)
         if (
           getPcbPortIdsConnectedToTrace(candidateTrace).includes(
             port.pcb_port_id,
-          )
+          ) ||
+          (candidateFirstPoint?.route_type === "wire" &&
+            pads.some((pad) => isPointInPad(candidateFirstPoint, pad))) ||
+          (candidateLastPoint?.route_type === "wire" &&
+            pads.some((pad) => isPointInPad(candidateLastPoint, pad)))
         ) {
           isConnectedByRoutedSourceTrace = true
           break
         }
       }
-      if (isConnectedByRoutedSourceTrace) {
-        continue
-      }
+      if (isConnectedByRoutedSourceTrace) continue
 
       const isFirstPointConnected =
         firstPoint.route_type === "wire" &&
