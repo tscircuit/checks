@@ -229,6 +229,36 @@ export const getTraceSegments = (
 
 export type TraceClearanceObstacle = PadElement | PcbVia
 
+const getCenterBetweenCopperEdges = ({
+  tracePoint,
+  obstaclePoint,
+  traceRadius,
+  obstacleRadius,
+}: {
+  tracePoint: { x: number; y: number }
+  obstaclePoint: { x: number; y: number }
+  traceRadius: number
+  obstacleRadius: number
+}) => {
+  const dx = obstaclePoint.x - tracePoint.x
+  const dy = obstaclePoint.y - tracePoint.y
+  const distance = Math.hypot(dx, dy)
+  if (distance === 0) return midpoint(tracePoint, obstaclePoint)
+
+  const unitX = dx / distance
+  const unitY = dy / distance
+  const traceEdge = {
+    x: tracePoint.x + unitX * traceRadius,
+    y: tracePoint.y + unitY * traceRadius,
+  }
+  const obstacleEdge = {
+    x: obstaclePoint.x - unitX * obstacleRadius,
+    y: obstaclePoint.y - unitY * obstacleRadius,
+  }
+
+  return midpoint(traceEdge, obstacleEdge)
+}
+
 export const getTraceObstacleClearance = (
   segment: PcbTraceSegment,
   obstacle: TraceClearanceObstacle,
@@ -250,7 +280,12 @@ export const getTraceObstacleClearance = (
 
     return {
       gap: segmentToCircleMinDistance(start, end, circle) - traceRadius,
-      center: midpoint(closestPoint, circle),
+      center: getCenterBetweenCopperEdges({
+        tracePoint: closestPoint,
+        obstaclePoint: circle,
+        traceRadius,
+        obstacleRadius: circle.radius,
+      }),
     }
   }
 
@@ -258,7 +293,12 @@ export const getTraceObstacleClearance = (
     const clearance = getSegmentToPillClearance(segment, obstacle)
     return {
       gap: clearance.distance - traceRadius - clearance.radius,
-      center: clearance.center,
+      center: getCenterBetweenCopperEdges({
+        tracePoint: clearance.tracePoint,
+        obstaclePoint: clearance.obstaclePoint,
+        traceRadius,
+        obstacleRadius: clearance.radius,
+      }),
     }
   }
 
@@ -269,7 +309,12 @@ export const getTraceObstacleClearance = (
   )
   return {
     gap: clearance.distance - traceRadius,
-    center: clearance.center,
+    center: getCenterBetweenCopperEdges({
+      tracePoint: clearance.tracePoint,
+      obstaclePoint: clearance.obstaclePoint,
+      traceRadius,
+      obstacleRadius: 0,
+    }),
   }
 }
 

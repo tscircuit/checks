@@ -161,7 +161,12 @@ export const getSegmentToPolygonClearanceFromPoints = (
   polygon: Point[],
 ) => {
   if (polygon.length < 3) {
-    return { distance: Number.POSITIVE_INFINITY, center: start }
+    return {
+      distance: Number.POSITIVE_INFINITY,
+      center: start,
+      tracePoint: start,
+      obstaclePoint: start,
+    }
   }
 
   const intersections = getPolygonEdges(polygon)
@@ -180,19 +185,27 @@ export const getSegmentToPolygonClearanceFromPoints = (
       return ta - tb
     })
 
-    return { distance: 0, center: intersections[0]! }
+    return {
+      distance: 0,
+      center: intersections[0]!,
+      tracePoint: intersections[0]!,
+      obstaclePoint: intersections[0]!,
+    }
   }
 
   if (
     isPointInsidePolygon(start, polygon) ||
     isPointInsidePolygon(end, polygon)
   ) {
+    const center = {
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
+    }
     return {
       distance: 0,
-      center: {
-        x: (start.x + end.x) / 2,
-        y: (start.y + end.y) / 2,
-      },
+      center,
+      tracePoint: center,
+      obstaclePoint: center,
     }
   }
 
@@ -213,7 +226,12 @@ export const getSegmentToPolygonClearanceFromPoints = (
     if (candidate.distance < best.distance) best = candidate
   }
 
-  return { distance: best.distance, center: best.center }
+  return {
+    distance: best.distance,
+    center: best.center,
+    tracePoint: best.pointOnA,
+    obstaclePoint: best.pointOnB,
+  }
 }
 
 export const getSegmentToPolygonClearance = (
@@ -242,5 +260,7 @@ export const getSegmentToPillClearance = (
     distance: closest.distance,
     center: closest.center,
     radius: pill.radius,
+    tracePoint: closest.pointOnA,
+    obstaclePoint: closest.pointOnB,
   }
 }
