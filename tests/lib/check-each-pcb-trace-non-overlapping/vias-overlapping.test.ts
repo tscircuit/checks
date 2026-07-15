@@ -1,20 +1,14 @@
 import { describe, expect, test } from "bun:test"
-import { cju } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, PcbTrace, PcbVia } from "circuit-json"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import type { PcbTrace, PcbVia } from "circuit-json"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
-import { DEFAULT_TRACE_MARGIN } from "lib/drc-defaults"
+import { checkViaTraceClearance } from "lib/check-via-trace-clearance"
 
 describe("PCB vias in non-overlapping trace checks", () => {
-  test("non-overlapping functionality should include vias as collidable objects", () => {
-    // Simple test to verify vias are included in the check
+  test("reports a positive via-trace gap as clearance, not overlap", () => {
     const testData = [
       {
         type: "pcb_trace",
-        id: "trace1",
         pcb_trace_id: "trace1",
-        layer: "top",
-        width: 0.15,
         route: [
           { x: 0, y: 0, layer: "top", route_type: "wire" },
           { x: 10, y: 0, layer: "top", route_type: "wire" },
@@ -31,26 +25,11 @@ describe("PCB vias in non-overlapping trace checks", () => {
       },
     ] as Array<PcbTrace | PcbVia>
 
-    // The via is directly on the trace and has a different net, so should generate an error
-    const errors = checkEachPcbTraceNonOverlapping(testData)
-    expect(errors).toMatchInlineSnapshot(`
-      [
-        {
-          "center": {
-            "x": 4.7,
-            "y": 0,
-          },
-          "error_type": "pcb_trace_error",
-          "message": "PCB trace trace[trace1] is too close to pcb_via "pcb_via[#via1]" (gap: 0.020mm)",
-          "pcb_component_ids": [],
-          "pcb_port_ids": [],
-          "pcb_trace_error_id": "overlap_trace1_via1",
-          "pcb_trace_id": "trace1",
-          "source_trace_id": "",
-          "type": "pcb_trace_error",
-        },
-      ]
-    `)
-    expect(errors.length).toBeGreaterThan(0)
+    const overlapErrors = checkEachPcbTraceNonOverlapping(testData)
+    const clearanceErrors = checkViaTraceClearance(testData)
+
+    expect(overlapErrors).toEqual([])
+    expect(clearanceErrors).toHaveLength(1)
+    expect(clearanceErrors[0]!.actual_clearance).toBeGreaterThan(0)
   })
 })

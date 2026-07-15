@@ -2,17 +2,13 @@ import {
   getPrimaryId,
   getReadableNameForElement,
 } from "@tscircuit/circuit-json-util"
-import {
-  segmentToBoundsMinDistance,
-  segmentToCircleMinDistance,
-} from "@tscircuit/math-utils"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { AnyCircuitElement, PcbPadTraceClearanceError } from "circuit-json"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
 import { getCollidableBounds } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
-import { getSegmentToPillClearance } from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
@@ -20,13 +16,11 @@ import {
   type PadElement,
   formatMm,
   getPadBounds,
-  getPadCenter,
-  getPadRadius,
   getPads,
+  getTraceObstacleClearance,
   getTraceSegments,
-  isCircularPad,
+  isTraceObstacleOverlap,
 } from "./check-pad-clearance/common"
-import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 export function checkPadTraceClearance(
   circuitJson: AnyCircuitElement[],
@@ -54,6 +48,7 @@ export function checkPadTraceClearance(
     string,
     { error: PcbPadTraceClearanceError; gap: number }
   >()
+  const overlappingPairIds = new Set<string>()
 
   for (const segment of segments) {
     const nearbyPads = spatialIndex.getObjectsInBounds(
@@ -65,34 +60,16 @@ export function checkPadTraceClearance(
       const padId = getPrimaryId(pad)
       if (!getLayersOfPcbElement(pad as any).includes(segment.layer)) continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, padId)) continue
-      const center = getPadCenter(pad)
-
-      const gap =
-        pad.type === "pcb_smtpad" &&
-        (pad.shape === "pill" || pad.shape === "rotated_pill")
-          ? (() => {
-              const { distance, radius } = getSegmentToPillClearance(
-                segment,
-                pad,
-              )
-              return distance - segment.thickness / 2 - radius
-            })()
-          : isCircularPad(pad)
-            ? segmentToCircleMinDistance(
-                { x: segment.x1, y: segment.y1 },
-                { x: segment.x2, y: segment.y2 },
-                { x: center.x, y: center.y, radius: getPadRadius(pad) },
-              ) -
-              segment.thickness / 2
-            : segmentToBoundsMinDistance(
-                { x: segment.x1, y: segment.y1 },
-                { x: segment.x2, y: segment.y2 },
-                getPadBounds(pad),
-              ) -
-              segment.thickness / 2
+      const pairId = `${padId}_${segment.pcb_trace_id}`
+      const { gap, center } = getTraceObstacleClearance(segment, pad)
+      if (isTraceObstacleOverlap(gap)) {
+        errors.delete(pairId)
+        overlappingPairIds.add(pairId)
+        continue
+      }
+      if (overlappingPairIds.has(pairId)) continue
       if (gap + EPSILON >= minClearance!) continue
 
-      const pairId = `${padId}_${segment.pcb_trace_id}`
       const nextError: PcbPadTraceClearanceError = {
         type: "pcb_pad_trace_clearance_error" as const,
         pcb_pad_trace_clearance_error_id: `pad_trace_clearance_${pairId}`,
@@ -102,10 +79,7 @@ export function checkPadTraceClearance(
         pcb_trace_id: segment.pcb_trace_id,
         minimum_clearance: minClearance,
         actual_clearance: gap,
-        center: {
-          x: (center.x + (segment.x1 + segment.x2) / 2) / 2,
-          y: (center.y + (segment.y1 + segment.y2) / 2) / 2,
-        },
+        center,
       }
 
       const current = errors.get(pairId)

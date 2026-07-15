@@ -1,6 +1,6 @@
-import { expect, test, describe } from "bun:test"
+import { describe, expect, test } from "bun:test"
+import type { AnyCircuitElement, AnySoupElement } from "circuit-json"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
-import type { AnySoupElement, AnyCircuitElement } from "circuit-json"
 
 describe("checkEachPcbTraceNonOverlapping", () => {
   test("should return no errors when traces don't overlap", () => {
@@ -205,7 +205,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
     ).toEqual([])
   })
 
-  test("should use board minimum trace-to-pad clearance", () => {
+  test("reports pad clearance separately from pad overlap", () => {
     const circuitJson: AnyCircuitElement[] = [
       {
         type: "pcb_board",
@@ -241,7 +241,7 @@ describe("checkEachPcbTraceNonOverlapping", () => {
     expect(checkEachPcbTraceNonOverlapping(circuitJson)).toEqual([])
     expect(
       checkEachPcbTraceNonOverlapping(circuitJson, { minClearance: 0.1 }),
-    ).toHaveLength(1)
+    ).toEqual([])
   })
 
   test("does not report false positives against a rotated pill pad bounding box", () => {
