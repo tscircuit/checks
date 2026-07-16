@@ -32,10 +32,10 @@ test("checkPadTraceClearance reports pad and trace closer than 0.2mm", () => {
   expect(errors[0].pcb_trace_id).toBe("trace1")
   expect(errors[0].minimum_clearance).toBe(0.1)
   expect(errors[0].actual_clearance).toBeCloseTo(0.075, 10)
-  expect(errors[0]!.center!.y).toBeCloseTo(0.5375, 10)
+  expect(errors[0]!.center).toEqual({ x: 0, y: 0.625 })
 })
 
-test("centers circular pad clearance errors between the copper edges", () => {
+test("centers circular pad clearance errors on the full trace", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "pcb_plated_hole",
@@ -61,8 +61,7 @@ test("centers circular pad clearance errors between the copper edges", () => {
 
   expect(errors).toHaveLength(1)
   expect(errors[0].actual_clearance).toBeCloseTo(0.075, 10)
-  expect(errors[0]!.center!.x).toBeCloseTo(0, 10)
-  expect(errors[0]!.center!.y).toBeCloseTo(0.5375, 10)
+  expect(errors[0]!.center).toEqual({ x: 0, y: 0.625 })
 })
 
 test("checkPadTraceClearance deduplicates multiple close segments for one pad-trace pair", () => {
@@ -178,5 +177,5 @@ test("checkPadTraceClearance still flags a real (non-rotated) pill pad clearance
   const errors = checkPadTraceClearance(circuitJson, { minClearance: 0.1 })
 
   expect(errors).toHaveLength(1)
-  expect(errors[0]!.center!.y).toBeCloseTo(0.51, 10)
+  expect(errors[0]!.center).toEqual({ x: 0, y: 0.57 })
 })

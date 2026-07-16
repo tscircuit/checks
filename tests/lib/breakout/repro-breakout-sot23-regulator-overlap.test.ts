@@ -24,6 +24,20 @@ test("repro breakout sot23 regulator overlap routing checks snapshot", async () 
   expect(
     errors.filter((error) => error.message.includes("missing a connection")),
   ).toHaveLength(0)
+  const errorCenters = errors
+    .filter((error) => error.type === "pcb_pad_trace_clearance_error")
+    .map((error) => error.center)
+    .filter(
+      (center): center is { x: number; y: number } =>
+        typeof center?.x === "number" && typeof center.y === "number",
+    )
+  expect(errorCenters).toHaveLength(2)
+  expect(
+    Math.hypot(
+      errorCenters[0]!.x - errorCenters[1]!.x,
+      errorCenters[0]!.y - errorCenters[1]!.y,
+    ),
+  ).toBeGreaterThan(1)
 
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {

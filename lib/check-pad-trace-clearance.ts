@@ -2,7 +2,6 @@ import {
   getPrimaryId,
   getReadableNameForElement,
 } from "@tscircuit/circuit-json-util"
-import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { AnyCircuitElement, PcbPadTraceClearanceError } from "circuit-json"
 import {
   type ConnectivityMap,
@@ -10,13 +9,19 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { getCollidableBounds } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
-import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import {
+  DEFAULT_PAD_TRACE_CLEARANCE,
+  EPSILON,
+  getBoardDrcValue,
+  getPcbBoard,
+} from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   type PadElement,
   formatMm,
   getPadBounds,
   getPads,
+  getTraceCenter,
   getTraceObstacleClearance,
   getTraceSegments,
   isTraceObstacleOverlap,
@@ -36,7 +41,7 @@ export function checkPadTraceClearance(
   const board = getPcbBoard(circuitJson)
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
-    jlcMinTolerances.min_trace_to_pad_edge_clearance
+    DEFAULT_PAD_TRACE_CLEARANCE
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const spatialIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,
@@ -61,7 +66,7 @@ export function checkPadTraceClearance(
       if (!getLayersOfPcbElement(pad as any).includes(segment.layer)) continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, padId)) continue
       const pairId = `${padId}_${segment.pcb_trace_id}`
-      const { gap, center } = getTraceObstacleClearance(segment, pad)
+      const { gap } = getTraceObstacleClearance(segment, pad)
       if (isTraceObstacleOverlap(gap)) {
         errors.delete(pairId)
         overlappingPairIds.add(pairId)
@@ -79,7 +84,7 @@ export function checkPadTraceClearance(
         pcb_trace_id: segment.pcb_trace_id,
         minimum_clearance: minClearance,
         actual_clearance: gap,
-        center,
+        center: getTraceCenter(segment),
       }
 
       const current = errors.get(pairId)

@@ -46,8 +46,7 @@ test("checkViaTraceClearance reports via and unrelated trace closer than default
   expect(errors[0].pcb_trace_id).toBe("trace1")
   expect(errors[0].minimum_clearance).toBe(0.1)
   expect(errors[0].actual_clearance).toBeLessThan(0.1)
-  expect(errors[0]!.center!.x).toBeCloseTo(0.5, 10)
-  expect(errors[0]!.center!.y).toBeCloseTo(0.075, 10)
+  expect(errors[0]!.center).toEqual({ x: 0, y: 0 })
 
   expect(svg).toMatchSvgSnapshot(import.meta.path)
 })

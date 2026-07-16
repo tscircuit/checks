@@ -1,5 +1,4 @@
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
-import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,
   PcbVia,
@@ -9,10 +8,16 @@ import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
-import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import {
+  DEFAULT_PAD_TRACE_CLEARANCE,
+  EPSILON,
+  getBoardDrcValue,
+  getPcbBoard,
+} from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   formatMm,
+  getTraceCenter,
   getTraceObstacleClearance,
   getTraceSegments,
   isTraceObstacleOverlap,
@@ -32,7 +37,7 @@ export function checkViaTraceClearance(
   const board = getPcbBoard(circuitJson)
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
-    jlcMinTolerances.min_trace_to_pad_edge_clearance
+    DEFAULT_PAD_TRACE_CLEARANCE
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const errors = new Map<
     string,
@@ -47,7 +52,7 @@ export function checkViaTraceClearance(
         continue
 
       const pairId = `${via.pcb_via_id}_${segment.pcb_trace_id}`
-      const { gap, center } = getTraceObstacleClearance(segment, via)
+      const { gap } = getTraceObstacleClearance(segment, via)
       if (isTraceObstacleOverlap(gap)) {
         errors.delete(pairId)
         overlappingPairIds.add(pairId)
@@ -65,7 +70,7 @@ export function checkViaTraceClearance(
         pcb_trace_id: segment.pcb_trace_id,
         minimum_clearance: minClearance,
         actual_clearance: gap,
-        center,
+        center: getTraceCenter(segment),
       }
 
       const current = errors.get(pairId)
