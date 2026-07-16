@@ -12,6 +12,10 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "lib/add-start-and-end-port-ids-if-missing"
 import {
+  getTraceObstacleClearance,
+  isTraceObstacleOverlap,
+} from "lib/check-pad-clearance/common"
+import {
   type Bounds,
   SpatialObjectIndex,
 } from "lib/data-structures/SpatialIndex"
@@ -32,11 +36,6 @@ import {
 } from "./getCollidableBounds"
 import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
-import {
-  getPolygonPointsForPad,
-  getSegmentToPillClearance,
-  getSegmentToPolygonClearance,
-} from "./segment-to-polygon-clearance"
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -112,7 +111,7 @@ export function checkEachPcbTraceNonOverlapping(
     otherName: string,
     gap: number,
   ) => {
-    if (gap < 0) {
+    if (isTraceObstacleOverlap(gap)) {
       return `PCB trace ${traceName} overlaps with ${otherName} (accidental contact)`
     }
 
@@ -194,11 +193,43 @@ export function checkEachPcbTraceNonOverlapping(
       )
         continue
 
-      const isCircular =
-        obj.type === "pcb_via" ||
-        (obj.type === "pcb_plated_hole" && obj.shape === "circle") ||
-        obj.type === "pcb_hole" ||
-        (obj.type === "pcb_smtpad" && obj.shape === "circle")
+      if (
+        obj.type === "pcb_smtpad" ||
+        obj.type === "pcb_plated_hole" ||
+        obj.type === "pcb_via"
+      ) {
+        const { gap, center } = getTraceObstacleClearance(segmentA, obj)
+        if (!isTraceObstacleOverlap(gap)) continue
+
+        const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
+        if (errorIds.has(pcb_trace_error_id)) continue
+        errorIds.add(pcb_trace_error_id)
+        errors.push({
+          type: "pcb_trace_error",
+          error_type: "pcb_trace_error",
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            `${obj.type} "${getReadableName(primaryObjId)}"`,
+            gap,
+          ),
+          pcb_trace_id: segmentA.pcb_trace_id,
+          center,
+          source_trace_id: "",
+          pcb_trace_error_id,
+          pcb_component_ids: [
+            "pcb_component_id" in obj
+              ? (obj.pcb_component_id as string)
+              : undefined,
+          ].filter(Boolean) as string[],
+          pcb_port_ids: [
+            ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
+            "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
+          ].filter(Boolean) as string[],
+        })
+        continue
+      }
+
+      const isCircular = obj.type === "pcb_hole"
 
       if (isCircular) {
         const radius = getRadiusOfCircuitJsonElement(obj)
@@ -238,89 +269,6 @@ export function checkEachPcbTraceNonOverlapping(
             "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
           ].filter(Boolean) as string[],
         })
-      }
-
-      if (
-        obj.type === "pcb_smtpad" &&
-        (obj.shape === "pill" || obj.shape === "rotated_pill")
-      ) {
-        const { distance, center, radius } = getSegmentToPillClearance(
-          segmentA,
-          obj,
-        )
-        const gap = distance - segmentA.thickness / 2 - radius
-        if (gap > minClearance - EPSILON) continue
-
-        const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
-        if (errorIds.has(pcb_trace_error_id)) continue
-        errorIds.add(pcb_trace_error_id)
-        errors.push({
-          type: "pcb_trace_error",
-          error_type: "pcb_trace_error",
-          message: constructErrorMessage(
-            getReadableName(segmentA.pcb_trace_id),
-            `${obj.type} "${getReadableName(getPrimaryId(obj))}"`,
-            gap,
-          ),
-          pcb_trace_id: segmentA.pcb_trace_id,
-          center,
-          source_trace_id: "",
-          pcb_trace_error_id,
-          pcb_component_ids: [
-            "pcb_component_id" in obj
-              ? (obj.pcb_component_id as string)
-              : undefined,
-          ].filter(Boolean) as string[],
-          pcb_port_ids: [
-            ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
-            "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
-          ].filter(Boolean) as string[],
-        })
-        continue
-      }
-
-      const isPolygon =
-        (obj.type === "pcb_smtpad" &&
-          (obj.shape === "rotated_rect" || obj.shape === "polygon")) ||
-        (obj.type === "pcb_plated_hole" &&
-          "rect_pad_width" in obj &&
-          "rect_pad_height" in obj)
-
-      if (isPolygon) {
-        const padOutline = getPolygonPointsForPad(obj)
-        const { distance, center } = getSegmentToPolygonClearance(
-          segmentA,
-          padOutline,
-        )
-        const gap = distance - segmentA.thickness / 2
-        if (gap > minClearance - EPSILON) continue
-
-        const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
-        if (errorIds.has(pcb_trace_error_id)) continue
-        errorIds.add(pcb_trace_error_id)
-        errors.push({
-          type: "pcb_trace_error",
-          error_type: "pcb_trace_error",
-          message: constructErrorMessage(
-            getReadableName(segmentA.pcb_trace_id),
-            `${obj.type} "${getReadableName(getPrimaryId(obj))}"`,
-            gap,
-          ),
-          pcb_trace_id: segmentA.pcb_trace_id,
-          center,
-          source_trace_id: "",
-          pcb_trace_error_id,
-          pcb_component_ids: [
-            "pcb_component_id" in obj
-              ? (obj.pcb_component_id as string)
-              : undefined,
-          ].filter(Boolean) as string[],
-          pcb_port_ids: [
-            ...getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
-            "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
-          ].filter(Boolean) as string[],
-        })
-        continue
       }
 
       // Handle generic case of hitting the bounds of any collidable obstacle

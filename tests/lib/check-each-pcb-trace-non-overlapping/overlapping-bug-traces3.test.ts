@@ -1,11 +1,14 @@
-import { expect, test, describe } from "bun:test"
+import { describe, expect, test } from "bun:test"
 import { checkEachPcbTraceNonOverlapping } from "lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
+import { checkPadTraceClearance } from "lib/check-pad-trace-clearance"
 import traces3 from "tests/assets/traces3.solution.json"
 
 describe("checkEachPcbTraceNonOverlapping", () => {
-  test("should return no errors when traces don't overlap", () => {
-    const errors = checkEachPcbTraceNonOverlapping(traces3 as any)
+  test("classifies trace-pad overlap and clearance separately", () => {
+    const overlapErrors = checkEachPcbTraceNonOverlapping(traces3 as any)
+    const clearanceErrors = checkPadTraceClearance(traces3 as any)
 
-    expect(errors).toHaveLength(2)
+    expect(overlapErrors).toHaveLength(1)
+    expect(clearanceErrors).toHaveLength(1)
   })
 })

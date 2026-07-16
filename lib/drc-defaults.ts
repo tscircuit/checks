@@ -18,8 +18,6 @@ export const DEFAULT_DIFFERENT_NET_VIA_MARGIN =
 
 export const DEFAULT_PAD_PAD_CLEARANCE =
   jlcMinTolerances.min_pad_edge_to_pad_edge_clearance!
-export const DEFAULT_PAD_TRACE_CLEARANCE =
-  jlcMinTolerances.min_trace_to_pad_edge_clearance!
 
 export const EPSILON = 0.005
 

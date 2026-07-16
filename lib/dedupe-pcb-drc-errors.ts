@@ -8,6 +8,10 @@ type DrcRecord = AnyCircuitElement & Record<string, unknown>
  *
  * The specific record is retained because it includes the measured and
  * required clearance. Trace-trace and all other generic errors are untouched.
+ *
+ * @deprecated Aggregate runners now classify trace-obstacle pairs as either
+ * overlap or clearance before combining results, so they no longer need this
+ * post-processing step. Kept for callers combining results from older checks.
  */
 export const dedupePcbDrcErrors = <T extends AnyCircuitElement>(
   errors: T[],

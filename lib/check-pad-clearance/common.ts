@@ -7,6 +7,7 @@ import {
 } from "@tscircuit/circuit-json-util"
 import {
   midpoint,
+  pointToSegmentClosestPoint,
   segmentToCircleMinDistance,
   segmentToSegmentMinDistance,
 } from "@tscircuit/math-utils"
@@ -15,13 +16,15 @@ import type {
   PcbPlatedHole,
   PcbSmtPad,
   PcbTrace,
+  PcbVia,
 } from "circuit-json"
+import type { PcbTraceSegment } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import {
   getPillCenterLineForPad,
   getPolygonPointsForPad,
+  getSegmentToPillClearance,
   getSegmentToPolygonClearanceFromPoints,
 } from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
-import type { PcbTraceSegment } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import type { Bounds } from "lib/data-structures/SpatialIndex"
 import { DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
 
@@ -223,3 +226,125 @@ export const getTraceSegments = (
     return segments
   })
 }
+
+/**
+ * Returns the center used to place a trace-related error in circuit-json.
+ *
+ * Clearance geometry is measured at the closest segment/obstacle points, but
+ * placing the error there makes independent traces that pass the same obstacle
+ * render on top of one another. Centering each error on its full trace keeps
+ * placement deterministic and distinct without requiring renderer-side moves.
+ */
+export const getTraceCenter = (segment: PcbTraceSegment) => {
+  const routePoints = segment._pcbTrace.route.flatMap((routePoint) => {
+    if (routePoint.route_type === "through_pad") {
+      return [routePoint.start, routePoint.end]
+    }
+
+    return [{ x: routePoint.x, y: routePoint.y }]
+  })
+  const firstPoint = routePoints[0]
+  const lastPoint = routePoints[routePoints.length - 1]
+
+  if (!firstPoint || !lastPoint) {
+    return midpoint(
+      { x: segment.x1, y: segment.y1 },
+      { x: segment.x2, y: segment.y2 },
+    )
+  }
+
+  return midpoint(firstPoint, lastPoint)
+}
+
+export type TraceClearanceObstacle = PadElement | PcbVia
+
+const getCenterBetweenCopperEdges = ({
+  tracePoint,
+  obstaclePoint,
+  traceRadius,
+  obstacleRadius,
+}: {
+  tracePoint: { x: number; y: number }
+  obstaclePoint: { x: number; y: number }
+  traceRadius: number
+  obstacleRadius: number
+}) => {
+  const dx = obstaclePoint.x - tracePoint.x
+  const dy = obstaclePoint.y - tracePoint.y
+  const distance = Math.hypot(dx, dy)
+  if (distance === 0) return midpoint(tracePoint, obstaclePoint)
+
+  const unitX = dx / distance
+  const unitY = dy / distance
+  const traceEdge = {
+    x: tracePoint.x + unitX * traceRadius,
+    y: tracePoint.y + unitY * traceRadius,
+  }
+  const obstacleEdge = {
+    x: obstaclePoint.x - unitX * obstacleRadius,
+    y: obstaclePoint.y - unitY * obstacleRadius,
+  }
+
+  return midpoint(traceEdge, obstacleEdge)
+}
+
+export const getTraceObstacleClearance = (
+  segment: PcbTraceSegment,
+  obstacle: TraceClearanceObstacle,
+): { gap: number; center: { x: number; y: number } } => {
+  const start = { x: segment.x1, y: segment.y1 }
+  const end = { x: segment.x2, y: segment.y2 }
+  const traceRadius = segment.thickness / 2
+
+  if (obstacle.type === "pcb_via" || isCircularPad(obstacle)) {
+    const circle =
+      obstacle.type === "pcb_via"
+        ? {
+            x: obstacle.x,
+            y: obstacle.y,
+            radius: obstacle.outer_diameter / 2,
+          }
+        : getCircleShape(obstacle)
+    const closestPoint = pointToSegmentClosestPoint(circle, start, end)
+
+    return {
+      gap: segmentToCircleMinDistance(start, end, circle) - traceRadius,
+      center: getCenterBetweenCopperEdges({
+        tracePoint: closestPoint,
+        obstaclePoint: circle,
+        traceRadius,
+        obstacleRadius: circle.radius,
+      }),
+    }
+  }
+
+  if (isPillPad(obstacle)) {
+    const clearance = getSegmentToPillClearance(segment, obstacle)
+    return {
+      gap: clearance.distance - traceRadius - clearance.radius,
+      center: getCenterBetweenCopperEdges({
+        tracePoint: clearance.tracePoint,
+        obstaclePoint: clearance.obstaclePoint,
+        traceRadius,
+        obstacleRadius: clearance.radius,
+      }),
+    }
+  }
+
+  const clearance = getSegmentToPolygonClearanceFromPoints(
+    start,
+    end,
+    getPolygonShape(obstacle).points,
+  )
+  return {
+    gap: clearance.distance - traceRadius,
+    center: getCenterBetweenCopperEdges({
+      tracePoint: clearance.tracePoint,
+      obstaclePoint: clearance.obstaclePoint,
+      traceRadius,
+      obstacleRadius: 0,
+    }),
+  }
+}
+
+export const isTraceObstacleOverlap = (gap: number): boolean => gap <= 0
