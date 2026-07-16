@@ -421,7 +421,7 @@ test("still reports a source-trace branch that does not reach a required port", 
   )
 })
 
-test.failing(
+test(
   "errors when a trace endpoint touches a pad on a different layer",
   () => {
     // A top-layer wire endpoint at (1,0) coincides with a BOTTOM-layer pad.
@@ -486,7 +486,7 @@ test.failing(
   },
 )
 
-test.failing(
+test(
   "draws an error where a trace endpoint touches a pad on a different layer",
   () => {
     // Same scenario rendered with shouldDrawErrors: a top-layer wire ends on
