@@ -1,4 +1,5 @@
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,
   PcbVia,
@@ -8,12 +9,7 @@ import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
-import {
-  DEFAULT_PAD_TRACE_CLEARANCE,
-  EPSILON,
-  getBoardDrcValue,
-  getPcbBoard,
-} from "lib/drc-defaults"
+import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   formatMm,
@@ -37,7 +33,7 @@ export function checkViaTraceClearance(
   const board = getPcbBoard(circuitJson)
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
-    DEFAULT_PAD_TRACE_CLEARANCE
+    jlcMinTolerances.min_trace_to_pad_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const errors = new Map<
     string,
