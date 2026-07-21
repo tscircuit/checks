@@ -32,12 +32,19 @@ test("repro breakout sot23 regulator overlap routing checks snapshot", async () 
         typeof center?.x === "number" && typeof center.y === "number",
     )
   expect(errorCenters).toHaveLength(2)
-  expect(
-    Math.hypot(
-      errorCenters[0]!.x - errorCenters[1]!.x,
-      errorCenters[0]!.y - errorCenters[1]!.y,
-    ),
-  ).toBeGreaterThan(1)
+  const platedHole = circuitJson.find(
+    (element) =>
+      element.type === "pcb_plated_hole" &&
+      element.pcb_plated_hole_id === "pcb_plated_hole_1",
+  )
+  expect(platedHole?.type).toBe("pcb_plated_hole")
+  if (platedHole?.type !== "pcb_plated_hole") return
+
+  for (const center of errorCenters) {
+    expect(
+      Math.hypot(center.x - platedHole.x, center.y - platedHole.y),
+    ).toBeCloseTo(platedHole.outer_diameter / 2, 2)
+  }
 
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {

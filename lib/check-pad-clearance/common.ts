@@ -227,35 +227,6 @@ export const getTraceSegments = (
   })
 }
 
-/**
- * Returns the center used to place a trace-related error in circuit-json.
- *
- * Clearance geometry is measured at the closest segment/obstacle points, but
- * placing the error there makes independent traces that pass the same obstacle
- * render on top of one another. Centering each error on its full trace keeps
- * placement deterministic and distinct without requiring renderer-side moves.
- */
-export const getTraceCenter = (segment: PcbTraceSegment) => {
-  const routePoints = segment._pcbTrace.route.flatMap((routePoint) => {
-    if (routePoint.route_type === "through_pad") {
-      return [routePoint.start, routePoint.end]
-    }
-
-    return [{ x: routePoint.x, y: routePoint.y }]
-  })
-  const firstPoint = routePoints[0]
-  const lastPoint = routePoints[routePoints.length - 1]
-
-  if (!firstPoint || !lastPoint) {
-    return midpoint(
-      { x: segment.x1, y: segment.y1 },
-      { x: segment.x2, y: segment.y2 },
-    )
-  }
-
-  return midpoint(firstPoint, lastPoint)
-}
-
 export type TraceClearanceObstacle = PadElement | PcbVia
 
 const getCenterBetweenCopperEdges = ({

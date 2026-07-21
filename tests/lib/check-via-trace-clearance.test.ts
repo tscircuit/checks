@@ -46,7 +46,38 @@ test("checkViaTraceClearance reports via and unrelated trace closer than default
   expect(errors[0].pcb_trace_id).toBe("trace1")
   expect(errors[0].minimum_clearance).toBe(0.1)
   expect(errors[0].actual_clearance).toBeLessThan(0.1)
-  expect(errors[0]!.center).toEqual({ x: 0, y: 0 })
+  expect(errors[0]!.center!.x).toBeCloseTo(0.5, 10)
+  expect(errors[0]!.center!.y).toBeCloseTo(0.075, 10)
 
   expect(svg).toMatchSvgSnapshot(import.meta.path)
+})
+
+test("centers via-trace errors at the violating copper on long traces", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "trace1",
+      route: [
+        { route_type: "wire", x: -10, y: 0, width: 0.1, layer: "top" },
+        { route_type: "wire", x: 10, y: 0, width: 0.1, layer: "top" },
+      ],
+    },
+    {
+      type: "pcb_via",
+      pcb_via_id: "via1",
+      x: 9,
+      y: 0.3,
+      hole_diameter: 0.3,
+      outer_diameter: 0.4,
+      layers: ["top", "bottom"],
+    },
+  ]
+
+  const [error] = checkViaTraceClearance(circuitJson, {
+    connMap: { areIdsConnected: () => false } as any,
+  })
+
+  expect(error).toBeDefined()
+  expect(error!.center!.x).toBeCloseTo(9, 10)
+  expect(error!.center!.y).toBeCloseTo(0.075, 10)
 })

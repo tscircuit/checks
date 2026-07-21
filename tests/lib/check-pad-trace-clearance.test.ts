@@ -32,10 +32,10 @@ test("checkPadTraceClearance reports pad and trace closer than 0.2mm", () => {
   expect(errors[0].pcb_trace_id).toBe("trace1")
   expect(errors[0].minimum_clearance).toBe(0.1)
   expect(errors[0].actual_clearance).toBeCloseTo(0.075, 10)
-  expect(errors[0]!.center).toEqual({ x: 0, y: 0.625 })
+  expect(errors[0]!.center!.y).toBeCloseTo(0.5375, 10)
 })
 
-test("centers circular pad clearance errors on the full trace", () => {
+test("centers circular pad clearance errors between the copper edges", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "pcb_plated_hole",
@@ -61,7 +61,8 @@ test("centers circular pad clearance errors on the full trace", () => {
 
   expect(errors).toHaveLength(1)
   expect(errors[0].actual_clearance).toBeCloseTo(0.075, 10)
-  expect(errors[0]!.center).toEqual({ x: 0, y: 0.625 })
+  expect(errors[0]!.center!.x).toBeCloseTo(0, 10)
+  expect(errors[0]!.center!.y).toBeCloseTo(0.5375, 10)
 })
 
 test("checkPadTraceClearance deduplicates multiple close segments for one pad-trace pair", () => {
@@ -177,5 +178,34 @@ test("checkPadTraceClearance still flags a real (non-rotated) pill pad clearance
   const errors = checkPadTraceClearance(circuitJson, { minClearance: 0.1 })
 
   expect(errors).toHaveLength(1)
-  expect(errors[0]!.center).toEqual({ x: 0, y: 0.57 })
+  expect(errors[0]!.center!.y).toBeCloseTo(0.51, 10)
+})
+
+test("centers pad-trace errors at the violating copper on long traces", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_plated_hole",
+      pcb_plated_hole_id: "pad1",
+      shape: "circle",
+      x: 9,
+      y: 0,
+      outer_diameter: 1,
+      hole_diameter: 0.5,
+      layers: ["top", "bottom"],
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "trace1",
+      route: [
+        { route_type: "wire", x: -10, y: 0.625, width: 0.1, layer: "top" },
+        { route_type: "wire", x: 10, y: 0.625, width: 0.1, layer: "top" },
+      ],
+    },
+  ]
+
+  const [error] = checkPadTraceClearance(circuitJson)
+
+  expect(error).toBeDefined()
+  expect(error!.center!.x).toBeCloseTo(9, 10)
+  expect(error!.center!.y).toBeCloseTo(0.5375, 10)
 })

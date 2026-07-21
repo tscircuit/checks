@@ -17,7 +17,6 @@ import {
   formatMm,
   getPadBounds,
   getPads,
-  getTraceCenter,
   getTraceObstacleClearance,
   getTraceSegments,
   isTraceObstacleOverlap,
@@ -62,7 +61,7 @@ export function checkPadTraceClearance(
       if (!getLayersOfPcbElement(pad as any).includes(segment.layer)) continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, padId)) continue
       const pairId = `${padId}_${segment.pcb_trace_id}`
-      const { gap } = getTraceObstacleClearance(segment, pad)
+      const { gap, center } = getTraceObstacleClearance(segment, pad)
       if (isTraceObstacleOverlap(gap)) {
         errors.delete(pairId)
         overlappingPairIds.add(pairId)
@@ -80,7 +79,7 @@ export function checkPadTraceClearance(
         pcb_trace_id: segment.pcb_trace_id,
         minimum_clearance: minClearance,
         actual_clearance: gap,
-        center: getTraceCenter(segment),
+        center,
       }
 
       const current = errors.get(pairId)

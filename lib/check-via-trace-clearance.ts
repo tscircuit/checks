@@ -13,7 +13,6 @@ import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   formatMm,
-  getTraceCenter,
   getTraceObstacleClearance,
   getTraceSegments,
   isTraceObstacleOverlap,
@@ -48,7 +47,7 @@ export function checkViaTraceClearance(
         continue
 
       const pairId = `${via.pcb_via_id}_${segment.pcb_trace_id}`
-      const { gap } = getTraceObstacleClearance(segment, via)
+      const { gap, center } = getTraceObstacleClearance(segment, via)
       if (isTraceObstacleOverlap(gap)) {
         errors.delete(pairId)
         overlappingPairIds.add(pairId)
@@ -66,7 +65,7 @@ export function checkViaTraceClearance(
         pcb_trace_id: segment.pcb_trace_id,
         minimum_clearance: minClearance,
         actual_clearance: gap,
-        center: getTraceCenter(segment),
+        center,
       }
 
       const current = errors.get(pairId)
