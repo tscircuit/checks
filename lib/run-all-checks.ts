@@ -12,6 +12,7 @@ import { checkPadTraceClearance } from "./check-pad-trace-clearance"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
+import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
@@ -48,6 +49,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
     ...checkSourceTracesHavePcbTraces(circuitJson),
+    ...checkPcbTraceLengths(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson),
     ...checkPadTraceClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson),

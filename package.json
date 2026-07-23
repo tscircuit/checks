@@ -20,9 +20,10 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
-    "circuit-json": "^0.0.428",
+    "circuit-json": "^0.0.453",
     "circuit-to-svg": "^0.0.388",
     "debug": "^4.3.5",
+    "format-si-unit": "^0.0.7",
     "tscircuit": "^0.0.1786",
     "tsup": "^8.2.3",
     "zod": "^3.23.8"
