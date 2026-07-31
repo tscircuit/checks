@@ -2,7 +2,7 @@ import type { SourcePinMissingTraceWarning } from "circuit-json"
 import type { DecouplingCapacitorChecker } from "./decoupling-capacitor-checker"
 import { getSourcePortDisplayLabel } from "./get-source-port-display-label"
 
-export const DecouplingCapacitorChecker_getWarnings = (
+export const getDecouplingCapacitorWarnings = (
   checker: DecouplingCapacitorChecker,
 ): SourcePinMissingTraceWarning[] => {
   const warnings: SourcePinMissingTraceWarning[] = []

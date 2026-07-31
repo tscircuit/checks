@@ -1,7 +1,7 @@
 import type { SourcePort } from "circuit-json"
 import type { DecouplingCapacitorChecker } from "./decoupling-capacitor-checker"
 
-export const DecouplingCapacitorChecker_sourcePortHasConnection = (
+export const sourcePortHasConnection = (
   checker: DecouplingCapacitorChecker,
   sourcePort: SourcePort,
 ): boolean => {

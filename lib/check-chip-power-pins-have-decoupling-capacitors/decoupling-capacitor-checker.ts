@@ -11,11 +11,11 @@ import {
   type ConnectivityMap,
   getSourcePortConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
-import { DecouplingCapacitorChecker_capacitorConnectsPowerSourcePortToGround } from "./decoupling-capacitor-checker-capacitor-connects-power-source-port-to-ground"
-import { DecouplingCapacitorChecker_getWarnings } from "./decoupling-capacitor-checker-get-warnings"
-import { DecouplingCapacitorChecker_sourcePortHasConnection } from "./decoupling-capacitor-checker-source-port-has-connection"
-import { DecouplingCapacitorChecker_sourcePortIsConnectedToGround } from "./decoupling-capacitor-checker-source-port-is-connected-to-ground"
-import { DecouplingCapacitorChecker_sourcePortShouldHaveDecouplingCapacitor } from "./decoupling-capacitor-checker-source-port-should-have-decoupling-capacitor"
+import { capacitorConnectsPowerSourcePortToGround } from "./decoupling-capacitor-checker-capacitor-connects-power-source-port-to-ground"
+import { getDecouplingCapacitorWarnings } from "./decoupling-capacitor-checker-get-warnings"
+import { sourcePortHasConnection } from "./decoupling-capacitor-checker-source-port-has-connection"
+import { sourcePortIsConnectedToGround } from "./decoupling-capacitor-checker-source-port-is-connected-to-ground"
+import { sourcePortShouldHaveDecouplingCapacitor } from "./decoupling-capacitor-checker-source-port-should-have-decoupling-capacitor"
 import type { SourceComponentId } from "./types"
 
 export class DecouplingCapacitorChecker {
@@ -64,7 +64,7 @@ export class DecouplingCapacitorChecker {
   }
 
   getWarnings(): SourcePinMissingTraceWarning[] {
-    return DecouplingCapacitorChecker_getWarnings(this)
+    return getDecouplingCapacitorWarnings(this)
   }
 
   getSourcePorts(sourceComponentId: SourceComponentId): SourcePort[] {
@@ -72,27 +72,22 @@ export class DecouplingCapacitorChecker {
   }
 
   sourcePortShouldHaveDecouplingCapacitor(sourcePort: SourcePort): boolean {
-    return DecouplingCapacitorChecker_sourcePortShouldHaveDecouplingCapacitor(
-      sourcePort,
-    )
+    return sourcePortShouldHaveDecouplingCapacitor(sourcePort)
   }
 
   sourcePortHasConnection(sourcePort: SourcePort): boolean {
-    return DecouplingCapacitorChecker_sourcePortHasConnection(this, sourcePort)
+    return sourcePortHasConnection(this, sourcePort)
   }
 
   sourcePortIsConnectedToGround(sourcePort: SourcePort): boolean {
-    return DecouplingCapacitorChecker_sourcePortIsConnectedToGround(
-      this,
-      sourcePort,
-    )
+    return sourcePortIsConnectedToGround(this, sourcePort)
   }
 
   capacitorConnectsPowerSourcePortToGround(
     capacitorSourceComponent: SourceSimpleCapacitor,
     chipPowerSourcePort: SourcePort,
   ): boolean {
-    return DecouplingCapacitorChecker_capacitorConnectsPowerSourcePortToGround(
+    return capacitorConnectsPowerSourcePortToGround(
       this,
       capacitorSourceComponent,
       chipPowerSourcePort,
