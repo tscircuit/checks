@@ -17,6 +17,7 @@ export { checkViaTraceClearance } from "./lib/check-via-trace-clearance"
 export { dedupePcbDrcErrors } from "./lib/dedupe-pcb-drc-errors"
 export { checkPinMustBeConnected } from "./lib/check-pin-must-be-connected"
 export { checkAllPinsInComponentAreUnderspecified } from "./lib/check-all-pins-in-component-are-underspecified"
+export { checkChipPowerPinsHaveDecouplingCapacitors } from "./lib/check-chip-power-pins-have-decoupling-capacitors"
 export { checkNoPowerPinDefined } from "./lib/check-no-power-pin-defined"
 export { checkNoGroundPinDefined } from "./lib/check-no-ground-pin-defined"
 export {

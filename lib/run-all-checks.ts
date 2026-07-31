@@ -1,5 +1,6 @@
 import type { AnyCircuitElement } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
+import { checkChipPowerPinsHaveDecouplingCapacitors } from "./check-chip-power-pins-have-decoupling-capacitors"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkCourtyardOverlap } from "./check-courtyard-overlap/checkCourtyardOverlap"
 import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
@@ -32,7 +33,10 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
 }
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
-  return [...checkPinMustBeConnected(circuitJson)]
+  return [
+    ...checkPinMustBeConnected(circuitJson),
+    ...checkChipPowerPinsHaveDecouplingCapacitors(circuitJson),
+  ]
 }
 
 export async function runAllPinSpecificationChecks(
