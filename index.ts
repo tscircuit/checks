@@ -13,6 +13,7 @@ export { checkPcbComponentOverlap } from "./lib/check-pcb-components-overlap/che
 export { checkPcbTraceLengths } from "./lib/check-pcb-trace-lengths"
 export { checkPadPadClearance } from "./lib/check-pad-pad-clearance"
 export { checkPadTraceClearance } from "./lib/check-pad-trace-clearance"
+export { checkViaPadClearance } from "./lib/check-via-pad-clearance"
 export { checkViaTraceClearance } from "./lib/check-via-trace-clearance"
 export { dedupePcbDrcErrors } from "./lib/dedupe-pcb-drc-errors"
 export { checkPinMustBeConnected } from "./lib/check-pin-must-be-connected"
