@@ -7,7 +7,6 @@ import {
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
-  PCBKeepout,
   PcbPlatedHole,
   PcbPort,
   PcbSmtPad,
@@ -43,10 +42,6 @@ import {
 } from "./getCollidableBounds"
 import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
-
-type PCBKeepoutWithExclusions = PCBKeepout & {
-  excluded_pcb_component_ids?: string[]
-}
 
 type PcbComponentConnectionElement = PcbPort | PcbSmtPad | PcbPlatedHole
 
@@ -119,7 +114,7 @@ export function checkEachPcbTraceNonOverlapping(
   const excludedConnectionIdsByKeepoutId = new Map<string, string[]>()
   for (const keepout of pcbKeepouts) {
     const excludedPcbComponentIds = new Set(
-      (keepout as PCBKeepoutWithExclusions).excluded_pcb_component_ids ?? [],
+      keepout.excluded_pcb_component_ids ?? [],
     )
     if (excludedPcbComponentIds.size === 0) continue
 
