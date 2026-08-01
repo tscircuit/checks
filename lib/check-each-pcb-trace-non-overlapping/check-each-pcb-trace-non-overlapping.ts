@@ -5,7 +5,14 @@ import {
   segmentToCircleMinDistance,
 } from "@tscircuit/math-utils"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
-import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PCBKeepout,
+  PcbPlatedHole,
+  PcbPort,
+  PcbSmtPad,
+  PcbTraceError,
+} from "circuit-json"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
@@ -36,6 +43,20 @@ import {
 } from "./getCollidableBounds"
 import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
+
+type PCBKeepoutWithExclusions = PCBKeepout & {
+  excluded_pcb_component_ids?: string[]
+}
+
+type PcbComponentConnectionElement = PcbPort | PcbSmtPad | PcbPlatedHole
+
+const getPcbComponentConnectionElementId = (
+  element: PcbComponentConnectionElement,
+): string => {
+  if (element.type === "pcb_port") return element.pcb_port_id
+  if (element.type === "pcb_smtpad") return element.pcb_smtpad_id
+  return element.pcb_plated_hole_id
+}
 
 export function checkEachPcbTraceNonOverlapping(
   circuitJson: AnyCircuitElement[],
@@ -85,9 +106,34 @@ export function checkEachPcbTraceNonOverlapping(
   })
   const pcbSmtPads = cju(circuitJson).pcb_smtpad.list()
   const pcbPlatedHoles = cju(circuitJson).pcb_plated_hole.list()
+  const pcbPorts = cju(circuitJson).pcb_port.list()
   const pcbHoles = cju(circuitJson).pcb_hole.list()
   const pcbVias = cju(circuitJson).pcb_via.list()
   const pcbKeepouts = cju(circuitJson).pcb_keepout.list()
+
+  const pcbComponentConnectionElements: PcbComponentConnectionElement[] = [
+    ...pcbPorts,
+    ...pcbSmtPads,
+    ...pcbPlatedHoles,
+  ]
+  const excludedConnectionIdsByKeepoutId = new Map<string, string[]>()
+  for (const keepout of pcbKeepouts) {
+    const excludedPcbComponentIds = new Set(
+      (keepout as PCBKeepoutWithExclusions).excluded_pcb_component_ids ?? [],
+    )
+    if (excludedPcbComponentIds.size === 0) continue
+
+    excludedConnectionIdsByKeepoutId.set(
+      keepout.pcb_keepout_id,
+      pcbComponentConnectionElements
+        .filter(
+          (element) =>
+            element.pcb_component_id &&
+            excludedPcbComponentIds.has(element.pcb_component_id),
+        )
+        .map(getPcbComponentConnectionElementId),
+    )
+  }
 
   const allObjects: Collidable[] = [
     ...pcbTraceSegments,
@@ -133,6 +179,15 @@ export function checkEachPcbTraceNonOverlapping(
     for (const obj of nearbyObjects) {
       // ignore obstacles not on the trace's layer (except vias)
       if (!getLayersOfPcbElement(obj).includes(segmentA.layer)) {
+        continue
+      }
+      if (
+        obj.type === "pcb_keepout" &&
+        (excludedConnectionIdsByKeepoutId.get(obj.pcb_keepout_id) ?? []).some(
+          (connectionId) =>
+            connMap.areIdsConnected(segmentA.pcb_trace_id, connectionId),
+        )
+      ) {
         continue
       }
       if (obj.type === "pcb_trace_segment") {
