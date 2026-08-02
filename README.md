@@ -10,6 +10,7 @@ and output an array of arrays for any issues found.
 | Function | Description |
 | --- | --- |
 | [`checkConnectorAccessibleOrientation`](./lib/check-connector-accessible-orientation.ts) | Returns `pcb_accessibility_error` for connectors whose orientation makes them inaccessible. |
+| [`checkTestPointAccessibility`](./lib/check-testpoint-accessibility.ts) | Returns `pcb_placement_error` when a test point is inside another component's courtyard on the same PCB side. |
 | [`checkAllPinsInComponentAreUnderspecified`](./lib/check-all-pins-in-component-are-underspecified.ts) | Returns `source_component_pins_underspecified_warning` when every pin on a chip lacks pin attributes. |
 | [`checkNoPowerPinDefined`](./lib/check-no-power-pin-defined.ts) | Returns `source_no_power_pin_defined_warning` when a chip has no pin with `requires_power=true`. |
 | [`checkNoGroundPinDefined`](./lib/check-no-ground-pin-defined.ts) | Returns `source_no_ground_pin_defined_warning` when a chip has no pin with `requires_ground=true`. |
@@ -31,7 +32,7 @@ and output an array of arrays for any issues found.
 
 | Function | Description |
 | --- | --- |
-| [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs placement checks (`checkViasOffBoard`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverlap`, `checkPadPadClearance`, and `checkConnectorAccessibleOrientation`). |
+| [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs placement checks (`checkViasOffBoard`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverlap`, `checkPadPadClearance`, `checkCourtyardOverlap`, `checkConnectorAccessibleOrientation`, and `checkTestPointAccessibility`). |
 | [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs netlist connectivity checks (currently `checkPinMustBeConnected`). |
 | [`runAllPinSpecificationChecks`](./lib/run-all-checks.ts) | Runs pin specification checks (e.g. `checkAllPinsInComponentAreUnderspecified`, `checkNoPowerPinDefined`, and `checkNoGroundPinDefined`). |
 | [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
