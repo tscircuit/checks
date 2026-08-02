@@ -17,11 +17,12 @@ function getFacingDirectionFromInsertionDirection(
       return "x-"
     case "from_right":
       return "x+"
-    case "from_front":
+    case "from_top":
       return "y+"
-    case "from_back":
+    case "from_bottom":
       return "y-"
     case "from_above":
+    case "from_below":
       return null
     default:
       return null
