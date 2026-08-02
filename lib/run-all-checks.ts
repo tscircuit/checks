@@ -18,6 +18,7 @@ import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
@@ -28,6 +29,7 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPadPadClearance(circuitJson),
     ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
+    ...checkTestPointAccessibility(circuitJson),
   ]
 }
 
