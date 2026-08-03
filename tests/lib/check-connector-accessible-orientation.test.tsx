@@ -194,7 +194,7 @@ test("connector orientation check uses insertion_direction when present", () => 
       height: 4,
       layer: "top",
       rotation: 0,
-      insertion_direction: "from_back",
+      insertion_direction: "from_bottom",
       obstructs_within_bounds: true,
     },
   ]
