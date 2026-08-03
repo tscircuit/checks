@@ -31,6 +31,20 @@ test.failing(
             </footprint>
           }
         />
+        <pcbnotetext
+          text="Expected error: left hole crosses top courtyard"
+          pcbX={0}
+          pcbY="2.5mm"
+          fontSize="0.45mm"
+          color="#FF00FF"
+        />
+        <pcbnotetext
+          text="Bottom J1 footprint: two drilled holes"
+          pcbX={0}
+          pcbY="-2.5mm"
+          fontSize="0.45mm"
+          color="#00E9FF"
+        />
       </board>,
     )
 

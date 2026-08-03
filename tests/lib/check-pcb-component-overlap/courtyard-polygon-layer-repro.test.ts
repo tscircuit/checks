@@ -63,6 +63,28 @@ test.failing(
       ...makePolygonComponent({ id: "top_a", layer: "top", x: -1 }),
       ...makePolygonComponent({ id: "top_b", layer: "top", x: 1 }),
       ...makePolygonComponent({ id: "bottom", layer: "bottom", x: -1.2 }),
+      {
+        type: "pcb_note_text",
+        pcb_note_text_id: "note_top",
+        text: "Top polygons overlap: expected error",
+        font: "tscircuit2024",
+        font_size: 0.45,
+        anchor_position: { x: 0, y: 2.8 },
+        anchor_alignment: "center",
+        layer: "top",
+        color: "#FF00FF",
+      },
+      {
+        type: "pcb_note_text",
+        pcb_note_text_id: "note_bottom",
+        text: "Bottom polygon (cyan): overlap allowed",
+        font: "tscircuit2024",
+        font_size: 0.45,
+        anchor_position: { x: 0, y: -2.8 },
+        anchor_alignment: "center",
+        layer: "top",
+        color: "#00BFFF",
+      },
     ]
 
     const errors = checkCourtyardOverlap(circuitJson)

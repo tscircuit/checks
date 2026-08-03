@@ -39,6 +39,20 @@ test("allows SMT components to share coordinates on opposite layers", async () =
         pcbX={0}
         pcbY={0}
       />
+      <pcbnotetext
+        text="Top U1 pad (red)"
+        pcbX={0}
+        pcbY="2.5mm"
+        fontSize="0.5mm"
+        color="#C83434"
+      />
+      <pcbnotetext
+        text="Bottom U2 pad (blue)"
+        pcbX={0}
+        pcbY="-2.5mm"
+        fontSize="0.5mm"
+        color="#4D7FC4"
+      />
     </board>,
   )
 

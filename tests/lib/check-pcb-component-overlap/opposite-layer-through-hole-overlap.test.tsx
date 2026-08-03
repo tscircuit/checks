@@ -43,6 +43,20 @@ test("still reports through-hole copper collisions across component layers", asy
           </footprint>
         }
       />
+      <pcbnotetext
+        text="Top SMT pad (red)"
+        pcbX={0}
+        pcbY="2.5mm"
+        fontSize="0.5mm"
+        color="#C83434"
+      />
+      <pcbnotetext
+        text="Bottom plated hole spans both layers"
+        pcbX={0}
+        pcbY="-2.5mm"
+        fontSize="0.45mm"
+        color="#00E9FF"
+      />
     </board>,
   )
 
