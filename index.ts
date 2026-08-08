@@ -30,3 +30,4 @@ export {
 
 export { checkConnectorAccessibleOrientation } from "./lib/check-connector-accessible-orientation"
 export { checkTestPointAccessibility } from "./lib/check-testpoint-accessibility"
+export { checkCopperPourOverlap } from "./lib/check-copper-pour-overlap/checkCopperPourOverlap"
