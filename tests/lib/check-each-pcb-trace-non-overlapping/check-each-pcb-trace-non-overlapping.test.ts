@@ -272,4 +272,50 @@ describe("checkEachPcbTraceNonOverlapping", () => {
       checkEachPcbTraceNonOverlapping(circuitJson, { minClearance: 0.1 }),
     ).toEqual([])
   })
+
+  test("reports a trace overlapping a rotated pill plated hole", () => {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "pcb_trace",
+        pcb_trace_id: "cc2_trace",
+        route: [
+          {
+            route_type: "wire",
+            x: -28.9,
+            y: -4.5,
+            width: 0.1,
+            layer: "top",
+          },
+          {
+            route_type: "wire",
+            x: -28.9,
+            y: -8.75,
+            width: 0.1,
+            layer: "top",
+          },
+        ],
+      },
+      {
+        type: "pcb_plated_hole",
+        pcb_plated_hole_id: "usb_shell_tab",
+        shape: "pill",
+        outer_width: 1.2,
+        outer_height: 1.8,
+        hole_width: 0.6,
+        hole_height: 1.2,
+        x: -28.125,
+        y: -7.075,
+        ccw_rotation: 270,
+        layers: ["top", "bottom"],
+      },
+    ]
+
+    const errors = checkEachPcbTraceNonOverlapping(circuitJson)
+
+    expect(errors).toHaveLength(1)
+    expect(errors[0].message).toContain("overlaps with")
+    expect(errors[0].pcb_trace_id).toBe("cc2_trace")
+    expect(errors[0].pcb_component_ids).toEqual([])
+    expect(errors[0].pcb_port_ids).toEqual([])
+  })
 })
