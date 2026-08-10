@@ -14,10 +14,6 @@ import type {
 } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import {
-  getReadableNameForElementId,
-  getReadableNameForPort,
-} from "lib/util/get-readable-names"
-import {
   type OverlappableElement,
   doPcbElementsOverlap,
 } from "./doPcbElementsOverlap"
@@ -46,19 +42,6 @@ const isCourtyardElement = (
   element.type === "pcb_courtyard_outline" ||
   element.type === "pcb_courtyard_polygon" ||
   element.type === "pcb_courtyard_rect"
-
-const formatOverlapElementDescription = (
-  circuitJson: AnyCircuitElement[],
-  element: OverlappableElement,
-): string => {
-  if ("pcb_port_id" in element && element.pcb_port_id) {
-    return getReadableNameForPort(circuitJson, element.pcb_port_id)
-  }
-
-  const id = getPrimaryId(element)
-  const readableName = getReadableNameForElementId(circuitJson, id)
-  return readableName === "element" ? `[${id}]` : readableName
-}
 
 /**
  * Check for overlapping PCB components
@@ -181,21 +164,17 @@ export function checkPcbComponentOverlap(
 
           // Check if element bounds overlap
           if (doPcbElementsOverlap(elem1, elem2)) {
-            const elem1Description = formatOverlapElementDescription(
-              circuitJson,
-              elem1,
-            )
-            const elem2Description = formatOverlapElementDescription(
-              circuitJson,
-              elem2,
-            )
+            // Keep the message stable so error tracking groups every overlap
+            // into one issue. The specific elements are identified by the
+            // structured id fields below, not by the message text.
+            const [firstType, secondType] = [elem1.type, elem2.type].sort()
 
             // Create error object
             const error: PcbFootprintOverlapError = {
               type: "pcb_footprint_overlap_error",
               pcb_error_id: `pcb_footprint_overlap_${id1}_${id2}`,
               error_type: "pcb_footprint_overlap_error",
-              message: `${elem1.type} ${elem1Description} overlaps with ${elem2.type} ${elem2Description}`,
+              message: `${firstType} overlaps with ${secondType}`,
             }
 
             // Add relevant IDs based on element types
