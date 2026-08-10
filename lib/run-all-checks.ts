@@ -20,6 +20,7 @@ import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceO
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
 import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
+import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
@@ -57,6 +58,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkEachPcbTraceNonOverlapping(circuitJson),
     ...checkPadTraceClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson),
+    ...checkViaPadClearance(circuitJson),
     ...checkSameNetViaSpacing(circuitJson),
     ...checkDifferentNetViaSpacing(circuitJson),
     ...checkTracesAreContiguous(circuitJson),
