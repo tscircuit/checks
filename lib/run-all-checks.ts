@@ -9,6 +9,7 @@ import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
 import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkPadPadClearance } from "./check-pad-pad-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
+import { checkPadsOffBoard } from "./check-pcb-components-out-of-board/checkPadsOffBoard"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
@@ -27,6 +28,7 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
     ...checkViasOffBoard(circuitJson),
     ...checkViasInPads(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
+    ...checkPadsOffBoard(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPadPadClearance(circuitJson),
     ...checkCourtyardOverlap(circuitJson),
