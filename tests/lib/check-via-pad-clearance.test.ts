@@ -70,6 +70,7 @@ test("checkViaPadClearance reports an escape via too close to an unrelated fine-
 
   const svg = convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
     shouldDrawErrors: true,
+    showErrorsInTextOverlay: true,
   })
 
   expect(errors).toHaveLength(2)
