@@ -42,7 +42,9 @@ const Chip = (props: { name: string; pcbX: number; pcbRotation?: number }) => (
 )
 
 test("courtyard overlap: 30° vs 60° rotation", async () => {
-  const circuit = new Circuit()
+  const circuit = new Circuit({
+    platform: { placementDrcChecksDisabled: true },
+  })
   circuit.add(
     <board width="20mm" height="10mm">
       <Chip name="U1" pcbX={0} pcbRotation={30} />
