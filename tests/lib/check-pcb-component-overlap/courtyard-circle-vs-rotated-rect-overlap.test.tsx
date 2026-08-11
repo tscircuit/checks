@@ -2,6 +2,7 @@ import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
 import { checkCourtyardOverlap } from "lib/check-courtyard-overlap/checkCourtyardOverlap"
+import { checkPcbComponentOverlap } from "lib/check-pcb-components-overlap/checkPcbComponentOverlap"
 
 /**
  * U1 at (0,0): circle courtyard radius=2mm
@@ -12,7 +13,9 @@ import { checkCourtyardOverlap } from "lib/check-courtyard-overlap/checkCourtyar
  */
 
 test("courtyard overlap: circle vs rotated rect", async () => {
-  const circuit = new Circuit()
+  const circuit = new Circuit({
+    platform: { placementDrcChecksDisabled: true },
+  })
   circuit.add(
     <board width="20mm" height="10mm">
       <chip
@@ -72,6 +75,8 @@ test("courtyard overlap: circle vs rotated rect", async () => {
   )
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
+
+  expect(checkPcbComponentOverlap(circuitJson)).toHaveLength(0)
 
   const errors = checkCourtyardOverlap(circuitJson)
   expect(errors).toHaveLength(1)
