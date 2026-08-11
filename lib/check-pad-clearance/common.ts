@@ -31,11 +31,6 @@ import { DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
 export type PadElement = PcbSmtPad | PcbPlatedHole
 export type PadClearanceElement = PadElement | PcbVia
 
-export const formatMm = (value: number) => {
-  const rounded = Math.round(value * 1000) / 1000
-  return `${Number(rounded.toFixed(3))}mm`
-}
-
 export const getPadBounds = (pad: PadClearanceElement): Bounds =>
   getBoundsOfPcbElements([pad])
 

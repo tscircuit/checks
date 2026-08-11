@@ -5,6 +5,7 @@ import type {
   PcbVia,
   PcbViaTraceClearanceError,
 } from "circuit-json"
+import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
@@ -12,7 +13,6 @@ import {
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
-  formatMm,
   getTraceCenter,
   getTraceObstacleClearance,
   getTraceSegments,
