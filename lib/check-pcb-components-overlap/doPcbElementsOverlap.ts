@@ -10,6 +10,7 @@ import type {
   PcbSmtPad,
 } from "circuit-json"
 import type { Collidable } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
+import { getPadToPadGap } from "lib/check-pad-clearance/common"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 
 export type OverlappableElement =
@@ -47,6 +48,10 @@ export function doPcbElementsOverlap(
   const layers1 = getElementLayers(elem1)
   const layers2 = getElementLayers(elem2)
   if (!doLayersOverlap(layers1, layers2)) return false
+
+  if (elem1.type === "pcb_smtpad" && elem2.type === "pcb_smtpad") {
+    return getPadToPadGap(elem1, elem2) <= 0
+  }
 
   const bounds1 = getBoundsOfPcbElements([elem1])
   const bounds2 = getBoundsOfPcbElements([elem2])
