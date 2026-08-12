@@ -20,9 +20,7 @@ const COURTYARD_OUTLINE = [
 ]
 
 test("courtyard overlap: outline vs rotated rect", async () => {
-  const circuit = new Circuit({
-    platform: { placementDrcChecksDisabled: true },
-  })
+  const circuit = new Circuit()
   circuit.add(
     <board width="20mm" height="10mm">
       <chip
