@@ -39,7 +39,11 @@ test("lightning cutout with a resistor directly on the cutout", async () => {
   const circuitJson = circuit.getCircuitJson()
   const placementErrors = await runAllPlacementChecks(circuitJson)
 
-  expect(placementErrors).toHaveLength(0)
+  expect(placementErrors.length).toBeGreaterThan(0)
+  expect(placementErrors.map((error) => error.type)).toContain(
+    "pcb_placement_error",
+  )
+  expect(placementErrors[0].message).toContain("overlaps with pcb_cutout")
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...placementErrors], {
       shouldDrawErrors: true,
