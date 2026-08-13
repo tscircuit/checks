@@ -15,6 +15,7 @@ import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
+import { checkPlatedHoleDrillClearance } from "./check-plated-hole-drill-clearance"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
@@ -32,6 +33,7 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPcbComponentOverCutout(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPadPadClearance(circuitJson),
+    ...checkPlatedHoleDrillClearance(circuitJson),
     ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
