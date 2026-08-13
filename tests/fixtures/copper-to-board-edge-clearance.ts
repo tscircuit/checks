@@ -65,6 +65,16 @@ export const copperInsideButBelowClearance: AnyCircuitElement[] = [
   },
 ]
 
+export const combinedViolatingGeometry: AnyCircuitElement[] = [
+  board({
+    outline: chamferedOutline,
+    min_board_edge_clearance: 0.5,
+  }),
+  viaOutsideChamferedCorner[1],
+  rotatedPlatedPillCrossingAngledEdge[1],
+  copperInsideButBelowClearance[1],
+]
+
 export const roundedRectNearChamfer: AnyCircuitElement[] = [
   board({ outline: chamferedOutline }),
   {

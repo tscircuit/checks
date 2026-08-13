@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import type { AnyCircuitElement, PcbPlatedHole, PcbSmtPad } from "circuit-json"
 import { checkCopperToBoardEdgeClearance } from "lib/check-copper-to-board-edge-clearance"
 import { checkViasOffBoard } from "lib/check-pcb-components-out-of-board/checkViasOffBoard"
 import { runAllPlacementChecks } from "lib/run-all-checks"
 import {
+  combinedViolatingGeometry,
   copperInsideButBelowClearance,
   equivalentPassingGeometry,
   roundedRectNearChamfer,
@@ -70,6 +72,22 @@ describe("copper-to-board-edge regression fixtures", () => {
             "copper_too_close_to_board_edge_pad_below_clearance",
       ),
     ).toBe(true)
+  })
+
+  test("renders before and after placement snapshots", () => {
+    expect(
+      checkCopperToBoardEdgeClearance(combinedViolatingGeometry),
+    ).toHaveLength(3)
+    expect(checkCopperToBoardEdgeClearance(equivalentPassingGeometry)).toEqual(
+      [],
+    )
+
+    expect(
+      convertCircuitJsonToPcbSvg(combinedViolatingGeometry),
+    ).toMatchSvgSnapshot(import.meta.path, "copper-edge-clearance-before")
+    expect(
+      convertCircuitJsonToPcbSvg(equivalentPassingGeometry),
+    ).toMatchSvgSnapshot(import.meta.path, "copper-edge-clearance-after")
   })
 })
 
