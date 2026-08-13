@@ -65,14 +65,40 @@ export const copperInsideButBelowClearance: AnyCircuitElement[] = [
   },
 ]
 
-export const combinedViolatingGeometry: AnyCircuitElement[] = [
-  board({
-    outline: chamferedOutline,
-    min_board_edge_clearance: 0.5,
-  }),
-  viaOutsideChamferedCorner[1],
-  rotatedPlatedPillCrossingAngledEdge[1],
-  copperInsideButBelowClearance[1],
+export const copperOutsideBoard: AnyCircuitElement[] = [
+  board(),
+  {
+    type: "pcb_via",
+    pcb_via_id: "via_outside_board",
+    x: -5.1,
+    y: -2.5,
+    outer_diameter: 0.8,
+    hole_diameter: 0.4,
+    layers: ["top", "bottom"],
+  },
+  {
+    type: "pcb_plated_hole",
+    pcb_plated_hole_id: "plated_hole_outside_board",
+    shape: "pill",
+    x: 0,
+    y: 5.1,
+    outer_width: 2,
+    outer_height: 1,
+    hole_width: 1.2,
+    hole_height: 0.5,
+    ccw_rotation: 30,
+    layers: ["top", "bottom"],
+  },
+  {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "smtpad_outside_board",
+    shape: "rect",
+    x: 5.1,
+    y: 2.5,
+    width: 1,
+    height: 1.5,
+    layer: "top",
+  },
 ]
 
 export const roundedRectNearChamfer: AnyCircuitElement[] = [

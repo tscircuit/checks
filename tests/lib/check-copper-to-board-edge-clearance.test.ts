@@ -5,7 +5,7 @@ import { checkCopperToBoardEdgeClearance } from "lib/check-copper-to-board-edge-
 import { checkViasOffBoard } from "lib/check-pcb-components-out-of-board/checkViasOffBoard"
 import { runAllPlacementChecks } from "lib/run-all-checks"
 import {
-  combinedViolatingGeometry,
+  copperOutsideBoard,
   copperInsideButBelowClearance,
   equivalentPassingGeometry,
   roundedRectNearChamfer,
@@ -74,20 +74,32 @@ describe("copper-to-board-edge regression fixtures", () => {
     ).toBe(true)
   })
 
-  test("renders before and after placement snapshots", () => {
-    expect(
-      checkCopperToBoardEdgeClearance(combinedViolatingGeometry),
-    ).toHaveLength(3)
-    expect(checkCopperToBoardEdgeClearance(equivalentPassingGeometry)).toEqual(
-      [],
+  test("renders outside copper and reports placement errors", () => {
+    const errors = checkCopperToBoardEdgeClearance(copperOutsideBoard)
+
+    expect(errors).toHaveLength(3)
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "pcb_placement_error",
+          message: expect.stringContaining("via_outside_board"),
+        }),
+        expect.objectContaining({
+          type: "pcb_placement_error",
+          message: expect.stringContaining("plated_hole_outside_board"),
+        }),
+        expect.objectContaining({
+          type: "pcb_placement_error",
+          message: expect.stringContaining("smtpad_outside_board"),
+        }),
+      ]),
     )
 
     expect(
-      convertCircuitJsonToPcbSvg(combinedViolatingGeometry),
-    ).toMatchSvgSnapshot(import.meta.path, "copper-edge-clearance-before")
-    expect(
-      convertCircuitJsonToPcbSvg(equivalentPassingGeometry),
-    ).toMatchSvgSnapshot(import.meta.path, "copper-edge-clearance-after")
+      convertCircuitJsonToPcbSvg([...copperOutsideBoard, ...errors], {
+        shouldDrawErrors: true,
+      }),
+    ).toMatchSvgSnapshot(import.meta.path, "copper-outside-board")
   })
 })
 
