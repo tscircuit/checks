@@ -11,6 +11,7 @@ import { checkPadPadClearance } from "./check-pad-pad-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
+import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
@@ -28,6 +29,7 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
     ...checkViasOffBoard(circuitJson),
     ...checkViasInPads(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
+    ...checkPcbComponentOverCutout(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPadPadClearance(circuitJson),
     ...checkCourtyardOverlap(circuitJson),

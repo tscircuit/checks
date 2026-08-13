@@ -3,6 +3,7 @@ export { checkEachPcbTraceNonOverlapping } from "./lib/check-each-pcb-trace-non-
 export { NetManager } from "./lib/net-manager"
 export { checkViasOffBoard } from "./lib/check-pcb-components-out-of-board/checkViasOffBoard"
 export { checkPcbComponentsOutOfBoard } from "./lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
+export { checkPcbComponentOverCutout } from "./lib/check-pcb-component-over-cutout"
 export { checkSameNetViaSpacing } from "./lib/check-same-net-via-spacing"
 export { checkDifferentNetViaSpacing } from "./lib/check-different-net-via-spacing"
 export { checkSourceTracesMatchPcbTraceThickness } from "./lib/check-source-traces-match-pcb-trace-thickness"
