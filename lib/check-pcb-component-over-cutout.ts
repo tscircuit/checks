@@ -1,14 +1,9 @@
-import {
-  getBoundsOfPcbElements,
-  getPrimaryId,
-} from "@tscircuit/circuit-json-util"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
   PcbComponent,
   PcbCutout,
-  PcbFootprintOverlapError,
-  PcbSmtPad,
+  PcbPlacementError,
 } from "circuit-json"
 import * as Flatten from "@flatten-js/core"
 import { applyToPoint, rotateDEG } from "transformation-matrix"
@@ -86,20 +81,6 @@ function cutoutToPolygon(cutout: PcbCutout): Flatten.Polygon | null {
   return null
 }
 
-function boundsToPolygon(bounds: {
-  minX: number
-  minY: number
-  maxX: number
-  maxY: number
-}) {
-  return new Flatten.Polygon([
-    new Flatten.Point(bounds.minX, bounds.minY),
-    new Flatten.Point(bounds.maxX, bounds.minY),
-    new Flatten.Point(bounds.maxX, bounds.maxY),
-    new Flatten.Point(bounds.minX, bounds.maxY),
-  ])
-}
-
 function polygonBoxToBounds(polygon: Flatten.Polygon) {
   return {
     minX: polygon.box.xmin,
@@ -134,24 +115,13 @@ function doPolygonsOverlap(
   }
 }
 
-function getPadsForComponent(
-  circuitJson: AnyCircuitElement[],
-  component: PcbComponent,
-) {
-  return circuitJson.filter(
-    (element): element is PcbSmtPad =>
-      element.type === "pcb_smtpad" &&
-      element.pcb_component_id === component.pcb_component_id,
-  )
-}
-
 /**
  * Cutouts remove PCB material on every layer, so a component body or SMT pad
  * overlapping a cutout is invalid on both top and bottom.
  */
 export function checkPcbComponentOverCutout(
   circuitJson: AnyCircuitElement[],
-): PcbFootprintOverlapError[] {
+): PcbPlacementError[] {
   const cutouts = circuitJson.filter(
     (element): element is PcbCutout => element.type === "pcb_cutout",
   )
@@ -166,7 +136,7 @@ export function checkPcbComponentOverCutout(
       (entry): entry is { cutout: PcbCutout; polygon: Flatten.Polygon } =>
         entry.polygon !== null && entry.polygon.area() > 0,
     )
-  const errors: PcbFootprintOverlapError[] = []
+  const errors: PcbPlacementError[] = []
 
   for (const component of components) {
     if (!component.center || component.width <= 0 || component.height <= 0) {
@@ -178,19 +148,8 @@ export function checkPcbComponentOverCutout(
       width: component.width,
       height: component.height,
     })
-    const componentPads = getPadsForComponent(circuitJson, component)
-
     for (const { cutout, polygon: cutoutPolygon } of cutoutPolygons) {
       if (!doPolygonsOverlap(componentPolygon, cutoutPolygon)) continue
-
-      const overlappingPadIds = componentPads
-        .filter((pad) =>
-          doPolygonsOverlap(
-            boundsToPolygon(getBoundsOfPcbElements([pad])),
-            cutoutPolygon,
-          ),
-        )
-        .map((pad) => getPrimaryId(pad))
 
       const componentName = getReadableNameForComponent(
         circuitJson,
@@ -199,15 +158,12 @@ export function checkPcbComponentOverCutout(
       const cutoutId = cutout.pcb_cutout_id
 
       errors.push({
-        type: "pcb_footprint_overlap_error",
-        pcb_error_id: `pcb_footprint_overlap_${component.pcb_component_id}_${cutoutId}`,
-        error_type: "pcb_footprint_overlap_error",
+        type: "pcb_placement_error",
+        pcb_placement_error_id: `component_over_cutout_${component.pcb_component_id}_${cutoutId}`,
+        error_type: "pcb_placement_error",
         message: `Component ${componentName} overlaps with pcb_cutout [${cutoutId}]`,
-        ...(overlappingPadIds.length > 0
-          ? { pcb_smtpad_ids: overlappingPadIds }
-          : {}),
-        pcb_cutout_ids: [cutoutId],
-      } as PcbFootprintOverlapError)
+        subcircuit_id: component.subcircuit_id,
+      })
     }
   }
 

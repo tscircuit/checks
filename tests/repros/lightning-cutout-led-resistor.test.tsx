@@ -41,7 +41,7 @@ test("lightning cutout with a resistor directly on the cutout", async () => {
 
   expect(placementErrors.length).toBeGreaterThan(0)
   expect(placementErrors.map((error) => error.type)).toContain(
-    "pcb_footprint_overlap_error",
+    "pcb_placement_error",
   )
   expect(placementErrors[0].message).toContain("overlaps with pcb_cutout")
   expect(
