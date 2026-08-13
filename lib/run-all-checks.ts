@@ -1,6 +1,7 @@
 import type { AnyCircuitElement } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
+import { checkCopperPourOverlap } from "./check-copper-pour-overlap/checkCopperPourOverlap"
 import { checkCourtyardOverlap } from "./check-courtyard-overlap/checkCourtyardOverlap"
 import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
 import { checkEachPcbPortConnectedToPcbTraces } from "./check-each-pcb-port-connected-to-pcb-trace"
@@ -63,6 +64,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkViaPadClearance(circuitJson),
     ...checkSameNetViaSpacing(circuitJson),
     ...checkDifferentNetViaSpacing(circuitJson),
+    ...checkCopperPourOverlap(circuitJson),
     ...checkTracesAreContiguous(circuitJson),
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
