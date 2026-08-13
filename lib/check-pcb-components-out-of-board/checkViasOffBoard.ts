@@ -1,52 +1,36 @@
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, PcbPlacementError, PcbVia } from "circuit-json"
-import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
-import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
+import type { AnyCircuitElement, PcbPlacementError } from "circuit-json"
+import { checkCopperToBoardEdgeClearance } from "lib/check-copper-to-board-edge-clearance"
 
 export function checkViasOffBoard(
   circuitJson: AnyCircuitElement[],
 ): PcbPlacementError[] {
-  const board = getPcbBoard(circuitJson)
-  if (!board) return []
+  const vias = circuitJson.filter((element) => element.type === "pcb_via")
+  const violationsById = new Map(
+    checkCopperToBoardEdgeClearance(
+      circuitJson.filter(
+        (element) => element.type === "pcb_board" || element.type === "pcb_via",
+      ),
+    ).map((error) => [
+      error.pcb_placement_error_id.replace(
+        "copper_too_close_to_board_edge_",
+        "",
+      ),
+      error,
+    ]),
+  )
 
-  const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
+  return vias.flatMap((via) => {
+    const violation = violationsById.get(via.pcb_via_id)
+    if (!violation) return []
 
-  if (vias.length === 0) return []
-
-  if (board.width === undefined || board.height === undefined) return []
-  const boardEdgeClearance =
-    getBoardDrcValue(board, "min_board_edge_clearance") ??
-    jlcMinTolerances.min_board_edge_clearance
-
-  const boardMinX = board.center.x - board.width / 2
-  const boardMaxX = board.center.x + board.width / 2
-  const boardMinY = board.center.y - board.height / 2
-  const boardMaxY = board.center.y + board.height / 2
-
-  const errors: PcbPlacementError[] = []
-
-  for (const via of vias) {
-    const viaRadius = via.outer_diameter / 2
-    const viaMinX = via.x - viaRadius
-    const viaMaxX = via.x + viaRadius
-    const viaMinY = via.y - viaRadius
-    const viaMaxY = via.y + viaRadius
-
-    if (
-      viaMinX < boardMinX + boardEdgeClearance! ||
-      viaMaxX > boardMaxX - boardEdgeClearance! ||
-      viaMinY < boardMinY + boardEdgeClearance! ||
-      viaMaxY > boardMaxY - boardEdgeClearance!
-    ) {
-      const viaName = getReadableNameForElement(circuitJson, via.pcb_via_id)
-      errors.push({
-        type: "pcb_placement_error",
+    const viaName = getReadableNameForElement(circuitJson, via.pcb_via_id)
+    return [
+      {
+        ...violation,
         pcb_placement_error_id: `out_of_board_${via.pcb_via_id}`,
         message: `Via ${viaName} is outside or crossing the board boundary`,
-        error_type: "pcb_placement_error",
-      })
-    }
-  }
-
-  return errors
+      },
+    ]
+  })
 }
