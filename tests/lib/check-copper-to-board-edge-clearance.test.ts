@@ -1,12 +1,14 @@
 import { describe, expect, test } from "bun:test"
-import type { AnyCircuitElement, PcbSmtPad } from "circuit-json"
+import type { AnyCircuitElement, PcbPlatedHole, PcbSmtPad } from "circuit-json"
 import { checkCopperToBoardEdgeClearance } from "lib/check-copper-to-board-edge-clearance"
 import { checkViasOffBoard } from "lib/check-pcb-components-out-of-board/checkViasOffBoard"
 import { runAllPlacementChecks } from "lib/run-all-checks"
 import {
   copperInsideButBelowClearance,
   equivalentPassingGeometry,
+  roundedRectNearChamfer,
   rotatedPlatedPillCrossingAngledEdge,
+  sharpRectNearChamfer,
   viaOutsideChamferedCorner,
 } from "tests/fixtures/copper-to-board-edge-clearance"
 
@@ -46,6 +48,15 @@ describe("copper-to-board-edge regression fixtures", () => {
     expect(checkCopperToBoardEdgeClearance(equivalentPassingGeometry)).toEqual(
       [],
     )
+  })
+
+  test("uses rounded rather than sharp copper corners near a chamfer", () => {
+    expect(checkCopperToBoardEdgeClearance(roundedRectNearChamfer)).toEqual([])
+
+    const sharpCornerErrors =
+      checkCopperToBoardEdgeClearance(sharpRectNearChamfer)
+    expect(sharpCornerErrors).toHaveLength(1)
+    expect(sharpCornerErrors[0].message).toContain("sharp_rect_near_chamfer")
   })
 
   test("is registered in runAllPlacementChecks", async () => {
@@ -168,6 +179,57 @@ test("supports rotated oval plated-hole copper geometry", () => {
 
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain("rotated_oval")
+})
+
+test("supports rotated rounded rectangles and rounded plated-hole pads", () => {
+  const rotatedRoundedPad: Extract<PcbSmtPad, { shape: "rotated_rect" }> = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "rotated_rounded_rect",
+    shape: "rotated_rect",
+    x: 3.7,
+    y: 0,
+    width: 2,
+    height: 2,
+    corner_radius: 1,
+    ccw_rotation: 30,
+    layer: "top",
+  }
+  const roundedPlatedHole: Extract<
+    PcbPlatedHole,
+    { shape: "circular_hole_with_rect_pad" }
+  > = {
+    type: "pcb_plated_hole",
+    pcb_plated_hole_id: "rounded_plated_rect",
+    shape: "circular_hole_with_rect_pad",
+    hole_shape: "circle",
+    pad_shape: "rect",
+    x: -3.7,
+    y: 0,
+    hole_diameter: 0.5,
+    hole_offset_x: 0,
+    hole_offset_y: 0,
+    rect_pad_width: 2,
+    rect_pad_height: 2,
+    rect_border_radius: 1,
+    rect_ccw_rotation: 30,
+    layers: ["top", "bottom"],
+  }
+
+  expect(
+    checkCopperToBoardEdgeClearance([
+      rectangularBoard,
+      rotatedRoundedPad,
+      roundedPlatedHole,
+    ]),
+  ).toEqual([])
+
+  expect(
+    checkCopperToBoardEdgeClearance([
+      rectangularBoard,
+      { ...rotatedRoundedPad, corner_radius: 0 },
+      { ...roundedPlatedHole, rect_border_radius: 0 },
+    ]),
+  ).toHaveLength(2)
 })
 
 test("applies component rotation to a plated-hole polygon pad", () => {

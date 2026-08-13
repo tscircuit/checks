@@ -65,6 +65,35 @@ export const copperInsideButBelowClearance: AnyCircuitElement[] = [
   },
 ]
 
+export const roundedRectNearChamfer: AnyCircuitElement[] = [
+  board({ outline: chamferedOutline }),
+  {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "rounded_rect_near_chamfer",
+    shape: "rect",
+    x: 3.1,
+    y: 3.1,
+    width: 2,
+    height: 2,
+    rect_border_radius: 1,
+    layer: "top",
+  },
+]
+
+export const sharpRectNearChamfer: AnyCircuitElement[] = [
+  board({ outline: chamferedOutline }),
+  {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "sharp_rect_near_chamfer",
+    shape: "rect",
+    x: 3.1,
+    y: 3.1,
+    width: 2,
+    height: 2,
+    layer: "top",
+  },
+]
+
 export const equivalentPassingGeometry: AnyCircuitElement[] = [
   board({
     outline: chamferedOutline,

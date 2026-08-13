@@ -10,12 +10,18 @@ import type {
   PcbVia,
 } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
-import { getRotatedRectPoints } from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
+import { applyToPoint, rotateDEG } from "transformation-matrix"
 
 type CopperElement = PcbVia | PcbSmtPad | PcbPlatedHole
+declare const pcbComponentIdBrand: unique symbol
+type PcbComponentId = string & {
+  readonly [pcbComponentIdBrand]: "PcbComponentId"
+}
+const toPcbComponentId = (id: string): PcbComponentId => id as PcbComponentId
+type CopperShape = Flatten.Circle | Flatten.Polygon
 
 type CopperGeometry =
-  | { kind: "shape"; shape: Flatten.Circle | Flatten.Polygon }
+  | { kind: "shapes"; shapes: CopperShape[] }
   | { kind: "pill"; centerLine: Flatten.Segment; radius: number }
 
 const GEOMETRY_EPSILON = 1e-9
@@ -50,29 +56,110 @@ const boardToPolygon = (board: PcbBoard): Flatten.Polygon | null => {
   ])
 }
 
-const rotatedRect = ({
+const getRectanglePolygon = ({
   x,
   y,
   width,
   height,
-  rotation = 0,
+  ccwRotationDegrees = 0,
 }: {
   x: number
   y: number
   width: number
   height: number
-  rotation?: number
+  ccwRotationDegrees?: number
+}): Flatten.Polygon | null => {
+  const halfWidth = width / 2
+  const halfHeight = height / 2
+  const rotationMatrix = rotateDEG(ccwRotationDegrees, x, y)
+  return pointsToPolygon(
+    [
+      { x: x - halfWidth, y: y - halfHeight },
+      { x: x + halfWidth, y: y - halfHeight },
+      { x: x + halfWidth, y: y + halfHeight },
+      { x: x - halfWidth, y: y + halfHeight },
+    ].map((point) => applyToPoint(rotationMatrix, point)),
+  )
+}
+
+/** Model a rounded rectangle exactly as the union of two bands and its corners. */
+const roundedRect = ({
+  x,
+  y,
+  width,
+  height,
+  cornerRadius,
+  ccwRotationDegrees = 0,
+}: {
+  x: number
+  y: number
+  width: number
+  height: number
+  cornerRadius: number
+  ccwRotationDegrees?: number
 }): CopperGeometry | null => {
-  const polygon = pointsToPolygon(
-    getRotatedRectPoints({
+  const radius = Math.max(0, Math.min(cornerRadius, width / 2, height / 2))
+  if (radius <= GEOMETRY_EPSILON) {
+    const polygon = getRectanglePolygon({
       x,
       y,
       width,
       height,
-      ccwRotation: rotation,
-    }),
+      ccwRotationDegrees,
+    })
+    return polygon ? { kind: "shapes", shapes: [polygon] } : null
+  }
+
+  const shapes: CopperShape[] = []
+  const innerWidth = width - 2 * radius
+  const innerHeight = height - 2 * radius
+  if (innerWidth > GEOMETRY_EPSILON) {
+    const verticalBand = getRectanglePolygon({
+      x,
+      y,
+      width: innerWidth,
+      height,
+      ccwRotationDegrees,
+    })
+    if (verticalBand) shapes.push(verticalBand)
+  }
+  if (innerHeight > GEOMETRY_EPSILON) {
+    const horizontalBand = getRectanglePolygon({
+      x,
+      y,
+      width,
+      height: innerHeight,
+      ccwRotationDegrees,
+    })
+    if (horizontalBand) shapes.push(horizontalBand)
+  }
+
+  const halfInnerWidth = innerWidth / 2
+  const halfInnerHeight = innerHeight / 2
+  const rotationMatrix = rotateDEG(ccwRotationDegrees, x, y)
+  const cornerCenters = [
+    { x: x - halfInnerWidth, y: y - halfInnerHeight },
+    { x: x + halfInnerWidth, y: y - halfInnerHeight },
+    { x: x + halfInnerWidth, y: y + halfInnerHeight },
+    { x: x - halfInnerWidth, y: y + halfInnerHeight },
+  ]
+    .map((point) => applyToPoint(rotationMatrix, point))
+    .filter(
+      (point, index, points) =>
+        points.findIndex(
+          (candidate) =>
+            Math.abs(candidate.x - point.x) <= GEOMETRY_EPSILON &&
+            Math.abs(candidate.y - point.y) <= GEOMETRY_EPSILON,
+        ) === index,
+    )
+  shapes.push(
+    ...cornerCenters.map(
+      (center) =>
+        new Flatten.Circle(new Flatten.Point(center.x, center.y), radius),
+    ),
   )
-  return polygon ? { kind: "shape", shape: polygon } : null
+
+  return shapes.length > 0 ? { kind: "shapes", shapes } : null
 }
 
 const pill = ({
@@ -81,28 +168,24 @@ const pill = ({
   width,
   height,
   radius,
-  rotation = 0,
+  ccwRotationDegrees = 0,
 }: {
   x: number
   y: number
   width: number
   height: number
   radius: number
-  rotation?: number
+  ccwRotationDegrees?: number
 }): CopperGeometry => {
   const halfLineLength = Math.max(Math.max(width, height) / 2 - radius, 0)
   const localAxis =
     width >= height ? { x: halfLineLength, y: 0 } : { x: 0, y: halfLineLength }
-  const angle = (rotation * Math.PI) / 180
-  const axis = {
-    x: localAxis.x * Math.cos(angle) - localAxis.y * Math.sin(angle),
-    y: localAxis.x * Math.sin(angle) + localAxis.y * Math.cos(angle),
-  }
+  const axis = applyToPoint(rotateDEG(ccwRotationDegrees), localAxis)
 
   if (halfLineLength <= GEOMETRY_EPSILON) {
     return {
-      kind: "shape",
-      shape: new Flatten.Circle(new Flatten.Point(x, y), radius),
+      kind: "shapes",
+      shapes: [new Flatten.Circle(new Flatten.Point(x, y), radius)],
     }
   }
 
@@ -120,23 +203,27 @@ const getSmtPadGeometry = (pad: PcbSmtPad): CopperGeometry | null => {
   switch (pad.shape) {
     case "circle":
       return {
-        kind: "shape",
-        shape: new Flatten.Circle(new Flatten.Point(pad.x, pad.y), pad.radius),
+        kind: "shapes",
+        shapes: [
+          new Flatten.Circle(new Flatten.Point(pad.x, pad.y), pad.radius),
+        ],
       }
     case "rect":
-      return rotatedRect({
+      return roundedRect({
         x: pad.x,
         y: pad.y,
         width: pad.width,
         height: pad.height,
+        cornerRadius: pad.rect_border_radius ?? pad.corner_radius ?? 0,
       })
     case "rotated_rect":
-      return rotatedRect({
+      return roundedRect({
         x: pad.x,
         y: pad.y,
         width: pad.width,
         height: pad.height,
-        rotation: pad.ccw_rotation,
+        cornerRadius: pad.rect_border_radius ?? pad.corner_radius ?? 0,
+        ccwRotationDegrees: pad.ccw_rotation,
       })
     case "pill":
       return pill({
@@ -153,27 +240,29 @@ const getSmtPadGeometry = (pad: PcbSmtPad): CopperGeometry | null => {
         width: pad.width,
         height: pad.height,
         radius: pad.radius,
-        rotation: pad.ccw_rotation,
+        ccwRotationDegrees: pad.ccw_rotation,
       })
     case "polygon": {
       const polygon = pointsToPolygon(pad.points)
-      return polygon ? { kind: "shape", shape: polygon } : null
+      return polygon ? { kind: "shapes", shapes: [polygon] } : null
     }
   }
 }
 
 const getPlatedHoleGeometry = (
   platedHole: PcbPlatedHole,
-  componentRotation: number,
+  componentCcwRotationDegrees: number,
 ): CopperGeometry | null => {
   switch (platedHole.shape) {
     case "circle":
       return {
-        kind: "shape",
-        shape: new Flatten.Circle(
-          new Flatten.Point(platedHole.x, platedHole.y),
-          platedHole.outer_diameter / 2,
-        ),
+        kind: "shapes",
+        shapes: [
+          new Flatten.Circle(
+            new Flatten.Point(platedHole.x, platedHole.y),
+            platedHole.outer_diameter / 2,
+          ),
+        ],
       }
     case "oval":
     case "pill":
@@ -186,59 +275,62 @@ const getPlatedHoleGeometry = (
           platedHole.outer_width / 2,
           platedHole.outer_height / 2,
         ),
-        rotation: platedHole.ccw_rotation,
+        ccwRotationDegrees: platedHole.ccw_rotation,
       })
     case "circular_hole_with_rect_pad":
     case "pill_hole_with_rect_pad":
     case "rotated_pill_hole_with_rect_pad":
-      return rotatedRect({
+      return roundedRect({
         x: platedHole.x,
         y: platedHole.y,
         width: platedHole.rect_pad_width,
         height: platedHole.rect_pad_height,
-        rotation:
+        cornerRadius: platedHole.rect_border_radius ?? 0,
+        ccwRotationDegrees:
           "rect_ccw_rotation" in platedHole
             ? (platedHole.rect_ccw_rotation ?? 0)
             : 0,
       })
     case "hole_with_polygon_pad": {
-      const angle =
-        ((platedHole.ccw_rotation ?? componentRotation) * Math.PI) / 180
+      const ccwRotationDegrees =
+        platedHole.ccw_rotation ?? componentCcwRotationDegrees
+      const rotationMatrix = rotateDEG(ccwRotationDegrees)
       const polygon = pointsToPolygon(
-        platedHole.pad_outline.map((point) => ({
-          x:
-            platedHole.x +
-            point.x * Math.cos(angle) -
-            point.y * Math.sin(angle),
-          y:
-            platedHole.y +
-            point.x * Math.sin(angle) +
-            point.y * Math.cos(angle),
-        })),
+        platedHole.pad_outline.map((point) => {
+          const rotatedPoint = applyToPoint(rotationMatrix, point)
+          return {
+            x: platedHole.x + rotatedPoint.x,
+            y: platedHole.y + rotatedPoint.y,
+          }
+        }),
       )
-      return polygon ? { kind: "shape", shape: polygon } : null
+      return polygon ? { kind: "shapes", shapes: [polygon] } : null
     }
   }
 }
 
 const getCopperGeometry = (
   element: CopperElement,
-  componentRotations: Map<string, number>,
+  componentCcwRotationsById: Map<PcbComponentId, number>,
 ): CopperGeometry | null => {
   if (element.type === "pcb_via") {
     return {
-      kind: "shape",
-      shape: new Flatten.Circle(
-        new Flatten.Point(element.x, element.y),
-        element.outer_diameter / 2,
-      ),
+      kind: "shapes",
+      shapes: [
+        new Flatten.Circle(
+          new Flatten.Point(element.x, element.y),
+          element.outer_diameter / 2,
+        ),
+      ],
     }
   }
   if (element.type === "pcb_smtpad") return getSmtPadGeometry(element)
   return getPlatedHoleGeometry(
     element,
     element.pcb_component_id
-      ? (componentRotations.get(element.pcb_component_id) ?? 0)
+      ? (componentCcwRotationsById.get(
+          toPcbComponentId(element.pcb_component_id),
+        ) ?? 0)
       : 0,
   )
 }
@@ -259,11 +351,15 @@ const measureClearance = (
   board: Flatten.Polygon,
   geometry: CopperGeometry,
 ): { isInside: boolean; clearance: number } => {
-  if (geometry.kind === "shape") {
-    const isInside = board.contains(geometry.shape)
+  if (geometry.kind === "shapes") {
+    const isInside = geometry.shapes.every((shape) => board.contains(shape))
     return {
       isInside,
-      clearance: isInside ? board.distanceTo(geometry.shape)[0] : 0,
+      clearance: isInside
+        ? Math.min(
+            ...geometry.shapes.map((shape) => board.distanceTo(shape)[0]),
+          )
+        : 0,
     }
   }
 
@@ -306,17 +402,20 @@ export function checkCopperToBoardEdgeClearance(
       element.type === "pcb_smtpad" ||
       element.type === "pcb_plated_hole",
   )
-  const componentRotations = new Map(
+  const componentCcwRotationsById = new Map<PcbComponentId, number>(
     circuitJson
       .filter(
         (element): element is PcbComponent => element.type === "pcb_component",
       )
-      .map((component) => [component.pcb_component_id, component.rotation]),
+      .map((component) => [
+        toPcbComponentId(component.pcb_component_id),
+        component.rotation,
+      ]),
   )
 
   const errors: PcbPlacementError[] = []
   for (const element of copperElements) {
-    const geometry = getCopperGeometry(element, componentRotations)
+    const geometry = getCopperGeometry(element, componentCcwRotationsById)
     if (!geometry) continue
 
     const { isInside, clearance } = measureClearance(boardPolygon, geometry)
