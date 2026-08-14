@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToSchematicSvg } from "circuit-to-svg"
-import { checkSchematicComponentExcessiveTopPadding } from "lib/check-schematic-component-excessive-top-padding"
+import { checkSchematicComponentExcessiveVerticalPadding } from "lib/check-schematic-component-excessive-vertical-padding"
 import { runAllSchematicChecks } from "lib/run-all-checks"
 
 const createBoxWithPins = ({
@@ -48,40 +48,66 @@ const createBoxWithPins = ({
   }),
 ]
 
-describe("checkSchematicComponentExcessiveTopPadding", () => {
-  test("warns when a tall box has a large blank area above its side pins", () => {
+describe("checkSchematicComponentExcessiveVerticalPadding", () => {
+  test("warns for both edges when pins are centered in a tall box", () => {
     const circuitJson = createBoxWithPins({
       height: 5,
       pinYs: [0.1, 0.1, -0.1, -0.1],
     })
-    const warnings = checkSchematicComponentExcessiveTopPadding(circuitJson)
+    const warnings =
+      checkSchematicComponentExcessiveVerticalPadding(circuitJson)
 
-    expect(warnings).toHaveLength(1)
-    expect(warnings[0]).toMatchObject({
-      type: "schematic_component_styling_warning",
-      warning_type: "schematic_component_styling_warning",
-      styling_issue_type: "excessive_top_padding",
-      schematic_component_id: "schematic_component_1",
-      source_component_id: "source_component_1",
-      schematic_port_ids: [
-        "schematic_port_1",
-        "schematic_port_2",
-        "schematic_port_3",
-        "schematic_port_4",
-      ],
-    })
-    expect(warnings[0].message).toContain("J1 has excessive empty space")
+    expect(warnings).toHaveLength(2)
+    expect(warnings.map((warning) => warning.styling_issue_type)).toEqual([
+      "excessive_top_padding",
+      "excessive_bottom_padding",
+    ])
+    for (const warning of warnings) {
+      expect(warning).toMatchObject({
+        type: "schematic_component_styling_warning",
+        warning_type: "schematic_component_styling_warning",
+        schematic_component_id: "schematic_component_1",
+        source_component_id: "source_component_1",
+        schematic_port_ids: [
+          "schematic_port_1",
+          "schematic_port_2",
+          "schematic_port_3",
+          "schematic_port_4",
+        ],
+      })
+      expect(warning.message).toContain("J1 has excessive empty space")
+    }
     expect(
       convertCircuitJsonToSchematicSvg([...circuitJson, ...warnings], {
         width: 600,
         height: 500,
         grid: true,
       }),
-    ).toMatchSvgSnapshot(import.meta.path, "excessive-top-padding")
+    ).toMatchSvgSnapshot(import.meta.path, "excessive-vertical-padding")
   })
 
-  test("does not warn when the highest pin is within three pin spacings", () => {
-    const warnings = checkSchematicComponentExcessiveTopPadding(
+  test("warns only for excessive top padding", () => {
+    const warnings = checkSchematicComponentExcessiveVerticalPadding(
+      createBoxWithPins({ height: 2, pinYs: [-0.6, -0.6, -0.8, -0.8] }),
+    )
+
+    expect(warnings.map((warning) => warning.styling_issue_type)).toEqual([
+      "excessive_top_padding",
+    ])
+  })
+
+  test("warns only for excessive bottom padding", () => {
+    const warnings = checkSchematicComponentExcessiveVerticalPadding(
+      createBoxWithPins({ height: 2, pinYs: [0.8, 0.8, 0.6, 0.6] }),
+    )
+
+    expect(warnings.map((warning) => warning.styling_issue_type)).toEqual([
+      "excessive_bottom_padding",
+    ])
+  })
+
+  test("does not warn when both edges are within three pin spacings", () => {
+    const warnings = checkSchematicComponentExcessiveVerticalPadding(
       createBoxWithPins({ height: 1.8, pinYs: [0.7, 0.5, -0.5, -0.7] }),
     )
 
@@ -89,7 +115,7 @@ describe("checkSchematicComponentExcessiveTopPadding", () => {
   })
 
   test("ignores pins entering from the top or bottom", () => {
-    const warnings = checkSchematicComponentExcessiveTopPadding(
+    const warnings = checkSchematicComponentExcessiveVerticalPadding(
       createBoxWithPins({
         height: 5,
         pinYs: [2.5, -2.5],
@@ -101,7 +127,7 @@ describe("checkSchematicComponentExcessiveTopPadding", () => {
   })
 
   test("ignores custom symbol components", () => {
-    const warnings = checkSchematicComponentExcessiveTopPadding(
+    const warnings = checkSchematicComponentExcessiveVerticalPadding(
       createBoxWithPins({
         height: 5,
         pinYs: [0.1, -0.1],
@@ -117,6 +143,6 @@ describe("checkSchematicComponentExcessiveTopPadding", () => {
       createBoxWithPins({ height: 5, pinYs: [0.1, -0.1] }),
     )
 
-    expect(warnings).toHaveLength(1)
+    expect(warnings).toHaveLength(2)
   })
 })

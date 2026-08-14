@@ -14,7 +14,7 @@ and output an array of arrays for any issues found.
 | [`checkAllPinsInComponentAreUnderspecified`](./lib/check-all-pins-in-component-are-underspecified.ts) | Returns `source_component_pins_underspecified_warning` when every pin on a chip lacks pin attributes. |
 | [`checkNoPowerPinDefined`](./lib/check-no-power-pin-defined.ts) | Returns `source_no_power_pin_defined_warning` when a chip has no pin with `requires_power=true`. |
 | [`checkNoGroundPinDefined`](./lib/check-no-ground-pin-defined.ts) | Returns `source_no_ground_pin_defined_warning` when a chip has no pin with `requires_ground=true`. |
-| [`checkSchematicComponentExcessiveTopPadding`](./lib/check-schematic-component-excessive-top-padding.ts) | Returns a `schematic_component_styling_warning` with `styling_issue_type: "excessive_top_padding"` when a box-style component has more than three pin spacings of empty space above its left/right pins. |
+| [`checkSchematicComponentExcessiveVerticalPadding`](./lib/check-schematic-component-excessive-vertical-padding.ts) | Returns a `schematic_component_styling_warning` with `styling_issue_type: "excessive_top_padding"` or `"excessive_bottom_padding"` when a box-style component has more than three pin spacings of empty space above or below its left/right pins. |
 | [`checkDifferentNetViaSpacing`](./lib/check-different-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on different nets are too close together. |
 | [`checkEachPcbPortConnectedToPcbTraces`](./lib/check-each-pcb-port-connected-to-pcb-trace.ts) | Returns `pcb_trace_error` if any `source_port` is not connected to its corresponding PCB traces. |
 | [`checkEachPcbTraceNonOverlapping`](./lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping.ts) | Returns `pcb_trace_error` when `pcb_trace` segments physically overlap incompatible geometry on the same layer. Pad/via near-misses are reported by the typed clearance checks instead. |
@@ -37,7 +37,7 @@ and output an array of arrays for any issues found.
 | [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs placement checks (`checkCopperToBoardEdgeClearance`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverlap`, `checkPadPadClearance`, `checkCourtyardOverlap`, `checkConnectorAccessibleOrientation`, and `checkTestPointAccessibility`). |
 | [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs netlist connectivity checks (currently `checkPinMustBeConnected`). |
 | [`runAllPinSpecificationChecks`](./lib/run-all-checks.ts) | Runs pin specification checks (e.g. `checkAllPinsInComponentAreUnderspecified`, `checkNoPowerPinDefined`, and `checkNoGroundPinDefined`). |
-| [`runAllSchematicChecks`](./lib/run-all-checks.ts) | Runs schematic-layout checks (currently `checkSchematicComponentExcessiveTopPadding`). |
+| [`runAllSchematicChecks`](./lib/run-all-checks.ts) | Runs schematic-layout checks (currently `checkSchematicComponentExcessiveVerticalPadding`). |
 | [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs placement, schematic, netlist, pin specification, and routing checks and returns a combined list of issues. |
 

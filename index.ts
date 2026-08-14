@@ -23,7 +23,7 @@ export { checkPinMustBeConnected } from "./lib/check-pin-must-be-connected"
 export { checkAllPinsInComponentAreUnderspecified } from "./lib/check-all-pins-in-component-are-underspecified"
 export { checkNoPowerPinDefined } from "./lib/check-no-power-pin-defined"
 export { checkNoGroundPinDefined } from "./lib/check-no-ground-pin-defined"
-export { checkSchematicComponentExcessiveTopPadding } from "./lib/check-schematic-component-excessive-top-padding"
+export { checkSchematicComponentExcessiveVerticalPadding } from "./lib/check-schematic-component-excessive-vertical-padding"
 export {
   runAllChecks,
   runAllNetlistChecks,
