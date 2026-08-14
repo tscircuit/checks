@@ -17,6 +17,7 @@ import {
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "lib/add-start-and-end-port-ids-if-missing"
+import { checkCopperPourTraceClearance } from "lib/check-copper-pour-trace-clearance"
 import {
   getTraceObstacleClearance,
   isTraceObstacleOverlap,
@@ -360,5 +361,11 @@ export function checkEachPcbTraceNonOverlapping(
       }
     }
   }
+  errors.push(
+    ...checkCopperPourTraceClearance(circuitJson, {
+      connectivityMap: connMap,
+      minClearance,
+    }),
+  )
   return errors
 }

@@ -27,14 +27,14 @@ type CopperGeometry =
 
 const GEOMETRY_EPSILON = 1e-9
 
-const pointsToPolygon = (
+export const pointsToPolygon = (
   points: Array<{ x: number; y: number }>,
 ): Flatten.Polygon | null => {
   if (points.length < 3) return null
   return new Flatten.Polygon(points.map(({ x, y }) => new Flatten.Point(x, y)))
 }
 
-const brepRingToPolygon = (
+export const brepRingToPolygon = (
   vertices: Array<{ x: number; y: number; bulge?: number }>,
 ): Flatten.Polygon | null => {
   const ring = vertices.filter((vertex, index) => {
@@ -122,7 +122,7 @@ const boardToPolygon = (board: PcbBoard): Flatten.Polygon | null => {
   ])
 }
 
-const getRectanglePolygon = ({
+export const getRectanglePolygon = ({
   x,
   y,
   width,
@@ -375,6 +375,43 @@ const getPlatedHoleGeometry = (
   }
 }
 
+export const getCopperPourPolygon = (
+  copperPour: PcbCopperPour,
+): Flatten.Polygon | null => {
+  if (copperPour.shape === "rect") {
+    return getRectanglePolygon({
+      x: copperPour.center.x,
+      y: copperPour.center.y,
+      width: copperPour.width,
+      height: copperPour.height,
+      ccwRotationDegrees: copperPour.rotation ?? 0,
+    })
+  }
+
+  if (copperPour.shape === "polygon") {
+    return pointsToPolygon(copperPour.points)
+  }
+
+  const polygon = brepRingToPolygon(copperPour.brep_shape.outer_ring.vertices)
+  if (!polygon) return null
+
+  const outerFace = [...polygon.faces][0]
+  if (!outerFace) return null
+
+  for (const innerRing of copperPour.brep_shape.inner_rings) {
+    const innerPolygon = brepRingToPolygon(innerRing.vertices)
+    const innerFace = innerPolygon ? [...innerPolygon.faces][0] : undefined
+    if (!innerFace) continue
+
+    if (innerFace.orientation() === outerFace.orientation()) {
+      innerFace.reverse()
+    }
+    polygon.addFace(innerFace.shapes)
+  }
+
+  return polygon.rearrange()
+}
+
 const getCopperGeometry = (
   element: CopperElement,
   componentCcwRotationsById: Map<PcbComponentId, number>,
@@ -402,25 +439,7 @@ const getCopperGeometry = (
     )
   }
 
-  let polygon: Flatten.Polygon | null
-  switch (element.shape) {
-    case "rect":
-      polygon = getRectanglePolygon({
-        x: element.center.x,
-        y: element.center.y,
-        width: element.width,
-        height: element.height,
-        ccwRotationDegrees: element.rotation ?? 0,
-      })
-      break
-    case "polygon":
-      polygon = pointsToPolygon(element.points)
-      break
-    case "brep":
-      // Holes remove copper, so only the outer ring can violate the board edge.
-      polygon = brepRingToPolygon(element.brep_shape.outer_ring.vertices)
-      break
-  }
+  const polygon = getCopperPourPolygon(element)
   return polygon ? { kind: "shapes", shapes: [polygon] } : null
 }
 
