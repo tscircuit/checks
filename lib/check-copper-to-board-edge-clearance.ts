@@ -4,6 +4,7 @@ import type {
   AnyCircuitElement,
   PcbBoard,
   PcbComponent,
+  PcbCopperPour,
   PcbPlacementError,
   PcbPlatedHole,
   PcbSmtPad,
@@ -12,7 +13,7 @@ import type {
 import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { applyToPoint, rotateDEG } from "transformation-matrix"
 
-type CopperElement = PcbVia | PcbSmtPad | PcbPlatedHole
+type CopperElement = PcbVia | PcbSmtPad | PcbPlatedHole | PcbCopperPour
 declare const pcbComponentIdBrand: unique symbol
 type PcbComponentId = string & {
   readonly [pcbComponentIdBrand]: "PcbComponentId"
@@ -31,6 +32,71 @@ const pointsToPolygon = (
 ): Flatten.Polygon | null => {
   if (points.length < 3) return null
   return new Flatten.Polygon(points.map(({ x, y }) => new Flatten.Point(x, y)))
+}
+
+const brepRingToPolygon = (
+  vertices: Array<{ x: number; y: number; bulge?: number }>,
+): Flatten.Polygon | null => {
+  const ring = vertices.filter((vertex, index) => {
+    const previous = vertices[index - 1]
+    return (
+      !previous ||
+      Math.abs(previous.x - vertex.x) > GEOMETRY_EPSILON ||
+      Math.abs(previous.y - vertex.y) > GEOMETRY_EPSILON
+    )
+  })
+  if (
+    ring.length > 1 &&
+    Math.abs(ring[0].x - ring.at(-1)!.x) <= GEOMETRY_EPSILON &&
+    Math.abs(ring[0].y - ring.at(-1)!.y) <= GEOMETRY_EPSILON
+  ) {
+    ring.pop()
+  }
+  if (ring.length < 3) return null
+
+  const edges: Array<Flatten.Segment | Flatten.Arc> = []
+  for (let index = 0; index < ring.length; index++) {
+    const start = ring[index]
+    const end = ring[(index + 1) % ring.length]
+    const startPoint = new Flatten.Point(start.x, start.y)
+    const endPoint = new Flatten.Point(end.x, end.y)
+    const bulge = start.bulge ?? 0
+    if (Math.abs(bulge) <= GEOMETRY_EPSILON) {
+      edges.push(new Flatten.Segment(startPoint, endPoint))
+      continue
+    }
+
+    const chordLength = startPoint.distanceTo(endPoint)[0]
+    if (chordLength <= GEOMETRY_EPSILON) continue
+    const midpoint = {
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
+    }
+    const leftNormal = {
+      x: -(end.y - start.y) / chordLength,
+      y: (end.x - start.x) / chordLength,
+    }
+    const centerOffset = (chordLength * (1 - bulge * bulge)) / (4 * bulge)
+    const center = new Flatten.Point(
+      midpoint.x + leftNormal.x * centerOffset,
+      midpoint.y + leftNormal.y * centerOffset,
+    )
+    const radius = (chordLength * (1 + bulge * bulge)) / (4 * Math.abs(bulge))
+    edges.push(
+      new Flatten.Arc(
+        center,
+        radius,
+        Math.atan2(start.y - center.y, start.x - center.x),
+        Math.atan2(end.y - center.y, end.x - center.x),
+        bulge > 0,
+      ),
+    )
+  }
+
+  if (edges.length < 3) return null
+  const polygon = new Flatten.Polygon()
+  polygon.addFace(edges)
+  return polygon
 }
 
 const boardToPolygon = (board: PcbBoard): Flatten.Polygon | null => {
@@ -325,26 +391,51 @@ const getCopperGeometry = (
     }
   }
   if (element.type === "pcb_smtpad") return getSmtPadGeometry(element)
-  return getPlatedHoleGeometry(
-    element,
-    element.pcb_component_id
-      ? (componentCcwRotationsById.get(
-          toPcbComponentId(element.pcb_component_id),
-        ) ?? 0)
-      : 0,
-  )
+  if (element.type === "pcb_plated_hole") {
+    return getPlatedHoleGeometry(
+      element,
+      element.pcb_component_id
+        ? (componentCcwRotationsById.get(
+            toPcbComponentId(element.pcb_component_id),
+          ) ?? 0)
+        : 0,
+    )
+  }
+
+  let polygon: Flatten.Polygon | null
+  switch (element.shape) {
+    case "rect":
+      polygon = getRectanglePolygon({
+        x: element.center.x,
+        y: element.center.y,
+        width: element.width,
+        height: element.height,
+        ccwRotationDegrees: element.rotation ?? 0,
+      })
+      break
+    case "polygon":
+      polygon = pointsToPolygon(element.points)
+      break
+    case "brep":
+      // Holes remove copper, so only the outer ring can violate the board edge.
+      polygon = brepRingToPolygon(element.brep_shape.outer_ring.vertices)
+      break
+  }
+  return polygon ? { kind: "shapes", shapes: [polygon] } : null
 }
 
 const getCopperElementId = (element: CopperElement): string => {
   if (element.type === "pcb_via") return element.pcb_via_id
   if (element.type === "pcb_smtpad") return element.pcb_smtpad_id
-  return element.pcb_plated_hole_id
+  if (element.type === "pcb_plated_hole") return element.pcb_plated_hole_id
+  return element.pcb_copper_pour_id
 }
 
 const getCopperElementLabel = (element: CopperElement): string => {
   if (element.type === "pcb_via") return "Via"
   if (element.type === "pcb_smtpad") return "SMT pad"
-  return "Plated hole"
+  if (element.type === "pcb_plated_hole") return "Plated hole"
+  return "Copper pour"
 }
 
 const measureClearance = (
@@ -374,8 +465,9 @@ const measureClearance = (
 }
 
 /**
- * Checks the finished copper geometry of every via, SMT pad, and plated hole
- * against the real board outline and its configured edge-clearance rule.
+ * Checks the finished copper geometry of every via, SMT pad, plated hole, and
+ * copper pour against the real board outline and its configured edge-clearance
+ * rule.
  *
  * Component and footprint rotations are normally composed into Circuit JSON's
  * absolute coordinates and `ccw_rotation` fields. Polygon-pad plated holes are
@@ -400,7 +492,8 @@ export function checkCopperToBoardEdgeClearance(
     (element): element is CopperElement =>
       element.type === "pcb_via" ||
       element.type === "pcb_smtpad" ||
-      element.type === "pcb_plated_hole",
+      element.type === "pcb_plated_hole" ||
+      element.type === "pcb_copper_pour",
   )
   const componentCcwRotationsById = new Map<PcbComponentId, number>(
     circuitJson
