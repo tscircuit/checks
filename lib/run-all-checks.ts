@@ -1,6 +1,7 @@
 import type { AnyCircuitElement } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
+import { checkCopperToBoardEdgeClearance } from "./check-copper-to-board-edge-clearance"
 import { checkCourtyardOverlap } from "./check-courtyard-overlap/checkCourtyardOverlap"
 import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
 import { checkEachPcbPortConnectedToPcbTraces } from "./check-each-pcb-port-connected-to-pcb-trace"
@@ -11,7 +12,6 @@ import { checkPadPadClearance } from "./check-pad-pad-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
 import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
-import { checkViasOffBoard } from "./check-pcb-components-out-of-board/checkViasOffBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
@@ -27,7 +27,7 @@ import { checkViasInPads } from "./check-vias-in-pads"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
   return [
-    ...checkViasOffBoard(circuitJson),
+    ...checkCopperToBoardEdgeClearance(circuitJson),
     ...checkViasInPads(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverCutout(circuitJson),
