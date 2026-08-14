@@ -10,18 +10,19 @@ import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
 import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkPadPadClearance } from "./check-pad-pad-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
-import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
+import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
+import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
+import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
-import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
-import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViaPadClearance } from "./check-via-pad-clearance"
+import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
@@ -40,6 +41,10 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
   return [...checkPinMustBeConnected(circuitJson)]
+}
+
+export async function runAllSchematicChecks(circuitJson: AnyCircuitElement[]) {
+  return checkSchematicComponentExcessiveVerticalPadding(circuitJson)
 }
 
 export async function runAllPinSpecificationChecks(
@@ -71,6 +76,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
 export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...(await runAllPlacementChecks(circuitJson)),
+    ...(await runAllSchematicChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
     ...(await runAllRoutingChecks(circuitJson)),
