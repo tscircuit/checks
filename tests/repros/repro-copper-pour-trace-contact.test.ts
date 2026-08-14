@@ -77,21 +77,21 @@ const circuitJson: AnyCircuitElement[] = [
     pcb_note_text_id: "actual_note",
     font: "tscircuit2024",
     font_size: 0.28,
-    text: "ACTUAL: no copper-pour contact error",
+    text: "FIXED: copper-pour contact error reported",
     anchor_position: { x: 0, y: -2.7 },
     anchor_alignment: "center",
     layer: "top",
-    color: "red",
+    color: "green",
   },
 ]
 
-test("different-net trace contact with a BREP copper pour is missed", () => {
+test("different-net trace contact with a BREP copper pour is reported", () => {
   const traceErrors = checkEachPcbTraceNonOverlapping(circuitJson)
   const copperPourContactErrors = traceErrors.filter((error) =>
     error.message.includes("ground_pour"),
   )
 
-  expect(copperPourContactErrors).toHaveLength(0)
+  expect(copperPourContactErrors).toHaveLength(1)
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...traceErrors], {
       shouldDrawErrors: true,
