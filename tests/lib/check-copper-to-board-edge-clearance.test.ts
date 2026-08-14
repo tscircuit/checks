@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import type { AnyCircuitElement, PcbPlatedHole, PcbSmtPad } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbCopperPour,
+  PcbPlatedHole,
+  PcbSmtPad,
+} from "circuit-json"
 import { checkCopperToBoardEdgeClearance } from "lib/check-copper-to-board-edge-clearance"
 import { checkViasOffBoard } from "lib/check-pcb-components-out-of-board/checkViasOffBoard"
 import { runAllPlacementChecks } from "lib/run-all-checks"
@@ -187,6 +192,120 @@ test.each(violatingSmtPads)("supports $shape SMT copper geometry", (pad) => {
 
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain(pad.pcb_smtpad_id)
+})
+
+const violatingCopperPours: PcbCopperPour[] = [
+  {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "rect_pour_outside_board",
+    shape: "rect",
+    center: { x: 4.5, y: 0 },
+    width: 1,
+    height: 2,
+    rotation: 45,
+    layer: "top",
+    covered_with_solder_mask: true,
+  },
+  {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "polygon_pour_outside_board",
+    shape: "polygon",
+    points: [
+      { x: 4, y: -1 },
+      { x: 5.2, y: 0 },
+      { x: 4, y: 1 },
+    ],
+    layer: "top",
+    covered_with_solder_mask: true,
+  },
+  {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "brep_pour_outside_board",
+    shape: "brep",
+    brep_shape: {
+      outer_ring: {
+        vertices: [
+          { x: -1, y: -5.2 },
+          { x: 1, y: -5.2 },
+          { x: 1, y: -4 },
+          { x: -1, y: -4 },
+        ],
+      },
+      inner_rings: [],
+    },
+    layer: "bottom",
+    covered_with_solder_mask: true,
+  },
+]
+
+test.each(violatingCopperPours)(
+  "detects $shape copper pours outside the board",
+  (pour) => {
+    const errors = checkCopperToBoardEdgeClearance([rectangularBoard, pour])
+
+    expect(errors).toHaveLength(1)
+    expect(errors[0].message).toContain(pour.pcb_copper_pour_id)
+    expect(errors[0].message).toContain("measured 0.000mm")
+  },
+)
+
+test("detects a curved BRep copper edge outside the board", () => {
+  const curvedPour: PcbCopperPour = {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "curved_brep_pour_outside_board",
+    shape: "brep",
+    brep_shape: {
+      outer_ring: {
+        vertices: [
+          // Both endpoints are inside, but this bulge bows past x=5.
+          { x: 4.5, y: -1, bulge: 0.75 },
+          { x: 4.5, y: 1 },
+          { x: 3.5, y: 1 },
+          { x: 3.5, y: -1 },
+        ],
+      },
+      inner_rings: [],
+    },
+    layer: "top",
+    covered_with_solder_mask: true,
+  }
+
+  const errors = checkCopperToBoardEdgeClearance([rectangularBoard, curvedPour])
+
+  expect(errors).toHaveLength(1)
+  expect(errors[0].message).toContain(curvedPour.pcb_copper_pour_id)
+  expect(errors[0].message).toContain("measured 0.000mm")
+})
+
+test("accepts copper pours at or above the required board-edge clearance", () => {
+  const pour: PcbCopperPour = {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "pour_at_required_clearance",
+    shape: "rect",
+    center: { x: 0, y: 0 },
+    width: 9.6,
+    height: 9.6,
+    rotation: 0,
+    layer: "top",
+    covered_with_solder_mask: true,
+  }
+
+  expect(checkCopperToBoardEdgeClearance([rectangularBoard, pour])).toEqual([])
+})
+
+test("reports copper pours through runAllPlacementChecks", async () => {
+  const errors = await runAllPlacementChecks([
+    rectangularBoard,
+    violatingCopperPours[0],
+  ])
+
+  expect(errors).toContainEqual(
+    expect.objectContaining({
+      type: "pcb_placement_error",
+      pcb_placement_error_id:
+        "copper_too_close_to_board_edge_rect_pour_outside_board",
+    }),
+  )
 })
 
 test("supports rotated oval plated-hole copper geometry", () => {
