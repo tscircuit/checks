@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { convertCircuitJsonToSchematicSvg } from "circuit-to-svg"
 import { checkSchematicComponentExcessiveTopPadding } from "lib/check-schematic-component-excessive-top-padding"
 import { runAllSchematicChecks } from "lib/run-all-checks"
 
 const createBoxWithPins = ({
   height,
   pinYs,
-  sides = ["left", "right"],
+  sides = [],
   isBoxWithPins = true,
 }: {
   height: number
@@ -29,29 +30,31 @@ const createBoxWithPins = ({
     pin_spacing: 0.2,
     is_box_with_pins: isBoxWithPins,
   },
-  ...pinYs.map(
-    (y, index): AnyCircuitElement => ({
+  ...pinYs.map((y, index): AnyCircuitElement => {
+    const side = sides[index] ?? (index % 2 === 0 ? "left" : "right")
+
+    return {
       type: "schematic_port",
       schematic_port_id: `schematic_port_${index + 1}`,
       schematic_component_id: "schematic_component_1",
       source_port_id: `source_port_${index + 1}`,
       center: { x: index % 2 === 0 ? -1.4 : 1.4, y },
-      side_of_component: sides[index] ?? "left",
+      side_of_component: side,
       facing_direction:
-        sides[index] === "top"
-          ? "up"
-          : sides[index] === "bottom"
-            ? "down"
-            : (sides[index] ?? "left"),
-    }),
-  ),
+        side === "top" ? "up" : side === "bottom" ? "down" : side,
+      pin_number: index + 1,
+      display_pin_label: `PIN${index + 1}`,
+    }
+  }),
 ]
 
 describe("checkSchematicComponentExcessiveTopPadding", () => {
   test("warns when a tall box has a large blank area above its side pins", () => {
-    const warnings = checkSchematicComponentExcessiveTopPadding(
-      createBoxWithPins({ height: 5, pinYs: [0.1, -0.1, 0.1, -0.1] }),
-    )
+    const circuitJson = createBoxWithPins({
+      height: 5,
+      pinYs: [0.1, 0.1, -0.1, -0.1],
+    })
+    const warnings = checkSchematicComponentExcessiveTopPadding(circuitJson)
 
     expect(warnings).toHaveLength(1)
     expect(warnings[0]).toMatchObject({
@@ -68,6 +71,13 @@ describe("checkSchematicComponentExcessiveTopPadding", () => {
       ],
     })
     expect(warnings[0].message).toContain("J1 has excessive empty space")
+    expect(
+      convertCircuitJsonToSchematicSvg([...circuitJson, ...warnings], {
+        width: 600,
+        height: 500,
+        grid: true,
+      }),
+    ).toMatchSvgSnapshot(import.meta.path, "excessive-top-padding")
   })
 
   test("does not warn when the highest pin is within three pin spacings", () => {
