@@ -1,13 +1,14 @@
 import { expect, test } from "bun:test"
+import type { AnyCircuitElement } from "circuit-json"
+import { containsCircuitJsonId } from "lib/util/get-readable-names"
 import {
   runAllChecks,
   runAllNetlistChecks,
   runAllPinSpecificationChecks,
   runAllPlacementChecks,
   runAllRoutingChecks,
+  runAllSchematicChecks,
 } from "../.." // index.ts when imported from root
-import type { AnyCircuitElement } from "circuit-json"
-import { containsCircuitJsonId } from "lib/util/get-readable-names"
 
 test("runAllChecks executes checks on tscircuit code", async () => {
   // Simple circuit JSON with a resistor component (no PCB traces, so should have no errors)
@@ -83,7 +84,7 @@ test("runAllNetlistChecks excludes routing-only pcb trace connectivity checks", 
   expect(netlistErrors).toEqual([])
   expect(routingErrors.length).toBeGreaterThan(0)
 })
-test("runAllChecks equals placement + netlist + pin specification + routing checks", async () => {
+test("runAllChecks equals every categorized check runner", async () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "pcb_board",
@@ -160,10 +161,12 @@ test("runAllChecks equals placement + netlist + pin specification + routing chec
   const placementErrors = await runAllPlacementChecks(circuitJson)
   const netlistErrors = await runAllNetlistChecks(circuitJson)
   const pinSpecificationErrors = await runAllPinSpecificationChecks(circuitJson)
+  const schematicWarnings = await runAllSchematicChecks(circuitJson)
   const routingErrors = await runAllRoutingChecks(circuitJson)
 
   expect(allChecksErrors).toEqual([
     ...placementErrors,
+    ...schematicWarnings,
     ...netlistErrors,
     ...pinSpecificationErrors,
     ...routingErrors,

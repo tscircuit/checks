@@ -22,12 +22,14 @@ export { checkPinMustBeConnected } from "./lib/check-pin-must-be-connected"
 export { checkAllPinsInComponentAreUnderspecified } from "./lib/check-all-pins-in-component-are-underspecified"
 export { checkNoPowerPinDefined } from "./lib/check-no-power-pin-defined"
 export { checkNoGroundPinDefined } from "./lib/check-no-ground-pin-defined"
+export { checkSchematicComponentExcessiveTopPadding } from "./lib/check-schematic-component-excessive-top-padding"
 export {
   runAllChecks,
   runAllNetlistChecks,
   runAllPinSpecificationChecks,
   runAllPlacementChecks,
   runAllRoutingChecks,
+  runAllSchematicChecks,
 } from "./lib/run-all-checks"
 
 export { checkConnectorAccessibleOrientation } from "./lib/check-connector-accessible-orientation"
