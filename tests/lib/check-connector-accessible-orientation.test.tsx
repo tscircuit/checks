@@ -179,15 +179,9 @@ test("connector facing either equally-near corner edge is accessible", async () 
   const circuitJson = circuit.getCircuitJson()
   const warnings = checkConnectorAccessibleOrientation(circuitJson)
 
-  // The connector is 5 mm from both the left and bottom board edges. Facing
-  // the bottom is therefore accessible, but the current checker arbitrarily
-  // recommends the left edge because it appears first in its sorted list.
-  expect(warnings).toHaveLength(1)
-  expect(warnings[0]).toMatchObject({
-    pcb_component_id: "pcb_component_0",
-    facing_direction: "y-",
-    recommended_facing_direction: "x-",
-  })
+  // The connector is 5 mm from both the left and bottom board edges, so either
+  // direction is accessible.
+  expect(warnings).toHaveLength(0)
 
   expect(
     addOrientationWarningLabels(
