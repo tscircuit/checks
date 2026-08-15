@@ -48,21 +48,31 @@ function getFacingDirection(component: PcbComponent): FacingDirection | null {
   return dy >= 0 ? "y+" : "y-"
 }
 
-function getRecommendedFacingDirection(
+const BOARD_EDGE_DISTANCE_EPSILON = 1e-6
+
+function getRecommendedFacingDirections(
   component: PcbComponent,
   bounds: { minX: number; maxX: number; minY: number; maxY: number },
-): FacingDirection | null {
-  if (!component.center) return null
+): FacingDirection[] {
+  if (!component.center) return []
 
-  const distances = [
+  const edgeDistances = [
     { direction: "x-" as const, distance: component.center.x - bounds.minX },
     { direction: "x+" as const, distance: bounds.maxX - component.center.x },
     { direction: "y-" as const, distance: component.center.y - bounds.minY },
     { direction: "y+" as const, distance: bounds.maxY - component.center.y },
   ]
 
-  distances.sort((a, b) => a.distance - b.distance)
-  return distances[0]?.direction ?? null
+  const nearestEdgeDistance = Math.min(
+    ...edgeDistances.map(({ distance }) => distance),
+  )
+
+  return edgeDistances
+    .filter(
+      ({ distance }) =>
+        Math.abs(distance - nearestEdgeDistance) <= BOARD_EDGE_DISTANCE_EPSILON,
+    )
+    .map(({ direction }) => direction)
 }
 
 export function checkConnectorAccessibleOrientation(
@@ -90,13 +100,16 @@ export function checkConnectorAccessibleOrientation(
 
   for (const component of components) {
     const facingDirection = getFacingDirection(component)
-    const recommendedFacingDirection = getRecommendedFacingDirection(
+    const recommendedFacingDirections = getRecommendedFacingDirections(
       component,
       bounds,
     )
 
-    if (!facingDirection || !recommendedFacingDirection) continue
-    if (facingDirection === recommendedFacingDirection) continue
+    if (!facingDirection) continue
+    if (recommendedFacingDirections.includes(facingDirection)) continue
+
+    const [recommendedFacingDirection] = recommendedFacingDirections
+    if (!recommendedFacingDirection) continue
 
     const componentName = getReadableNameForComponent(
       circuitJson,
