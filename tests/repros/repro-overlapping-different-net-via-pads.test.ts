@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement, PcbVia } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import { checkDifferentNetViaPadClearance } from "lib/check-different-net-via-pad-clearance"
 import { checkDifferentNetViaSpacing } from "lib/check-different-net-via-spacing"
 import { runAllRoutingChecks } from "lib/run-all-checks"
 
@@ -66,16 +65,15 @@ test("reproduces overlapping different-net via pads missed by routing checks", a
 
   expect(copperGap).toBeLessThan(0)
   expect(drillGap).toBeGreaterThan(0)
-  expect(checkDifferentNetViaSpacing(circuitJson)).toEqual([])
-  const viaPadErrors = checkDifferentNetViaPadClearance(circuitJson)
-  expect(viaPadErrors).toHaveLength(1)
-  expect(viaPadErrors[0]).toMatchObject({
+  const viaSpacingErrors = checkDifferentNetViaSpacing(circuitJson)
+  expect(viaSpacingErrors).toHaveLength(1)
+  expect(viaSpacingErrors[0]).toMatchObject({
     type: "pcb_pad_pad_clearance_error",
     pcb_pad_ids: ["pcb_via_boot", "pcb_via_psram"],
     actual_clearance: 0,
   })
   const routingErrors = await runAllRoutingChecks(circuitJson)
-  expect(routingErrors).toEqual(viaPadErrors)
+  expect(routingErrors).toEqual(viaSpacingErrors)
 
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...routingErrors], {
