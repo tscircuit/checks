@@ -7,6 +7,7 @@ export { checkPcbComponentsOutOfBoard } from "./lib/check-pcb-components-out-of-
 export { checkPcbComponentOverCutout } from "./lib/check-pcb-component-over-cutout"
 export { checkSameNetViaSpacing } from "./lib/check-same-net-via-spacing"
 export { checkDifferentNetViaSpacing } from "./lib/check-different-net-via-spacing"
+export { checkDifferentNetViaPadClearance } from "./lib/check-different-net-via-pad-clearance"
 export { checkSourceTracesMatchPcbTraceThickness } from "./lib/check-source-traces-match-pcb-trace-thickness"
 export { checkSourceTracesHavePcbTraces } from "./lib/check-source-traces-have-pcb-traces"
 export { checkTracesAreContiguous } from "./lib/check-traces-are-contiguous/check-traces-are-contiguous"
