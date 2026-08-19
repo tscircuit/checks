@@ -3,6 +3,10 @@
   "type": "module",
   "main": "./dist/index.js",
   "version": "0.0.163",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tscircuit/checks"
+  },
   "files": [
     "dist"
   ],
