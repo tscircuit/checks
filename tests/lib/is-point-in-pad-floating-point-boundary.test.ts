@@ -104,5 +104,5 @@ test("treats floating-point residue at a rectangular pad boundary as contact", (
       shouldDrawErrors: true,
       showErrorsInTextOverlay: true,
     }),
-  ).toMatchSvgSnapshot(import.meta.path, "circuit018-pad-boundary-after")
+  ).toMatchSvgSnapshot(import.meta.path, "circuit018-pad-boundary")
 })
