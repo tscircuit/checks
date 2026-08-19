@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { isPointInPad } from "lib/check-traces-are-contiguous/is-point-in-pad"
@@ -82,21 +82,6 @@ const circuitJson = [
   },
 ] as AnyCircuitElement[]
 
-// Captured from origin/main for the same circuit fixture so the visual
-// regression keeps the false-positive state beside the corrected output.
-const beforeFixError: PcbTraceError = {
-  type: "pcb_trace_error",
-  message:
-    "Trace [trace[source_net_10]] is missing a connection to smtpad[#pcb_port_27]",
-  source_trace_id: "source_net_10",
-  error_type: "pcb_trace_error",
-  pcb_trace_id: "pcb_trace_1",
-  pcb_trace_error_id: "missing_connection_pcb_trace_1_pcb_port_27",
-  center: { x: 2.637275000000003, y: 1.3836249999999986 },
-  pcb_component_ids: [],
-  pcb_port_ids: ["pcb_port_27"],
-}
-
 test("treats floating-point residue at a rectangular pad boundary as contact", () => {
   const pad = circuitJson.find(
     (element) =>
@@ -111,13 +96,6 @@ test("treats floating-point residue at a rectangular pad boundary as contact", (
     isPointInPad({ x: 2.637275000000003, y: 1.3836249999999986 }, pad),
   ).toBe(true)
   expect(isPointInPad({ x: 2.637275000000003, y: 1.383626 }, pad)).toBe(false)
-
-  expect(
-    convertCircuitJsonToPcbSvg([...circuitJson, beforeFixError], {
-      shouldDrawErrors: true,
-      showErrorsInTextOverlay: true,
-    }),
-  ).toMatchSvgSnapshot(import.meta.path, "circuit018-pad-boundary-before")
 
   const errors = checkTracesAreContiguous(circuitJson)
   expect(errors).toHaveLength(0)
