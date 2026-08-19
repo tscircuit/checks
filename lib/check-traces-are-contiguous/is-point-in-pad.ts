@@ -14,6 +14,11 @@ function getDistanceBetweenPoints(
 
 const POINT_ON_SEGMENT_TOLERANCE_MM = 1e-9
 
+// Circuit coordinates commonly reach pad boundaries through separate decimal
+// calculations. Allow their sub-nanometer floating-point residue while keeping
+// physical gaps outside the pad.
+const POINT_IN_PAD_TOLERANCE_MM = 1e-9
+
 function isPointOnSegment(
   point: { x: number; y: number },
   segment: { start: { x: number; y: number }; end: { x: number; y: number } },
@@ -58,15 +63,18 @@ export function isPointInPad(
 ): boolean {
   if (pad.type === "pcb_smtpad") {
     if (pad.shape === "circle") {
-      return getDistanceBetweenPoints(point, pad) <= pad.radius
+      return (
+        getDistanceBetweenPoints(point, pad) <=
+        pad.radius + POINT_IN_PAD_TOLERANCE_MM
+      )
     }
 
     if (pad.shape === "rect") {
       const halfWidth = pad.width / 2
       const halfHeight = pad.height / 2
       return (
-        Math.abs(point.x - pad.x) <= halfWidth &&
-        Math.abs(point.y - pad.y) <= halfHeight
+        Math.abs(point.x - pad.x) <= halfWidth + POINT_IN_PAD_TOLERANCE_MM &&
+        Math.abs(point.y - pad.y) <= halfHeight + POINT_IN_PAD_TOLERANCE_MM
       )
     }
 
@@ -78,7 +86,8 @@ export function isPointInPad(
       if (pad.shape === "rotated_pill") {
         const pill = getPillCenterLineForPad(pad)
         return (
-          pointToSegmentDistance(point, pill.start, pill.end) <= pill.radius
+          pointToSegmentDistance(point, pill.start, pill.end) <=
+          pill.radius + POINT_IN_PAD_TOLERANCE_MM
         )
       }
 
@@ -87,8 +96,9 @@ export function isPointInPad(
       const radius = pad.radius
 
       if (
-        Math.abs(point.x - pad.x) <= halfWidth - radius &&
-        Math.abs(point.y - pad.y) <= halfHeight
+        Math.abs(point.x - pad.x) <=
+          halfWidth - radius + POINT_IN_PAD_TOLERANCE_MM &&
+        Math.abs(point.y - pad.y) <= halfHeight + POINT_IN_PAD_TOLERANCE_MM
       ) {
         return true
       }
@@ -101,7 +111,11 @@ export function isPointInPad(
         Math.abs(point.y - pad.y) - (halfHeight - radius),
         0,
       )
-      return cornerX * cornerX + cornerY * cornerY <= radius * radius
+      const radiusWithTolerance = radius + POINT_IN_PAD_TOLERANCE_MM
+      return (
+        cornerX * cornerX + cornerY * cornerY <=
+        radiusWithTolerance * radiusWithTolerance
+      )
     }
 
     if (pad.shape === "polygon") {
@@ -111,7 +125,10 @@ export function isPointInPad(
 
   if (pad.type === "pcb_plated_hole") {
     if (pad.shape === "circle") {
-      return getDistanceBetweenPoints(point, pad) <= pad.outer_diameter / 2
+      return (
+        getDistanceBetweenPoints(point, pad) <=
+        pad.outer_diameter / 2 + POINT_IN_PAD_TOLERANCE_MM
+      )
     }
 
     if ("rect_pad_width" in pad && "rect_pad_height" in pad) {
@@ -120,8 +137,10 @@ export function isPointInPad(
 
     if (pad.shape === "oval" || pad.shape === "pill") {
       return (
-        Math.abs(point.x - pad.x) <= pad.outer_width / 2 &&
-        Math.abs(point.y - pad.y) <= pad.outer_height / 2
+        Math.abs(point.x - pad.x) <=
+          pad.outer_width / 2 + POINT_IN_PAD_TOLERANCE_MM &&
+        Math.abs(point.y - pad.y) <=
+          pad.outer_height / 2 + POINT_IN_PAD_TOLERANCE_MM
       )
     }
   }

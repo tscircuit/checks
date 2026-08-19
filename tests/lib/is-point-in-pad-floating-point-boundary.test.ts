@@ -197,16 +197,12 @@ const platedHoleCircuitJson = createRoundedBoundaryCircuit({
   }),
 })
 
-const expectBoundaryErrors = (
+const expectBoundaryContacts = (
   circuitJson: AnyCircuitElement[],
-  expectedPortIds: string[],
   snapshotName: string,
 ) => {
   const errors = checkTracesAreContiguous(circuitJson)
-  expect(errors).toHaveLength(2)
-  expect(errors.map((error) => error.pcb_port_ids)).toEqual(
-    expectedPortIds.map((portId) => [portId]),
-  )
+  expect(errors).toHaveLength(0)
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,
@@ -215,7 +211,7 @@ const expectBoundaryErrors = (
   ).toMatchSvgSnapshot(import.meta.path, snapshotName)
 }
 
-test("reproduces a floating-point miss at a rectangular pad boundary", () => {
+test("treats floating-point residue at a rectangular pad boundary as contact", () => {
   const pad = rectCircuitJson.find(
     (element) =>
       element.type === "pcb_smtpad" &&
@@ -227,16 +223,13 @@ test("reproduces a floating-point miss at a rectangular pad boundary", () => {
 
   expect(
     isPointInPad({ x: 2.637275000000003, y: 1.3836249999999986 }, pad),
-  ).toBe(false)
+  ).toBe(true)
+  expect(isPointInPad({ x: 2.637275000000003, y: 1.383626 }, pad)).toBe(false)
 
-  expectBoundaryErrors(
-    rectCircuitJson,
-    ["pcb_port_27", "pcb_port_28"],
-    "circuit018-pad-boundary",
-  )
+  expectBoundaryContacts(rectCircuitJson, "circuit018-pad-boundary")
 })
 
-test("reproduces a floating-point miss at a rotated-pill pad boundary", () => {
+test("treats floating-point residue at a rotated-pill pad boundary as contact", () => {
   const pad = rotatedPillCircuitJson.find(
     (element) =>
       element.type === "pcb_smtpad" &&
@@ -246,15 +239,12 @@ test("reproduces a floating-point miss at a rotated-pill pad boundary", () => {
     throw new Error("Missing rotated-pill boundary pad fixture")
   }
 
-  expect(isPointInPad({ x: 0, y: 0.5000000000000001 }, pad)).toBe(false)
-  expectBoundaryErrors(
-    rotatedPillCircuitJson,
-    ["pcb_port_rotated_pill_lower", "pcb_port_rotated_pill_upper"],
-    "rotated-pill-pad-boundary",
-  )
+  expect(isPointInPad({ x: 0, y: 0.5000000000000001 }, pad)).toBe(true)
+  expect(isPointInPad({ x: 0, y: 0.500001 }, pad)).toBe(false)
+  expectBoundaryContacts(rotatedPillCircuitJson, "rotated-pill-pad-boundary")
 })
 
-test("reproduces a floating-point miss at a circular plated-hole boundary", () => {
+test("treats floating-point residue at a circular plated-hole boundary as contact", () => {
   const pad = platedHoleCircuitJson.find(
     (element) =>
       element.type === "pcb_plated_hole" &&
@@ -264,10 +254,7 @@ test("reproduces a floating-point miss at a circular plated-hole boundary", () =
     throw new Error("Missing circular plated-hole boundary fixture")
   }
 
-  expect(isPointInPad({ x: 0, y: 0.5000000000000001 }, pad)).toBe(false)
-  expectBoundaryErrors(
-    platedHoleCircuitJson,
-    ["pcb_port_plated_hole_lower", "pcb_port_plated_hole_upper"],
-    "circular-plated-hole-boundary",
-  )
+  expect(isPointInPad({ x: 0, y: 0.5000000000000001 }, pad)).toBe(true)
+  expect(isPointInPad({ x: 0, y: 0.500001 }, pad)).toBe(false)
+  expectBoundaryContacts(platedHoleCircuitJson, "circular-plated-hole-boundary")
 })
