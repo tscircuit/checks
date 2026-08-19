@@ -27,5 +27,7 @@ jobs:
           INPUT_PACKAGE_TYPE: internal_lib
 
           # INPUT_PEER_DEPS_SHOULD_BE_ASTERISK: false
-          # INPUT_IGNORE_PACKAGES: "circuit-json,..."
+          # This package is imported directly by the published build, so it must
+          # be installed as a runtime dependency rather than supplied by consumers.
+          INPUT_IGNORE_PACKAGES: "@tscircuit/circuit-json-util"
           # INPUT_ADDITIONAL_INTERNAL_PACKAGES: "circuit-json,..."
