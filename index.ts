@@ -12,6 +12,7 @@ export { checkSourceTracesHavePcbTraces } from "./lib/check-source-traces-have-p
 export { checkTracesAreContiguous } from "./lib/check-traces-are-contiguous/check-traces-are-contiguous"
 export { checkPcbTracesOutOfBoard } from "./lib/check-trace-out-of-board/checkTraceOutOfBoard"
 export { checkPcbComponentOverlap } from "./lib/check-pcb-components-overlap/checkPcbComponentOverlap"
+export { checkPcbComponentsMissingCourtyard } from "./lib/check-pcb-components-missing-courtyard"
 export { checkPcbTraceLengths } from "./lib/check-pcb-trace-lengths"
 export { checkPadPadClearance } from "./lib/check-pad-pad-clearance"
 export { checkPadTraceClearance } from "./lib/check-pad-trace-clearance"
