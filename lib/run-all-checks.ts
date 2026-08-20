@@ -6,6 +6,7 @@ import { checkCourtyardOverlap } from "./check-courtyard-overlap/checkCourtyardO
 import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
 import { checkEachPcbPortConnectedToPcbTraces } from "./check-each-pcb-port-connected-to-pcb-trace"
 import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
+import { checkLedSchematicPorts } from "./check-led-schematic-ports"
 import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
 import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkPadPadClearance } from "./check-pad-pad-clearance"
@@ -46,7 +47,10 @@ export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
 }
 
 export async function runAllSchematicChecks(circuitJson: AnyCircuitElement[]) {
-  return checkSchematicComponentExcessiveVerticalPadding(circuitJson)
+  return [
+    ...checkSchematicComponentExcessiveVerticalPadding(circuitJson),
+    ...checkLedSchematicPorts(circuitJson),
+  ]
 }
 
 export async function runAllPinSpecificationChecks(
