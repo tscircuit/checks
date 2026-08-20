@@ -2,8 +2,11 @@ import type {
   AnyCircuitElement,
   PcbComponent,
   PcbPortNotMatchedError,
+  SourceComponentBase,
 } from "circuit-json"
 import { getReadableNameForSourcePort } from "./util/get-readable-names"
+
+type SourceComponentId = SourceComponentBase["source_component_id"]
 
 /**
  * Report connected source ports on PCB components that have no corresponding
@@ -60,7 +63,10 @@ export function checkSourcePortsHavePcbPorts(
       return []
     }),
   )
-  const pcbComponentsBySourceComponentId = new Map<string, PcbComponent[]>()
+  const pcbComponentsBySourceComponentId = new Map<
+    SourceComponentId,
+    PcbComponent[]
+  >()
 
   for (const element of circuitJson) {
     if (element.type !== "pcb_component" || !element.source_component_id) {
