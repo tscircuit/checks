@@ -25,6 +25,7 @@ and output an array of arrays for any issues found.
 | [`checkViaTraceClearance`](./lib/check-via-trace-clearance.ts) | Returns `pcb_via_trace_clearance_error` when a via and unrelated trace have a positive gap below the minimum clearance. Physical overlaps are reported by `checkEachPcbTraceNonOverlapping`. |
 | [`checkPinMustBeConnected`](./lib/check-pin-must-be-connected.ts) | Returns `pcb_trace_error` when required source pins are not connected. |
 | [`checkSameNetViaSpacing`](./lib/check-same-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on the same net are closer than the allowed margin. |
+| [`checkSourcePortsHavePcbPorts`](./lib/check-source-ports-have-pcb-ports.ts) | Returns `pcb_port_not_matched_error` when a connected source port on a PCB-backed component has no corresponding `pcb_port`. |
 | [`checkSourceTracesHavePcbTraces`](./lib/check-source-traces-have-pcb-traces.ts) | Returns `pcb_trace_error` when source traces are missing corresponding `pcb_trace` routes. |
 | [`checkTracesAreContiguous`](./lib/check-traces-are-contiguous/check-traces-are-contiguous.ts) | Returns `pcb_trace_error` when trace endpoints are floating or do not connect as expected. |
 | [`checkViasOffBoard`](./lib/check-pcb-components-out-of-board/checkViasOffBoard.ts) | Returns `pcb_placement_error` if any PCB via lies outside or crosses the board boundary. |
@@ -34,7 +35,7 @@ and output an array of arrays for any issues found.
 
 | Function | Description |
 | --- | --- |
-| [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs placement checks (`checkCopperToBoardEdgeClearance`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverlap`, `checkPadPadClearance`, `checkCourtyardOverlap`, `checkConnectorAccessibleOrientation`, and `checkTestPointAccessibility`). |
+| [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs placement checks (`checkSourcePortsHavePcbPorts`, `checkCopperToBoardEdgeClearance`, `checkViasInPads`, `checkPcbComponentsOutOfBoard`, `checkPcbComponentOverCutout`, `checkPcbComponentOverlap`, `checkPadPadClearance`, `checkCourtyardOverlap`, `checkConnectorAccessibleOrientation`, and `checkTestPointAccessibility`). |
 | [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs netlist connectivity checks (currently `checkPinMustBeConnected`). |
 | [`runAllPinSpecificationChecks`](./lib/run-all-checks.ts) | Runs pin specification checks (e.g. `checkAllPinsInComponentAreUnderspecified`, `checkNoPowerPinDefined`, and `checkNoGroundPinDefined`). |
 | [`runAllSchematicChecks`](./lib/run-all-checks.ts) | Runs schematic-layout checks (currently `checkSchematicComponentExcessiveVerticalPadding`). |
