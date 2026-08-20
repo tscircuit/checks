@@ -4,7 +4,7 @@ import { checkPcbComponentsMissingCourtyard } from "lib/check-pcb-components-mis
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
 
 describe("checkPcbComponentsMissingCourtyard", () => {
-  test("returns a warning when a component has no courtyard", () => {
+  test("returns an error when a component has no courtyard", () => {
     const circuitJson = [
       {
         type: "source_component",
@@ -22,21 +22,20 @@ describe("checkPcbComponentsMissingCourtyard", () => {
       },
     ] as unknown as AnyCircuitElement[]
 
-    const warnings = checkPcbComponentsMissingCourtyard(circuitJson)
+    const errors = checkPcbComponentsMissingCourtyard(circuitJson)
 
-    expect(warnings).toEqual([
+    expect(errors).toEqual([
       expect.objectContaining({
-        type: "pcb_component_missing_courtyard_warning",
-        pcb_component_id: "pcb_component_1",
-        source_component_id: "source_component_1",
+        type: "pcb_placement_error",
+        error_type: "pcb_placement_error",
         message: "R1 has no courtyard",
       }),
     ])
-    expect(containsCircuitJsonId(warnings[0]!.message)).toBe(false)
-    expect(any_circuit_element.safeParse(warnings[0]).success).toBe(true)
+    expect(containsCircuitJsonId(errors[0]!.message)).toBe(false)
+    expect(any_circuit_element.safeParse(errors[0]).success).toBe(true)
   })
 
-  test("does not warn when a component has a courtyard", () => {
+  test("does not error when a component has a courtyard", () => {
     const circuitJson = [
       {
         type: "pcb_component",
