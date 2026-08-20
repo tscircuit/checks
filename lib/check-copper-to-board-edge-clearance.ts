@@ -495,19 +495,33 @@ export function checkCopperToBoardEdgeClearance(
       element.type === "pcb_plated_hole" ||
       element.type === "pcb_copper_pour",
   )
+  const pcbComponents = circuitJson.filter(
+    (element): element is PcbComponent => element.type === "pcb_component",
+  )
   const componentCcwRotationsById = new Map<PcbComponentId, number>(
-    circuitJson
-      .filter(
-        (element): element is PcbComponent => element.type === "pcb_component",
-      )
-      .map((component) => [
-        toPcbComponentId(component.pcb_component_id),
-        component.rotation,
-      ]),
+    pcbComponents.map((component) => [
+      toPcbComponentId(component.pcb_component_id),
+      component.rotation,
+    ]),
+  )
+  const offBoardAllowedComponentIds = new Set<PcbComponentId>(
+    pcbComponents
+      .filter((component) => component.is_allowed_to_be_off_board)
+      .map((component) => toPcbComponentId(component.pcb_component_id)),
   )
 
   const errors: PcbPlacementError[] = []
   for (const element of copperElements) {
+    if (
+      (element.type === "pcb_smtpad" || element.type === "pcb_plated_hole") &&
+      element.pcb_component_id &&
+      offBoardAllowedComponentIds.has(
+        toPcbComponentId(element.pcb_component_id),
+      )
+    ) {
+      continue
+    }
+
     const geometry = getCopperGeometry(element, componentCcwRotationsById)
     if (!geometry) continue
 
