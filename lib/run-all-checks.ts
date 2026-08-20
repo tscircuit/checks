@@ -16,6 +16,7 @@ import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPc
 import { checkPcbComponentsMissingCourtyard } from "./check-pcb-components-missing-courtyard"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
+import { checkPushButtonInternalConnections } from "./check-push-button-internal-connections"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
@@ -42,7 +43,10 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
 }
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
-  return [...checkPinMustBeConnected(circuitJson)]
+  return [
+    ...checkPinMustBeConnected(circuitJson),
+    ...checkPushButtonInternalConnections(circuitJson),
+  ]
 }
 
 export async function runAllSchematicChecks(circuitJson: AnyCircuitElement[]) {

@@ -14,6 +14,7 @@ export { checkPcbTracesOutOfBoard } from "./lib/check-trace-out-of-board/checkTr
 export { checkPcbComponentOverlap } from "./lib/check-pcb-components-overlap/checkPcbComponentOverlap"
 export { checkPcbComponentsMissingCourtyard } from "./lib/check-pcb-components-missing-courtyard"
 export { checkPcbTraceLengths } from "./lib/check-pcb-trace-lengths"
+export { checkPushButtonInternalConnections } from "./lib/check-push-button-internal-connections"
 export { checkPadPadClearance } from "./lib/check-pad-pad-clearance"
 export { checkPadTraceClearance } from "./lib/check-pad-trace-clearance"
 export { checkViaTraceClearance } from "./lib/check-via-trace-clearance"
