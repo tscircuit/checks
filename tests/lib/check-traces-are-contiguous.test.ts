@@ -1,12 +1,12 @@
-import { expect, test, describe } from "bun:test"
+import { describe, expect, test } from "bun:test"
+import type { AnyCircuitElement } from "circuit-json"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { isPointInPad } from "lib/check-traces-are-contiguous/is-point-in-pad"
+import { runAllRoutingChecks } from "lib/run-all-checks"
+import repro02 from "tests/assets/motor-controller-1.json"
 import circuitJson from "tests/assets/traces-with-vias-2.json"
 import corruptedCircuitJson from "tests/assets/traces-with-vias-corrupted.json"
-import repro02 from "tests/assets/motor-controller-1.json"
-import type { AnyCircuitElement } from "circuit-json"
-import { runAllRoutingChecks } from "lib/run-all-checks"
-import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import { isPointInPad } from "lib/check-traces-are-contiguous/is-point-in-pad"
 
 describe("testing checkTracesAreContiguous(", () => {
   test("should not error as traces are contiguous", () => {
@@ -348,7 +348,7 @@ test("checks multi-port source-trace branches once through a shared pad", () => 
   expect(checkTracesAreContiguous(circuitJson)).toHaveLength(0)
 })
 
-test("still reports a source-trace branch that does not reach a required port", () => {
+test("still reports source-trace branches that are physically disconnected", () => {
   const circuitJson = [
     {
       type: "source_trace",
@@ -408,6 +408,22 @@ test("still reports a source-trace branch that does not reach a required port", 
           start_pcb_port_id: "pcb_port_a",
         },
         { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
+      ],
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_disconnected_half",
+      source_trace_id: "source_trace_half",
+      route: [
+        { route_type: "wire", x: 2, y: 0, layer: "top", width: 0.2 },
+        {
+          route_type: "wire",
+          x: 4,
+          y: 0,
+          layer: "top",
+          width: 0.2,
+          end_pcb_port_id: "pcb_port_b",
+        },
       ],
     },
   ] as AnyCircuitElement[]
