@@ -97,6 +97,20 @@ const TYPE_C_6P_FOOTPRINT = (
   </footprint>
 )
 
+const addOrientationWarningLabels = (
+  svg: string,
+  warnings: ReturnType<typeof checkConnectorAccessibleOrientation>,
+): string => {
+  const warningLabels = warnings
+    .map(
+      (warning, index) =>
+        `<text x="400" y="${30 + index * 18}" fill="red" font-family="sans-serif" font-size="14" text-anchor="middle" data-type="connector-orientation-warning">CHECKER WARNING: ${warning.facing_direction} should face ${warning.recommended_facing_direction}</text>`,
+    )
+    .join("")
+
+  return svg.replace("</svg>", `${warningLabels}</svg>`)
+}
+
 test("connector orientation warning is emitted when cable insertion points inward", async () => {
   const circuit = new Circuit()
   circuit.add(
@@ -127,6 +141,62 @@ test("connector orientation warning is emitted when cable insertion points inwar
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
+})
+
+test("connector facing either equally-near corner edge is accessible", async () => {
+  const circuit = new Circuit()
+  circuit.add(
+    <board width="30mm" height="20mm" routingDisabled>
+      <connector
+        name="J1"
+        pcbX="-10mm"
+        pcbY="-5mm"
+        footprint={
+          <footprint insertionDirection="from_bottom">
+            <smtpad
+              portHints={["pin1"]}
+              pcbX="-0.75mm"
+              width="1mm"
+              height="2mm"
+              shape="rect"
+            />
+            <smtpad
+              portHints={["pin2"]}
+              pcbX="0.75mm"
+              width="1mm"
+              height="2mm"
+              shape="rect"
+            />
+            <silkscreenrect width="3mm" height="2.5mm" />
+          </footprint>
+        }
+        pinLabels={{ 1: ["A"], 2: ["B"] }}
+      />
+    </board>,
+  )
+
+  await circuit.renderUntilSettled()
+  const circuitJson = circuit.getCircuitJson()
+  const warnings = checkConnectorAccessibleOrientation(circuitJson)
+
+  // The connector is 5 mm from both the left and bottom board edges. Facing
+  // the bottom is therefore accessible, but the current checker arbitrarily
+  // recommends the left edge because it appears first in its sorted list.
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0]).toMatchObject({
+    pcb_component_id: "pcb_component_0",
+    facing_direction: "y-",
+    recommended_facing_direction: "x-",
+  })
+
+  expect(
+    addOrientationWarningLabels(
+      convertCircuitJsonToPcbSvg([...circuitJson, ...warnings], {
+        shouldDrawErrors: true,
+      }),
+      warnings,
+    ),
+  ).toMatchSvgSnapshot(import.meta.path, "equally-near-corner-edges")
 })
 
 test("connector orientation check skips components without cable_insertion_center", async () => {
