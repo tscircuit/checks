@@ -1,26 +1,70 @@
-import type {
-  AnyCircuitElement,
-  PcbTraceError,
-  PcbPort,
-  PcbTrace,
-  SourceTrace,
-  PcbSmtPad,
-  PcbPlatedHole,
-} from "circuit-json"
-import { isPointInPad } from "./is-point-in-pad"
-import { distance } from "../util/distance"
-import {
-  getPcbPortIdsConnectedToRoutePoint,
-  getPcbPortIdsConnectedToTrace,
-} from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
 import {
   getReadableNameForPcbPort,
   getReadableNameForPcbTrace,
 } from "@tscircuit/circuit-json-util"
+import type {
+  AnyCircuitElement,
+  LayerRef,
+  PcbBoard,
+  PcbPlatedHole,
+  PcbPort,
+  PcbSmtPad,
+  PcbTrace,
+  PcbTraceError,
+  SourceTrace,
+} from "circuit-json"
 import { PcbConnectivityMap } from "circuit-json-to-connectivity-map"
+import {
+  getPcbPortIdsConnectedToRoutePoint,
+  getPcbPortIdsConnectedToTrace,
+} from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
+import { distance } from "../util/distance"
+import { isPointInPad } from "./is-point-in-pad"
 
 type PcbPortId = PcbPort["pcb_port_id"]
 type PcbTraceRoutePoint = PcbTrace["route"][number]
+
+function getLayerIndex(
+  layer: LayerRef,
+  layerCount: number,
+): number | undefined {
+  if (layer === "top") return 0
+  if (layer === "bottom") return layerCount - 1
+
+  const innerLayerMatch = /^inner(\d+)$/.exec(layer)
+  if (!innerLayerMatch) return undefined
+
+  const layerIndex = Number(innerLayerMatch[1])
+  return layerIndex > 0 && layerIndex < layerCount - 1 ? layerIndex : undefined
+}
+
+function isLayerWithinViaSpan({
+  layer,
+  fromLayer,
+  toLayer,
+  layerCount,
+}: {
+  layer: LayerRef
+  fromLayer: LayerRef
+  toLayer: LayerRef
+  layerCount: number
+}): boolean {
+  const layerIndex = getLayerIndex(layer, layerCount)
+  const fromLayerIndex = getLayerIndex(fromLayer, layerCount)
+  const toLayerIndex = getLayerIndex(toLayer, layerCount)
+
+  if (
+    layerIndex === undefined ||
+    fromLayerIndex === undefined ||
+    toLayerIndex === undefined
+  ) {
+    return false
+  }
+
+  const spanStart = Math.min(fromLayerIndex, toLayerIndex)
+  const spanEnd = Math.max(fromLayerIndex, toLayerIndex)
+  return layerIndex >= spanStart && layerIndex <= spanEnd
+}
 
 function getRoutePointCenter(point: PcbTraceRoutePoint) {
   if (point.route_type === "through_pad") {
@@ -150,6 +194,12 @@ function checkTracesAreContiguous(
   const pcbPlatedHoles = circuitJson.filter(
     (el) => el.type === "pcb_plated_hole",
   ) as PcbPlatedHole[]
+  const pcbBoard = circuitJson.find((el) => el.type === "pcb_board") as
+    | PcbBoard
+    | undefined
+  // A board is present in complete Circuit JSON. Use the largest supported
+  // stack only for partial test fixtures that omit it.
+  const layerCount = pcbBoard?.num_layers ?? 10
 
   const padMap = new Map<PcbPortId, Array<PcbSmtPad | PcbPlatedHole>>()
   const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
@@ -186,51 +236,88 @@ function checkTracesAreContiguous(
         )
       : []
 
-    for (let i = 1; i < trace.route.length - 1; i++) {
+    const traceName = getReadableNameForPcbTrace(
+      circuitJson,
+      trace.pcb_trace_id,
+    )
+
+    for (let i = 0; i < trace.route.length; i++) {
       const prevPoint = trace.route[i - 1]
       const currentPoint = trace.route[i]
       const nextPoint = trace.route[i + 1]
 
       if (currentPoint.route_type === "via") {
-        const prevIsWire = prevPoint.route_type === "wire"
-        const nextIsWire = nextPoint.route_type === "wire"
+        if (
+          prevPoint?.route_type !== "wire" ||
+          nextPoint?.route_type !== "wire"
+        ) {
+          errors.push({
+            type: "pcb_trace_error",
+            message: `Via in trace [${traceName}] at position {x: ${currentPoint.x}, y: ${currentPoint.y}} must be immediately preceded and followed by wire route points.`,
+            source_trace_id:
+              sourceTrace?.source_trace_id ||
+              trace.source_trace_id ||
+              `!${trace.pcb_trace_id}`,
+            error_type: "pcb_trace_error",
+            pcb_trace_id: trace.pcb_trace_id,
+            pcb_trace_error_id: `unconnected_via_${trace.pcb_trace_id}_${i}`,
+            pcb_component_ids: [],
+            pcb_port_ids: [],
+          })
+          continue
+        }
 
-        if (prevIsWire && nextIsWire) {
-          const prevAligned =
-            Math.abs(prevPoint.x - currentPoint.x) < 0.01 &&
-            Math.abs(prevPoint.y - currentPoint.y) < 0.01
+        const prevAligned =
+          Math.abs(prevPoint.x - currentPoint.x) < 0.01 &&
+          Math.abs(prevPoint.y - currentPoint.y) < 0.01
 
-          const nextAligned =
-            Math.abs(nextPoint.x - currentPoint.x) < 0.01 &&
-            Math.abs(nextPoint.y - currentPoint.y) < 0.01
+        const nextAligned =
+          Math.abs(nextPoint.x - currentPoint.x) < 0.01 &&
+          Math.abs(nextPoint.y - currentPoint.y) < 0.01
 
-          if (!prevAligned || !nextAligned) {
-            const traceName = getReadableNameForPcbTrace(
-              circuitJson,
-              trace.pcb_trace_id,
-            )
-            errors.push({
-              type: "pcb_trace_error",
-              message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
-              source_trace_id:
-                sourceTrace?.source_trace_id ||
-                trace.source_trace_id ||
-                `!${trace.pcb_trace_id}`,
-              error_type: "pcb_trace_error",
-              pcb_trace_id: trace.pcb_trace_id,
-              pcb_trace_error_id: `misaligned_via_${trace.pcb_trace_id}_${i}`,
-              pcb_component_ids: [],
-              pcb_port_ids: [],
-            })
-          }
+        if (!prevAligned || !nextAligned) {
+          errors.push({
+            type: "pcb_trace_error",
+            message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
+            source_trace_id:
+              sourceTrace?.source_trace_id ||
+              trace.source_trace_id ||
+              `!${trace.pcb_trace_id}`,
+            error_type: "pcb_trace_error",
+            pcb_trace_id: trace.pcb_trace_id,
+            pcb_trace_error_id: `misaligned_via_${trace.pcb_trace_id}_${i}`,
+            pcb_component_ids: [],
+            pcb_port_ids: [],
+          })
+          continue
+        }
+
+        const layersMatch = [prevPoint.layer, nextPoint.layer].every((layer) =>
+          isLayerWithinViaSpan({
+            layer,
+            fromLayer: currentPoint.from_layer,
+            toLayer: currentPoint.to_layer,
+            layerCount,
+          }),
+        )
+
+        if (!layersMatch) {
+          errors.push({
+            type: "pcb_trace_error",
+            message: `Via in trace [${traceName}] spans ${currentPoint.from_layer} to ${currentPoint.to_layer}, but an adjacent wire layer (${prevPoint.layer}, ${nextPoint.layer}) is outside that physical span.`,
+            source_trace_id:
+              sourceTrace?.source_trace_id ||
+              trace.source_trace_id ||
+              `!${trace.pcb_trace_id}`,
+            error_type: "pcb_trace_error",
+            pcb_trace_id: trace.pcb_trace_id,
+            pcb_trace_error_id: `via_layer_mismatch_${trace.pcb_trace_id}_${i}`,
+            pcb_component_ids: [],
+            pcb_port_ids: [],
+          })
         }
       }
     }
-
-    const traceName = getReadableNameForPcbTrace(
-      circuitJson,
-      trace.pcb_trace_id,
-    )
 
     // Validate required ports once for the complete routed source trace.
     if (sourceTrace && expectedPorts.length > 0) {
