@@ -1,7 +1,7 @@
 import type {
   AnyCircuitElement,
   PcbComponent,
-  PcbComponentMissingCourtyardWarning,
+  PcbPlacementError,
 } from "circuit-json"
 import { getReadableNameForComponent } from "./util/get-readable-names"
 
@@ -13,10 +13,10 @@ const courtyardTypes = new Set([
   "pcb_courtyard_rect",
 ])
 
-/** Returns a warning for every PCB component without a courtyard. */
+/** Returns a placement error for every PCB component without a courtyard. */
 export function checkPcbComponentsMissingCourtyard(
   circuitJson: AnyCircuitElement[],
-): PcbComponentMissingCourtyardWarning[] {
+): PcbPlacementError[] {
   const componentIdsWithCourtyards = new Set(
     circuitJson
       .filter((element) => courtyardTypes.has(element.type))
@@ -49,12 +49,10 @@ export function checkPcbComponentsMissingCourtyard(
           : getReadableNameForComponent(circuitJson, component.pcb_component_id)
 
       return {
-        type: "pcb_component_missing_courtyard_warning" as const,
-        pcb_component_missing_courtyard_warning_id: `pcb_component_missing_courtyard_warning_${component.pcb_component_id}`,
-        warning_type: "pcb_component_missing_courtyard_warning" as const,
+        type: "pcb_placement_error" as const,
+        pcb_placement_error_id: `missing_courtyard_${component.pcb_component_id}`,
+        error_type: "pcb_placement_error" as const,
         message: `${componentName} has no courtyard`,
-        pcb_component_id: component.pcb_component_id,
-        source_component_id: component.source_component_id,
         subcircuit_id: component.subcircuit_id,
       }
     })
