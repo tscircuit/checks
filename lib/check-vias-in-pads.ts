@@ -8,13 +8,14 @@ import {
 import { isPointInPad } from "./check-traces-are-contiguous/is-point-in-pad"
 import { SpatialObjectIndex } from "./data-structures/SpatialIndex"
 import { getPcbBoard } from "./drc-defaults"
-import { getLayersOfPcbElement } from "./util/getLayersOfPcbElement"
 import { getReadableNameForFootprintPad } from "./util/get-readable-names"
+import { getLayersOfPcbElement } from "./util/getLayersOfPcbElement"
 
 export function checkViasInPads(
   circuitJson: AnyCircuitElement[],
 ): PcbPlacementError[] {
   const board = getPcbBoard(circuitJson)
+  const layerCount = board?.num_layers
   if (
     board &&
     "is_via_in_pad_allowed" in board &&
@@ -48,8 +49,8 @@ export function checkViasInPads(
     })
 
     for (const pad of nearbyPads) {
-      const viaLayers = getLayersOfPcbElement(via)
-      const padLayers = getLayersOfPcbElement(pad)
+      const viaLayers = getLayersOfPcbElement(via, layerCount)
+      const padLayers = getLayersOfPcbElement(pad, layerCount)
       if (!viaLayers.some((layer) => padLayers.includes(layer))) continue
       if (!isPointInPad(via, pad)) continue
 

@@ -4,11 +4,11 @@ import {
 } from "@tscircuit/circuit-json-util"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { AnyCircuitElement, PcbPadTraceClearanceError } from "circuit-json"
-import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
+import { formatMm } from "format-si-unit"
 import { getCollidableBounds } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
@@ -35,6 +35,7 @@ export function checkPadTraceClearance(
   if (pads.length === 0 || segments.length === 0) return []
 
   const board = getPcbBoard(circuitJson)
+  const layerCount = board?.num_layers
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     jlcMinTolerances.min_trace_to_pad_edge_clearance
@@ -59,7 +60,10 @@ export function checkPadTraceClearance(
 
     for (const pad of nearbyPads) {
       const padId = getPrimaryId(pad)
-      if (!getLayersOfPcbElement(pad as any).includes(segment.layer)) continue
+      if (
+        !getLayersOfPcbElement(pad as any, layerCount).includes(segment.layer)
+      )
+        continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, padId)) continue
       const pairId = `${padId}_${segment.pcb_trace_id}`
       const { gap } = getTraceObstacleClearance(segment, pad)

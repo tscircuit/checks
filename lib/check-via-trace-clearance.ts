@@ -5,11 +5,11 @@ import type {
   PcbVia,
   PcbViaTraceClearanceError,
 } from "circuit-json"
-import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
+import { formatMm } from "format-si-unit"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
@@ -31,6 +31,7 @@ export function checkViaTraceClearance(
   if (vias.length === 0 || segments.length === 0) return []
 
   const board = getPcbBoard(circuitJson)
+  const layerCount = board?.num_layers
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     jlcMinTolerances.min_trace_to_pad_edge_clearance
@@ -43,7 +44,8 @@ export function checkViaTraceClearance(
 
   for (const via of vias) {
     for (const segment of segments) {
-      if (!getLayersOfPcbElement(via).includes(segment.layer)) continue
+      if (!getLayersOfPcbElement(via, layerCount).includes(segment.layer))
+        continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, via.pcb_via_id))
         continue
 
