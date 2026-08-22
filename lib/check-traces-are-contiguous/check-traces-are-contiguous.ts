@@ -52,7 +52,7 @@ function routePointConnectsToAnotherExpectedPort(
     const expectedPads = padMap.get(expectedPort.pcb_port_id)
     return (
       expectedPads?.some((pad) =>
-        isPointInPad({ x: point.x, y: point.y }, pad),
+        isPointInPad({ x: point.x, y: point.y }, pad, point.layer),
       ) ?? false
     )
   })
@@ -288,13 +288,21 @@ function checkTracesAreContiguous(
       const isFirstPointConnected =
         firstPoint.route_type === "wire" &&
         pads.some((pad) =>
-          isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad),
+          isPointInPad(
+            { x: firstPoint.x, y: firstPoint.y },
+            pad,
+            firstPoint.layer,
+          ),
         )
 
       const isLastPointConnected =
         lastPoint.route_type === "wire" &&
         pads.some((pad) =>
-          isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad),
+          isPointInPad(
+            { x: lastPoint.x, y: lastPoint.y },
+            pad,
+            lastPoint.layer,
+          ),
         )
 
       if (!isFirstPointConnected && !isLastPointConnected) {
@@ -341,7 +349,11 @@ function checkTracesAreContiguous(
         if (
           firstPoint.route_type === "wire" &&
           pads.some((pad) =>
-            isPointInPad({ x: firstPoint.x, y: firstPoint.y }, pad),
+            isPointInPad(
+              { x: firstPoint.x, y: firstPoint.y },
+              pad,
+              firstPoint.layer,
+            ),
           )
         ) {
           firstConnectsToAnyPad = true
@@ -349,7 +361,11 @@ function checkTracesAreContiguous(
         if (
           lastPoint.route_type === "wire" &&
           pads.some((pad) =>
-            isPointInPad({ x: lastPoint.x, y: lastPoint.y }, pad),
+            isPointInPad(
+              { x: lastPoint.x, y: lastPoint.y },
+              pad,
+              lastPoint.layer,
+            ),
           )
         ) {
           lastConnectsToAnyPad = true
