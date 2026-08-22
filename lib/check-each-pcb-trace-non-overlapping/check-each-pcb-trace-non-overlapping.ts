@@ -67,6 +67,7 @@ export function checkEachPcbTraceNonOverlapping(
   addStartAndEndPortIdsIfMissing(circuitJson)
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const board = getPcbBoard(circuitJson)
+  const layerCount = board?.num_layers
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     DEFAULT_TRACE_MARGIN
@@ -173,7 +174,7 @@ export function checkEachPcbTraceNonOverlapping(
 
     for (const obj of nearbyObjects) {
       // ignore obstacles not on the trace's layer (except vias)
-      if (!getLayersOfPcbElement(obj).includes(segmentA.layer)) {
+      if (!getLayersOfPcbElement(obj, layerCount).includes(segmentA.layer)) {
         continue
       }
       if (

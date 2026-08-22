@@ -2,12 +2,13 @@ import {
   getPrimaryId,
   getReadableNameForElement,
 } from "@tscircuit/circuit-json-util"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { AnyCircuitElement, PcbPadPadClearanceError } from "circuit-json"
-import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
+import { formatMm } from "format-si-unit"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
@@ -18,7 +19,6 @@ import {
   getPadToPadGap,
   getPads,
 } from "./check-pad-clearance/common"
-import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 export function checkPadPadClearance(
   circuitJson: AnyCircuitElement[],
@@ -31,6 +31,7 @@ export function checkPadPadClearance(
   if (pads.length < 2) return []
 
   const board = getPcbBoard(circuitJson)
+  const layerCount = board?.num_layers
   minClearance ??=
     getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
     jlcMinTolerances.min_pad_edge_to_pad_edge_clearance
@@ -54,8 +55,8 @@ export function checkPadPadClearance(
       const padBId = getPrimaryId(padB)
       if (padAId === padBId) continue
       if (
-        !getLayersOfPcbElement(padA as any).some((layer) =>
-          getLayersOfPcbElement(padB as any).includes(layer),
+        !getLayersOfPcbElement(padA as any, layerCount).some((layer) =>
+          getLayersOfPcbElement(padB as any, layerCount).includes(layer),
         )
       ) {
         continue

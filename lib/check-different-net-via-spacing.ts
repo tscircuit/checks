@@ -1,4 +1,5 @@
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,
   PcbVia,
@@ -10,8 +11,8 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { distance } from "lib/util/distance"
+import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import { viasAreAtSameLocation } from "lib/util/viasAreAtSameLocation"
-import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 export function checkDifferentNetViaSpacing(
   circuitJson: AnyCircuitElement[],
@@ -23,6 +24,7 @@ export function checkDifferentNetViaSpacing(
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   if (vias.length < 2) return []
   const board = getPcbBoard(circuitJson)
+  const layerCount = board?.num_layers
   minClearance ??=
     getBoardDrcValue(board, "min_via_hole_edge_to_via_hole_edge_clearance") ??
     jlcMinTolerances.min_via_hole_edge_to_via_hole_edge_clearance
@@ -36,6 +38,12 @@ export function checkDifferentNetViaSpacing(
       const viaB = vias[j]
       // TODO: It is a very inefficient piece of code, the way to fix it is to use flatbush.
       if (viasAreAtSameLocation(viaA, viaB)) continue
+      if (
+        !getLayersOfPcbElement(viaA, layerCount).some((layer) =>
+          getLayersOfPcbElement(viaB, layerCount).includes(layer),
+        )
+      )
+        continue
       if (connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
       const gap =
         distance(viaA, viaB) - viaA.hole_diameter / 2 - viaB.hole_diameter / 2

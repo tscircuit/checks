@@ -8,11 +8,11 @@ import type {
   PcbPadPadClearanceError,
   PcbVia,
 } from "circuit-json"
-import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
+import { formatMm } from "format-si-unit"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
@@ -38,6 +38,7 @@ export function checkViaPadClearance(
   if (vias.length === 0 || pads.length === 0) return []
 
   const board = getPcbBoard(circuitJson)
+  const layerCount = board?.num_layers
   const requiredClearance =
     minClearance ??
     getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
@@ -60,8 +61,8 @@ export function checkViaPadClearance(
     for (const pad of nearbyPads) {
       const padId = getPrimaryId(pad)
       if (
-        !getLayersOfPcbElement(via).some((layer) =>
-          getLayersOfPcbElement(pad).includes(layer),
+        !getLayersOfPcbElement(via, layerCount).some((layer) =>
+          getLayersOfPcbElement(pad, layerCount).includes(layer),
         )
       ) {
         continue
