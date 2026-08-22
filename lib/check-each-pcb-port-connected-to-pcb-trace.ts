@@ -7,6 +7,7 @@ import type {
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPort } from "./util/get-readable-names"
+import { getSubcircuitIdsWithSkippedAutorouting } from "./util/get-subcircuits-with-skipped-autorouting"
 
 function checkEachPcbPortConnectedToPcbTraces(
   circuitJson: AnyCircuitElement[],
@@ -31,8 +32,19 @@ function checkEachPcbPortConnectedToPcbTraces(
     sourcePortToPcbPort.set(pcbPort.source_port_id, pcbPort)
   }
 
+  const skippedSubcircuitIds =
+    getSubcircuitIdsWithSkippedAutorouting(circuitJson)
+
   // Process each source trace
   for (const sourceTrace of sourceTraces) {
+    // The router never ran for this subcircuit, so an unconnected port here
+    // restates the placement error rather than being a separate failure.
+    if (
+      sourceTrace.subcircuit_id &&
+      skippedSubcircuitIds.has(sourceTrace.subcircuit_id)
+    ) {
+      continue
+    }
     const connectedSourcePortIds = sourceTrace.connected_source_port_ids
 
     // Skip traces with less than 2 ports (nothing to connect)

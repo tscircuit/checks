@@ -7,6 +7,7 @@ import type {
 } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
+import { getSubcircuitIdsWithSkippedAutorouting } from "lib/util/get-subcircuits-with-skipped-autorouting"
 
 /**
  * Check that each source_trace which connects source ports has at least one
@@ -30,8 +31,18 @@ function checkSourceTracesHavePcbTraces(
     pcbPorts.map((pcbPort) => [pcbPort.source_port_id, pcbPort]),
   )
   const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+  const skippedSubcircuitIds =
+    getSubcircuitIdsWithSkippedAutorouting(circuitJson)
 
   for (const sourceTrace of sourceTraces) {
+    // The router never ran for this subcircuit, so a missing pcb_trace here
+    // restates the placement error rather than being a separate failure.
+    if (
+      sourceTrace.subcircuit_id &&
+      skippedSubcircuitIds.has(sourceTrace.subcircuit_id)
+    ) {
+      continue
+    }
     if (!sourceTrace.connected_source_port_ids?.length) continue
     if ((sourceTrace.connected_source_net_ids?.length ?? 0) > 0) continue
     if (sourceTrace.connected_source_port_ids.length < 2) continue
