@@ -197,6 +197,98 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
     expect(containsCircuitJsonId(errors[0]!.message)).toBe(false)
   })
 
+  test("returns an error for an unrouted port-to-net trace", () => {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "source_component",
+        source_component_id: "source_component_r_fault_pu",
+        ftype: "simple_resistor",
+        name: "R_FAULT_PU",
+        resistance: 10_000,
+        supplier_part_numbers: {},
+      },
+      {
+        type: "source_port",
+        source_port_id: "source_port_r_fault_pu_2",
+        source_component_id: "source_component_r_fault_pu",
+        name: "pin2",
+        pin_number: 2,
+        port_hints: ["2"],
+      },
+      {
+        type: "source_net",
+        source_net_id: "source_net_v3v3",
+        name: "V3V3",
+        member_source_group_ids: [],
+        is_power: true,
+      },
+      {
+        type: "source_trace",
+        source_trace_id: "source_trace_fault_pullup_3v3",
+        connected_source_port_ids: ["source_port_r_fault_pu_2"],
+        connected_source_net_ids: ["source_net_v3v3"],
+      },
+      {
+        type: "pcb_component",
+        source_component_id: "source_component_r_fault_pu",
+        pcb_component_id: "pcb_component_r_fault_pu",
+        width: 1.56,
+        height: 0.64,
+        rotation: 0,
+        layer: "top",
+        center: { x: 18, y: -4.5 },
+        obstructs_within_bounds: true,
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "pcb_port_r_fault_pu_2",
+        source_port_id: "source_port_r_fault_pu_2",
+        pcb_component_id: "pcb_component_r_fault_pu",
+        x: 18.51,
+        y: -4.5,
+        layers: ["top"],
+      },
+    ]
+
+    expect(checkEachPcbPortConnectedToPcbTraces(circuitJson)).toEqual([
+      {
+        type: "pcb_port_not_connected_error",
+        message:
+          "Port [R_FAULT_PU.pin2] is not connected to net [V3V3] by a PCB trace.",
+        error_type: "pcb_port_not_connected_error",
+        pcb_port_ids: ["pcb_port_r_fault_pu_2"],
+        pcb_component_ids: ["pcb_component_r_fault_pu"],
+        pcb_port_not_connected_error_id:
+          "pcb_port_not_connected_error_trace_source_trace_fault_pullup_3v3",
+      },
+    ])
+
+    circuitJson.push({
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_fault_pullup_3v3",
+      source_trace_id: "source_trace_fault_pullup_3v3",
+      route: [
+        {
+          route_type: "wire",
+          x: 18.51,
+          y: -4.5,
+          width: 0.15,
+          layer: "top",
+          start_pcb_port_id: "pcb_port_r_fault_pu_2",
+        },
+        {
+          route_type: "wire",
+          x: 20,
+          y: -4.5,
+          width: 0.15,
+          layer: "top",
+        },
+      ],
+    })
+
+    expect(checkEachPcbPortConnectedToPcbTraces(circuitJson)).toEqual([])
+  })
+
   test("should prefer source component and source port names in errors", () => {
     const circuitJson: AnyCircuitElement[] = [
       {
