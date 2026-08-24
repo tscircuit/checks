@@ -1,6 +1,62 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbTraceLengths, runAllRoutingChecks } from "../.."
+
+const snapshotBoard = ({
+  center,
+  width,
+  height,
+}: {
+  center: { x: number; y: number }
+  width: number
+  height: number
+}): AnyCircuitElement => ({
+  type: "pcb_board",
+  pcb_board_id: "snapshot_board",
+  center,
+  width,
+  height,
+  thickness: 1.6,
+  num_layers: 2,
+  material: "fr4",
+})
+
+const snapshotLabel = ({
+  id,
+  text,
+  x,
+  y,
+}: {
+  id: string
+  text: string
+  x: number
+  y: number
+}): AnyCircuitElement => ({
+  type: "pcb_silkscreen_text",
+  pcb_silkscreen_text_id: id,
+  pcb_component_id: "",
+  anchor_position: { x, y },
+  anchor_alignment: "center",
+  font: "tscircuit2024",
+  font_size: 0.35,
+  layer: "top",
+  text,
+})
+
+const expectPcbSnapshot = (
+  circuitJson: AnyCircuitElement[],
+  annotations: AnyCircuitElement[],
+  snapshotName: string,
+) => {
+  const warnings = checkPcbTraceLengths(circuitJson)
+
+  expect(
+    convertCircuitJsonToPcbSvg([...annotations, ...circuitJson, ...warnings], {
+      shouldDrawErrors: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path, snapshotName)
+}
 
 const circuitJson = [
   {
@@ -244,7 +300,9 @@ test("ignores an arbitrary long MST branch when the constrained endpoints have a
 })
 
 test("warns using the true overlength shortest endpoint path", () => {
-  expect(checkPcbTraceLengths(createMultidropCircuitJson(7))).toEqual([
+  const multidropCircuitJson = createMultidropCircuitJson(7)
+
+  expect(checkPcbTraceLengths(multidropCircuitJson)).toEqual([
     expect.objectContaining({
       pcb_trace_id: "endpoint_path_1",
       source_trace_id: "constrained_source_trace",
@@ -252,6 +310,26 @@ test("warns using the true overlength shortest endpoint path", () => {
       maximum_trace_length: 5,
     }),
   ])
+
+  expectPcbSnapshot(
+    multidropCircuitJson,
+    [
+      snapshotBoard({ center: { x: 2, y: 8 }, width: 14, height: 28 }),
+      snapshotLabel({
+        id: "constrained_path_label",
+        text: "7mm CONSTRAINED PATH",
+        x: 3.5,
+        y: -1.2,
+      }),
+      snapshotLabel({
+        id: "unrelated_branch_label",
+        text: "20mm UNRELATED BRANCH",
+        x: 3,
+        y: 18.5,
+      }),
+    ],
+    "multidrop-constrained-endpoint-path",
+  )
 })
 
 test("includes via transitions in the shortest endpoint path length", () => {
@@ -328,6 +406,20 @@ test("includes via transitions in the shortest endpoint path length", () => {
       maximum_trace_length: 3.5,
     }),
   ])
+
+  expectPcbSnapshot(
+    viaCircuitJson,
+    [
+      snapshotBoard({ center: { x: 0, y: 0 }, width: 6, height: 4 }),
+      snapshotLabel({
+        id: "via_length_label",
+        text: "1 + VIA 1.6 + 1 = 3.6mm",
+        x: 0,
+        y: -1,
+      }),
+    ],
+    "via-transition-length",
+  )
 
   const thinBoardCircuitJson = [
     {
@@ -469,6 +561,20 @@ test("connects separate same-layer traces at a geometric intersection", () => {
       maximum_trace_length: 3.5,
     }),
   ])
+
+  expectPcbSnapshot(
+    intersectingTraceCircuitJson,
+    [
+      snapshotBoard({ center: { x: 0, y: 0 }, width: 7, height: 7 }),
+      snapshotLabel({
+        id: "same_layer_junction_label",
+        text: "SAME-LAYER JUNCTION = 4mm",
+        x: 0,
+        y: -2.8,
+      }),
+    ],
+    "same-layer-trace-intersection",
+  )
 })
 
 test("uses unique warning IDs when constraints share a PCB trace", () => {
@@ -595,4 +701,18 @@ test("does not connect crossing trace segments on different layers", () => {
   ] as AnyCircuitElement[]
 
   expect(checkPcbTraceLengths(crossLayerCircuitJson)).toEqual([])
+
+  expectPcbSnapshot(
+    crossLayerCircuitJson,
+    [
+      snapshotBoard({ center: { x: 0, y: 0 }, width: 6, height: 6 }),
+      snapshotLabel({
+        id: "cross_layer_label",
+        text: "TOP / BOTTOM CROSSING: NO VIA",
+        x: 0,
+        y: -2.3,
+      }),
+    ],
+    "cross-layer-traces-do-not-connect",
+  )
 })
