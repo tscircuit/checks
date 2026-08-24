@@ -410,6 +410,22 @@ test("still reports a source-trace branch that does not reach a required port", 
         { route_type: "wire", x: 0, y: 0, layer: "top", width: 0.2 },
       ],
     },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_disconnected_half",
+      source_trace_id: "source_trace_half",
+      route: [
+        {
+          route_type: "wire",
+          x: 4,
+          y: 0,
+          layer: "top",
+          width: 0.2,
+          start_pcb_port_id: "pcb_port_b",
+        },
+        { route_type: "wire", x: 2, y: 0, layer: "top", width: 0.2 },
+      ],
+    },
   ] as AnyCircuitElement[]
 
   expect(checkTracesAreContiguous(circuitJson)).toContainEqual(

@@ -43,30 +43,26 @@ const SharedGroundKelvinRepro = () => (
   </board>
 )
 
-test.failing(
-  "same-net routed branch should satisfy the required PCB port",
-  async () => {
-    const circuit = new Circuit({
-      platform: {
-        netlistDrcChecksDisabled: true,
-        placementDrcChecksDisabled: true,
-      },
-    })
-    circuit.add(<SharedGroundKelvinRepro />)
+test("same-net routed branch should satisfy the required PCB port", async () => {
+  const circuit = new Circuit({
+    platform: {
+      netlistDrcChecksDisabled: true,
+      placementDrcChecksDisabled: true,
+    },
+  })
+  circuit.add(<SharedGroundKelvinRepro />)
 
-    await circuit.renderUntilSettled()
+  await circuit.renderUntilSettled()
 
-    const circuitJson = circuit
-      .getCircuitJson()
-      .filter((element) => element.type !== "pcb_trace_error")
-    const errors = checkTracesAreContiguous(circuitJson)
+  const circuitJson = circuit
+    .getCircuitJson()
+    .filter((element) => element.type !== "pcb_trace_error")
+  const errors = checkTracesAreContiguous(circuitJson)
 
-    expect(
-      convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
-        shouldDrawErrors: true,
-      }),
-    ).toMatchSvgSnapshot(import.meta.path)
-    expect(errors).toHaveLength(0)
-  },
-  30_000,
-)
+  expect(
+    convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+      shouldDrawErrors: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path)
+  expect(errors).toHaveLength(0)
+}, 30_000)

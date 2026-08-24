@@ -9,10 +9,7 @@ import type {
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
 import { distance } from "../util/distance"
-import {
-  getPcbPortIdsConnectedToRoutePoint,
-  getPcbPortIdsConnectedToTrace,
-} from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
+import { getPcbPortIdsConnectedToRoutePoint } from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
 import {
   getReadableNameForPcbPort,
   getReadableNameForPcbTrace,
@@ -170,6 +167,80 @@ function checkTracesAreContiguous(
     }
   }
 
+  const touchedPortIdsByTraceId = new Map<string, Set<PcbPortId>>()
+  const traceIdsByTouchedPortId = new Map<PcbPortId, Set<string>>()
+
+  // Route attribution can change when a logical net is converted into an MST.
+  // Record the PCB ports each routed trace physically reaches so contiguity can
+  // follow the copper network instead of relying on singular source_trace_ids.
+  for (const trace of pcbTraces) {
+    const touchedPortIds = new Set<PcbPortId>()
+    const firstPoint = trace.route[0]
+    const lastPoint = trace.route.at(-1)
+
+    for (const point of [firstPoint, lastPoint]) {
+      if (point?.route_type !== "wire") continue
+
+      for (const [pcbPortId, pads] of padMap) {
+        if (pads.some((pad) => isPointInPad(point, pad))) {
+          touchedPortIds.add(pcbPortId)
+        }
+      }
+    }
+
+    touchedPortIdsByTraceId.set(trace.pcb_trace_id, touchedPortIds)
+    for (const pcbPortId of touchedPortIds) {
+      const traceIds = traceIdsByTouchedPortId.get(pcbPortId) ?? new Set()
+      traceIds.add(trace.pcb_trace_id)
+      traceIdsByTouchedPortId.set(pcbPortId, traceIds)
+    }
+  }
+
+  const physicallyConnectedTracesByTraceId = new Map<string, PcbTrace[]>()
+  const getPhysicallyConnectedTraces = (startTrace: PcbTrace): PcbTrace[] => {
+    const cached = physicallyConnectedTracesByTraceId.get(
+      startTrace.pcb_trace_id,
+    )
+    if (cached) return cached
+
+    const connectedTraceIds = new Set<string>()
+    const pendingTraceIds = [startTrace.pcb_trace_id]
+
+    while (pendingTraceIds.length > 0) {
+      const traceId = pendingTraceIds.pop()!
+      if (connectedTraceIds.has(traceId)) continue
+      connectedTraceIds.add(traceId)
+
+      for (const connectedTrace of pcbConnectivityMap.getAllTracesConnectedToTrace(
+        traceId,
+      )) {
+        if (!connectedTraceIds.has(connectedTrace.pcb_trace_id)) {
+          pendingTraceIds.push(connectedTrace.pcb_trace_id)
+        }
+      }
+
+      for (const pcbPortId of touchedPortIdsByTraceId.get(traceId) ?? []) {
+        for (const touchingTraceId of traceIdsByTouchedPortId.get(pcbPortId) ??
+          []) {
+          if (!connectedTraceIds.has(touchingTraceId)) {
+            pendingTraceIds.push(touchingTraceId)
+          }
+        }
+      }
+    }
+
+    const connectedTraces = pcbTraces.filter((trace) =>
+      connectedTraceIds.has(trace.pcb_trace_id),
+    )
+    for (const trace of connectedTraces) {
+      physicallyConnectedTracesByTraceId.set(
+        trace.pcb_trace_id,
+        connectedTraces,
+      )
+    }
+    return connectedTraces
+  }
+
   for (const trace of pcbTraces) {
     if (trace.route.length === 0) continue
 
@@ -245,44 +316,13 @@ function checkTracesAreContiguous(
 
       if (!pads?.length) continue
 
-      let isConnectedByRoutedSourceTrace = false
-      const candidateTraces = [
-        ...pcbConnectivityMap.getAllTracesConnectedToTrace(trace.pcb_trace_id),
-        ...pcbTraces.filter(
-          (candidateTrace) =>
-            candidateTrace.source_trace_id === sourceTrace?.source_trace_id,
-        ),
-      ]
-      for (const candidateTrace of candidateTraces) {
-        if (candidateTrace.pcb_trace_id === trace.pcb_trace_id) continue
-        if (!candidateTrace.source_trace_id) continue
-        const candidateSourceTrace = sourceTraces.find(
-          (st) => st.source_trace_id === candidateTrace.source_trace_id,
-        )
-        if (
-          !sourceTrace ||
-          (candidateTrace.source_trace_id !== sourceTrace.source_trace_id &&
-            !candidateSourceTrace?.connected_source_port_ids.includes(
-              port.source_port_id,
-            ))
-        ) {
-          continue
-        }
-        const candidateFirstPoint = candidateTrace.route[0]
-        const candidateLastPoint = candidateTrace.route.at(-1)
-        if (
-          getPcbPortIdsConnectedToTrace(candidateTrace).includes(
-            port.pcb_port_id,
-          ) ||
-          (candidateFirstPoint?.route_type === "wire" &&
-            pads.some((pad) => isPointInPad(candidateFirstPoint, pad))) ||
-          (candidateLastPoint?.route_type === "wire" &&
-            pads.some((pad) => isPointInPad(candidateLastPoint, pad)))
-        ) {
-          isConnectedByRoutedSourceTrace = true
-          break
-        }
-      }
+      const isConnectedByRoutedSourceTrace = getPhysicallyConnectedTraces(
+        trace,
+      ).some((candidateTrace) =>
+        touchedPortIdsByTraceId
+          .get(candidateTrace.pcb_trace_id)
+          ?.has(port.pcb_port_id),
+      )
       if (isConnectedByRoutedSourceTrace) continue
 
       const isFirstPointConnected =
