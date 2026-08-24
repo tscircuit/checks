@@ -1,14 +1,15 @@
+import {
+  getBoundsOfPcbElements,
+  getReadableNameForElement,
+  getReadableNameForPcbPort,
+} from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   PcbPlatedHole,
   PcbSmtPad,
+  SourcePort,
   SourceTrace,
 } from "circuit-json"
-import {
-  getReadableNameForElement,
-  getReadableNameForPcbPort,
-  getBoundsOfPcbElements,
-} from "@tscircuit/circuit-json-util"
 
 const CIRCUIT_JSON_ID_PATTERN =
   /\b(?:pcb|source|schematic|subcircuit)_[a-z0-9_]+\b/i
@@ -112,6 +113,45 @@ export const getReadableNameForPort = (
   )
 }
 
+export const getReadableNameForSourcePort = (
+  circuitJson: AnyCircuitElement[],
+  sourcePortId: string,
+): string => {
+  const sourcePort = circuitJson.find(
+    (element): element is SourcePort =>
+      element.type === "source_port" && element.source_port_id === sourcePortId,
+  )
+  if (!sourcePort) return "port"
+
+  const sourceComponent = circuitJson.find(
+    (element) =>
+      element.type === "source_component" &&
+      element.source_component_id === sourcePort.source_component_id,
+  )
+
+  const sourceComponentName =
+    sourceComponent?.type === "source_component"
+      ? firstReadableName(
+          [sourceComponent.name],
+          sourceComponent.source_component_id,
+        )
+      : ""
+  const sourcePortName = firstReadableName(
+    [
+      sourcePort.name,
+      sourcePort.pin_number?.toString(),
+      sourcePort.port_hints?.[0],
+    ],
+    sourcePort.source_port_id,
+  )
+
+  if (sourceComponentName && sourcePortName) {
+    return `${sourceComponentName}.${sourcePortName}`
+  }
+
+  return sourcePortName || "port"
+}
+
 export const getReadableNameForSourceTrace = (
   circuitJson: AnyCircuitElement[],
   sourceTrace: SourceTrace,
@@ -142,35 +182,7 @@ export const getReadableNameForSourceTrace = (
       )
       if (sourcePort?.type !== "source_port") return null
 
-      const sourceComponent = circuitJson.find(
-        (element) =>
-          element.type === "source_component" &&
-          element.source_component_id === sourcePort.source_component_id,
-      )
-
-      const sourceComponentName =
-        sourceComponent?.type === "source_component"
-          ? sanitizeReadableName(
-              sourceComponent.name,
-              sourceComponent.source_component_id,
-              "",
-            )
-          : ""
-
-      const sourcePortName = firstReadableName(
-        [
-          sourcePort.name,
-          sourcePort.pin_number?.toString(),
-          sourcePort.port_hints?.[0],
-        ],
-        sourcePort.source_port_id,
-      )
-
-      if (sourceComponentName && sourcePortName) {
-        return `${sourceComponentName}.${sourcePortName}`
-      }
-
-      return sourcePortName || null
+      return getReadableNameForSourcePort(circuitJson, sourcePortId)
     })
     .filter((name): name is string => Boolean(name))
 

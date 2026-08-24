@@ -19,6 +19,7 @@ import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
+import { checkSourcePortsHavePcbPorts } from "./check-source-ports-have-pcb-ports"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
@@ -29,6 +30,7 @@ import { checkViasInPads } from "./check-vias-in-pads"
 
 export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
   return [
+    ...checkSourcePortsHavePcbPorts(circuitJson),
     ...checkCopperToBoardEdgeClearance(circuitJson),
     ...checkViasInPads(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
