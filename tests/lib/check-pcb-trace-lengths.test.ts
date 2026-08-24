@@ -91,7 +91,7 @@ test("warns when a PCB trace exceeds its source trace maximum length", () => {
     {
       type: "pcb_trace_too_long_warning",
       pcb_trace_too_long_warning_id:
-        "pcb_trace_too_long_warning_overlength_pcb_trace",
+        "pcb_trace_too_long_warning_overlength_source_trace_overlength_pcb_trace",
       warning_type: "pcb_trace_too_long_warning",
       message: "PCB trace is 12.00mm long, exceeding the 10mm maximum",
       pcb_trace_id: "overlength_pcb_trace",
@@ -377,6 +377,160 @@ test("does not infer a unique length endpoint from a source net", () => {
   ] as AnyCircuitElement[]
 
   expect(checkPcbTraceLengths(ambiguousEndpointCircuitJson)).toEqual([])
+})
+
+test("connects separate same-layer traces at a geometric intersection", () => {
+  const intersectingTraceCircuitJson = [
+    {
+      type: "source_trace",
+      source_trace_id: "intersection_constraint",
+      connected_source_port_ids: ["source_port_a", "source_port_b"],
+      connected_source_net_ids: [],
+      max_length: 3.5,
+    },
+    {
+      type: "source_trace",
+      source_trace_id: "horizontal_source_trace",
+      connected_source_port_ids: ["source_port_a", "source_port_d"],
+      connected_source_net_ids: [],
+    },
+    {
+      type: "source_trace",
+      source_trace_id: "vertical_source_trace",
+      connected_source_port_ids: ["source_port_c", "source_port_b"],
+      connected_source_net_ids: [],
+    },
+    ...[
+      ["a", -2, 0],
+      ["b", 0, 2],
+      ["c", 0, -2],
+      ["d", 2, 0],
+    ].map(([name, x, y]) => ({
+      type: "pcb_port",
+      pcb_port_id: `pcb_port_${name}`,
+      source_port_id: `source_port_${name}`,
+      pcb_component_id: `component_${name}`,
+      x,
+      y,
+      layers: ["top"],
+    })),
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "horizontal_trace",
+      source_trace_id: "horizontal_source_trace",
+      route: [
+        {
+          route_type: "wire",
+          x: -2,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+          start_pcb_port_id: "pcb_port_a",
+        },
+        {
+          route_type: "wire",
+          x: 2,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+          end_pcb_port_id: "pcb_port_d",
+        },
+      ],
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "vertical_trace",
+      source_trace_id: "vertical_source_trace",
+      route: [
+        {
+          route_type: "wire",
+          x: 0,
+          y: -2,
+          width: 0.15,
+          layer: "top",
+          start_pcb_port_id: "pcb_port_c",
+        },
+        {
+          route_type: "wire",
+          x: 0,
+          y: 2,
+          width: 0.15,
+          layer: "top",
+          end_pcb_port_id: "pcb_port_b",
+        },
+      ],
+    },
+  ] as AnyCircuitElement[]
+
+  expect(checkPcbTraceLengths(intersectingTraceCircuitJson)).toEqual([
+    expect.objectContaining({
+      source_trace_id: "intersection_constraint",
+      actual_trace_length: 4,
+      maximum_trace_length: 3.5,
+    }),
+  ])
+})
+
+test("uses unique warning IDs when constraints share a PCB trace", () => {
+  const sharedTraceCircuitJson = [
+    ...["first_constraint", "second_constraint"].map((sourceTraceId) => ({
+      type: "source_trace",
+      source_trace_id: sourceTraceId,
+      connected_source_port_ids: ["source_port_a", "source_port_b"],
+      connected_source_net_ids: [],
+      max_length: 1,
+    })),
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_a",
+      source_port_id: "source_port_a",
+      pcb_component_id: "component_a",
+      x: 0,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_b",
+      source_port_id: "source_port_b",
+      pcb_component_id: "component_b",
+      x: 2,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "shared_pcb_trace",
+      source_trace_id: "first_constraint",
+      route: [
+        {
+          route_type: "wire",
+          x: 0,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+          start_pcb_port_id: "pcb_port_a",
+        },
+        {
+          route_type: "wire",
+          x: 2,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+          end_pcb_port_id: "pcb_port_b",
+        },
+      ],
+    },
+  ] as AnyCircuitElement[]
+
+  expect(
+    checkPcbTraceLengths(sharedTraceCircuitJson).map(
+      (warning) => warning.pcb_trace_too_long_warning_id,
+    ),
+  ).toEqual([
+    "pcb_trace_too_long_warning_first_constraint_shared_pcb_trace",
+    "pcb_trace_too_long_warning_second_constraint_shared_pcb_trace",
+  ])
 })
 
 test("does not connect crossing trace segments on different layers", () => {

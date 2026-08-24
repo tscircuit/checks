@@ -26,7 +26,7 @@ const createTraceTooLongWarning = ({
   maximumTraceLength: number
 }): PcbTraceTooLongWarning => ({
   type: "pcb_trace_too_long_warning",
-  pcb_trace_too_long_warning_id: `pcb_trace_too_long_warning_${pcbTrace.pcb_trace_id}`,
+  pcb_trace_too_long_warning_id: `pcb_trace_too_long_warning_${sourceTrace.source_trace_id}_${pcbTrace.pcb_trace_id}`,
   warning_type: "pcb_trace_too_long_warning",
   message: `PCB trace is ${actualTraceLength.toFixed(2)}mm long, exceeding the ${maximumTraceLength}mm maximum`,
   pcb_trace_id: pcbTrace.pcb_trace_id,
