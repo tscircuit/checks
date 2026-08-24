@@ -1,9 +1,20 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbCopperOverKeepout } from "lib/check-pcb-copper-over-keepout"
 import { runAllPlacementChecks } from "lib/run-all-checks"
 
 const circuitJson = [
+  {
+    type: "pcb_board",
+    pcb_board_id: "pcb_board_1",
+    center: { x: 1, y: 0 },
+    width: 8,
+    height: 5,
+    thickness: 1.6,
+    num_layers: 2,
+    material: "fr4",
+  },
   {
     type: "source_component",
     source_component_id: "source_component_c14",
@@ -93,6 +104,28 @@ const circuitJson = [
     layers: ["top"],
     excluded_pcb_component_ids: ["pcb_component_ant1"],
   },
+  {
+    type: "pcb_silkscreen_text",
+    pcb_silkscreen_text_id: "pcb_silkscreen_text_c14",
+    pcb_component_id: "pcb_component_c14",
+    anchor_position: { x: 0, y: -1.4 },
+    anchor_alignment: "center",
+    font: "tscircuit2024",
+    font_size: 0.25,
+    layer: "top",
+    text: "C14: ERROR",
+  },
+  {
+    type: "pcb_silkscreen_text",
+    pcb_silkscreen_text_id: "pcb_silkscreen_text_ant1",
+    pcb_component_id: "pcb_component_ant1",
+    anchor_position: { x: 2, y: 1.4 },
+    anchor_alignment: "center",
+    font: "tscircuit2024",
+    font_size: 0.25,
+    layer: "top",
+    text: "ANT1: EXCLUDED",
+  },
 ] as AnyCircuitElement[]
 
 test("reports non-excluded component copper inside a keepout once", async () => {
@@ -106,6 +139,12 @@ test("reports non-excluded component copper inside a keepout once", async () => 
   expect(errors[0]?.message).toContain("PCB keepout")
   expect(errors[0]?.message).not.toContain("pcb_keepout_antenna")
 
+  expect(
+    convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+      shouldDrawErrors: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path, "component-copper-over-rect-keepout")
+
   const placementErrors = await runAllPlacementChecks(circuitJson)
   expect(
     placementErrors.some(
@@ -117,7 +156,17 @@ test("reports non-excluded component copper inside a keepout once", async () => 
 })
 
 test("reports a via inside a circular keepout on a shared layer", () => {
-  const errors = checkPcbCopperOverKeepout([
+  const circleKeepoutCircuitJson = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "pcb_board_1",
+      center: { x: 1, y: 1 },
+      width: 5,
+      height: 5,
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+    },
     {
       type: "pcb_via",
       pcb_via_id: "pcb_via_1",
@@ -135,10 +184,27 @@ test("reports a via inside a circular keepout on a shared layer", () => {
       radius: 1,
       layers: ["bottom"],
     },
-  ] as AnyCircuitElement[])
+    {
+      type: "pcb_silkscreen_text",
+      pcb_silkscreen_text_id: "pcb_silkscreen_text_via",
+      pcb_component_id: "",
+      anchor_position: { x: 1, y: -0.4 },
+      anchor_alignment: "center",
+      font: "tscircuit2024",
+      font_size: 0.3,
+      layer: "top",
+      text: "VIA ERROR",
+    },
+  ] as AnyCircuitElement[]
+  const errors = checkPcbCopperOverKeepout(circleKeepoutCircuitJson)
 
   expect(errors).toHaveLength(1)
   expect(errors[0]?.pcb_placement_error_id).toBe(
     "copper_over_keepout_pcb_via_1_pcb_keepout_circle",
   )
+  expect(
+    convertCircuitJsonToPcbSvg([...circleKeepoutCircuitJson, ...errors], {
+      shouldDrawErrors: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path, "via-over-circle-keepout")
 })
