@@ -8,6 +8,12 @@ import type {
 import { getReadableNameForComponent } from "lib/util/get-readable-names"
 import type { Point } from "@tscircuit/math-utils"
 import * as Flatten from "@flatten-js/core"
+import {
+  arePointsInsideBoard,
+  createBoardEdgeSpatialIndex,
+  getBoardEdgesNearBox,
+  type BoardEdgeSpatialIndex,
+} from "lib/utils/geometry/create-board-edge-spatial-index"
 import { rotateDEG, applyToPoint } from "transformation-matrix"
 
 /**
@@ -264,6 +270,27 @@ function getRepositionSuggestion({
   return `Try moving it ${absDy}mm ${yDir} to fit within the board edge.`
 }
 
+const isComponentInsideBoard = ({
+  componentPolygon,
+  boardEdgeSpatialIndex,
+}: {
+  componentPolygon: Flatten.Polygon
+  boardEdgeSpatialIndex: BoardEdgeSpatialIndex
+}): boolean => {
+  const nearbyBoardEdges = getBoardEdgesNearBox({
+    box: componentPolygon.box,
+    margin: 0,
+    boardEdgeSpatialIndex,
+  })
+  if (nearbyBoardEdges.length > 0) {
+    return boardEdgeSpatialIndex.boardPolygon.contains(componentPolygon)
+  }
+  return arePointsInsideBoard({
+    points: componentPolygon.vertices,
+    boardEdgeSpatialIndex,
+  })
+}
+
 /**
  * Main function — polygon-first: construct polygons, test containment / intersection,
  * compute overlap distance using boolean intersection area or geometric distance.
@@ -278,6 +305,7 @@ export function checkPcbComponentsOutOfBoard(
 
   const boardPoly = boardToPolygon({ board })
   if (!boardPoly) return []
+  const boardEdgeSpatialIndex = createBoardEdgeSpatialIndex(boardPoly.vertices)
 
   const components = circuitJson.filter(
     (el): el is PcbComponent => el.type === "pcb_component",
@@ -309,9 +337,10 @@ export function checkPcbComponentsOutOfBoard(
 
     if (compPoly.area() === 0) continue
 
-    // If component is entirely inside board polygon -> OK
-    // Flatten.Polygon.contains accepts shapes; this is the correct polygon containment check.
-    const isInside = boardPoly.contains(compPoly)
+    const isInside = isComponentInsideBoard({
+      componentPolygon: compPoly,
+      boardEdgeSpatialIndex,
+    })
     if (isInside) continue
 
     // Component is at least partially outside. Compute overlapDistance:

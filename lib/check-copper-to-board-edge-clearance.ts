@@ -11,6 +11,13 @@ import type {
   PcbVia,
 } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import {
+  arePointsInsideBoard,
+  createBoardEdgeSpatialIndex,
+  getBoardEdgesNearBox,
+  type BoardEdgeSpatialIndex,
+  type BoardOutlinePoint,
+} from "lib/utils/geometry/create-board-edge-spatial-index"
 import { applyToPoint, rotateDEG } from "transformation-matrix"
 
 type CopperElement = PcbVia | PcbSmtPad | PcbPlatedHole | PcbCopperPour
@@ -99,9 +106,9 @@ const brepRingToPolygon = (
   return polygon
 }
 
-const boardToPolygon = (board: PcbBoard): Flatten.Polygon | null => {
+const boardToOutline = (board: PcbBoard): BoardOutlinePoint[] | null => {
   if (board.outline && board.outline.length >= 3) {
-    return pointsToPolygon(board.outline)
+    return board.outline
   }
 
   if (
@@ -114,12 +121,12 @@ const boardToPolygon = (board: PcbBoard): Flatten.Polygon | null => {
 
   const halfWidth = board.width / 2
   const halfHeight = board.height / 2
-  return pointsToPolygon([
+  return [
     { x: board.center.x - halfWidth, y: board.center.y - halfHeight },
     { x: board.center.x + halfWidth, y: board.center.y - halfHeight },
     { x: board.center.x + halfWidth, y: board.center.y + halfHeight },
     { x: board.center.x - halfWidth, y: board.center.y + halfHeight },
-  ])
+  ]
 }
 
 const getRectanglePolygon = ({
@@ -438,29 +445,111 @@ const getCopperElementLabel = (element: CopperElement): string => {
   return "Copper pour"
 }
 
-const measureClearance = (
-  board: Flatten.Polygon,
-  geometry: CopperGeometry,
-): { isInside: boolean; clearance: number } => {
-  if (geometry.kind === "shapes") {
-    const isInside = geometry.shapes.every((shape) => board.contains(shape))
-    return {
-      isInside,
-      clearance: isInside
-        ? Math.min(
-            ...geometry.shapes.map((shape) => board.distanceTo(shape)[0]),
-          )
-        : 0,
+const measureShapeClearance = ({
+  shape,
+  requiredClearance,
+  boardEdgeSpatialIndex,
+}: {
+  shape: CopperShape
+  requiredClearance: number
+  boardEdgeSpatialIndex: BoardEdgeSpatialIndex
+}): { isInside: boolean; clearance: number } => {
+  const nearbyBoardEdges = getBoardEdgesNearBox({
+    box: shape.box,
+    margin: requiredClearance,
+    boardEdgeSpatialIndex,
+  })
+  if (nearbyBoardEdges.length === 0) {
+    let points: BoardOutlinePoint[]
+    if (shape instanceof Flatten.Circle) {
+      points = [shape.center]
+    } else {
+      points = shape.vertices
     }
+    const isInside = arePointsInsideBoard({
+      points,
+      boardEdgeSpatialIndex,
+    })
+    if (!isInside) return { isInside: false, clearance: 0 }
+    return { isInside: true, clearance: Number.POSITIVE_INFINITY }
   }
 
-  const centerLineClearance = board.distanceTo(geometry.centerLine)[0]
+  const isInside = boardEdgeSpatialIndex.boardPolygon.contains(shape)
+  if (!isInside) return { isInside: false, clearance: 0 }
+
+  const clearance = Math.min(
+    ...nearbyBoardEdges.map((boardEdge) => boardEdge.distanceTo(shape)[0]),
+  )
+  return { isInside: true, clearance }
+}
+
+const measurePillClearance = ({
+  geometry,
+  requiredClearance,
+  boardEdgeSpatialIndex,
+}: {
+  geometry: Extract<CopperGeometry, { kind: "pill" }>
+  requiredClearance: number
+  boardEdgeSpatialIndex: BoardEdgeSpatialIndex
+}): { isInside: boolean; clearance: number } => {
+  const nearbyBoardEdges = getBoardEdgesNearBox({
+    box: geometry.centerLine.box,
+    margin: geometry.radius + requiredClearance,
+    boardEdgeSpatialIndex,
+  })
+  if (nearbyBoardEdges.length === 0) {
+    const isInside = arePointsInsideBoard({
+      points: geometry.centerLine.vertices,
+      boardEdgeSpatialIndex,
+    })
+    if (!isInside) return { isInside: false, clearance: 0 }
+    return { isInside: true, clearance: Number.POSITIVE_INFINITY }
+  }
+
+  const centerLineClearance = Math.min(
+    ...nearbyBoardEdges.map(
+      (boardEdge) => boardEdge.distanceTo(geometry.centerLine)[0],
+    ),
+  )
   const clearance = centerLineClearance - geometry.radius
   const isInside =
-    board.contains(geometry.centerLine) && clearance >= -GEOMETRY_EPSILON
+    boardEdgeSpatialIndex.boardPolygon.contains(geometry.centerLine) &&
+    clearance >= -GEOMETRY_EPSILON
+  if (!isInside) return { isInside: false, clearance: 0 }
+  return { isInside: true, clearance: Math.max(0, clearance) }
+}
+
+const measureClearance = ({
+  geometry,
+  requiredClearance,
+  boardEdgeSpatialIndex,
+}: {
+  geometry: CopperGeometry
+  requiredClearance: number
+  boardEdgeSpatialIndex: BoardEdgeSpatialIndex
+}): { isInside: boolean; clearance: number } => {
+  if (geometry.kind === "pill") {
+    return measurePillClearance({
+      geometry,
+      requiredClearance,
+      boardEdgeSpatialIndex,
+    })
+  }
+
+  const measurements = geometry.shapes.map((shape) =>
+    measureShapeClearance({
+      shape,
+      requiredClearance,
+      boardEdgeSpatialIndex,
+    }),
+  )
+  const isInside = measurements.every((measurement) => measurement.isInside)
+  if (!isInside) return { isInside: false, clearance: 0 }
   return {
-    isInside,
-    clearance: isInside ? Math.max(0, clearance) : 0,
+    isInside: true,
+    clearance: Math.min(
+      ...measurements.map((measurement) => measurement.clearance),
+    ),
   }
 }
 
@@ -480,13 +569,14 @@ export function checkCopperToBoardEdgeClearance(
   const board = getPcbBoard(circuitJson)
   if (!board) return []
 
-  const boardPolygon = boardToPolygon(board)
-  if (!boardPolygon) return []
+  const boardOutline = boardToOutline(board)
+  if (!boardOutline) return []
 
   const requiredClearance =
     getBoardDrcValue(board, "min_board_edge_clearance") ??
     jlcMinTolerances.min_board_edge_clearance
   if (requiredClearance === undefined) return []
+  const boardEdgeSpatialIndex = createBoardEdgeSpatialIndex(boardOutline)
 
   const copperElements = circuitJson.filter(
     (element): element is CopperElement =>
@@ -511,7 +601,11 @@ export function checkCopperToBoardEdgeClearance(
     const geometry = getCopperGeometry(element, componentCcwRotationsById)
     if (!geometry) continue
 
-    const { isInside, clearance } = measureClearance(boardPolygon, geometry)
+    const { isInside, clearance } = measureClearance({
+      geometry,
+      requiredClearance,
+      boardEdgeSpatialIndex,
+    })
     if (isInside && clearance + GEOMETRY_EPSILON >= requiredClearance) {
       continue
     }
