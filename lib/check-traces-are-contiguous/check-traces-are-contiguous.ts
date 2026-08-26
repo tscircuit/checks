@@ -218,6 +218,15 @@ function checkTracesAreContiguous(
     for (const point of [firstPoint, lastPoint]) {
       if (!point) continue
 
+      for (const pcbPortId of getPcbPortIdsConnectedToRoutePoint(point)) {
+        // Pad-backed ports still need a geometric touch so a stale route id
+        // cannot hide cut-off copper. Padless ports (for example a manually
+        // placed via's layer port) rely on the explicit endpoint id.
+        if (!(padMap.get(pcbPortId)?.length ?? 0)) {
+          touchedPortIds.add(pcbPortId)
+        }
+      }
+
       for (const [pcbPortId, pads] of padMap) {
         if (pads.some((pad) => routePointTouchesPad(point, pad))) {
           touchedPortIds.add(pcbPortId)

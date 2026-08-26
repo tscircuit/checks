@@ -317,3 +317,103 @@ test("treats traces meeting through a breakout point as one copper group", () =>
     }),
   )
 })
+
+test("uses explicit route endpoint port ids for padless via ports", () => {
+  const sourceNetId = "source_net_via"
+  const viaCircuitJson: AnyCircuitElement[] = [
+    {
+      type: "source_net",
+      source_net_id: sourceNetId,
+      name: "GND",
+      member_source_group_ids: [],
+    },
+    {
+      type: "source_trace",
+      source_trace_id: "source_trace_to_via",
+      connected_source_port_ids: ["source_port_component", "source_port_via"],
+      connected_source_net_ids: [sourceNetId],
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_component",
+      source_port_id: "source_port_component",
+      x: -3,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_component",
+      pcb_port_id: "pcb_port_component",
+      shape: "rect",
+      x: -3,
+      y: 0,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_via",
+      source_port_id: "source_port_via",
+      x: 0,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_via",
+      pcb_via_id: "pcb_via_0",
+      source_net_id: sourceNetId,
+      x: 0,
+      y: 0,
+      hole_diameter: 0.3,
+      outer_diameter: 0.6,
+      layers: ["top", "bottom"],
+      from_layer: "top",
+      to_layer: "bottom",
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_to_via",
+      source_trace_id: "source_trace_to_via",
+      route: [
+        {
+          route_type: "wire",
+          x: -3,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+          start_pcb_port_id: "pcb_port_component",
+        },
+        {
+          route_type: "wire",
+          x: 0,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+          end_pcb_port_id: "pcb_port_via",
+        },
+      ],
+    },
+  ]
+
+  expect(checkTracesAreContiguous(viaCircuitJson)).toHaveLength(0)
+
+  const traceWithoutViaPortId = viaCircuitJson.map((element) => {
+    if (element.type !== "pcb_trace") return element
+    return {
+      ...element,
+      route: element.route.map((point) => {
+        if (point.route_type !== "wire" || !point.end_pcb_port_id) return point
+        const { end_pcb_port_id: _endPcbPortId, ...pointWithoutPortId } = point
+        return pointWithoutPortId
+      }),
+    }
+  })
+
+  expect(checkTracesAreContiguous(traceWithoutViaPortId)).toContainEqual(
+    expect.objectContaining({
+      pcb_trace_error_id: `disconnected_copper_groups_${sourceNetId}`,
+    }),
+  )
+})
