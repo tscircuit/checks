@@ -66,29 +66,46 @@ export function checkSchematicComponentPortsOutsideBody(
     const componentPorts =
       portsByComponentId.get(component.schematic_component_id) ?? []
 
-    const portsOutsideBody = componentPorts.filter((port) => {
-      if (
-        port.side_of_component === "left" ||
-        port.side_of_component === "right"
-      ) {
-        return (
-          port.center.y < componentBottomY - FLOATING_POINT_TOLERANCE ||
-          port.center.y > componentTopY + FLOATING_POINT_TOLERANCE
-        )
-      }
+    const portsOutsideBody = componentPorts
+      .filter((port) => {
+        if (
+          port.side_of_component === "left" ||
+          port.side_of_component === "right"
+        ) {
+          return (
+            port.center.y < componentBottomY - FLOATING_POINT_TOLERANCE ||
+            port.center.y > componentTopY + FLOATING_POINT_TOLERANCE
+          )
+        }
 
-      if (
-        port.side_of_component === "top" ||
-        port.side_of_component === "bottom"
-      ) {
-        return (
-          port.center.x < componentLeftX - FLOATING_POINT_TOLERANCE ||
-          port.center.x > componentRightX + FLOATING_POINT_TOLERANCE
-        )
-      }
+        if (
+          port.side_of_component === "top" ||
+          port.side_of_component === "bottom"
+        ) {
+          return (
+            port.center.x < componentLeftX - FLOATING_POINT_TOLERANCE ||
+            port.center.x > componentRightX + FLOATING_POINT_TOLERANCE
+          )
+        }
 
-      return false
-    })
+        return false
+      })
+      .sort((portA, portB) => {
+        const portAIsVertical =
+          portA.side_of_component === "left" ||
+          portA.side_of_component === "right"
+        const portBIsVertical =
+          portB.side_of_component === "left" ||
+          portB.side_of_component === "right"
+
+        if (portAIsVertical && portBIsVertical) {
+          return portB.center.y - portA.center.y
+        }
+        if (!portAIsVertical && !portBIsVertical) {
+          return portA.center.x - portB.center.x
+        }
+        return portAIsVertical ? -1 : 1
+      })
 
     if (portsOutsideBody.length === 0) continue
 
