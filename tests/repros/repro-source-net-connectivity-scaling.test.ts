@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
-import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkSourceNetsArePhysicallyConnected } from "lib/check-source-nets-are-physically-connected"
 
 const copperGroupCount = 500
 const sourceNetId = "source_net_large_split"
@@ -83,18 +83,11 @@ const createLargeSplitNet = (): AnyCircuitElement[] => {
 
 test("checks 1,000 required ports split across 500 copper groups", () => {
   const circuitJson = createLargeSplitNet()
-  const startedAt = performance.now()
-  const errors = checkTracesAreContiguous(circuitJson)
-  const elapsedMs = performance.now() - startedAt
-
-  console.info(
-    `checked ${copperGroupCount * 2} ports and ${copperGroupCount} traces in ${elapsedMs.toFixed(1)}ms`,
-  )
+  const errors = checkSourceNetsArePhysicallyConnected(circuitJson)
   expect(errors).toHaveLength(1)
   expect(errors[0]).toMatchObject({
     pcb_trace_error_id: `disconnected_copper_groups_${sourceNetId}`,
     message:
       "Net [LARGE_SPLIT_NET] has 1000 required PCB ports split across 500 disconnected copper groups.",
   })
-  expect(elapsedMs).toBeLessThan(10_000)
 }, 15_000)

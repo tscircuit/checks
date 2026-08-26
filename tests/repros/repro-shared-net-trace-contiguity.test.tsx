@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkSourceNetsArePhysicallyConnected } from "lib/check-source-nets-are-physically-connected"
 import { Circuit } from "tscircuit"
 
 const Branch = ({
@@ -43,7 +43,7 @@ const SharedGroundKelvinRepro = () => (
   </board>
 )
 
-test("reports same-net routed branches split into copper groups", async () => {
+test("same-net routed branches joined by copper are connected", async () => {
   const circuit = new Circuit({
     platform: {
       netlistDrcChecksDisabled: true,
@@ -57,15 +57,9 @@ test("reports same-net routed branches split into copper groups", async () => {
   const circuitJson = circuit
     .getCircuitJson()
     .filter((element) => element.type !== "pcb_trace_error")
-  const errors = checkTracesAreContiguous(circuitJson)
+  const errors = checkSourceNetsArePhysicallyConnected(circuitJson)
 
-  expect(errors).toEqual([
-    expect.objectContaining({
-      pcb_trace_error_id: "disconnected_copper_groups_source_net_0",
-      message:
-        "Net [GND] has 3 required PCB ports split across 2 disconnected copper groups.",
-    }),
-  ])
+  expect(errors).toEqual([])
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,

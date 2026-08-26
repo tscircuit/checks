@@ -6,8 +6,6 @@ import type {
   SourceTrace,
   PcbSmtPad,
   PcbPlatedHole,
-  SourceNet,
-  PcbBreakoutPoint,
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
 import { distance } from "../util/distance"
@@ -20,11 +18,9 @@ import { PcbConnectivityMap } from "circuit-json-to-connectivity-map"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 
 type PcbPortId = PcbPort["pcb_port_id"]
+type PcbTraceId = PcbTrace["pcb_trace_id"]
 type PcbTraceRoutePoint = PcbTrace["route"][number]
 type PcbPad = PcbSmtPad | PcbPlatedHole
-type BreakoutTouchKey = `${PcbBreakoutPoint["pcb_breakout_point_id"]}:${string}`
-
-const BREAKOUT_POINT_COORDINATE_TOLERANCE = 0.001
 
 function routePointTouchesPad(point: PcbTraceRoutePoint, pad: PcbPad) {
   return (
@@ -32,20 +28,6 @@ function routePointTouchesPad(point: PcbTraceRoutePoint, pad: PcbPad) {
     getLayersOfPcbElement(pad).includes(point.layer) &&
     isPointInPad(point, pad)
   )
-}
-
-function getBreakoutTouchKey(
-  point: PcbTraceRoutePoint,
-  breakoutPoint: PcbBreakoutPoint,
-): BreakoutTouchKey | undefined {
-  if (point.route_type !== "wire") return undefined
-
-  const reachesBreakoutPoint =
-    distance(point, breakoutPoint) <=
-    point.width / 2 + BREAKOUT_POINT_COORDINATE_TOLERANCE
-  if (!reachesBreakoutPoint) return undefined
-
-  return `${breakoutPoint.pcb_breakout_point_id}:${point.layer}`
 }
 
 function getRoutePointCenter(point: PcbTraceRoutePoint) {
@@ -59,12 +41,17 @@ function getRoutePointCenter(point: PcbTraceRoutePoint) {
   return { x: point.x, y: point.y }
 }
 
-function routePointConnectsToAnotherExpectedPort(
-  point: PcbTraceRoutePoint,
-  expectedPorts: PcbPort[],
-  missingPcbPortId: PcbPortId,
-  padMap: Map<PcbPortId, PcbPad[]>,
-) {
+function routePointConnectsToAnotherExpectedPort({
+  point,
+  expectedPorts,
+  missingPcbPortId,
+  padMap,
+}: {
+  point: PcbTraceRoutePoint
+  expectedPorts: PcbPort[]
+  missingPcbPortId: PcbPortId
+  padMap: Map<PcbPortId, PcbPad[]>
+}) {
   return expectedPorts.some((expectedPort) => {
     if (
       !expectedPort.pcb_port_id ||
@@ -111,22 +98,22 @@ function getMissingConnectionErrorCenter({
   } else if (lastWirePointReferencesPort && lastWirePoint) {
     errorLocation = lastWirePoint
   } else if (
-    routePointConnectsToAnotherExpectedPort(
-      firstPoint,
+    routePointConnectsToAnotherExpectedPort({
+      point: firstPoint,
       expectedPorts,
-      port.pcb_port_id,
+      missingPcbPortId: port.pcb_port_id,
       padMap,
-    ) &&
+    }) &&
     lastWirePoint
   ) {
     errorLocation = lastWirePoint
   } else if (
-    routePointConnectsToAnotherExpectedPort(
-      lastPoint,
+    routePointConnectsToAnotherExpectedPort({
+      point: lastPoint,
       expectedPorts,
-      port.pcb_port_id,
+      missingPcbPortId: port.pcb_port_id,
       padMap,
-    ) &&
+    }) &&
     firstWirePoint
   ) {
     errorLocation = firstWirePoint
@@ -163,28 +150,18 @@ function checkTracesAreContiguous(
   const pcbTraces = circuitJson.filter(
     (el) => el.type === "pcb_trace",
   ) as PcbTrace[]
-  const pcbTraceById = new Map(
-    pcbTraces.map((pcbTrace) => [pcbTrace.pcb_trace_id, pcbTrace]),
-  )
   const sourceTraces = circuitJson.filter(
     (el) => el.type === "source_trace",
   ) as SourceTrace[]
-  const sourceNets = circuitJson.filter(
-    (el) => el.type === "source_net",
-  ) as SourceNet[]
   const pcbSmtPads = circuitJson.filter(
     (el) => el.type === "pcb_smtpad",
   ) as PcbSmtPad[]
   const pcbPlatedHoles = circuitJson.filter(
     (el) => el.type === "pcb_plated_hole",
   ) as PcbPlatedHole[]
-  const pcbBreakoutPoints = circuitJson.filter(
-    (el) => el.type === "pcb_breakout_point",
-  ) as PcbBreakoutPoint[]
-
   const padMap = new Map<PcbPortId, PcbPad[]>()
   const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
-  const checkedSourceTraceIds = new Set<string>()
+  const checkedSourceTraceIds = new Set<SourceTrace["source_trace_id"]>()
 
   for (const pad of pcbSmtPads) {
     if (pad.pcb_port_id) {
@@ -201,41 +178,24 @@ function checkTracesAreContiguous(
     }
   }
 
-  const touchedPortIdsByTraceId = new Map<string, Set<PcbPortId>>()
-  const traceIdsByTouchedPortId = new Map<PcbPortId, Set<string>>()
-  const breakoutTouchKeysByTraceId = new Map<string, Set<BreakoutTouchKey>>()
-  const traceIdsByBreakoutTouchKey = new Map<BreakoutTouchKey, Set<string>>()
+  const touchedPortIdsByTraceId = new Map<PcbTraceId, Set<PcbPortId>>()
+  const traceIdsByTouchedPortId = new Map<PcbPortId, Set<PcbTraceId>>()
 
   // Route attribution can change when a logical net is converted into an MST.
   // Record the PCB ports each routed trace physically reaches so contiguity can
   // follow the copper network instead of relying on singular source_trace_ids.
   for (const trace of pcbTraces) {
     const touchedPortIds = new Set<PcbPortId>()
-    const breakoutTouchKeys = new Set<BreakoutTouchKey>()
     const firstPoint = trace.route[0]
     const lastPoint = trace.route.at(-1)
 
     for (const point of [firstPoint, lastPoint]) {
       if (!point) continue
 
-      for (const pcbPortId of getPcbPortIdsConnectedToRoutePoint(point)) {
-        // Pad-backed ports still need a geometric touch so a stale route id
-        // cannot hide cut-off copper. Padless ports (for example a manually
-        // placed via's layer port) rely on the explicit endpoint id.
-        if (!(padMap.get(pcbPortId)?.length ?? 0)) {
-          touchedPortIds.add(pcbPortId)
-        }
-      }
-
       for (const [pcbPortId, pads] of padMap) {
         if (pads.some((pad) => routePointTouchesPad(point, pad))) {
           touchedPortIds.add(pcbPortId)
         }
-      }
-
-      for (const breakoutPoint of pcbBreakoutPoints) {
-        const breakoutTouchKey = getBreakoutTouchKey(point, breakoutPoint)
-        if (breakoutTouchKey) breakoutTouchKeys.add(breakoutTouchKey)
       }
     }
 
@@ -245,24 +205,16 @@ function checkTracesAreContiguous(
       traceIds.add(trace.pcb_trace_id)
       traceIdsByTouchedPortId.set(pcbPortId, traceIds)
     }
-
-    breakoutTouchKeysByTraceId.set(trace.pcb_trace_id, breakoutTouchKeys)
-    for (const breakoutTouchKey of breakoutTouchKeys) {
-      const traceIds =
-        traceIdsByBreakoutTouchKey.get(breakoutTouchKey) ?? new Set()
-      traceIds.add(trace.pcb_trace_id)
-      traceIdsByBreakoutTouchKey.set(breakoutTouchKey, traceIds)
-    }
   }
 
-  const physicallyConnectedTracesByTraceId = new Map<string, PcbTrace[]>()
+  const physicallyConnectedTracesByTraceId = new Map<PcbTraceId, PcbTrace[]>()
   const getPhysicallyConnectedTraces = (startTrace: PcbTrace): PcbTrace[] => {
     const cached = physicallyConnectedTracesByTraceId.get(
       startTrace.pcb_trace_id,
     )
     if (cached) return cached
 
-    const connectedTraceIds = new Set<string>()
+    const connectedTraceIds = new Set<PcbTraceId>()
     const pendingTraceIds = [startTrace.pcb_trace_id]
 
     while (pendingTraceIds.length > 0) {
@@ -281,17 +233,6 @@ function checkTracesAreContiguous(
       for (const pcbPortId of touchedPortIdsByTraceId.get(traceId) ?? []) {
         for (const touchingTraceId of traceIdsByTouchedPortId.get(pcbPortId) ??
           []) {
-          if (!connectedTraceIds.has(touchingTraceId)) {
-            pendingTraceIds.push(touchingTraceId)
-          }
-        }
-      }
-
-      for (const breakoutTouchKey of breakoutTouchKeysByTraceId.get(traceId) ??
-        []) {
-        for (const touchingTraceId of traceIdsByBreakoutTouchKey.get(
-          breakoutTouchKey,
-        ) ?? []) {
           if (!connectedTraceIds.has(touchingTraceId)) {
             pendingTraceIds.push(touchingTraceId)
           }
@@ -489,120 +430,6 @@ function checkTracesAreContiguous(
         })
       }
     }
-  }
-
-  // A named source net is usually routed as several one-port source traces.
-  // Checking each source trace independently only proves that every port
-  // reaches some copper, not that all of that copper belongs to one physical
-  // component. Compare the physical component reached by every required port
-  // so a net split into independently contiguous islands is still reported.
-  for (const sourceNet of sourceNets) {
-    // The connectivity map currently models traces, pads, and vias, but not
-    // copper pours or ground-plane regions. Avoid a false open until those
-    // copper shapes participate in physical-connectivity analysis.
-    const hasUnmodeledPlaneCopper = circuitJson.some(
-      (element) =>
-        (element.type === "pcb_copper_pour" ||
-          element.type === "pcb_ground_plane") &&
-        element.source_net_id === sourceNet.source_net_id,
-    )
-    if (hasUnmodeledPlaneCopper) continue
-
-    const sourceTracesForNet = sourceTraces.filter((sourceTrace) =>
-      sourceTrace.connected_source_net_ids?.includes(sourceNet.source_net_id),
-    )
-    const sourceTraceIdsForNet = new Set(
-      sourceTracesForNet.map((sourceTrace) => sourceTrace.source_trace_id),
-    )
-    const expectedSourcePortIds = new Set(
-      sourceTracesForNet.flatMap(
-        (sourceTrace) => sourceTrace.connected_source_port_ids ?? [],
-      ),
-    )
-    const expectedPorts = pcbPorts.filter((pcbPort) =>
-      expectedSourcePortIds.has(pcbPort.source_port_id),
-    )
-
-    if (expectedPorts.length < 2) continue
-
-    const routedTracesForNet = pcbTraces.filter(
-      (pcbTrace) =>
-        pcbTrace.source_trace_id === sourceNet.source_net_id ||
-        (pcbTrace.source_trace_id !== undefined &&
-          sourceTraceIdsForNet.has(pcbTrace.source_trace_id)),
-    )
-    if (routedTracesForNet.length === 0) continue
-
-    const routedTraceIdsForNet = new Set(
-      routedTracesForNet.map((pcbTrace) => pcbTrace.pcb_trace_id),
-    )
-    const portsByPhysicalGroup = new Map<string, PcbPort[]>()
-
-    for (const port of expectedPorts) {
-      const touchingTraceIds = Array.from(
-        traceIdsByTouchedPortId.get(port.pcb_port_id) ?? [],
-      )
-      // Prefer this net's own trace, but allow copper whose source attribution
-      // belongs to a nested circuit. Breakout routing deliberately connects a
-      // child trace to a parent trace while each keeps its local source net.
-      const touchingTraceId =
-        touchingTraceIds.find((traceId) => routedTraceIdsForNet.has(traceId)) ??
-        touchingTraceIds.find((traceId) =>
-          Array.from(breakoutTouchKeysByTraceId.get(traceId) ?? []).some(
-            (breakoutTouchKey) =>
-              Array.from(
-                traceIdsByBreakoutTouchKey.get(breakoutTouchKey) ?? [],
-              ).some((otherTraceId) => routedTraceIdsForNet.has(otherTraceId)),
-          ),
-        )
-
-      let physicalGroupId = `unconnected_${port.pcb_port_id}`
-      if (touchingTraceId) {
-        const touchingTrace = pcbTraceById.get(touchingTraceId)
-        if (touchingTrace) {
-          physicalGroupId =
-            getPhysicallyConnectedTraces(touchingTrace)
-              .map((pcbTrace) => pcbTrace.pcb_trace_id)
-              .sort()[0] ?? touchingTraceId
-        }
-      }
-
-      portsByPhysicalGroup.set(physicalGroupId, [
-        ...(portsByPhysicalGroup.get(physicalGroupId) ?? []),
-        port,
-      ])
-    }
-
-    if (portsByPhysicalGroup.size <= 1) continue
-
-    const disconnectedGroups = Array.from(portsByPhysicalGroup.values()).sort(
-      (groupA, groupB) => groupB.length - groupA.length,
-    )
-    const errorGroup = disconnectedGroups[1] ?? disconnectedGroups[0]!
-    const errorCenter = {
-      x: errorGroup.reduce((sum, port) => sum + port.x, 0) / errorGroup.length,
-      y: errorGroup.reduce((sum, port) => sum + port.y, 0) / errorGroup.length,
-    }
-    const primaryTrace = routedTracesForNet[0]!
-
-    errors.push({
-      type: "pcb_trace_error",
-      message: `Net [${sourceNet.name || "unnamed net"}] has ${expectedPorts.length} required PCB ports split across ${portsByPhysicalGroup.size} disconnected copper groups.`,
-      source_trace_id: sourceNet.source_net_id,
-      error_type: "pcb_trace_error",
-      pcb_trace_id: primaryTrace.pcb_trace_id,
-      pcb_trace_error_id: `disconnected_copper_groups_${sourceNet.source_net_id}`,
-      center: errorCenter,
-      pcb_component_ids: Array.from(
-        new Set(
-          expectedPorts
-            .map((port) => port.pcb_component_id)
-            .filter((id): id is string => id !== undefined),
-        ),
-      ),
-      pcb_port_ids: expectedPorts.map((port) => port.pcb_port_id),
-      subcircuit_id: primaryTrace.subcircuit_id ?? sourceNet.subcircuit_id,
-    })
   }
 
   return errors
