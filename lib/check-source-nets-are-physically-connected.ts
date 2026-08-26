@@ -76,7 +76,7 @@ export function checkSourceNetsArePhysicallyConnected(
     errors.push({
       type: "pcb_trace_error",
       message: `Net [${sourceNet.name || "unnamed net"}] has ${expectedPorts.length} required PCB ports split across ${portsByPhysicalGroup.size} disconnected copper groups.`,
-      source_trace_id: primaryTrace.source_trace_id ?? sourceNet.source_net_id,
+      source_trace_id: sourceNet.source_net_id,
       error_type: "pcb_trace_error",
       pcb_trace_id: primaryTrace.pcb_trace_id,
       pcb_trace_error_id: `disconnected_copper_groups_${sourceNet.source_net_id}`,
