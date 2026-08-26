@@ -488,6 +488,15 @@ export function checkCopperToBoardEdgeClearance(
     jlcMinTolerances.min_board_edge_clearance
   if (requiredClearance === undefined) return []
 
+  const allowedOffBoardComponentIds = new Set<PcbComponentId>(
+    circuitJson
+      .filter(
+        (element): element is PcbComponent => element.type === "pcb_component",
+      )
+      .filter((component) => component.is_allowed_to_be_off_board)
+      .map((component) => toPcbComponentId(component.pcb_component_id)),
+  )
+
   const copperElements = circuitJson.filter(
     (element): element is CopperElement =>
       element.type === "pcb_via" ||
@@ -508,6 +517,16 @@ export function checkCopperToBoardEdgeClearance(
 
   const errors: PcbPlacementError[] = []
   for (const element of copperElements) {
+    if (
+      (element.type === "pcb_smtpad" || element.type === "pcb_plated_hole") &&
+      element.pcb_component_id &&
+      allowedOffBoardComponentIds.has(
+        toPcbComponentId(element.pcb_component_id),
+      )
+    ) {
+      continue
+    }
+
     const geometry = getCopperGeometry(element, componentCcwRotationsById)
     if (!geometry) continue
 
