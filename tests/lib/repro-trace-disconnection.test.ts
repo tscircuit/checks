@@ -19,6 +19,13 @@ test("disconnected trace endpoint should be detected with visual snapshot", () =
   // This trace should have an error because it has a floating endpoint
   expect(disconnectedTraceError).toBeDefined()
   expect(disconnectedTraceError?.message).toContain("disconnected endpoint")
+  expect(errors).toContainEqual(
+    expect.objectContaining({
+      pcb_trace_error_id: "disconnected_copper_groups_source_net_1",
+      message:
+        "Net [GND] has 6 required PCB ports split across 2 disconnected copper groups.",
+    }),
+  )
 
   // Add errors to circuit JSON for visualization
   circuitJson.push(...errors)

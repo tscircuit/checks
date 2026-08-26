@@ -43,7 +43,7 @@ const SharedGroundKelvinRepro = () => (
   </board>
 )
 
-test("same-net routed branch should satisfy the required PCB port", async () => {
+test("reports same-net routed branches split into copper groups", async () => {
   const circuit = new Circuit({
     platform: {
       netlistDrcChecksDisabled: true,
@@ -59,10 +59,16 @@ test("same-net routed branch should satisfy the required PCB port", async () => 
     .filter((element) => element.type !== "pcb_trace_error")
   const errors = checkTracesAreContiguous(circuitJson)
 
+  expect(errors).toEqual([
+    expect.objectContaining({
+      pcb_trace_error_id: "disconnected_copper_groups_source_net_0",
+      message:
+        "Net [GND] has 3 required PCB ports split across 2 disconnected copper groups.",
+    }),
+  ])
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
-  expect(errors).toHaveLength(0)
 }, 30_000)

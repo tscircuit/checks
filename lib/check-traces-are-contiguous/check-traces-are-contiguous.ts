@@ -6,6 +6,7 @@ import type {
   SourceTrace,
   PcbSmtPad,
   PcbPlatedHole,
+  SourceNet,
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
 import { distance } from "../util/distance"
@@ -144,9 +145,15 @@ function checkTracesAreContiguous(
   const pcbTraces = circuitJson.filter(
     (el) => el.type === "pcb_trace",
   ) as PcbTrace[]
+  const pcbTraceById = new Map(
+    pcbTraces.map((pcbTrace) => [pcbTrace.pcb_trace_id, pcbTrace]),
+  )
   const sourceTraces = circuitJson.filter(
     (el) => el.type === "source_trace",
   ) as SourceTrace[]
+  const sourceNets = circuitJson.filter(
+    (el) => el.type === "source_net",
+  ) as SourceNet[]
   const pcbSmtPads = circuitJson.filter(
     (el) => el.type === "pcb_smtpad",
   ) as PcbSmtPad[]
@@ -425,6 +432,107 @@ function checkTracesAreContiguous(
         })
       }
     }
+  }
+
+  // A named source net is usually routed as several one-port source traces.
+  // Checking each source trace independently only proves that every port
+  // reaches some copper, not that all of that copper belongs to one physical
+  // component. Compare the physical component reached by every required port
+  // so a net split into independently contiguous islands is still reported.
+  for (const sourceNet of sourceNets) {
+    // The connectivity map currently models traces, pads, and vias, but not
+    // copper pours or ground-plane regions. Avoid a false open until those
+    // copper shapes participate in physical-connectivity analysis.
+    const hasUnmodeledPlaneCopper = circuitJson.some(
+      (element) =>
+        (element.type === "pcb_copper_pour" ||
+          element.type === "pcb_ground_plane") &&
+        element.source_net_id === sourceNet.source_net_id,
+    )
+    if (hasUnmodeledPlaneCopper) continue
+
+    const sourceTracesForNet = sourceTraces.filter((sourceTrace) =>
+      sourceTrace.connected_source_net_ids?.includes(sourceNet.source_net_id),
+    )
+    const sourceTraceIdsForNet = new Set(
+      sourceTracesForNet.map((sourceTrace) => sourceTrace.source_trace_id),
+    )
+    const expectedSourcePortIds = new Set(
+      sourceTracesForNet.flatMap(
+        (sourceTrace) => sourceTrace.connected_source_port_ids ?? [],
+      ),
+    )
+    const expectedPorts = pcbPorts.filter((pcbPort) =>
+      expectedSourcePortIds.has(pcbPort.source_port_id),
+    )
+
+    if (expectedPorts.length < 2) continue
+
+    const routedTracesForNet = pcbTraces.filter(
+      (pcbTrace) =>
+        pcbTrace.source_trace_id === sourceNet.source_net_id ||
+        (pcbTrace.source_trace_id !== undefined &&
+          sourceTraceIdsForNet.has(pcbTrace.source_trace_id)),
+    )
+    if (routedTracesForNet.length === 0) continue
+
+    const routedTraceIdsForNet = new Set(
+      routedTracesForNet.map((pcbTrace) => pcbTrace.pcb_trace_id),
+    )
+    const portsByPhysicalGroup = new Map<string, PcbPort[]>()
+
+    for (const port of expectedPorts) {
+      const touchingTraceId = Array.from(
+        traceIdsByTouchedPortId.get(port.pcb_port_id) ?? [],
+      ).find((traceId) => routedTraceIdsForNet.has(traceId))
+
+      let physicalGroupId = `unconnected_${port.pcb_port_id}`
+      if (touchingTraceId) {
+        const touchingTrace = pcbTraceById.get(touchingTraceId)
+        if (touchingTrace) {
+          physicalGroupId =
+            getPhysicallyConnectedTraces(touchingTrace)
+              .map((pcbTrace) => pcbTrace.pcb_trace_id)
+              .sort()[0] ?? touchingTraceId
+        }
+      }
+
+      portsByPhysicalGroup.set(physicalGroupId, [
+        ...(portsByPhysicalGroup.get(physicalGroupId) ?? []),
+        port,
+      ])
+    }
+
+    if (portsByPhysicalGroup.size <= 1) continue
+
+    const disconnectedGroups = Array.from(portsByPhysicalGroup.values()).sort(
+      (groupA, groupB) => groupB.length - groupA.length,
+    )
+    const errorGroup = disconnectedGroups[1] ?? disconnectedGroups[0]!
+    const errorCenter = {
+      x: errorGroup.reduce((sum, port) => sum + port.x, 0) / errorGroup.length,
+      y: errorGroup.reduce((sum, port) => sum + port.y, 0) / errorGroup.length,
+    }
+    const primaryTrace = routedTracesForNet[0]!
+
+    errors.push({
+      type: "pcb_trace_error",
+      message: `Net [${sourceNet.name || "unnamed net"}] has ${expectedPorts.length} required PCB ports split across ${portsByPhysicalGroup.size} disconnected copper groups.`,
+      source_trace_id: sourceNet.source_net_id,
+      error_type: "pcb_trace_error",
+      pcb_trace_id: primaryTrace.pcb_trace_id,
+      pcb_trace_error_id: `disconnected_copper_groups_${sourceNet.source_net_id}`,
+      center: errorCenter,
+      pcb_component_ids: Array.from(
+        new Set(
+          expectedPorts
+            .map((port) => port.pcb_component_id)
+            .filter((id): id is string => id !== undefined),
+        ),
+      ),
+      pcb_port_ids: expectedPorts.map((port) => port.pcb_port_id),
+      subcircuit_id: primaryTrace.subcircuit_id ?? sourceNet.subcircuit_id,
+    })
   }
 
   return errors
