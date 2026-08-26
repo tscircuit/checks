@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import type {
   AnyCircuitElement,
+  PcbComponent,
   PcbCopperPour,
   PcbPlatedHole,
   PcbSmtPad,
@@ -417,4 +418,118 @@ test("applies component rotation to a plated-hole polygon pad", () => {
   ])
 
   expect(errors).toEqual([])
+})
+
+test("allows edge-contact SMT pads for off-board components without clearance errors", () => {
+  const component: PcbComponent = {
+    type: "pcb_component",
+    pcb_component_id: "edge_jumper",
+    source_component_id: "source_edge_jumper",
+    center: { x: 0, y: -4.8 },
+    width: 2,
+    height: 1,
+    layer: "top",
+    rotation: 0,
+    obstructs_within_bounds: true,
+    is_allowed_to_be_off_board: true,
+  }
+  const pad: PcbSmtPad = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "edge_pad",
+    pcb_component_id: "edge_jumper",
+    shape: "rect",
+    x: 0,
+    y: -4.9,
+    width: 2,
+    height: 1,
+    layer: "top",
+  }
+
+  const errors = checkCopperToBoardEdgeClearance([
+    rectangularBoard,
+    component,
+    pad,
+  ])
+  expect(errors).toEqual([])
+
+  expect(
+    convertCircuitJsonToPcbSvg([rectangularBoard, component, pad, ...errors], {
+      shouldDrawErrors: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path, "edge-contact-allowed-off-board")
+})
+
+test("allows plated holes for off-board components without clearance errors", () => {
+  const component: PcbComponent = {
+    type: "pcb_component",
+    pcb_component_id: "edge_header",
+    source_component_id: "source_edge_header",
+    center: { x: 0, y: -4.8 },
+    width: 2,
+    height: 1,
+    layer: "top",
+    rotation: 0,
+    obstructs_within_bounds: true,
+    is_allowed_to_be_off_board: true,
+  }
+  const platedHole: PcbPlatedHole = {
+    type: "pcb_plated_hole",
+    pcb_plated_hole_id: "edge_hole",
+    pcb_component_id: "edge_header",
+    shape: "circle",
+    hole_diameter: 0.5,
+    outer_diameter: 1.0,
+    x: 0,
+    y: -4.9,
+    layers: ["top", "bottom"],
+  }
+
+  const errors = checkCopperToBoardEdgeClearance([
+    rectangularBoard,
+    component,
+    platedHole,
+  ])
+  expect(errors).toEqual([])
+
+  expect(
+    convertCircuitJsonToPcbSvg(
+      [rectangularBoard, component, platedHole, ...errors],
+      {
+        shouldDrawErrors: true,
+      },
+    ),
+  ).toMatchSvgSnapshot(import.meta.path, "edge-plated-hole-allowed-off-board")
+})
+
+test("reports clearance error for edge-contact SMT pad when is_allowed_to_be_off_board is not set", () => {
+  const component: PcbComponent = {
+    type: "pcb_component",
+    pcb_component_id: "standard_jumper",
+    source_component_id: "source_standard_jumper",
+    center: { x: 0, y: -4.8 },
+    width: 2,
+    height: 1,
+    layer: "top",
+    rotation: 0,
+    obstructs_within_bounds: true,
+  }
+  const pad: PcbSmtPad = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "edge_pad",
+    pcb_component_id: "standard_jumper",
+    shape: "rect",
+    x: 0,
+    y: -4.9,
+    width: 2,
+    height: 1,
+    layer: "top",
+  }
+
+  const errors = checkCopperToBoardEdgeClearance([
+    rectangularBoard,
+    component,
+    pad,
+  ])
+  expect(errors).toHaveLength(1)
+  expect(errors[0].type).toBe("pcb_placement_error")
 })

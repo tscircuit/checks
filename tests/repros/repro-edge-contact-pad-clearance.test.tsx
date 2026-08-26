@@ -4,9 +4,9 @@ import { checkCopperToBoardEdgeClearance } from "lib/check-copper-to-board-edge-
 import { Circuit } from "tscircuit"
 
 // An SMT pad can intentionally reach the PCB outline when it is used as an
-// edge contact. The placement checker currently treats this valid geometry as
-// a copper-to-board-edge clearance violation.
-test.failing(
+// edge contact without triggering a copper-to-board-edge clearance violation.
+// biome-ignore format: preserve upstream spacing
+test(
   "intentional edge-contact SMT pads should not report board-edge clearance errors",
   async () => {
     const circuit = new Circuit({
