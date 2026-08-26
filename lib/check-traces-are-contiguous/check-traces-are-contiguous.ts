@@ -7,6 +7,7 @@ import type {
   PcbSmtPad,
   PcbPlatedHole,
   SourceNet,
+  PcbBreakoutPoint,
 } from "circuit-json"
 import { isPointInPad } from "./is-point-in-pad"
 import { distance } from "../util/distance"
@@ -21,6 +22,9 @@ import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 type PcbPortId = PcbPort["pcb_port_id"]
 type PcbTraceRoutePoint = PcbTrace["route"][number]
 type PcbPad = PcbSmtPad | PcbPlatedHole
+type BreakoutTouchKey = `${PcbBreakoutPoint["pcb_breakout_point_id"]}:${string}`
+
+const BREAKOUT_POINT_COORDINATE_TOLERANCE = 0.001
 
 function routePointTouchesPad(point: PcbTraceRoutePoint, pad: PcbPad) {
   return (
@@ -28,6 +32,20 @@ function routePointTouchesPad(point: PcbTraceRoutePoint, pad: PcbPad) {
     getLayersOfPcbElement(pad).includes(point.layer) &&
     isPointInPad(point, pad)
   )
+}
+
+function getBreakoutTouchKey(
+  point: PcbTraceRoutePoint,
+  breakoutPoint: PcbBreakoutPoint,
+): BreakoutTouchKey | undefined {
+  if (point.route_type !== "wire") return undefined
+
+  const reachesBreakoutPoint =
+    distance(point, breakoutPoint) <=
+    point.width / 2 + BREAKOUT_POINT_COORDINATE_TOLERANCE
+  if (!reachesBreakoutPoint) return undefined
+
+  return `${breakoutPoint.pcb_breakout_point_id}:${point.layer}`
 }
 
 function getRoutePointCenter(point: PcbTraceRoutePoint) {
@@ -160,6 +178,9 @@ function checkTracesAreContiguous(
   const pcbPlatedHoles = circuitJson.filter(
     (el) => el.type === "pcb_plated_hole",
   ) as PcbPlatedHole[]
+  const pcbBreakoutPoints = circuitJson.filter(
+    (el) => el.type === "pcb_breakout_point",
+  ) as PcbBreakoutPoint[]
 
   const padMap = new Map<PcbPortId, PcbPad[]>()
   const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
@@ -182,12 +203,15 @@ function checkTracesAreContiguous(
 
   const touchedPortIdsByTraceId = new Map<string, Set<PcbPortId>>()
   const traceIdsByTouchedPortId = new Map<PcbPortId, Set<string>>()
+  const breakoutTouchKeysByTraceId = new Map<string, Set<BreakoutTouchKey>>()
+  const traceIdsByBreakoutTouchKey = new Map<BreakoutTouchKey, Set<string>>()
 
   // Route attribution can change when a logical net is converted into an MST.
   // Record the PCB ports each routed trace physically reaches so contiguity can
   // follow the copper network instead of relying on singular source_trace_ids.
   for (const trace of pcbTraces) {
     const touchedPortIds = new Set<PcbPortId>()
+    const breakoutTouchKeys = new Set<BreakoutTouchKey>()
     const firstPoint = trace.route[0]
     const lastPoint = trace.route.at(-1)
 
@@ -199,6 +223,11 @@ function checkTracesAreContiguous(
           touchedPortIds.add(pcbPortId)
         }
       }
+
+      for (const breakoutPoint of pcbBreakoutPoints) {
+        const breakoutTouchKey = getBreakoutTouchKey(point, breakoutPoint)
+        if (breakoutTouchKey) breakoutTouchKeys.add(breakoutTouchKey)
+      }
     }
 
     touchedPortIdsByTraceId.set(trace.pcb_trace_id, touchedPortIds)
@@ -206,6 +235,14 @@ function checkTracesAreContiguous(
       const traceIds = traceIdsByTouchedPortId.get(pcbPortId) ?? new Set()
       traceIds.add(trace.pcb_trace_id)
       traceIdsByTouchedPortId.set(pcbPortId, traceIds)
+    }
+
+    breakoutTouchKeysByTraceId.set(trace.pcb_trace_id, breakoutTouchKeys)
+    for (const breakoutTouchKey of breakoutTouchKeys) {
+      const traceIds =
+        traceIdsByBreakoutTouchKey.get(breakoutTouchKey) ?? new Set()
+      traceIds.add(trace.pcb_trace_id)
+      traceIdsByBreakoutTouchKey.set(breakoutTouchKey, traceIds)
     }
   }
 
@@ -235,6 +272,17 @@ function checkTracesAreContiguous(
       for (const pcbPortId of touchedPortIdsByTraceId.get(traceId) ?? []) {
         for (const touchingTraceId of traceIdsByTouchedPortId.get(pcbPortId) ??
           []) {
+          if (!connectedTraceIds.has(touchingTraceId)) {
+            pendingTraceIds.push(touchingTraceId)
+          }
+        }
+      }
+
+      for (const breakoutTouchKey of breakoutTouchKeysByTraceId.get(traceId) ??
+        []) {
+        for (const touchingTraceId of traceIdsByBreakoutTouchKey.get(
+          breakoutTouchKey,
+        ) ?? []) {
           if (!connectedTraceIds.has(touchingTraceId)) {
             pendingTraceIds.push(touchingTraceId)
           }
@@ -482,9 +530,22 @@ function checkTracesAreContiguous(
     const portsByPhysicalGroup = new Map<string, PcbPort[]>()
 
     for (const port of expectedPorts) {
-      const touchingTraceId = Array.from(
+      const touchingTraceIds = Array.from(
         traceIdsByTouchedPortId.get(port.pcb_port_id) ?? [],
-      ).find((traceId) => routedTraceIdsForNet.has(traceId))
+      )
+      // Prefer this net's own trace, but allow copper whose source attribution
+      // belongs to a nested circuit. Breakout routing deliberately connects a
+      // child trace to a parent trace while each keeps its local source net.
+      const touchingTraceId =
+        touchingTraceIds.find((traceId) => routedTraceIdsForNet.has(traceId)) ??
+        touchingTraceIds.find((traceId) =>
+          Array.from(breakoutTouchKeysByTraceId.get(traceId) ?? []).some(
+            (breakoutTouchKey) =>
+              Array.from(
+                traceIdsByBreakoutTouchKey.get(breakoutTouchKey) ?? [],
+              ).some((otherTraceId) => routedTraceIdsForNet.has(otherTraceId)),
+          ),
+        )
 
       let physicalGroupId = `unconnected_${port.pcb_port_id}`
       if (touchingTraceId) {

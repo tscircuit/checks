@@ -160,3 +160,160 @@ test("reports a four-port source net split into two copper groups", () => {
     checkTracesAreContiguous([...circuitJson, connectingPour]),
   ).toHaveLength(0)
 })
+
+test("treats traces meeting through a breakout point as one copper group", () => {
+  const parentNetId = "source_net_parent"
+  const childNetId = "source_net_child"
+  const breakoutCircuitJson: AnyCircuitElement[] = [
+    {
+      type: "source_net",
+      source_net_id: parentNetId,
+      name: "VCC",
+      member_source_group_ids: [],
+    },
+    {
+      type: "source_net",
+      source_net_id: childNetId,
+      name: "VCC",
+      member_source_group_ids: [],
+    },
+    {
+      type: "source_trace",
+      source_trace_id: "source_trace_child_to_parent",
+      connected_source_port_ids: ["source_port_child"],
+      connected_source_net_ids: [parentNetId],
+    },
+    {
+      type: "source_trace",
+      source_trace_id: "source_trace_load",
+      connected_source_port_ids: ["source_port_load"],
+      connected_source_net_ids: [parentNetId],
+    },
+    {
+      type: "source_trace",
+      source_trace_id: "source_trace_internal",
+      connected_source_port_ids: ["source_port_child"],
+      connected_source_net_ids: [childNetId],
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_child",
+      source_port_id: "source_port_child",
+      x: -3,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_child",
+      pcb_port_id: "pcb_port_child",
+      shape: "rect",
+      x: -3,
+      y: 0,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_load",
+      source_port_id: "source_port_load",
+      x: 3,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_load",
+      pcb_port_id: "pcb_port_load",
+      shape: "rect",
+      x: 3,
+      y: 0,
+      width: 1,
+      height: 1,
+      layer: "top",
+    },
+    {
+      type: "pcb_breakout_point",
+      pcb_breakout_point_id: "pcb_breakout_point_0",
+      pcb_group_id: "pcb_group_child",
+      source_port_id: "source_port_child",
+      source_trace_id: "source_trace_internal",
+      source_net_id: childNetId,
+      x: 0,
+      y: 0,
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_internal",
+      source_trace_id: "source_trace_internal",
+      route: [
+        {
+          route_type: "wire",
+          x: -3,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+          start_pcb_port_id: "pcb_port_child",
+        },
+        {
+          route_type: "wire",
+          x: 0,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+        },
+      ],
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "pcb_trace_parent",
+      source_trace_id: "source_trace_load",
+      route: [
+        {
+          route_type: "wire",
+          x: 3,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+          start_pcb_port_id: "pcb_port_load",
+        },
+        {
+          route_type: "wire",
+          x: 0.0001,
+          y: 0,
+          width: 0.15,
+          layer: "top",
+        },
+      ],
+    },
+  ]
+
+  expect(checkTracesAreContiguous(breakoutCircuitJson)).toHaveLength(0)
+
+  const parentTrace = breakoutCircuitJson.find(
+    (element) =>
+      element.type === "pcb_trace" &&
+      element.pcb_trace_id === "pcb_trace_parent",
+  )
+  if (parentTrace?.type !== "pcb_trace") {
+    throw new Error("missing parent PCB trace")
+  }
+  const disconnectedParentTrace: typeof parentTrace = {
+    ...parentTrace,
+    route: parentTrace.route.map((point, index) =>
+      index === parentTrace.route.length - 1 && point.route_type === "wire"
+        ? { ...point, x: 0.2 }
+        : point,
+    ),
+  }
+  const disconnectedCircuitJson = breakoutCircuitJson.map((element) =>
+    element === parentTrace ? disconnectedParentTrace : element,
+  )
+
+  expect(checkTracesAreContiguous(disconnectedCircuitJson)).toContainEqual(
+    expect.objectContaining({
+      pcb_trace_error_id: `disconnected_copper_groups_${parentNetId}`,
+    }),
+  )
+})
