@@ -33,7 +33,7 @@ const createBoxWithPins = ({
     center: { x: 0, y: 0 },
     size: { width, height },
     pin_spacing: 0.2,
-    ...(isBoxWithPins === undefined ? {} : { is_box_with_pins: isBoxWithPins }),
+    is_box_with_pins: isBoxWithPins ?? true,
   },
   ...ports.map(
     (port, index): AnyCircuitElement => ({
@@ -43,7 +43,12 @@ const createBoxWithPins = ({
       source_port_id: `source_port_${index + 1}`,
       center: { x: port.x, y: port.y },
       side_of_component: port.side,
-      facing_direction: port.side,
+      facing_direction:
+        port.side === "top"
+          ? "up"
+          : port.side === "bottom"
+            ? "down"
+            : port.side,
       pin_number: index + 1,
       display_pin_label: port.label,
     }),
