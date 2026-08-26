@@ -3,9 +3,9 @@ import type { AnyCircuitElement, PcbPlacementError, PcbVia } from "circuit-json"
 import {
   type PadElement,
   getPadBounds,
+  getPadToPadGap,
   getPads,
 } from "./check-pad-clearance/common"
-import { isPointInPad } from "./check-traces-are-contiguous/is-point-in-pad"
 import { SpatialObjectIndex } from "./data-structures/SpatialIndex"
 import { getPcbBoard } from "./drc-defaults"
 import { getLayersOfPcbElement } from "./util/getLayersOfPcbElement"
@@ -40,18 +40,13 @@ export function checkViasInPads(
   const errors: PcbPlacementError[] = []
 
   for (const via of vias) {
-    const nearbyPads = padIndex.getObjectsInBounds({
-      minX: via.x,
-      minY: via.y,
-      maxX: via.x,
-      maxY: via.y,
-    })
+    const nearbyPads = padIndex.getObjectsInBounds(getPadBounds(via))
 
     for (const pad of nearbyPads) {
       const viaLayers = getLayersOfPcbElement(via)
       const padLayers = getLayersOfPcbElement(pad)
       if (!viaLayers.some((layer) => padLayers.includes(layer))) continue
-      if (!isPointInPad(via, pad)) continue
+      if (getPadToPadGap(via, pad) > 0) continue
 
       const padId = getPrimaryId(pad)
       const padOrdinal = padOrdinals.get(padId) ?? 0
@@ -65,7 +60,7 @@ export function checkViasInPads(
         type: "pcb_placement_error",
         pcb_placement_error_id: `via_in_pad_${via.pcb_via_id}_${padId}`,
         error_type: "pcb_placement_error",
-        message: `Via at (${via.x.toFixed(2)}mm, ${via.y.toFixed(2)}mm) is inside ${padName}`,
+        message: `Via copper at (${via.x.toFixed(2)}mm, ${via.y.toFixed(2)}mm) overlaps ${padName}`,
         subcircuit_id: via.subcircuit_id ?? pad.subcircuit_id,
       })
     }

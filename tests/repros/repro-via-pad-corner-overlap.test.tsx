@@ -89,6 +89,7 @@ test.failing(
         [...annotatedCircuit.getCircuitJson(), ...placementErrors],
         {
           shouldDrawErrors: true,
+          showErrorsInTextOverlay: true,
         },
       ),
     ).toMatchSvgSnapshot(import.meta.path)

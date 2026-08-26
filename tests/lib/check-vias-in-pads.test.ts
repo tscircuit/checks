@@ -57,7 +57,7 @@ test("reports a via whose center is inside an SMD pad", async () => {
     pcb_placement_error_id: "via_in_pad_pcb_via_1_pcb_smtpad_1",
     error_type: "pcb_placement_error",
   })
-  expect(errors[0].message).toContain("is inside SMD pad")
+  expect(errors[0].message).toContain("overlaps SMD pad")
   expect(containsCircuitJsonId(errors[0].message)).toBe(false)
   expect(await runAllPlacementChecks(circuitJson)).toContainEqual(errors[0])
 })
