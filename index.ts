@@ -27,6 +27,7 @@ export { checkAllPinsInComponentAreUnderspecified } from "./lib/check-all-pins-i
 export { checkNoPowerPinDefined } from "./lib/check-no-power-pin-defined"
 export { checkNoGroundPinDefined } from "./lib/check-no-ground-pin-defined"
 export { checkSchematicComponentExcessiveVerticalPadding } from "./lib/check-schematic-component-excessive-vertical-padding"
+export { checkSchematicComponentPortsOutsideBody } from "./lib/check-schematic-component-ports-outside-body"
 export {
   runAllChecks,
   runAllNetlistChecks,
