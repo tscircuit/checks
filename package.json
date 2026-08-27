@@ -10,11 +10,6 @@
   "files": [
     "dist"
   ],
-  "trustedDependencies": [
-    "@tscircuit/circuit-json-util",
-    "circuit-json-to-connectivity-map",
-    "sharp"
-  ],
   "scripts": {
     "build": "tsup-node",
     "test": "bun test",
@@ -23,14 +18,14 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
-    "@tscircuit/circuit-json-util": "^0.0.107",
+    "@tscircuit/circuit-json-util": "https://pkg.pr.new/@tscircuit/circuit-json-util@121",
     "@tscircuit/jlcpcb-manufacturing-specs": "git+https://github.com/tscircuit/jlcpcb-manufacturing-specs#e08af159db01a37db007e33f0a7268d0e4a279a5",
     "@tscircuit/log-soup": "^1.0.2",
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
     "circuit-json": "^0.0.471",
-    "circuit-json-to-connectivity-map": "git+https://github.com/tscircuit/circuit-json-to-connectivity-map#d77758ad49899543f944073155cabce12bfcf2a7",
+    "circuit-json-to-connectivity-map": "https://pkg.pr.new/circuit-json-to-connectivity-map@38",
     "circuit-to-svg": "^0.0.388",
     "debug": "^4.3.5",
     "format-si-unit": "^0.0.12",
