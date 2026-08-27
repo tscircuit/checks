@@ -16,6 +16,9 @@
     "format:check": "biome format .",
     "format": "biome format . --write"
   },
+  "dependencies": {
+    "transformation-matrix": "^3.1.0"
+  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
     "@tscircuit/circuit-json-util": "^0.0.107",
@@ -35,6 +38,7 @@
   },
   "peerDependencies": {
     "@flatten-js/core": "*",
+    "@tscircuit/circuit-json-util": "*",
     "@tscircuit/math-utils": "*",
     "circuit-json": "*",
     "circuit-json-to-connectivity-map": "*",
