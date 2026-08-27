@@ -56,11 +56,10 @@ test("passive jumpers do not need active-chip pin roles", async () => {
         sourceComponentIdsByName.get(componentName),
     ).length
 
-  // Jumper and SolderJumper are emitted as simple_chip elements with
-  // are_pins_interchangeable=true, so all three active-chip checks currently
-  // produce false-positive warnings for each passive part.
-  expect(warningCountFor("J1")).toBe(3)
-  expect(warningCountFor("SJ1")).toBe(3)
+  // Jumper and SolderJumper are passive parts whose pins are interchangeable,
+  // so active-chip pin-role checks do not apply to them.
+  expect(warningCountFor("J1")).toBe(0)
+  expect(warningCountFor("SJ1")).toBe(0)
   expect(warningCountFor("U1")).toBe(3)
 
   expect(
