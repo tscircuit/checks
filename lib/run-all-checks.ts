@@ -22,6 +22,7 @@ import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSchematicComponentPortsOutsideBody } from "./check-schematic-component-ports-outside-body"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
+import { checkTracedSourcePortsHavePcbPorts } from "./check-traced-source-ports-have-pcb-ports"
 import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
@@ -68,6 +69,7 @@ export async function runAllPinSpecificationChecks(
 
 export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   return [
+    ...checkTracedSourcePortsHavePcbPorts(circuitJson),
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
     ...checkSourceTracesHavePcbTraces(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
