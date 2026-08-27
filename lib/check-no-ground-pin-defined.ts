@@ -5,6 +5,7 @@ import type {
   SourceNoGroundPinDefinedWarning,
   SourcePort,
 } from "circuit-json"
+import { shouldCheckChipPowerGroundPins } from "./util/should-check-chip-power-ground-pins"
 
 /**
  * Check that each chip has at least one pin marked as requires_ground=true.
@@ -28,11 +29,9 @@ export function checkNoGroundPinDefined(
   }
 
   for (const component of sourceComponents) {
-    if (component.ftype !== "simple_chip") continue
-
     const componentPorts =
       portsByComponent.get(component.source_component_id) ?? []
-    if (componentPorts.length === 0) continue
+    if (!shouldCheckChipPowerGroundPins(component, componentPorts)) continue
 
     const hasRequiredGroundPin = componentPorts.some(
       (port) => port.requires_ground === true,
