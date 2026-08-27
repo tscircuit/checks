@@ -12,7 +12,8 @@
   ],
   "trustedDependencies": [
     "@tscircuit/circuit-json-util",
-    "circuit-json-to-connectivity-map"
+    "circuit-json-to-connectivity-map",
+    "sharp"
   ],
   "scripts": {
     "build": "tsup-node",
