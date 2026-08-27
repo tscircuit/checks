@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import { checkSourceNetsArePhysicallyConnected } from "lib/check-source-nets-are-physically-connected"
+import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { Circuit } from "tscircuit"
 
 const Branch = ({
@@ -43,7 +43,7 @@ const SharedGroundKelvinRepro = () => (
   </board>
 )
 
-test("same-net routed branches joined by copper are connected", async () => {
+test("same-net routed branch should satisfy the required PCB port", async () => {
   const circuit = new Circuit({
     platform: {
       netlistDrcChecksDisabled: true,
@@ -57,12 +57,12 @@ test("same-net routed branches joined by copper are connected", async () => {
   const circuitJson = circuit
     .getCircuitJson()
     .filter((element) => element.type !== "pcb_trace_error")
-  const errors = checkSourceNetsArePhysicallyConnected(circuitJson)
+  const errors = checkTracesAreContiguous(circuitJson)
 
-  expect(errors).toEqual([])
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
+  expect(errors).toHaveLength(0)
 }, 30_000)

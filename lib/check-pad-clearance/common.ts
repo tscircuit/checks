@@ -32,9 +32,6 @@ import { DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
 export type PadElement = PcbSmtPad | PcbPlatedHole
 export type PadClearanceElement = PadElement | PcbVia
 export type CopperClearanceElement = PadClearanceElement | PCBKeepout
-export type CopperShapeForObstacle =
-  | { kind: "circle"; x: number; y: number; radius: number }
-  | { kind: "polygon"; points: Array<{ x: number; y: number }> }
 
 export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
   if (pad.type === "pcb_keepout") {
@@ -153,11 +150,6 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
     ],
   }
 }
-
-export const getCopperShapeForObstacle = (
-  obstacle: CopperClearanceElement,
-): CopperShapeForObstacle =>
-  isCircularPad(obstacle) ? getCircleShape(obstacle) : getPolygonShape(obstacle)
 
 export const getPadToPadGap = (
   padA: CopperClearanceElement,

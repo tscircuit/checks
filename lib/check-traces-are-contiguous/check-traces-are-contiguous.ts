@@ -18,7 +18,6 @@ import { PcbConnectivityMap } from "circuit-json-to-connectivity-map"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 
 type PcbPortId = PcbPort["pcb_port_id"]
-type PcbTraceId = PcbTrace["pcb_trace_id"]
 type PcbTraceRoutePoint = PcbTrace["route"][number]
 type PcbPad = PcbSmtPad | PcbPlatedHole
 
@@ -41,17 +40,12 @@ function getRoutePointCenter(point: PcbTraceRoutePoint) {
   return { x: point.x, y: point.y }
 }
 
-function routePointConnectsToAnotherExpectedPort({
-  point,
-  expectedPorts,
-  missingPcbPortId,
-  padMap,
-}: {
-  point: PcbTraceRoutePoint
-  expectedPorts: PcbPort[]
-  missingPcbPortId: PcbPortId
-  padMap: Map<PcbPortId, PcbPad[]>
-}) {
+function routePointConnectsToAnotherExpectedPort(
+  point: PcbTraceRoutePoint,
+  expectedPorts: PcbPort[],
+  missingPcbPortId: PcbPortId,
+  padMap: Map<PcbPortId, PcbPad[]>,
+) {
   return expectedPorts.some((expectedPort) => {
     if (
       !expectedPort.pcb_port_id ||
@@ -98,22 +92,22 @@ function getMissingConnectionErrorCenter({
   } else if (lastWirePointReferencesPort && lastWirePoint) {
     errorLocation = lastWirePoint
   } else if (
-    routePointConnectsToAnotherExpectedPort({
-      point: firstPoint,
+    routePointConnectsToAnotherExpectedPort(
+      firstPoint,
       expectedPorts,
-      missingPcbPortId: port.pcb_port_id,
+      port.pcb_port_id,
       padMap,
-    }) &&
+    ) &&
     lastWirePoint
   ) {
     errorLocation = lastWirePoint
   } else if (
-    routePointConnectsToAnotherExpectedPort({
-      point: lastPoint,
+    routePointConnectsToAnotherExpectedPort(
+      lastPoint,
       expectedPorts,
-      missingPcbPortId: port.pcb_port_id,
+      port.pcb_port_id,
       padMap,
-    }) &&
+    ) &&
     firstWirePoint
   ) {
     errorLocation = firstWirePoint
@@ -159,9 +153,10 @@ function checkTracesAreContiguous(
   const pcbPlatedHoles = circuitJson.filter(
     (el) => el.type === "pcb_plated_hole",
   ) as PcbPlatedHole[]
+
   const padMap = new Map<PcbPortId, PcbPad[]>()
   const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
-  const checkedSourceTraceIds = new Set<SourceTrace["source_trace_id"]>()
+  const checkedSourceTraceIds = new Set<string>()
 
   for (const pad of pcbSmtPads) {
     if (pad.pcb_port_id) {
@@ -178,8 +173,8 @@ function checkTracesAreContiguous(
     }
   }
 
-  const touchedPortIdsByTraceId = new Map<PcbTraceId, Set<PcbPortId>>()
-  const traceIdsByTouchedPortId = new Map<PcbPortId, Set<PcbTraceId>>()
+  const touchedPortIdsByTraceId = new Map<string, Set<PcbPortId>>()
+  const traceIdsByTouchedPortId = new Map<PcbPortId, Set<string>>()
 
   // Route attribution can change when a logical net is converted into an MST.
   // Record the PCB ports each routed trace physically reaches so contiguity can
@@ -207,14 +202,14 @@ function checkTracesAreContiguous(
     }
   }
 
-  const physicallyConnectedTracesByTraceId = new Map<PcbTraceId, PcbTrace[]>()
+  const physicallyConnectedTracesByTraceId = new Map<string, PcbTrace[]>()
   const getPhysicallyConnectedTraces = (startTrace: PcbTrace): PcbTrace[] => {
     const cached = physicallyConnectedTracesByTraceId.get(
       startTrace.pcb_trace_id,
     )
     if (cached) return cached
 
-    const connectedTraceIds = new Set<PcbTraceId>()
+    const connectedTraceIds = new Set<string>()
     const pendingTraceIds = [startTrace.pcb_trace_id]
 
     while (pendingTraceIds.length > 0) {

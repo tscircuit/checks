@@ -10,6 +10,10 @@
   "files": [
     "dist"
   ],
+  "trustedDependencies": [
+    "@tscircuit/circuit-json-util",
+    "circuit-json-to-connectivity-map"
+  ],
   "scripts": {
     "build": "tsup-node",
     "test": "bun test",
@@ -25,7 +29,7 @@
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
     "circuit-json": "^0.0.471",
-    "circuit-json-to-connectivity-map": "^0.0.30",
+    "circuit-json-to-connectivity-map": "git+https://github.com/tscircuit/circuit-json-to-connectivity-map#d77758ad49899543f944073155cabce12bfcf2a7",
     "circuit-to-svg": "^0.0.388",
     "debug": "^4.3.5",
     "format-si-unit": "^0.0.12",
