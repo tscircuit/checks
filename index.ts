@@ -17,6 +17,7 @@ export { checkPcbComponentsMissingCourtyard } from "./lib/check-pcb-components-m
 export { checkPcbTraceLengths } from "./lib/check-pcb-trace-lengths"
 export { checkPcbTraceViaCounts } from "./lib/check-pcb-trace-via-counts"
 export { checkPadPadClearance } from "./lib/check-pad-pad-clearance"
+export { checkPlatedHoleDrillClearance } from "./lib/check-plated-hole-drill-clearance"
 export { checkPadTraceClearance } from "./lib/check-pad-trace-clearance"
 export { checkViaTraceClearance } from "./lib/check-via-trace-clearance"
 export { checkViaPadClearance } from "./lib/check-via-pad-clearance"
