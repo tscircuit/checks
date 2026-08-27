@@ -115,45 +115,7 @@ const circuitJson = [
 test("reproduces false disconnected endpoints at net-level region-reroute joins", () => {
   const errors = checkTracesAreContiguous(circuitJson)
 
-  // These four findings are false positives: each reported endpoint touches a
-  // same-layer trace carrying the same logical source trace. The fix should
-  // turn this expectation into an empty error list.
-  expect(
-    errors.map((error) => ({
-      pcb_trace_error_id: error.pcb_trace_error_id,
-      center: error.center,
-      message: error.message,
-    })),
-  ).toEqual([
-    {
-      pcb_trace_error_id:
-        "disconnected_endpoint_pcb_trace_keep_before_region_end",
-      center: { x: -2, y: 0 },
-      message:
-        "Trace [trace[pcb_trace_keep_before_region]] has disconnected endpoint at (-2.00, 0.00)",
-    },
-    {
-      pcb_trace_error_id:
-        "disconnected_endpoint_pcb_trace_reroute_inside_region_start",
-      center: { x: -1.9997, y: 0 },
-      message:
-        "Trace [trace[pcb_trace_reroute_inside_region]] has disconnected endpoint at (-2.00, 0.00)",
-    },
-    {
-      pcb_trace_error_id:
-        "disconnected_endpoint_pcb_trace_reroute_inside_region_end",
-      center: { x: 1.9997, y: 0 },
-      message:
-        "Trace [trace[pcb_trace_reroute_inside_region]] has disconnected endpoint at (2.00, 0.00)",
-    },
-    {
-      pcb_trace_error_id:
-        "disconnected_endpoint_pcb_trace_keep_after_region_start",
-      center: { x: 2, y: 0 },
-      message:
-        "Trace [trace[pcb_trace_keep_after_region]] has disconnected endpoint at (2.00, 0.00)",
-    },
-  ])
+  expect(errors).toEqual([])
 
   expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
     import.meta.path,
