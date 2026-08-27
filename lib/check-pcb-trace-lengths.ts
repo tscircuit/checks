@@ -1,5 +1,6 @@
 import type {
   AnyCircuitElement,
+  PcbPort,
   PcbTrace,
   PcbTraceRoutePoint,
   PcbTraceTooLongWarning,
@@ -45,6 +46,22 @@ const getPcbTraceLength = (pcbTrace: PcbTrace): number => {
   return traceLength
 }
 
+const getReferencedPcbPortIds = (pcbTrace: PcbTrace): Set<string> => {
+  const pcbPortIds = new Set<string>()
+
+  for (const routePoint of pcbTrace.route) {
+    if (routePoint.route_type !== "wire") continue
+    if (routePoint.start_pcb_port_id) {
+      pcbPortIds.add(routePoint.start_pcb_port_id)
+    }
+    if (routePoint.end_pcb_port_id) {
+      pcbPortIds.add(routePoint.end_pcb_port_id)
+    }
+  }
+
+  return pcbPortIds
+}
+
 export const checkPcbTraceLengths = (
   circuitJson: AnyCircuitElement[],
 ): PcbTraceTooLongWarning[] => {
@@ -54,6 +71,9 @@ export const checkPcbTraceLengths = (
   const pcbTraces = circuitJson.filter(
     (element): element is PcbTrace => element.type === "pcb_trace",
   )
+  const pcbPorts = circuitJson.filter(
+    (element): element is PcbPort => element.type === "pcb_port",
+  )
 
   const sourceTracesById = new Map(
     sourceTraces.map((sourceTrace) => [
@@ -61,6 +81,55 @@ export const checkPcbTraceLengths = (
       sourceTrace,
     ]),
   )
+  const pcbPortIdsBySourcePortId = new Map<string, Set<string>>()
+  for (const pcbPort of pcbPorts) {
+    if (!pcbPort.source_port_id) continue
+    const pcbPortIds =
+      pcbPortIdsBySourcePortId.get(pcbPort.source_port_id) ?? new Set<string>()
+    pcbPortIds.add(pcbPort.pcb_port_id)
+    pcbPortIdsBySourcePortId.set(pcbPort.source_port_id, pcbPortIds)
+  }
+
+  const pcbTracesBySourceTraceId = new Map<string, PcbTrace[]>()
+  for (const pcbTrace of pcbTraces) {
+    if (!pcbTrace.source_trace_id) continue
+    const matchingPcbTraces =
+      pcbTracesBySourceTraceId.get(pcbTrace.source_trace_id) ?? []
+    matchingPcbTraces.push(pcbTrace)
+    pcbTracesBySourceTraceId.set(pcbTrace.source_trace_id, matchingPcbTraces)
+  }
+
+  const exactEndpointPcbTraceIdsBySourceTraceId = new Map<string, Set<string>>()
+  for (const sourceTrace of sourceTraces) {
+    if (sourceTrace.connected_source_port_ids.length !== 2) continue
+
+    const endpointPcbPortIds = sourceTrace.connected_source_port_ids.map(
+      (sourcePortId) => pcbPortIdsBySourcePortId.get(sourcePortId),
+    )
+    if (endpointPcbPortIds.some((pcbPortIds) => !pcbPortIds?.size)) continue
+
+    const exactEndpointPcbTraceIds = new Set(
+      (pcbTracesBySourceTraceId.get(sourceTrace.source_trace_id) ?? [])
+        .filter((pcbTrace) => {
+          const referencedPcbPortIds = getReferencedPcbPortIds(pcbTrace)
+          return endpointPcbPortIds.every((pcbPortIds) =>
+            [...pcbPortIds!].some((pcbPortId) =>
+              referencedPcbPortIds.has(pcbPortId),
+            ),
+          )
+        })
+        .map((pcbTrace) => pcbTrace.pcb_trace_id),
+    )
+
+    // Keep the existing behavior when the route does not expose one PCB trace
+    // joining both explicit endpoints (for example through-pad-only routes).
+    if (exactEndpointPcbTraceIds.size > 0) {
+      exactEndpointPcbTraceIdsBySourceTraceId.set(
+        sourceTrace.source_trace_id,
+        exactEndpointPcbTraceIds,
+      )
+    }
+  }
   const warnings: PcbTraceTooLongWarning[] = []
 
   for (const pcbTrace of pcbTraces) {
@@ -71,6 +140,15 @@ export const checkPcbTraceLengths = (
 
     const maximumTraceLength = sourceTrace.max_length
     if (typeof maximumTraceLength !== "number") continue
+
+    const exactEndpointPcbTraceIds =
+      exactEndpointPcbTraceIdsBySourceTraceId.get(sourceTrace.source_trace_id)
+    if (
+      exactEndpointPcbTraceIds &&
+      !exactEndpointPcbTraceIds.has(pcbTrace.pcb_trace_id)
+    ) {
+      continue
+    }
 
     const actualTraceLength = getPcbTraceLength(pcbTrace)
     if (actualTraceLength <= maximumTraceLength) continue
