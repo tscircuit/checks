@@ -6,6 +6,7 @@ import { checkCourtyardOverlap } from "./check-courtyard-overlap/checkCourtyardO
 import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
 import { checkEachPcbPortConnectedToPcbTraces } from "./check-each-pcb-port-connected-to-pcb-trace"
 import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
+import { checkMinDrillDiameter } from "./check-min-drill-diameter"
 import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
 import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkPadPadClearance } from "./check-pad-pad-clearance"
@@ -33,6 +34,7 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkCopperToBoardEdgeClearance(circuitJson),
     ...checkViasInPads(circuitJson),
+    ...checkMinDrillDiameter(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverCutout(circuitJson),
     ...checkPcbCopperOverKeepout(circuitJson),
