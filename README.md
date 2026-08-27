@@ -28,6 +28,7 @@ and output an array of arrays for any issues found.
 | [`checkPinMustBeConnected`](./lib/check-pin-must-be-connected.ts) | Returns `pcb_trace_error` when required source pins are not connected. |
 | [`checkSameNetViaSpacing`](./lib/check-same-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on the same net are closer than the allowed margin. |
 | [`checkSourceTracesHavePcbTraces`](./lib/check-source-traces-have-pcb-traces.ts) | Returns `pcb_trace_error` when source traces are missing corresponding `pcb_trace` routes. |
+| [`checkSourceNetsArePhysicallyConnected`](./lib/check-source-nets-are-physically-connected.ts) | Returns `pcb_trace_error` when a source net's required PCB ports are split across disconnected physical copper groups. |
 | [`checkTracesAreContiguous`](./lib/check-traces-are-contiguous/check-traces-are-contiguous.ts) | Returns `pcb_trace_error` when trace endpoints are floating or do not connect as expected. |
 | [`checkViasOffBoard`](./lib/check-pcb-components-out-of-board/checkViasOffBoard.ts) | Returns `pcb_placement_error` if any PCB via lies outside or crosses the board boundary. |
 | [`checkCopperToBoardEdgeClearance`](./lib/check-copper-to-board-edge-clearance.ts) | Checks via, SMT-pad, plated-hole, and copper-pour geometry against the polygon board outline and required edge clearance. |
@@ -40,7 +41,7 @@ and output an array of arrays for any issues found.
 | [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs netlist connectivity checks (currently `checkPinMustBeConnected`). |
 | [`runAllPinSpecificationChecks`](./lib/run-all-checks.ts) | Runs pin specification checks (e.g. `checkAllPinsInComponentAreUnderspecified`, `checkNoPowerPinDefined`, and `checkNoGroundPinDefined`). |
 | [`runAllSchematicChecks`](./lib/run-all-checks.ts) | Runs schematic-layout checks (currently `checkSchematicComponentExcessiveVerticalPadding`). |
-| [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
+| [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled, including per-trace validation and source-net physical copper connectivity. Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs placement, schematic, netlist, pin specification, and routing checks and returns a combined list of issues. |
 
 ## Implementation Details
