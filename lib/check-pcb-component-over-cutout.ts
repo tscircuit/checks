@@ -7,7 +7,10 @@ import type {
 } from "circuit-json"
 import * as Flatten from "@flatten-js/core"
 import { applyToPoint, rotateDEG } from "transformation-matrix"
-import { getReadableNameForComponent } from "lib/util/get-readable-names"
+import {
+  getReadableNameForComponent,
+  getReadableNameForCutout,
+} from "lib/util/get-readable-names"
 
 const CUTOUT_CIRCLE_SEGMENTS = 32
 
@@ -161,7 +164,7 @@ export function checkPcbComponentOverCutout(
         type: "pcb_placement_error",
         pcb_placement_error_id: `component_over_cutout_${component.pcb_component_id}_${cutoutId}`,
         error_type: "pcb_placement_error",
-        message: `Component ${componentName} overlaps with pcb_cutout [${cutoutId}]`,
+        message: `Component ${componentName} overlaps with ${getReadableNameForCutout(cutout)}`,
         subcircuit_id: component.subcircuit_id,
       })
     }
