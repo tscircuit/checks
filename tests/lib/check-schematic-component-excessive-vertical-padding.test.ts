@@ -143,6 +143,10 @@ describe("checkSchematicComponentExcessiveVerticalPadding", () => {
       createBoxWithPins({ height: 5, pinYs: [0.1, -0.1] }),
     )
 
-    expect(warnings).toHaveLength(2)
+    expect(warnings.map((warning) => warning.styling_issue_type)).toEqual([
+      "excessive_top_padding",
+      "excessive_bottom_padding",
+      "missing_reference_designator_text",
+    ])
   })
 })

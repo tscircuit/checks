@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="tscircuit-schematic" width="600" height="400" style="background-color: rgb(245, 241, 237)" data-real-to-screen-transform="matrix(200,0,0,-200,300,200)" data-software-used-string="@tscircuit/core@0.0.1658"><style>
+              .boundary { fill: rgb(245, 241, 237); }
+              .schematic-boundary { fill: none; stroke: #fff; }
+              .component { fill: none; stroke: rgb(132, 0, 0); }
+              .chip { fill: rgb(255, 255, 194); stroke: rgb(132, 0, 0); }
+              .component-pin { fill: none; stroke: rgb(132, 0, 0); }
+              .text { font-family: sans-serif; fill: rgb(0, 150, 0); }
+              .pin-number { fill: rgb(169, 0, 0); }
+              .port-label { fill: rgb(0, 100, 100); }
+              .component-name { fill: rgb(0, 100, 100); }
+              
+            </style><rect class="boundary" x="0" y="0" width="600" height="400"/><g class="grid sch-grid"><line x1="-100" y1="400" x2="-100" y2="0" stroke="rgb(181, 181, 181)" stroke-width="2" stroke-opacity="0.5"/><line x1="100" y1="400" x2="100" y2="0" stroke="rgb(181, 181, 181)" stroke-width="2" stroke-opacity="0.5"/><line x1="300" y1="400" x2="300" y2="0" stroke="rgb(181, 181, 181)" stroke-width="2" stroke-opacity="0.5"/><line x1="500" y1="400" x2="500" y2="0" stroke="rgb(181, 181, 181)" stroke-width="2" stroke-opacity="0.5"/><line x1="700" y1="400" x2="700" y2="0" stroke="rgb(181, 181, 181)" stroke-width="2" stroke-opacity="0.5"/><line x1="0" y1="400" x2="600" y2="400" stroke="rgb(181, 181, 181)" stroke-width="2" stroke-opacity="0.5"/><line x1="0" y1="200" x2="600" y2="200" stroke="rgb(181, 181, 181)" stroke-width="2" stroke-opacity="0.5"/><line x1="0" y1="0" x2="600" y2="0" stroke="rgb(181, 181, 181)" stroke-width="2" stroke-opacity="0.5"/></g><g class="sch-component" data-circuit-json-type="schematic_component" data-schematic-component-id="schematic_component_0"><rect class="sch-rect" x="100" y="100" width="400" height="200" fill="rgba(132, 0, 0)" stroke="rgba(132, 0, 0)" stroke-width="24" data-schematic-rect-id="schematic_rect_0" data-schematic-component-id="schematic_component_0"/></g><text class="sch-text" x="300" y="200" fill="#000000" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="36px" transform="rotate(0, 300, 200)">CUSTOM</text></svg>
