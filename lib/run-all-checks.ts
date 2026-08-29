@@ -20,6 +20,7 @@ import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
+import { checkSchematicComponentMissingReferenceDesignatorText } from "./check-schematic-component-missing-reference-designator-text"
 import { checkSchematicComponentPortsOutsideBody } from "./check-schematic-component-ports-outside-body"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
@@ -52,6 +53,7 @@ export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
 export async function runAllSchematicChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkSchematicComponentExcessiveVerticalPadding(circuitJson),
+    ...checkSchematicComponentMissingReferenceDesignatorText(circuitJson),
     ...checkSchematicComponentPortsOutsideBody(circuitJson),
   ]
 }

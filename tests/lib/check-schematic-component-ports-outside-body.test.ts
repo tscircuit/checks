@@ -79,7 +79,7 @@ describe("checkSchematicComponentPortsOutsideBody", () => {
     expect(warnings[0].message).toBe(
       "U1 has schematic pins outside its body (VDD, GND); increase schHeight to at least 1.80mm",
     )
-    expect(await runAllSchematicChecks(circuitJson)).toEqual(warnings)
+    expect(await runAllSchematicChecks(circuitJson)).toContainEqual(warnings[0])
     expect(
       convertCircuitJsonToSchematicSvg([...circuitJson, ...warnings], {
         width: 600,
