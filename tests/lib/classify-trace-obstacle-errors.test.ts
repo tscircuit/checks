@@ -87,5 +87,5 @@ test("trace-obstacle checks classify each pair as overlap or clearance", async (
 
   expect(classifiedPairIds).toHaveLength(4)
   expect(new Set(classifiedPairIds).size).toBe(4)
-  expect(routingErrors as AnyCircuitElement[]).toEqual(errors)
+  expect(routingErrors as typeof errors).toEqual(errors)
 })

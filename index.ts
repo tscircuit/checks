@@ -29,6 +29,10 @@ export { checkNoGroundPinDefined } from "./lib/check-no-ground-pin-defined"
 export { checkSchematicComponentExcessiveVerticalPadding } from "./lib/check-schematic-component-excessive-vertical-padding"
 export { checkSchematicComponentPortsOutsideBody } from "./lib/check-schematic-component-ports-outside-body"
 export {
+  checkSchematicTextOverlap,
+  type SchematicTextOverlapWarning,
+} from "./lib/check-schematic-text-overlap"
+export {
   runAllChecks,
   runAllNetlistChecks,
   runAllPinSpecificationChecks,
