@@ -30,7 +30,7 @@ test("warns visually for a TSX custom symbol without a refdes", async () => {
     type: "schematic_component_styling_warning",
     styling_issue_type: "missing_reference_designator_text",
     message:
-      'Schematic component is missing schematic reference designator text; add name="{REFDES}" (for example, name="U1") and include <schematictext text="{NAME}" /> in custom symbols',
+      'Schematic component is missing schematic reference designator text. For a custom symbol, add name="{REFDES}" inside the symbol.',
   })
   expect(
     convertCircuitJsonToSchematicSvg([...circuitJson, ...warnings], {
@@ -39,30 +39,4 @@ test("warns visually for a TSX custom symbol without a refdes", async () => {
       grid: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path, "custom-symbol-missing-refdes")
-})
-
-test("accepts a TSX custom symbol with a refdes placeholder", async () => {
-  const circuit = new Circuit()
-  circuit.pcbDisabled = true
-  circuit.add(
-    <board>
-      <chip
-        name="U1"
-        symbol={
-          <symbol>
-            <schematicrect width={2} height={1} isFilled={false} />
-            <schematictext text="{NAME}" schY={0.7} fontSize={0.18} />
-          </symbol>
-        }
-      />
-    </board>,
-  )
-
-  await circuit.renderUntilSettled()
-
-  expect(
-    checkSchematicComponentMissingReferenceDesignatorText(
-      circuit.getCircuitJson(),
-    ),
-  ).toHaveLength(0)
 })

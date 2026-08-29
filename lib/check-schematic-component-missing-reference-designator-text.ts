@@ -86,6 +86,10 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
         .map((name) => name?.trim())
         .filter((name): name is string => Boolean(name)),
     )
+    const nonFallbackReferenceDesignator = [...referenceDesignators].find(
+      (referenceDesignator) =>
+        !isFallbackReferenceDesignator(referenceDesignator),
+    )
     const componentTexts = textBySchematicComponentId.get(
       schematicComponent.schematic_component_id,
     )
@@ -99,29 +103,18 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
           isTextWithinComponentBounds(schematicText, schematicComponent),
       )
 
-    if (
-      !isFallbackReferenceDesignator(sourceComponent.name) &&
-      hasReferenceDesignatorText
-    ) {
+    if (nonFallbackReferenceDesignator && hasReferenceDesignatorText) {
       continue
     }
 
-    const readableComponentName = isFallbackReferenceDesignator(
-      sourceComponent.name,
-    )
-      ? "Schematic component"
-      : sourceComponent.name
-    const exampleReferenceDesignator = isFallbackReferenceDesignator(
-      sourceComponent.name,
-    )
-      ? "U1"
-      : sourceComponent.name
+    const readableComponentName =
+      nonFallbackReferenceDesignator ?? "Schematic component"
 
     warnings.push({
       type: "schematic_component_styling_warning",
       schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponent.schematic_component_id}_missing_reference_designator_text`,
       warning_type: "schematic_component_styling_warning",
-      message: `${readableComponentName} is missing schematic reference designator text; add name="{REFDES}" (for example, name="${exampleReferenceDesignator}") and include <schematictext text="{NAME}" /> in custom symbols`,
+      message: `${readableComponentName} is missing schematic reference designator text. For a custom symbol, add name="{REFDES}" inside the symbol.`,
       schematic_component_id: schematicComponent.schematic_component_id,
       styling_issue_type: "missing_reference_designator_text",
       source_component_id: schematicComponent.source_component_id,
