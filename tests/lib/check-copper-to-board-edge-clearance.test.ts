@@ -107,6 +107,64 @@ describe("copper-to-board-edge regression fixtures", () => {
       }),
     ).toMatchSvgSnapshot(import.meta.path, "copper-outside-board")
   })
+
+  test("checks detailed board outlines without scanning every edge per pad", () => {
+    const boardRadius = 50
+    const boardOutlinePointCount = 2_400
+    const interiorPadCount = 270
+    const maximumCheckDurationMs = 2_000
+    const detailedBoard: AnyCircuitElement = {
+      type: "pcb_board",
+      pcb_board_id: "detailed_board",
+      center: { x: 0, y: 0 },
+      width: boardRadius * 2,
+      height: boardRadius * 2,
+      num_layers: 2,
+      thickness: 1.6,
+      material: "fr4",
+      min_board_edge_clearance: 0.2,
+      outline: Array.from({ length: boardOutlinePointCount }, (_, index) => {
+        const angleRadians = (index / boardOutlinePointCount) * Math.PI * 2
+        return {
+          x: Math.cos(angleRadians) * boardRadius,
+          y: Math.sin(angleRadians) * boardRadius,
+        }
+      }),
+    }
+    const interiorPads: PcbSmtPad[] = Array.from(
+      { length: interiorPadCount },
+      (_, index) => ({
+        type: "pcb_smtpad",
+        pcb_smtpad_id: `interior_pad_${index}`,
+        shape: "circle",
+        x: (index % 18) - 9,
+        y: Math.floor(index / 18) - 7,
+        radius: 0.25,
+        layer: "top",
+      }),
+    )
+    const padBelowClearance: PcbSmtPad = {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "detailed_board_pad_below_clearance",
+      shape: "circle",
+      x: boardRadius - 0.3,
+      y: 0,
+      radius: 0.2,
+      layer: "top",
+    }
+
+    const start = performance.now()
+    const errors = checkCopperToBoardEdgeClearance([
+      detailedBoard,
+      ...interiorPads,
+      padBelowClearance,
+    ])
+    const durationMs = performance.now() - start
+
+    expect(errors).toHaveLength(1)
+    expect(errors[0].message).toContain("detailed_board_pad_below_clearance")
+    expect(durationMs).toBeLessThan(maximumCheckDurationMs)
+  })
 })
 
 const rectangularBoard: AnyCircuitElement = {
