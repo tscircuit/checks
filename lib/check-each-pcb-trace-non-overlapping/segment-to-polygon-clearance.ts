@@ -10,7 +10,9 @@ import type { PcbPlatedHole, PcbSmtPad } from "circuit-json"
 import type { PcbTraceSegment } from "./getCollidableBounds"
 
 type PolygonalPad = PcbSmtPad | PcbPlatedHole
-type PillPad = Extract<PcbSmtPad, { shape: "pill" | "rotated_pill" }>
+type PillPad =
+  | Extract<PcbSmtPad, { shape: "pill" | "rotated_pill" }>
+  | Extract<PcbPlatedHole, { shape: "oval" | "pill" }>
 
 const rotatePoint = (point: Point, angleDegrees: number): Point => {
   const angle = (angleDegrees * Math.PI) / 180
@@ -48,21 +50,25 @@ export const getRotatedRectPoints = ({
 }
 
 export const getPillCenterLineForPad = (pad: PillPad) => {
-  const ccwRotation = pad.shape === "rotated_pill" ? pad.ccw_rotation : 0
-  const halfLineLength = Math.max(
-    Math.max(pad.width, pad.height) / 2 - pad.radius,
-    0,
-  )
+  const width = pad.type === "pcb_plated_hole" ? pad.outer_width : pad.width
+  const height = pad.type === "pcb_plated_hole" ? pad.outer_height : pad.height
+  const radius =
+    pad.type === "pcb_plated_hole" ? Math.min(width, height) / 2 : pad.radius
+  const ccwRotation =
+    pad.type === "pcb_plated_hole"
+      ? pad.ccw_rotation
+      : pad.shape === "rotated_pill"
+        ? pad.ccw_rotation
+        : 0
+  const halfLineLength = Math.max(Math.max(width, height) / 2 - radius, 0)
   const axis =
-    pad.width >= pad.height
-      ? { x: halfLineLength, y: 0 }
-      : { x: 0, y: halfLineLength }
+    width >= height ? { x: halfLineLength, y: 0 } : { x: 0, y: halfLineLength }
   const rotatedAxis = rotatePoint(axis, ccwRotation)
 
   return {
     start: { x: pad.x - rotatedAxis.x, y: pad.y - rotatedAxis.y },
     end: { x: pad.x + rotatedAxis.x, y: pad.y + rotatedAxis.y },
-    radius: pad.radius,
+    radius,
   }
 }
 

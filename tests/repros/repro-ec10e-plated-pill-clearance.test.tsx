@@ -301,7 +301,7 @@ const EC10E1220505 = (props: ChipProps<typeof pinLabels>) => {
   )
 }
 
-test("reproduces false EC10E1220505 plated-pill clearance errors", async () => {
+test("does not report false EC10E1220505 plated-pill clearance errors", async () => {
   const circuit = new Circuit({
     platform: {
       netlistDrcChecksDisabled: true,
@@ -319,8 +319,7 @@ test("reproduces false EC10E1220505 plated-pill clearance errors", async () => {
   const circuitJson = circuit.getCircuitJson()
   const errors = checkPadPadClearance(circuitJson)
 
-  expect(errors).toHaveLength(2)
-  expect(errors.every((error) => error.actual_clearance === 0)).toBe(true)
+  expect(errors).toEqual([])
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,
