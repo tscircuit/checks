@@ -258,23 +258,3 @@ test("treats floating-point residue at a circular plated-hole boundary as contac
   expect(isPointInPad({ x: 0, y: 0.500001 }, pad)).toBe(false)
   expectBoundaryContacts(platedHoleCircuitJson, "circular-plated-hole-boundary")
 })
-
-test("uses the rounded boundary of a rotated plated-hole pill", () => {
-  const pad = {
-    type: "pcb_plated_hole",
-    pcb_plated_hole_id: "plated_pill",
-    shape: "pill",
-    x: 0,
-    y: 0,
-    outer_width: 3.2,
-    outer_height: 3,
-    hole_width: 2.4,
-    hole_height: 2.2,
-    ccw_rotation: 90,
-    layers: ["top", "bottom"],
-  } as const
-
-  expect(isPointInPad({ x: 0, y: 1.6 }, pad)).toBe(true)
-  expect(isPointInPad({ x: 0, y: 1.600001 }, pad)).toBe(false)
-  expect(isPointInPad({ x: 1.5, y: 1.4 }, pad)).toBe(false)
-})

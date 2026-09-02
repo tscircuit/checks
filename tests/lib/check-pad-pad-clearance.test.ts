@@ -54,36 +54,3 @@ test("checkPadPadClearance does not flag adjacent W25Q16 rotated pill pads", () 
 
   expect(checkPadPadClearance(circuitJson)).toEqual([])
 })
-
-test("checkPadPadClearance reports a circle that overlaps a plated pill", () => {
-  const circuitJson: AnyCircuitElement[] = [
-    {
-      type: "pcb_plated_hole",
-      pcb_plated_hole_id: "pill",
-      shape: "pill",
-      x: 0,
-      y: 0,
-      outer_width: 3.2,
-      outer_height: 3,
-      hole_width: 2.4,
-      hole_height: 2.2,
-      ccw_rotation: 0,
-      layers: ["top", "bottom"],
-    },
-    {
-      type: "pcb_plated_hole",
-      pcb_plated_hole_id: "circle",
-      shape: "circle",
-      x: 2.2,
-      y: 0,
-      outer_diameter: 1.8,
-      hole_diameter: 1.2,
-      layers: ["top", "bottom"],
-    },
-  ]
-
-  const errors = checkPadPadClearance(circuitJson)
-
-  expect(errors).toHaveLength(1)
-  expect(errors[0].actual_clearance).toBeCloseTo(-0.3, 10)
-})

@@ -75,13 +75,9 @@ export const isCircularPad = (pad: CopperClearanceElement) =>
 
 const isPillPad = (
   pad: CopperClearanceElement,
-): pad is
-  | Extract<PcbSmtPad, { shape: "pill" | "rotated_pill" }>
-  | Extract<PcbPlatedHole, { shape: "oval" | "pill" }> =>
-  (pad.type === "pcb_smtpad" &&
-    (pad.shape === "pill" || pad.shape === "rotated_pill")) ||
-  (pad.type === "pcb_plated_hole" &&
-    (pad.shape === "oval" || pad.shape === "pill"))
+): pad is Extract<PcbSmtPad, { shape: "pill" | "rotated_pill" }> =>
+  pad.type === "pcb_smtpad" &&
+  (pad.shape === "pill" || pad.shape === "rotated_pill")
 
 const getCircleShape = (pad: CopperClearanceElement) => {
   const center = getPadCenter(pad)

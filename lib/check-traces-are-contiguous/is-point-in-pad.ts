@@ -136,10 +136,11 @@ export function isPointInPad(
     }
 
     if (pad.shape === "oval" || pad.shape === "pill") {
-      const pill = getPillCenterLineForPad(pad)
       return (
-        pointToSegmentDistance(point, pill.start, pill.end) <=
-        pill.radius + POINT_IN_PAD_TOLERANCE_MM
+        Math.abs(point.x - pad.x) <=
+          pad.outer_width / 2 + POINT_IN_PAD_TOLERANCE_MM &&
+        Math.abs(point.y - pad.y) <=
+          pad.outer_height / 2 + POINT_IN_PAD_TOLERANCE_MM
       )
     }
   }
