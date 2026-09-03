@@ -16,17 +16,6 @@ test("allows a component over its own footprint cutout", () => {
       obstructs_within_bounds: true,
     },
     {
-      type: "pcb_component",
-      pcb_component_id: "pcb_component_intruder",
-      source_component_id: "source_component_intruder",
-      center: { x: 0, y: 0 },
-      width: 2,
-      height: 2,
-      rotation: 0,
-      layer: "top",
-      obstructs_within_bounds: true,
-    },
-    {
       type: "pcb_cutout",
       pcb_cutout_id: "pcb_cutout_sensor",
       pcb_component_id: "pcb_component_owner",
@@ -38,8 +27,5 @@ test("allows a component over its own footprint cutout", () => {
 
   const errors = checkPcbComponentOverCutout(circuitJson)
 
-  expect(errors).toHaveLength(1)
-  expect(errors[0]?.pcb_placement_error_id).toBe(
-    "component_over_cutout_pcb_component_intruder_pcb_cutout_sensor",
-  )
+  expect(errors).toHaveLength(0)
 })

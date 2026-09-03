@@ -1,4 +1,3 @@
-import * as Flatten from "@flatten-js/core"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
@@ -6,8 +5,9 @@ import type {
   PcbCutout,
   PcbPlacementError,
 } from "circuit-json"
-import { getReadableNameForComponent } from "lib/util/get-readable-names"
+import * as Flatten from "@flatten-js/core"
 import { applyToPoint, rotateDEG } from "transformation-matrix"
+import { getReadableNameForComponent } from "lib/util/get-readable-names"
 
 const CUTOUT_CIRCLE_SEGMENTS = 32
 
