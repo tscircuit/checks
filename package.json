@@ -2,7 +2,7 @@
   "name": "@tscircuit/checks",
   "type": "module",
   "main": "./dist/index.js",
-  "version": "0.0.181",
+  "version": "0.0.182",
   "repository": {
     "type": "git",
     "url": "https://github.com/tscircuit/checks"
