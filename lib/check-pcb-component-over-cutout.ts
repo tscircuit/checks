@@ -149,6 +149,7 @@ export function checkPcbComponentOverCutout(
       height: component.height,
     })
     for (const { cutout, polygon: cutoutPolygon } of cutoutPolygons) {
+      if (cutout.pcb_component_id === component.pcb_component_id) continue
       if (!doPolygonsOverlap(componentPolygon, cutoutPolygon)) continue
 
       const componentName = getReadableNameForComponent(
