@@ -25,6 +25,7 @@ import {
   getPolygonPointsForPad,
   getSegmentToPillClearance,
   getSegmentToPolygonClearanceFromPoints,
+  isPolygonPadHole,
 } from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
 import type { Bounds } from "lib/data-structures/SpatialIndex"
 import { DEFAULT_TRACE_THICKNESS } from "lib/drc-defaults"
@@ -61,6 +62,17 @@ export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
     }
   }
 
+  if (isPolygonPadHole(pad)) {
+    // getBoundsOfPcbElements only knows the drill of a polygon-pad plated
+    // hole, so derive the bounds from the actual copper outline instead.
+    const points = getPolygonPointsForPad(pad)
+    return {
+      minX: Math.min(...points.map((point) => point.x)),
+      minY: Math.min(...points.map((point) => point.y)),
+      maxX: Math.max(...points.map((point) => point.x)),
+      maxY: Math.max(...points.map((point) => point.y)),
+    }
+  }
   return getBoundsOfPcbElements([pad])
 }
 
@@ -150,8 +162,8 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
 
   if (
     pad.type === "pcb_plated_hole" &&
-    "rect_pad_width" in pad &&
-    "rect_pad_height" in pad
+    (isPolygonPadHole(pad) ||
+      ("rect_pad_width" in pad && "rect_pad_height" in pad))
   ) {
     return {
       kind: "polygon" as const,
