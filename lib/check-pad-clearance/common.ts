@@ -35,6 +35,15 @@ export type CopperClearanceElement = PadClearanceElement | PCBKeepout
 
 export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
   if (pad.type === "pcb_keepout") {
+    if (pad.shape === "outline") {
+      return {
+        minX: Math.min(...pad.outline.map((point) => point.x)),
+        minY: Math.min(...pad.outline.map((point) => point.y)),
+        maxX: Math.max(...pad.outline.map((point) => point.x)),
+        maxY: Math.max(...pad.outline.map((point) => point.y)),
+      }
+    }
+
     if (pad.shape === "circle") {
       return {
         minX: pad.center.x - pad.radius,
@@ -56,7 +65,7 @@ export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
 }
 
 export const getPadCenter = (pad: CopperClearanceElement) => {
-  if (pad.type === "pcb_keepout") return pad.center
+  if (pad.type === "pcb_keepout" && pad.shape !== "outline") return pad.center
   const bounds = getPadBounds(pad)
   return midpoint(
     { x: bounds.minX, y: bounds.minY },
@@ -95,6 +104,13 @@ const getCircleShape = (pad: CopperClearanceElement) => {
 
 const getPolygonShape = (pad: CopperClearanceElement) => {
   if (pad.type === "pcb_keepout") {
+    if (pad.shape === "outline") {
+      return {
+        kind: "polygon" as const,
+        points: pad.outline,
+      }
+    }
+
     if (pad.shape !== "rect") {
       throw new Error(`Expected rectangular keepout, got ${pad.shape}`)
     }
