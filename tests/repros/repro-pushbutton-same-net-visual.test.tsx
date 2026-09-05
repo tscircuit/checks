@@ -26,7 +26,12 @@ const SameNetPushbutton = ({
       />
     )}
     {errorMessage && (
-      <schematictext text={errorMessage} schY={-2.2} fontSize={0.12} />
+      <schematictext
+        text={errorMessage}
+        schY={-2.2}
+        fontSize={0.12}
+        color="red"
+      />
     )}
   </board>
 )
@@ -47,7 +52,11 @@ test("pushbutton same-net DRC is visible in the schematic", async () => {
   )
   await annotatedCircuit.renderUntilSettled()
 
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(1)
+  expect(errors[0]).toMatchObject({
+    type: "source_component_misconfigured_error",
+    is_fatal: true,
+  })
   expect(
     convertCircuitJsonToSchematicSvg([
       ...annotatedCircuit.getCircuitJson(),

@@ -26,5 +26,67 @@ test("repro: pushbutton schematic contacts resolve to the same net", async () =>
 
   expect(schematicContactConnectivityKeys).toHaveLength(2)
   expect(new Set(schematicContactConnectivityKeys).size).toBe(1)
-  expect(await runAllNetlistChecks(circuitJson)).toHaveLength(0)
+  expect(await runAllNetlistChecks(circuitJson)).toMatchObject([
+    {
+      type: "source_component_misconfigured_error",
+      message:
+        "Switch SW1_WAKE has both schematic contacts connected to the same net. Check internallyConnectedPins and the footprint pin mapping.",
+      source_component_ids: ["source_component_2"],
+      source_port_ids: ["source_port_15", "source_port_16"],
+      is_fatal: true,
+    },
+  ])
+})
+
+test("internally grouped pushbutton contacts resolve to different nets", async () => {
+  const circuitJson = pushbuttonSelfConnection.map((element) => {
+    if (
+      element.type === "source_component" &&
+      element.ftype === "simple_push_button"
+    ) {
+      return any_circuit_element.parse({
+        ...element,
+        internally_connected_source_port_ids: [
+          ["source_port_15", "source_port_16"],
+          ["source_port_17", "source_port_18"],
+        ],
+      })
+    }
+    if (
+      element.type === "schematic_port" &&
+      element.schematic_port_id === "schematic_port_16"
+    ) {
+      return any_circuit_element.parse({
+        ...element,
+        source_port_id: "source_port_17",
+      })
+    }
+    return any_circuit_element.parse(element)
+  })
+
+  expect(await runAllNetlistChecks(circuitJson)).toEqual([])
+})
+
+test("two-terminal simple switch contacts on the same net produce an error", async () => {
+  const circuitJson = pushbuttonSelfConnection.map((element) => {
+    if (
+      element.type === "source_component" &&
+      element.ftype === "simple_push_button"
+    ) {
+      return any_circuit_element.parse({
+        ...element,
+        ftype: "simple_switch",
+      })
+    }
+    return any_circuit_element.parse(element)
+  })
+
+  expect(await runAllNetlistChecks(circuitJson)).toMatchObject([
+    {
+      type: "source_component_misconfigured_error",
+      source_component_ids: ["source_component_2"],
+      source_port_ids: ["source_port_15", "source_port_16"],
+      is_fatal: true,
+    },
+  ])
 })
