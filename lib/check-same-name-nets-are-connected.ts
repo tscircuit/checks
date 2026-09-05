@@ -1,15 +1,8 @@
-import type { AnyCircuitElement, SourceNet } from "circuit-json"
-
-// Kept structural until circuit-json publishes SourceConfusingNetNameWarning.
-export interface SourceConfusingNetNameWarning {
-  type: "source_confusing_net_name_warning"
-  source_confusing_net_name_warning_id: string
-  warning_type: "source_confusing_net_name_warning"
-  message: string
-  source_net_ids: string[]
-  net_name: string
-  subcircuit_id?: string
-}
+import type {
+  AnyCircuitElement,
+  SourceConfusingNetNameWarning,
+  SourceNet,
+} from "circuit-json"
 
 /** Warn once per name when its source nets belong to multiple electrical islands. */
 export function checkSameNameNetsAreConnected(
