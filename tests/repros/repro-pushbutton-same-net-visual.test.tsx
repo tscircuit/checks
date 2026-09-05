@@ -3,7 +3,10 @@ import { convertCircuitJsonToSchematicSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
 import { runAllNetlistChecks } from "../../lib/run-all-checks"
 
-const SameNetPushbutton = ({ errorCount }: { errorCount?: number }) => (
+const SameNetPushbutton = ({
+  errorCount,
+  errorMessage,
+}: { errorCount?: number; errorMessage?: string }) => (
   <board routingDisabled schMaxTraceDistance={1}>
     <pushbutton
       name="SW1"
@@ -15,22 +18,15 @@ const SameNetPushbutton = ({ errorCount }: { errorCount?: number }) => (
         pin4: "net.GND",
       }}
     />
-    <schematictext
-      text="SW1: both visible contacts connect to WAKE_MR_N"
-      schY={2}
-      fontSize={0.18}
-    />
-    <schematictext
-      text="Expected: WAKE_MR_N -- SW1 -- GND"
-      schY={1.5}
-      fontSize={0.18}
-    />
     {errorCount !== undefined && (
       <schematictext
         text={`SW1 same-net DRC errors: ${errorCount}`}
         schY={-1.5}
         fontSize={0.18}
       />
+    )}
+    {errorMessage && (
+      <schematictext text={errorMessage} schY={-2.2} fontSize={0.12} />
     )}
   </board>
 )
@@ -43,7 +39,12 @@ test("pushbutton same-net DRC is visible in the schematic", async () => {
   const circuitJson = circuit.getCircuitJson()
   const errors = await runAllNetlistChecks(circuitJson)
   const annotatedCircuit = new Circuit()
-  annotatedCircuit.add(<SameNetPushbutton errorCount={errors.length} />)
+  annotatedCircuit.add(
+    <SameNetPushbutton
+      errorCount={errors.length}
+      errorMessage={errors[0]?.message}
+    />,
+  )
   await annotatedCircuit.renderUntilSettled()
 
   expect(errors).toHaveLength(1)
