@@ -12,10 +12,10 @@ import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkPadPadClearance } from "./check-pad-pad-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
 import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
-import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
+import { checkPcbComponentsMissingCourtyard } from "./check-pcb-components-missing-courtyard"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
-import { checkPcbComponentsMissingCourtyard } from "./check-pcb-components-missing-courtyard"
+import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
@@ -27,6 +27,7 @@ import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-t
 import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-terminal-switch-contacts-on-different-nets"
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
@@ -51,6 +52,7 @@ export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkPinMustBeConnected(circuitJson),
     ...checkSameNameNetsAreConnected(circuitJson),
+    ...checkTwoTerminalSwitchContactsOnDifferentNets(circuitJson),
   ]
 }
 

@@ -1,0 +1,87 @@
+[
+  {
+    "type": "source_port",
+    "source_port_id": "source_port_15",
+    "name": "pin1",
+    "pin_number": 1,
+    "port_hints": ["pin1", "1"],
+    "source_component_id": "source_component_2",
+    "subcircuit_id": "subcircuit_source_group_2",
+    "subcircuit_connectivity_map_key": "PedometerBoard_connectivity_net19"
+  },
+  {
+    "type": "source_port",
+    "source_port_id": "source_port_16",
+    "name": "pin2",
+    "pin_number": 2,
+    "port_hints": ["pin2", "2"],
+    "source_component_id": "source_component_2",
+    "subcircuit_id": "subcircuit_source_group_2",
+    "subcircuit_connectivity_map_key": "PedometerBoard_connectivity_net19"
+  },
+  {
+    "type": "source_port",
+    "source_port_id": "source_port_17",
+    "name": "pin3",
+    "pin_number": 3,
+    "port_hints": ["pin3", "3"],
+    "source_component_id": "source_component_2",
+    "subcircuit_id": "subcircuit_source_group_2",
+    "subcircuit_connectivity_map_key": "PedometerBoard_connectivity_net8"
+  },
+  {
+    "type": "source_port",
+    "source_port_id": "source_port_18",
+    "name": "pin4",
+    "pin_number": 4,
+    "port_hints": ["pin4", "4"],
+    "source_component_id": "source_component_2",
+    "subcircuit_id": "subcircuit_source_group_2",
+    "subcircuit_connectivity_map_key": "PedometerBoard_connectivity_net8"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_2",
+    "name": "SW1_WAKE",
+    "ftype": "simple_push_button",
+    "supplier_part_numbers": { "jlcpcb": ["C913784"] },
+    "manufacturer_part_number": "1TS026A-1600-0553-CT",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_2",
+    "center": { "x": -4.351223214285714, "y": -5.4525 },
+    "size": { "width": 0.94, "height": 0.718910699999999 },
+    "source_component_id": "source_component_2",
+    "is_box_with_pins": true,
+    "symbol_name": "push_button_normally_open_momentary_right",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_port",
+    "schematic_port_id": "schematic_port_15",
+    "schematic_component_id": "schematic_component_2",
+    "center": { "x": -4.821223214285713, "y": -5.4525 },
+    "source_port_id": "source_port_15",
+    "facing_direction": "left",
+    "distance_from_component_edge": 0.4,
+    "pin_number": 1,
+    "is_connected": true,
+    "schematic_sheet_id": "schematic_sheet_0"
+  },
+  {
+    "type": "schematic_port",
+    "schematic_port_id": "schematic_port_16",
+    "schematic_component_id": "schematic_component_2",
+    "center": { "x": -3.8812232142857135, "y": -5.4525 },
+    "source_port_id": "source_port_16",
+    "facing_direction": "right",
+    "distance_from_component_edge": 0.4,
+    "pin_number": 2,
+    "is_connected": true,
+    "schematic_sheet_id": "schematic_sheet_0"
+  }
+]
