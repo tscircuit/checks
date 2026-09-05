@@ -1,3 +1,4 @@
+import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
 import type { AnyCircuitElement } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
@@ -50,6 +51,7 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkPinMustBeConnected(circuitJson),
+    ...checkSameNameNetsAreConnected(circuitJson),
     ...checkTwoTerminalSwitchContactsOnDifferentNets(circuitJson),
   ]
 }

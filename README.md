@@ -153,3 +153,10 @@ export const pcb_trace_error = z
 export type PCBTraceErrorInput = z.input<typeof pcb_trace_error>
 export type PCBTraceError = z.infer<typeof pcb_trace_error>
 ```
+
+
+### checkSameNameNetsAreConnected
+
+Checks whether source nets with exactly the same nonblank name belong to one electrical network, including across subcircuits. Returns one `source_confusing_net_name_warning` per ambiguous name with the affected `source_net_ids`. Connectivity follows source traces, shared ports, and both forms of internal component pin connections; a shared name or scoped connectivity key alone does not connect nets.
+
+Included in `runAllNetlistChecks` and `runAllChecks`. This checks logical source connectivity; PCB routing continuity remains a separate check.
