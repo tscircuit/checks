@@ -153,3 +153,23 @@ export const pcb_trace_error = z
 export type PCBTraceErrorInput = z.input<typeof pcb_trace_error>
 export type PCBTraceError = z.infer<typeof pcb_trace_error>
 ```
+
+### Checks between autorouting phases
+
+```ts
+import { runAllRoutingChecks, intermediateRoutingChecks } from "@tscircuit/checks"
+
+const errors = await runAllRoutingChecks(circuitJson, {
+  checks: intermediateRoutingChecks,
+  autoroutingPhase: {
+    subcircuit_id: "subcircuit_0",
+    routing_phase_index: 0,
+    name: "fanout",
+    stage_index: 0,
+  },
+})
+```
+
+`checks` accepts exported routing check names, for example `["checkPadTraceClearance", "checkViaPadClearance"]`. Omitting it preserves the full routing suite; `[]` runs none, and repeated names run once. `intermediateRoutingChecks` checks overlap, clearance, via spacing, and board boundaries while excluding connectivity, contiguity, length, and via-count checks that can be premature during routing.
+
+Each result carries `autorouting_phase` when context is supplied. The input is not annotated. These are observations of the supplied snapshot, including any pre-existing violations, not proof that the phase introduced them.

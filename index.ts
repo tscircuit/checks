@@ -40,3 +40,11 @@ export {
 
 export { checkConnectorAccessibleOrientation } from "./lib/check-connector-accessible-orientation"
 export { checkTestPointAccessibility } from "./lib/check-testpoint-accessibility"
+
+export {
+  routingChecks,
+  intermediateRoutingChecks,
+  type RoutingCheckName,
+  type RoutingCheckOptions,
+  type RoutingCheckResult,
+} from "./lib/run-all-checks"

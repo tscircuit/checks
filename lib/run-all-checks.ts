@@ -68,21 +68,59 @@ export async function runAllPinSpecificationChecks(
   ]
 }
 
-export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
-  return [
-    ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
-    ...checkSourceTracesHavePcbTraces(circuitJson),
-    ...checkPcbTraceLengths(circuitJson),
-    ...checkPcbTraceViaCounts(circuitJson),
-    ...checkEachPcbTraceNonOverlapping(circuitJson),
-    ...checkPadTraceClearance(circuitJson),
-    ...checkViaTraceClearance(circuitJson),
-    ...checkViaPadClearance(circuitJson),
-    ...checkSameNetViaSpacing(circuitJson),
-    ...checkDifferentNetViaSpacing(circuitJson),
-    ...checkTracesAreContiguous(circuitJson),
-    ...checkPcbTracesOutOfBoard(circuitJson),
-  ]
+export const routingChecks = {
+  checkEachPcbPortConnectedToPcbTraces,
+  checkSourceTracesHavePcbTraces,
+  checkPcbTraceLengths,
+  checkPcbTraceViaCounts,
+  checkEachPcbTraceNonOverlapping,
+  checkPadTraceClearance,
+  checkViaTraceClearance,
+  checkViaPadClearance,
+  checkSameNetViaSpacing,
+  checkDifferentNetViaSpacing,
+  checkTracesAreContiguous,
+  checkPcbTracesOutOfBoard,
+} as const
+
+export type RoutingCheckName = keyof typeof routingChecks
+export type RoutingCheckResult = ReturnType<
+  (typeof routingChecks)[RoutingCheckName]
+>[number]
+
+export interface RoutingCheckOptions {
+  /** Omit to run all routing checks; an empty array runs none. */
+  checks?: readonly RoutingCheckName[]
+  /** The stage where these diagnostics were observed, not necessarily introduced. */
+  autoroutingPhase?: import("circuit-json").AutoroutingPhase
+}
+
+/** Geometry checks suitable for partially routed circuits (including fanout). */
+export const intermediateRoutingChecks = [
+  "checkEachPcbTraceNonOverlapping",
+  "checkPadTraceClearance",
+  "checkViaTraceClearance",
+  "checkViaPadClearance",
+  "checkSameNetViaSpacing",
+  "checkDifferentNetViaSpacing",
+  "checkPcbTracesOutOfBoard",
+] as const satisfies readonly RoutingCheckName[]
+
+export async function runAllRoutingChecks(
+  circuitJson: AnyCircuitElement[],
+  options: RoutingCheckOptions = {},
+) {
+  const selectedChecks =
+    options.checks ?? (Object.keys(routingChecks) as RoutingCheckName[])
+  const results = [...new Set(selectedChecks)].flatMap<RoutingCheckResult>(
+    (name) => routingChecks[name](circuitJson),
+  )
+  return options.autoroutingPhase
+    ? results.map((error) => ({
+        ...error,
+        autorouting_phase: { ...options.autoroutingPhase! },
+      }))
+    : results
 }
 
 export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
