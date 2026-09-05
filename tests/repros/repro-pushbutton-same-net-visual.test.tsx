@@ -46,7 +46,11 @@ test("pushbutton same-net DRC is visible in the schematic", async () => {
   annotatedCircuit.add(<SameNetPushbutton errorCount={errors.length} />)
   await annotatedCircuit.renderUntilSettled()
 
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(1)
+  expect(errors[0]).toMatchObject({
+    type: "source_component_misconfigured_error",
+    is_fatal: true,
+  })
   expect(
     convertCircuitJsonToSchematicSvg([
       ...annotatedCircuit.getCircuitJson(),
