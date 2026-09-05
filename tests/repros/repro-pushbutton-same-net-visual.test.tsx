@@ -26,7 +26,12 @@ const SameNetPushbutton = ({
       />
     )}
     {errorMessage && (
-      <schematictext text={errorMessage} schY={-2.2} fontSize={0.12} />
+      <schematictext
+        text={errorMessage}
+        schY={-2.2}
+        fontSize={0.12}
+        color="red"
+      />
     )}
   </board>
 )
