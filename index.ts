@@ -40,3 +40,4 @@ export {
 
 export { checkConnectorAccessibleOrientation } from "./lib/check-connector-accessible-orientation"
 export { checkTestPointAccessibility } from "./lib/check-testpoint-accessibility"
+export { checkSameNameNetsAreConnected } from "./lib/check-same-name-nets-are-connected"
