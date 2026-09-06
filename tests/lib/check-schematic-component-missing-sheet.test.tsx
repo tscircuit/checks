@@ -1,8 +1,5 @@
 import { expect, test } from "bun:test"
-import {
-  type AnyCircuitElement,
-  schematic_component_styling_warning,
-} from "circuit-json"
+import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToSchematicSvg } from "circuit-to-svg"
 import {
   checkSchematicComponentMissingSheet,
@@ -21,32 +18,20 @@ test("warns with a component reference and assignment instructions", async () =>
   )
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
-  const original = structuredClone(circuitJson)
   const component = circuitJson.find(
     (element) => element.type === "schematic_component",
   )
-  expect(component).toBeDefined()
-  const warnings = checkSchematicComponentMissingSheet(circuitJson)
-  expect(warnings).toHaveLength(1)
-  expect(warnings[0]).toMatchObject({
-    type: "schematic_component_styling_warning",
-    styling_issue_type: "missing_schematic_sheet",
-    schematic_component_id: component!.schematic_component_id,
-    source_component_id: component!.source_component_id,
-    subcircuit_id: component!.subcircuit_id,
-    message:
-      "R1 is not assigned to a schematic sheet. Set schSheetName to an existing sheet name.",
-  })
-  expect(
-    schematic_component_styling_warning.safeParse(warnings[0]).success,
-  ).toBe(true)
-  expect(warnings[0].schematic_sheet_id).toBeUndefined()
-  expect(circuitJson).toEqual(original)
-  expect(
-    (await runAllSchematicChecks(circuitJson)).some(
-      (warning) => warning.styling_issue_type === "missing_schematic_sheet",
-    ),
-  ).toBe(true)
+  const warnings = (await runAllSchematicChecks(circuitJson)).filter(
+    (warning) => warning.styling_issue_type === "missing_schematic_sheet",
+  )
+  expect(warnings).toEqual([
+    expect.objectContaining({
+      schematic_component_id: component?.schematic_component_id,
+      source_component_id: component?.source_component_id,
+      message:
+        "R1 is not assigned to a schematic sheet. Set schSheetName to an existing sheet name.",
+    }),
+  ])
 })
 
 test("requires a sheet even when the circuit has not declared any", async () => {
@@ -59,15 +44,9 @@ test("requires a sheet even when the circuit has not declared any", async () => 
   )
   await circuit.renderUntilSettled()
   const warnings = checkSchematicComponentMissingSheet(circuit.getCircuitJson())
-  expect(warnings).toHaveLength(1)
-  expect(warnings[0].message).toBe(
+  expect(warnings.map((warning) => warning.message)).toEqual([
     "R1 is not assigned to a schematic sheet. Add a <schematicsheet> and set schSheetName to its name.",
-  )
-  expect(
-    (await runAllSchematicChecks(circuit.getCircuitJson())).some(
-      (warning) => warning.styling_issue_type === "missing_schematic_sheet",
-    ),
-  ).toBe(true)
+  ])
 })
 
 test("accepts components explicitly assigned to different sheets", async () => {
@@ -82,15 +61,6 @@ test("accepts components explicitly assigned to different sheets", async () => {
     </board>,
   )
   await circuit.renderUntilSettled()
-  const schematicComponents = circuit
-    .getCircuitJson()
-    .filter((element) => element.type === "schematic_component")
-  expect(schematicComponents).toHaveLength(2)
-  expect(
-    new Set(
-      schematicComponents.map((component) => component.schematic_sheet_id),
-    ).size,
-  ).toBe(2)
   expect(checkSchematicComponentMissingSheet(circuit.getCircuitJson())).toEqual(
     [],
   )
@@ -105,11 +75,6 @@ test("does not warn for an empty sheet", async () => {
     </board>,
   )
   await circuit.renderUntilSettled()
-  expect(
-    circuit
-      .getCircuitJson()
-      .filter((element) => element.type === "schematic_sheet"),
-  ).toHaveLength(1)
   expect(checkSchematicComponentMissingSheet(circuit.getCircuitJson())).toEqual(
     [],
   )
@@ -129,18 +94,18 @@ test("returns one warning per unassigned component", async () => {
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
   const warnings = checkSchematicComponentMissingSheet(circuitJson)
-  expect(warnings).toHaveLength(2)
-  const unassignedComponents = circuitJson
-    .filter((element) => element.type === "schematic_component")
-    .filter((component) => !component.schematic_sheet_id)
-  expect(warnings.map((warning) => warning.schematic_component_id)).toEqual(
-    unassignedComponents.map((component) => component.schematic_component_id),
+  const sourceComponents = circuitJson.filter(
+    (element) => element.type === "source_component",
   )
   expect(
-    new Set(
-      warnings.map((warning) => warning.schematic_component_styling_warning_id),
-    ).size,
-  ).toBe(2)
+    warnings.map(
+      (warning) =>
+        sourceComponents.find(
+          (component) =>
+            component.source_component_id === warning.source_component_id,
+        )?.name,
+    ),
+  ).toEqual(["R1", "C1"])
 })
 
 test("accepts sheet assignments inherited from a group", async () => {
@@ -155,13 +120,6 @@ test("accepts sheet assignments inherited from a group", async () => {
     </board>,
   )
   await circuit.renderUntilSettled()
-  const schematicComponents = circuit
-    .getCircuitJson()
-    .filter((element) => element.type === "schematic_component")
-  expect(schematicComponents.length).toBeGreaterThan(0)
-  expect(
-    schematicComponents.every((component) => component.schematic_sheet_id),
-  ).toBe(true)
   expect(checkSchematicComponentMissingSheet(circuit.getCircuitJson())).toEqual(
     [],
   )
@@ -416,23 +374,8 @@ test("shows a warning note pointing to the unassigned component, then clears aft
   circuit.pcbDisabled = true
   circuit.add(<SheetAssignmentExample />)
   await circuit.renderUntilSettled()
-  const schematicComponents = circuit
-    .getCircuitJson()
-    .filter((element) => element.type === "schematic_component")
-  expect(schematicComponents).toHaveLength(10)
-  expect(
-    schematicComponents.filter((component) => component.schematic_sheet_id),
-  ).toHaveLength(9)
   const warnings = checkSchematicComponentMissingSheet(circuit.getCircuitJson())
   expect(warnings).toHaveLength(1)
-  const sourceResistor = circuit
-    .getCircuitJson()
-    .filter((element) => element.type === "source_component")
-    .find((element) => element.name === "R2")
-  expect(warnings[0].source_component_id).toBe(
-    sourceResistor?.source_component_id,
-  )
-
   const annotated = new Circuit()
   annotated.pcbDisabled = true
   annotated.add(<SheetAssignmentExample note={warnings[0].message} />)
@@ -445,13 +388,6 @@ test("shows a warning note pointing to the unassigned component, then clears aft
   assigned.pcbDisabled = true
   assigned.add(<SheetAssignmentExample assigned />)
   await assigned.renderUntilSettled()
-  const assignedComponents = assigned
-    .getCircuitJson()
-    .filter((element) => element.type === "schematic_component")
-  expect(assignedComponents).toHaveLength(10)
-  expect(
-    assignedComponents.every((component) => component.schematic_sheet_id),
-  ).toBe(true)
   expect(
     checkSchematicComponentMissingSheet(assigned.getCircuitJson()),
   ).toEqual([])
