@@ -12,6 +12,7 @@ and output an array of arrays for any issues found.
 | [`checkConnectorAccessibleOrientation`](./lib/check-connector-accessible-orientation.ts) | Returns `pcb_accessibility_error` for connectors whose orientation makes them inaccessible. |
 | [`checkTestPointAccessibility`](./lib/check-testpoint-accessibility.ts) | Returns `pcb_placement_error` when a test point is inside another component's courtyard on the same PCB side. |
 | [`checkAllPinsInComponentAreUnderspecified`](./lib/check-all-pins-in-component-are-underspecified.ts) | Returns `source_component_pins_underspecified_warning` when every pin on a chip lacks pin attributes. |
+| [`checkConfiguredPeripheralPins`](./lib/check-configured-peripheral-pins.ts) | Returns one `source_component_misconfigured_error` per pin configured for explicitly unsupported I²C, SPI, or UART functions. Missing support attributes are unknown and are skipped. |
 | [`checkNoPowerPinDefined`](./lib/check-no-power-pin-defined.ts) | Returns `source_no_power_pin_defined_warning` when a chip has no pin with `requires_power=true`. |
 | [`checkNoGroundPinDefined`](./lib/check-no-ground-pin-defined.ts) | Returns `source_no_ground_pin_defined_warning` when a chip has no pin with `requires_ground=true`. |
 | [`checkSchematicComponentExcessiveVerticalPadding`](./lib/check-schematic-component-excessive-vertical-padding.ts) | Returns a `schematic_component_styling_warning` with `styling_issue_type: "excessive_top_padding"` or `"excessive_bottom_padding"` when a box-style component has more than three pin spacings of empty space above or below its left/right pins. |
@@ -39,12 +40,19 @@ and output an array of arrays for any issues found.
 | --- | --- |
 | [`runAllPlacementChecks`](./lib/run-all-checks.ts) | Runs placement checks (`checkCopperToBoardEdgeClearance`, `checkPcbComponentsOutOfBoard`, `checkPcbCopperOverKeepout`, `checkPcbComponentOverlap`, `checkPadPadClearance`, `checkCourtyardOverlap`, `checkConnectorAccessibleOrientation`, and `checkTestPointAccessibility`). |
 | [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs netlist connectivity checks (currently `checkPinMustBeConnected`). |
-| [`runAllPinSpecificationChecks`](./lib/run-all-checks.ts) | Runs pin specification checks (e.g. `checkAllPinsInComponentAreUnderspecified`, `checkNoPowerPinDefined`, and `checkNoGroundPinDefined`). |
+| [`runAllPinSpecificationChecks`](./lib/run-all-checks.ts) | Runs pin specification checks (`checkAllPinsInComponentAreUnderspecified`, `checkConfiguredPeripheralPins`, `checkNoPowerPinDefined`, and `checkNoGroundPinDefined`). |
 | [`runAllSchematicChecks`](./lib/run-all-checks.ts) | Runs schematic-layout checks (`checkSchematicComponentExcessiveVerticalPadding`, `checkSchematicComponentMissingReferenceDesignatorText`, and `checkSchematicComponentPortsOutsideBody`). |
 | [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs placement, schematic, netlist, pin specification, and routing checks and returns a combined list of issues. |
 
 ## Implementation Details
+
+Peripheral compatibility uses the declared source-port attributes: for example,
+`is_configured_for_i2c_sda: true` together with `supports_i2c_sda: false`
+produces an error. Omitting `supports_i2c_sda` does not declare it unsupported.
+Each error retains source component and port references and lists the conflicting
+functions. This check does not infer functions from net names, assign pins,
+validate peripheral controller pairings, or model software-emulated protocols.
 
 > [!NOTE]
 > It can be helpful to look at an [example soup file](./tests/assets/unrouted-soup-example.json)
