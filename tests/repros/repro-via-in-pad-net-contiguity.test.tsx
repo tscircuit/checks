@@ -4,7 +4,7 @@ import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { getViaInPadSensorRegion } from "../fixtures/via-in-pad-sensor-region"
 
-test("reproduces false disconnected endpoints on a sensor board with intentional via-in-pad", async () => {
+test("accepts connected sensor-board endpoints with intentional via-in-pad", async () => {
   const circuitJson = await getViaInPadSensorRegion()
   for (const element of circuitJson) {
     if (element.type === "pcb_trace" || element.type === "pcb_via") {
@@ -19,74 +19,10 @@ test("reproduces false disconnected endpoints on a sensor board with intentional
     ),
   ).toBe(true)
 
-  // These are known false positives: each endpoint touches a same-net 0.4 mm
-  // through-via centered inside a real top pad. A corrected checker should
-  // report zero, without changing this fixture's geometry or connectivity.
-  expect(
-    errors.map(({ pcb_trace_error_id, center }) => ({
-      pcb_trace_error_id,
-      center,
-    })),
-  ).toMatchInlineSnapshot(`
-    [
-      {
-        "center": {
-          "x": -1.15,
-          "y": 1.905,
-        },
-        "pcb_trace_error_id": "disconnected_endpoint_pcb_trace_vdd_u1_c1_start",
-      },
-      {
-        "center": {
-          "x": -3.175,
-          "y": -2,
-        },
-        "pcb_trace_error_id": "disconnected_endpoint_pcb_trace_vdd_c1_c2_end",
-      },
-      {
-        "center": {
-          "x": -1.15,
-          "y": -1.905,
-        },
-        "pcb_trace_error_id": "disconnected_endpoint_pcb_trace_gnd_u1_c1_start",
-      },
-      {
-        "center": {
-          "x": -4.825,
-          "y": -2,
-        },
-        "pcb_trace_error_id": "disconnected_endpoint_pcb_trace_gnd_c1_c2_end",
-      },
-      {
-        "center": {
-          "x": 3.15,
-          "y": -1.905,
-        },
-        "pcb_trace_error_id": "disconnected_endpoint_pcb_trace_sda_start",
-      },
-      {
-        "center": {
-          "x": 7,
-          "y": -0.5,
-        },
-        "pcb_trace_error_id": "disconnected_endpoint_pcb_trace_sda_end",
-      },
-      {
-        "center": {
-          "x": 3.15,
-          "y": -0.635,
-        },
-        "pcb_trace_error_id": "disconnected_endpoint_pcb_trace_scl_start",
-      },
-      {
-        "center": {
-          "x": 7,
-          "y": -1.5,
-        },
-        "pcb_trace_error_id": "disconnected_endpoint_pcb_trace_scl_end",
-      },
-    ]
-  `)
+  // Every inner-layer endpoint reaches its real top pad through a separate
+  // same-net via. The fixture is identical to the baseline repro; only the
+  // checker and the expected diagnostics have changed.
+  expect(errors).toEqual([])
 
   const errorCountNote: AnyCircuitElement = {
     type: "pcb_note_text",
