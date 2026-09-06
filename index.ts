@@ -30,6 +30,7 @@ export { checkNoGroundPinDefined } from "./lib/check-no-ground-pin-defined"
 export { checkSchematicComponentExcessiveVerticalPadding } from "./lib/check-schematic-component-excessive-vertical-padding"
 export { checkSchematicComponentMissingReferenceDesignatorText } from "./lib/check-schematic-component-missing-reference-designator-text"
 export { checkSchematicComponentPortsOutsideBody } from "./lib/check-schematic-component-ports-outside-body"
+export { checkSchematicComponentMissingSheet } from "./lib/check-schematic-component-missing-sheet"
 export {
   runAllChecks,
   runAllNetlistChecks,
