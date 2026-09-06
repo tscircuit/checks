@@ -21,6 +21,7 @@ import {
   PcbConnectivityMap,
 } from "circuit-json-to-connectivity-map"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import { endpointTouchesVia, getViaContactIndex } from "./via-contact-index"
 
 type PcbPortId = PcbPort["pcb_port_id"]
 type PcbTraceRoutePoint = PcbTrace["route"][number]
@@ -309,6 +310,14 @@ function checkTracesAreContiguous(
     )
     return traceWireSegmentsByNetAndLayer
   }
+  let viaContactIndex: ReturnType<typeof getViaContactIndex> | undefined
+  const getViaIndex = () => {
+    viaContactIndex ??= getViaContactIndex(
+      circuitJson,
+      getFullConnectivityMap(),
+    )
+    return viaContactIndex
+  }
   const checkedSourceTraceIds = new Set<string>()
 
   for (const pad of pcbSmtPads) {
@@ -561,9 +570,27 @@ function checkTracesAreContiguous(
           fullConnectivityMap: getFullConnectivityMap(),
         })
       const firstIsConnected =
-        firstConnectsToAnyPad || firstConnectsToLogicallyConnectedTraceCopper
+        firstConnectsToAnyPad ||
+        firstConnectsToLogicallyConnectedTraceCopper ||
+        (firstEndpointTraceCopperWidth !== undefined &&
+          endpointTouchesVia({
+            point: firstPoint,
+            width: firstEndpointTraceCopperWidth,
+            ownerTrace: trace,
+            index: getViaIndex(),
+            connectivity: getFullConnectivityMap(),
+          }))
       const lastIsConnected =
-        lastConnectsToAnyPad || lastConnectsToLogicallyConnectedTraceCopper
+        lastConnectsToAnyPad ||
+        lastConnectsToLogicallyConnectedTraceCopper ||
+        (lastEndpointTraceCopperWidth !== undefined &&
+          endpointTouchesVia({
+            point: lastPoint,
+            width: lastEndpointTraceCopperWidth,
+            ownerTrace: trace,
+            index: getViaIndex(),
+            connectivity: getFullConnectivityMap(),
+          }))
       const endpointsAreSame =
         firstPoint.route_type === "wire" &&
         lastPoint.route_type === "wire" &&
