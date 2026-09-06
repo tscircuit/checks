@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
 import { checkConnectorAccessibleOrientation } from "lib/check-connector-accessible-orientation"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, PcbComponent } from "circuit-json"
 
 const TYPE_C_6P_FOOTPRINT = (
   <footprint>
@@ -122,6 +122,15 @@ test("connector orientation warning is emitted when cable insertion points inwar
     recommended_facing_direction: "x-",
   })
 
+  expect(warnings[0]?.message).toStartWith("J1 faces y-")
+  expect(warnings[0]?.message).toContain("inferred from cable_insertion_center")
+  expect(warnings[0]?.message).toContain("adjust pcbRotation to face x-")
+  expect(warnings[0]?.message).toContain('insertionDirection="from_above"')
+  expect(warnings[0]?.message).toContain('or "from_below" on its <footprint>')
+  expect(warnings[0]?.message).toContain(
+    '"from_top" means y+, not above the board',
+  )
+
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...warnings] as any, {
       shouldDrawErrors: true,
@@ -208,10 +217,14 @@ test("connector orientation check uses insertion_direction when present", () => 
     facing_direction: "y-",
     recommended_facing_direction: "x-",
   })
+  expect(warnings[0]?.message).toContain('insertion_direction="from_bottom"')
+  expect(warnings[0]?.message).not.toContain("inferred")
 })
 
-test("connector orientation check skips from_above insertion direction", () => {
-  const circuitJson: AnyCircuitElement[] = [
+function createConnectorCircuitJson(
+  insertionDirection: PcbComponent["insertion_direction"],
+): AnyCircuitElement[] {
+  return [
     {
       type: "pcb_board",
       pcb_board_id: "pcb_board_0",
@@ -230,7 +243,7 @@ test("connector orientation check skips from_above insertion direction", () => {
       type: "source_component",
       source_component_id: "source_component_0",
       ftype: "simple_connector",
-      name: "J1",
+      name: "J2_BATTERY",
     },
     {
       type: "pcb_component",
@@ -241,12 +254,65 @@ test("connector orientation check skips from_above insertion direction", () => {
       height: 4,
       layer: "top",
       rotation: 0,
-      insertion_direction: "from_above",
+      insertion_direction: insertionDirection,
       cable_insertion_center: { x: -14, y: -2 },
       obstructs_within_bounds: true,
     },
   ]
+}
 
-  const warnings = checkConnectorAccessibleOrientation(circuitJson)
-  expect(warnings).toHaveLength(0)
+test.each(["from_above", "from_below"] as const)(
+  "%s skips the edge-facing check despite a misleading XY cable insertion center",
+  (insertionDirection) => {
+    const circuitJson = createConnectorCircuitJson(insertionDirection)
+    expect(checkConnectorAccessibleOrientation(circuitJson)).toHaveLength(0)
+
+    // The same geometry without explicit metadata is inferred to face y-.
+    const inferredWarnings = checkConnectorAccessibleOrientation(
+      createConnectorCircuitJson(undefined),
+    )
+    expect(inferredWarnings).toHaveLength(1)
+    expect(inferredWarnings[0]?.facing_direction).toBe("y-")
+  },
+)
+
+test.each([
+  ["from_left", "x-"],
+  ["from_right", "x+"],
+  ["from_top", "y+"],
+  ["from_bottom", "y-"],
+] as const)(
+  "explicit %s takes precedence over inferred cable direction and faces %s",
+  (insertionDirection, facingDirection) => {
+    const warnings = checkConnectorAccessibleOrientation(
+      createConnectorCircuitJson(insertionDirection),
+    )
+    if (facingDirection === "x-") {
+      expect(warnings).toHaveLength(0)
+    } else {
+      expect(warnings).toHaveLength(1)
+      expect(warnings[0]).toMatchObject({
+        facing_direction: facingDirection,
+        recommended_facing_direction: "x-",
+      })
+      expect(warnings[0]?.message).toContain(
+        `insertion_direction="${insertionDirection}"`,
+      )
+      expect(warnings[0]?.message).not.toContain("inferred")
+    }
+  },
+)
+
+test("connector warnings name the source component and tolerate missing source metadata", () => {
+  const circuitJson = createConnectorCircuitJson(undefined)
+  expect(
+    checkConnectorAccessibleOrientation(circuitJson)[0]?.message,
+  ).toStartWith("J2_BATTERY faces y-")
+
+  const withoutSource = circuitJson.filter(
+    (el) => el.type !== "source_component",
+  )
+  expect(
+    checkConnectorAccessibleOrientation(withoutSource)[0]?.message,
+  ).toStartWith("component faces y-")
 })

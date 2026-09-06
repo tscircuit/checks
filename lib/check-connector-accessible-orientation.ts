@@ -98,16 +98,25 @@ export function checkConnectorAccessibleOrientation(
     if (!facingDirection || !recommendedFacingDirection) continue
     if (facingDirection === recommendedFacingDirection) continue
 
-    const componentName = getReadableNameForComponent(
-      circuitJson,
-      component.pcb_component_id,
+    const sourceComponent = circuitJson.find(
+      (element) =>
+        element.type === "source_component" &&
+        element.source_component_id === component.source_component_id,
     )
+    const componentName =
+      sourceComponent?.type === "source_component"
+        ? sourceComponent.name
+        : getReadableNameForComponent(circuitJson, component.pcb_component_id)
+
+    const directionSource = component.insertion_direction
+      ? `insertion_direction="${component.insertion_direction}"`
+      : "inferred from cable_insertion_center"
 
     warnings.push({
       type: "pcb_connector_not_in_accessible_orientation_warning",
       warning_type: "pcb_connector_not_in_accessible_orientation_warning",
       pcb_connector_not_in_accessible_orientation_warning_id: `pcb_connector_not_in_accessible_orientation_warning_${component.pcb_component_id}`,
-      message: `${componentName} is facing ${facingDirection} but should face ${recommendedFacingDirection} so the connector is accessible from the board edge`,
+      message: `${componentName} faces ${facingDirection} (${directionSource}), but the nearest board edge is ${recommendedFacingDirection}. For an edge-facing connector, adjust pcbRotation to face ${recommendedFacingDirection}. For vertical mating, set insertionDirection="from_above" or "from_below" on its <footprint>; "from_top" means y+, not above the board.`,
       pcb_component_id: component.pcb_component_id,
       source_component_id: component.source_component_id,
       pcb_board_id: board.pcb_board_id,
