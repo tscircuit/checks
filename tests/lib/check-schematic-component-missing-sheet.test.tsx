@@ -1,5 +1,8 @@
 import { expect, test } from "bun:test"
-import { schematic_component_styling_warning } from "circuit-json"
+import {
+  type AnyCircuitElement,
+  schematic_component_styling_warning,
+} from "circuit-json"
 import { convertCircuitJsonToSchematicSvg } from "circuit-to-svg"
 import {
   checkSchematicComponentMissingSheet,
@@ -313,26 +316,35 @@ const SheetAssignmentExample = ({
         schRotation={90}
         connections={{ pin1: "net.V3V3", pin2: "net.SDA" }}
       />
-      <schematictext
-        text="CONTROLLER — 5 V INPUT / 3.3 V LOGIC / I2C EXPANSION"
-        schX={-1}
-        schY={5.2}
-        fontSize={0.32}
-        color="#174e75"
-      />
-      <schematictext
-        text="Schematic overview · sheet membership checked before export"
-        schX={-1}
-        schY={4.6}
-        fontSize={0.18}
-        color="#174e75"
-      />
+      <group name="sheetHeading" schSheetName="Controller">
+        <schematictext
+          text="CONTROLLER — 5 V INPUT / 3.3 V LOGIC / I2C EXPANSION"
+          schX={-1}
+          schY={5.2}
+          fontSize={0.32}
+          color="#174e75"
+        />
+        <schematictext
+          text="Controller / sheet 1"
+          schX={-1}
+          schY={4.6}
+          fontSize={0.18}
+          color="#174e75"
+        />
+      </group>
       {note && (
         <>
           <schematictext
+            text="UNASSIGNED COMPONENT — excluded from the sheet above"
+            schX={1}
+            schY={4}
+            fontSize={0.25}
+            color="#b45309"
+          />
+          <schematictext
             text={note}
             schX={0}
-            schY={-4}
+            schY={0}
             fontSize={0.2}
             color="#b45309"
           />
@@ -340,9 +352,8 @@ const SheetAssignmentExample = ({
             strokeColor="#b45309"
             strokeWidth={0.035}
             points={[
-              { x: 6, y: -3.6 },
-              { x: 8, y: -2.5 },
-              { x: 8, y: 2.7 },
+              { x: 6, y: 0.4 },
+              { x: 6, y: 2.7 },
               { x: 5.5, y: 2.7 },
             ]}
           />
@@ -358,16 +369,46 @@ const SheetAssignmentExample = ({
         </>
       )}
       {assigned && (
-        <schematictext
-          text="All 10 components belong to Controller — ready for sheet export"
-          schX={-1}
-          schY={-4}
-          fontSize={0.24}
-          color="#15803d"
-        />
+        <group name="sheetStatus" schSheetName="Controller">
+          <schematictext
+            text="All 10 components belong to Controller — ready for sheet export"
+            schX={-1}
+            schY={-4}
+            fontSize={0.24}
+            color="#15803d"
+          />
+        </group>
       )}
     </board>
   )
+}
+
+function renderSheetWithUnassignedComponents(circuitJson: AnyCircuitElement[]) {
+  const sheetSvg = convertCircuitJsonToSchematicSvg(circuitJson, {
+    width: 1600,
+    height: 1100,
+  })
+  const unassignedElements = circuitJson.filter((element) => {
+    switch (element.type) {
+      case "schematic_component":
+      case "schematic_port":
+      case "schematic_text":
+      case "schematic_path":
+      case "schematic_trace":
+      case "schematic_net_label":
+        return !element.schematic_sheet_id
+      case "source_component":
+        return true
+      default:
+        return false
+    }
+  })
+  const unassignedSvg = convertCircuitJsonToSchematicSvg(unassignedElements, {
+    width: 1600,
+    height: 400,
+  })
+  // Preserve the native sheet renderer; show excluded components in a separate diagnostic panel.
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1500">${sheetSvg}<g transform="translate(0,1100)">${unassignedSvg}</g></svg>`
 }
 
 test("shows a warning note pointing to the unassigned component, then clears after assignment", async () => {
@@ -396,14 +437,8 @@ test("shows a warning note pointing to the unassigned component, then clears aft
   annotated.pcbDisabled = true
   annotated.add(<SheetAssignmentExample note={warnings[0].message} />)
   await annotated.renderUntilSettled()
-  // Overview mode keeps the unassigned component visible instead of filtering to one sheet.
   expect(
-    convertCircuitJsonToSchematicSvg(
-      annotated
-        .getCircuitJson()
-        .filter((element) => element.type !== "schematic_sheet"),
-      { width: 1600, height: 1000 },
-    ),
+    renderSheetWithUnassignedComponents(annotated.getCircuitJson()),
   ).toMatchSvgSnapshot(import.meta.path, "unassigned-warning")
 
   const assigned = new Circuit()
@@ -421,11 +456,9 @@ test("shows a warning note pointing to the unassigned component, then clears aft
     checkSchematicComponentMissingSheet(assigned.getCircuitJson()),
   ).toEqual([])
   expect(
-    convertCircuitJsonToSchematicSvg(
-      assigned
-        .getCircuitJson()
-        .filter((element) => element.type !== "schematic_sheet"),
-      { width: 1600, height: 1000 },
-    ),
+    convertCircuitJsonToSchematicSvg(assigned.getCircuitJson(), {
+      width: 1600,
+      height: 1100,
+    }),
   ).toMatchSvgSnapshot(import.meta.path, "assigned")
 })
