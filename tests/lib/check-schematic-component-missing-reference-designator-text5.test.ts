@@ -7,8 +7,8 @@ test("runs with all schematic checks", async () => {
     createReferenceDesignatorCircuitJson(),
   )
 
-  expect(warnings).toHaveLength(1)
-  expect(warnings[0]?.styling_issue_type).toBe(
+  expect(warnings.map((warning) => warning.styling_issue_type)).toEqual([
+    "missing_schematic_sheet",
     "missing_reference_designator_text",
-  )
+  ])
 })

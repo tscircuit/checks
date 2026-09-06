@@ -144,6 +144,7 @@ describe("checkSchematicComponentExcessiveVerticalPadding", () => {
     )
 
     expect(warnings.map((warning) => warning.styling_issue_type)).toEqual([
+      "missing_schematic_sheet",
       "excessive_top_padding",
       "excessive_bottom_padding",
       "missing_reference_designator_text",

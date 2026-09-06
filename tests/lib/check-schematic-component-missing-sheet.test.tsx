@@ -46,7 +46,7 @@ test("warns with a component reference and assignment instructions", async () =>
   ).toBe(true)
 })
 
-test("does not require sheets in an ordinary single-canvas circuit", async () => {
+test("requires a sheet even when the circuit has not declared any", async () => {
   const circuit = new Circuit()
   circuit.pcbDisabled = true
   circuit.add(
@@ -55,9 +55,16 @@ test("does not require sheets in an ordinary single-canvas circuit", async () =>
     </board>,
   )
   await circuit.renderUntilSettled()
-  expect(checkSchematicComponentMissingSheet(circuit.getCircuitJson())).toEqual(
-    [],
+  const warnings = checkSchematicComponentMissingSheet(circuit.getCircuitJson())
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0].message).toBe(
+    "R1 is not assigned to a schematic sheet. Add a <schematicsheet> and set schSheetName to its name.",
   )
+  expect(
+    (await runAllSchematicChecks(circuit.getCircuitJson())).some(
+      (warning) => warning.styling_issue_type === "missing_schematic_sheet",
+    ),
+  ).toBe(true)
 })
 
 test("accepts components explicitly assigned to different sheets", async () => {

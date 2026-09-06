@@ -4,12 +4,14 @@ import {
   schematic_component_styling_warning,
 } from "circuit-json"
 
-/** Warns about unassigned components only when the circuit declares sheets. */
+/** Warns about every schematic component without a sheet assignment. */
 export function checkSchematicComponentMissingSheet(
   circuitJson: AnyCircuitElement[],
 ): SchematicComponentStylingWarning[] {
+  let assignmentInstructions = "Set schSheetName to an existing sheet name."
   if (!circuitJson.some((element) => element.type === "schematic_sheet")) {
-    return []
+    assignmentInstructions =
+      "Add a <schematicsheet> and set schSheetName to its name."
   }
 
   const sourceComponents = circuitJson.filter(
@@ -37,7 +39,7 @@ export function checkSchematicComponentMissingSheet(
     warnings.push(
       schematic_component_styling_warning.parse({
         type: "schematic_component_styling_warning",
-        message: `${componentName} is not assigned to a schematic sheet. Set schSheetName to an existing sheet name.`,
+        message: `${componentName} is not assigned to a schematic sheet. ${assignmentInstructions}`,
         schematic_component_id: component.schematic_component_id,
         source_component_id: component.source_component_id,
         subcircuit_id: component.subcircuit_id,
