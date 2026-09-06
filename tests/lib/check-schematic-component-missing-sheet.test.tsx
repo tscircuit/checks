@@ -168,73 +168,201 @@ const SheetAssignmentExample = ({
   assigned = false,
   note,
 }: { assigned?: boolean; note?: string }) => {
-  let resistorSheet: string | undefined
-  if (assigned) resistorSheet = "Controller"
+  let pullupSheet: string | undefined
+  if (assigned) pullupSheet = "Controller"
   return (
-    <board routingDisabled>
-      <schematicsheet name="Controller" displayName="Controller" />
-      <chip
-        name="U1"
-        schSheetName="Controller"
-        schX={-3}
-        schY={1}
-        schWidth={2}
-        schHeight={2}
-        pinLabels={{ pin1: "IN", pin2: "OUT" }}
+    <board routingDisabled schMaxTraceDistance={0.6}>
+      <schematicsheet
+        name="Controller"
+        displayName="Controller / power and sensor interface"
       />
+      <group name="controller" schSheetName="Controller">
+        <chip
+          name="J1"
+          schX={-9}
+          schY={1}
+          schWidth={1.2}
+          schHeight={1}
+          pinLabels={{ pin1: "5V", pin2: "GND" }}
+          schPinArrangement={{ rightSide: ["pin1", "pin2"] }}
+          connections={{ pin1: "net.VIN", pin2: "net.GND" }}
+        />
+        <chip
+          name="U1"
+          schX={-6}
+          schY={2}
+          schWidth={2}
+          schHeight={1.5}
+          pinLabels={{ pin1: "IN", pin2: "GND", pin3: "OUT" }}
+          schPinArrangement={{
+            leftSide: ["pin1"],
+            rightSide: ["pin3"],
+            bottomSide: ["pin2"],
+          }}
+          connections={{ pin1: "net.VIN", pin2: "net.GND", pin3: "net.V3V3" }}
+        />
+        <capacitor
+          name="C1"
+          capacitance="1uF"
+          schX={-8}
+          schY={-1}
+          schOrientation="vertical"
+          connections={{ pin1: "net.VIN", pin2: "net.GND" }}
+        />
+        <capacitor
+          name="C2"
+          capacitance="1uF"
+          schX={-5}
+          schY={-1}
+          schOrientation="vertical"
+          connections={{ pin1: "net.V3V3", pin2: "net.GND" }}
+        />
+        <chip
+          name="U2"
+          schX={0}
+          schY={0}
+          schWidth={2.4}
+          schHeight={2.6}
+          pinLabels={{
+            pin1: "VDD",
+            pin2: "GND",
+            pin3: "SCL",
+            pin4: "SDA",
+            pin5: "RESET",
+          }}
+          schPinArrangement={{
+            topSide: ["pin1"],
+            bottomSide: ["pin2"],
+            rightSide: ["pin3", "pin4"],
+            leftSide: ["pin5"],
+          }}
+          connections={{
+            pin1: "net.V3V3",
+            pin2: "net.GND",
+            pin3: "net.SCL",
+            pin4: "net.SDA",
+            pin5: "net.RESET",
+          }}
+        />
+        <capacitor
+          name="C3"
+          capacitance="100nF"
+          schX={-2}
+          schY={2.7}
+          schOrientation="vertical"
+          connections={{ pin1: "net.V3V3", pin2: "net.GND" }}
+        />
+        <resistor
+          name="R3"
+          resistance="10k"
+          schX={-2.5}
+          schY={-1}
+          schRotation={90}
+          connections={{ pin1: "net.V3V3", pin2: "net.RESET" }}
+        />
+        <resistor
+          name="R1"
+          resistance="4.7k"
+          schX={3}
+          schY={2.7}
+          schRotation={90}
+          connections={{ pin1: "net.V3V3", pin2: "net.SCL" }}
+        />
+        <chip
+          name="J2"
+          schX={6}
+          schY={-0.5}
+          schWidth={1.5}
+          schHeight={2.2}
+          pinLabels={{ pin1: "3V3", pin2: "GND", pin3: "SCL", pin4: "SDA" }}
+          schPinArrangement={{
+            leftSide: ["pin1", "pin2", "pin3", "pin4"],
+          }}
+          connections={{
+            pin1: "net.V3V3",
+            pin2: "net.GND",
+            pin3: "net.SCL",
+            pin4: "net.SDA",
+          }}
+        />
+        <schematictext
+          text="3.3 V REGULATOR"
+          schX={-6.5}
+          schY={4}
+          fontSize={0.25}
+        />
+        <schematictext
+          text="MCU / RESET / DECOUPLING"
+          schX={-0.5}
+          schY={4}
+          fontSize={0.25}
+        />
+        <schematictext
+          text="I2C SENSOR INTERFACE"
+          schX={5}
+          schY={4}
+          fontSize={0.25}
+        />
+      </group>
       <resistor
-        name="R1"
-        resistance="1k"
-        schSheetName={resistorSheet}
-        schX={1}
-        schY={1}
+        name="R2"
+        resistance="4.7k"
+        schSheetName={pullupSheet}
+        schX={5}
+        schY={2.7}
+        schRotation={90}
+        connections={{ pin1: "net.V3V3", pin2: "net.SDA" }}
       />
       <schematictext
-        text="SHEET ASSIGNMENT / CONTROLLER"
-        schY={3}
-        fontSize={0.25}
+        text="CONTROLLER — 5 V INPUT / 3.3 V LOGIC / I2C EXPANSION"
+        schX={-1}
+        schY={5.2}
+        fontSize={0.32}
         color="#174e75"
       />
       <schematictext
-        text="U1: assigned to Controller"
-        schX={-3}
-        schY={-0.5}
-        fontSize={0.16}
+        text="Schematic overview · sheet membership checked before export"
+        schX={-1}
+        schY={4.6}
+        fontSize={0.18}
         color="#174e75"
       />
       {note && (
         <>
           <schematictext
             text={note}
-            schY={-2}
-            fontSize={0.16}
+            schX={0}
+            schY={-4}
+            fontSize={0.2}
             color="#b45309"
           />
           <schematicpath
             strokeColor="#b45309"
             strokeWidth={0.035}
             points={[
-              { x: 0, y: -1.7 },
-              { x: 1, y: -0.7 },
-              { x: 1, y: 0.6 },
+              { x: 6, y: -3.6 },
+              { x: 8, y: -2.5 },
+              { x: 8, y: 2.7 },
+              { x: 5.5, y: 2.7 },
             ]}
           />
           <schematicpath
             strokeColor="#b45309"
             strokeWidth={0.035}
             points={[
-              { x: 0.85, y: 0.4 },
-              { x: 1, y: 0.6 },
-              { x: 1.15, y: 0.4 },
+              { x: 5.7, y: 2.85 },
+              { x: 5.5, y: 2.7 },
+              { x: 5.7, y: 2.55 },
             ]}
           />
         </>
       )}
       {assigned && (
         <schematictext
-          text="PASS: all components assigned to Controller"
-          schY={-2}
-          fontSize={0.2}
+          text="All 10 components belong to Controller — ready for sheet export"
+          schX={-1}
+          schY={-4}
+          fontSize={0.24}
           color="#15803d"
         />
       )}
@@ -247,12 +375,19 @@ test("shows a warning note pointing to the unassigned component, then clears aft
   circuit.pcbDisabled = true
   circuit.add(<SheetAssignmentExample />)
   await circuit.renderUntilSettled()
+  const schematicComponents = circuit
+    .getCircuitJson()
+    .filter((element) => element.type === "schematic_component")
+  expect(schematicComponents).toHaveLength(10)
+  expect(
+    schematicComponents.filter((component) => component.schematic_sheet_id),
+  ).toHaveLength(9)
   const warnings = checkSchematicComponentMissingSheet(circuit.getCircuitJson())
   expect(warnings).toHaveLength(1)
   const sourceResistor = circuit
     .getCircuitJson()
     .filter((element) => element.type === "source_component")
-    .find((element) => element.name === "R1")
+    .find((element) => element.name === "R2")
   expect(warnings[0].source_component_id).toBe(
     sourceResistor?.source_component_id,
   )
@@ -267,7 +402,7 @@ test("shows a warning note pointing to the unassigned component, then clears aft
       annotated
         .getCircuitJson()
         .filter((element) => element.type !== "schematic_sheet"),
-      { width: 1200, height: 600 },
+      { width: 1600, height: 1000 },
     ),
   ).toMatchSvgSnapshot(import.meta.path, "unassigned-warning")
 
@@ -275,6 +410,13 @@ test("shows a warning note pointing to the unassigned component, then clears aft
   assigned.pcbDisabled = true
   assigned.add(<SheetAssignmentExample assigned />)
   await assigned.renderUntilSettled()
+  const assignedComponents = assigned
+    .getCircuitJson()
+    .filter((element) => element.type === "schematic_component")
+  expect(assignedComponents).toHaveLength(10)
+  expect(
+    assignedComponents.every((component) => component.schematic_sheet_id),
+  ).toBe(true)
   expect(
     checkSchematicComponentMissingSheet(assigned.getCircuitJson()),
   ).toEqual([])
@@ -283,7 +425,7 @@ test("shows a warning note pointing to the unassigned component, then clears aft
       assigned
         .getCircuitJson()
         .filter((element) => element.type !== "schematic_sheet"),
-      { width: 1200, height: 600 },
+      { width: 1600, height: 1000 },
     ),
   ).toMatchSvgSnapshot(import.meta.path, "assigned")
 })
