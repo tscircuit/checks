@@ -8,12 +8,16 @@ import type {
   PcbCourtyardRect,
   PcbCourtyardCircle,
   PcbCourtyardOutline,
+  PcbCourtyardPolygon,
+  PcbCourtyardPill,
 } from "circuit-json"
 
 type CourtyardElement =
   | PcbCourtyardRect
   | PcbCourtyardCircle
   | PcbCourtyardOutline
+  | PcbCourtyardPolygon
+  | PcbCourtyardPill
 
 function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
   if (el.type === "pcb_courtyard_rect") {
@@ -43,7 +47,49 @@ function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
       }
     })
   }
+  if (el.type === "pcb_courtyard_pill") {
+    return getPillPolygon(el)
+  }
+  if (el.type === "pcb_courtyard_polygon") {
+    return el.points
+  }
   return el.outline
+}
+
+/**
+ * Approximate a pill (stadium) courtyard as a polygon: a straight section
+ * capped by two semicircles. The caps are sampled the same way the circle
+ * courtyard is turned into a 32-gon, so overlap is measured against the real
+ * rounded shape rather than a bounding box.
+ */
+function getPillPolygon(
+  el: PcbCourtyardPill,
+  segmentsPerCap = 16,
+): { x: number; y: number }[] {
+  const isHorizontal = el.width >= el.height
+  const halfLength = Math.max(Math.max(el.width, el.height) / 2 - el.radius, 0)
+  const axisX = isHorizontal ? halfLength : 0
+  const axisY = isHorizontal ? 0 : halfLength
+  const angle = Math.atan2(axisY, axisX)
+  const capA = { x: el.center.x + axisX, y: el.center.y + axisY }
+  const capB = { x: el.center.x - axisX, y: el.center.y - axisY }
+
+  const points: { x: number; y: number }[] = []
+  for (let i = 0; i <= segmentsPerCap; i++) {
+    const a = angle - Math.PI / 2 + (Math.PI * i) / segmentsPerCap
+    points.push({
+      x: capA.x + el.radius * Math.cos(a),
+      y: capA.y + el.radius * Math.sin(a),
+    })
+  }
+  for (let i = 0; i <= segmentsPerCap; i++) {
+    const a = angle + Math.PI / 2 + (Math.PI * i) / segmentsPerCap
+    points.push({
+      x: capB.x + el.radius * Math.cos(a),
+      y: capB.y + el.radius * Math.sin(a),
+    })
+  }
+  return points
 }
 
 function getComponentName(
@@ -96,7 +142,9 @@ export function checkCourtyardOverlap(
     (el): el is CourtyardElement =>
       el.type === "pcb_courtyard_rect" ||
       el.type === "pcb_courtyard_circle" ||
-      el.type === "pcb_courtyard_outline",
+      el.type === "pcb_courtyard_outline" ||
+      el.type === "pcb_courtyard_polygon" ||
+      el.type === "pcb_courtyard_pill",
   )
 
   // Group by component
