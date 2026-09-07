@@ -1,25 +1,21 @@
 import type {
   AnyCircuitElement,
-  PcbPort,
   PcbTrace,
-  PcbTraceError,
+  PcbTraceTooManyViasWarning,
   SourceTrace,
 } from "circuit-json"
 
-/** Return a routing error when a source trace exceeds its maximum via count. */
+/** Return a routing warning when a source trace exceeds its maximum via count. */
 export const checkPcbTraceViaCounts = (
   circuitJson: AnyCircuitElement[],
-): PcbTraceError[] => {
+): PcbTraceTooManyViasWarning[] => {
   const sourceTraces = circuitJson.filter(
     (element): element is SourceTrace => element.type === "source_trace",
   )
   const pcbTraces = circuitJson.filter(
     (element): element is PcbTrace => element.type === "pcb_trace",
   )
-  const pcbPorts = circuitJson.filter(
-    (element): element is PcbPort => element.type === "pcb_port",
-  )
-  const errors: PcbTraceError[] = []
+  const warnings: PcbTraceTooManyViasWarning[] = []
 
   for (const sourceTrace of sourceTraces) {
     const maximumViaCount = sourceTrace.max_via_count
@@ -39,33 +35,25 @@ export const checkPcbTraceViaCounts = (
     )
     if (actualViaCount <= maximumViaCount) continue
 
-    const connectedPcbPorts = pcbPorts.filter(
-      (pcbPort) =>
-        pcbPort.source_port_id !== undefined &&
-        sourceTrace.connected_source_port_ids.includes(pcbPort.source_port_id),
+    const pcbTraceContainingVia = routedPcbTraces.find((pcbTrace) =>
+      pcbTrace.route.some((routePoint) => routePoint.route_type === "via"),
     )
-    errors.push({
-      type: "pcb_trace_error",
-      pcb_trace_error_id: `max_via_count_exceeded_${sourceTrace.source_trace_id}`,
-      error_type: "pcb_trace_error",
+    if (!pcbTraceContainingVia) continue
+
+    warnings.push({
+      type: "pcb_trace_too_many_vias_warning",
+      pcb_trace_too_many_vias_warning_id: `pcb_trace_too_many_vias_warning_${sourceTrace.source_trace_id}`,
+      warning_type: "pcb_trace_too_many_vias_warning",
       message: `PCB trace uses ${actualViaCount} vias, exceeding the ${maximumViaCount} maximum`,
-      pcb_trace_id: routedPcbTraces[0]!.pcb_trace_id,
+      pcb_trace_id: pcbTraceContainingVia.pcb_trace_id,
       source_trace_id: sourceTrace.source_trace_id,
-      pcb_component_ids: [
-        ...new Set(
-          connectedPcbPorts
-            .map((pcbPort) => pcbPort.pcb_component_id)
-            .filter(
-              (pcbComponentId): pcbComponentId is string =>
-                pcbComponentId !== undefined,
-            ),
-        ),
-      ],
-      pcb_port_ids: connectedPcbPorts.map((pcbPort) => pcbPort.pcb_port_id),
+      source_net_id: sourceTrace.connected_source_net_ids[0],
+      actual_via_count: actualViaCount,
+      maximum_via_count: maximumViaCount,
       subcircuit_id:
-        routedPcbTraces[0]!.subcircuit_id ?? sourceTrace.subcircuit_id,
+        pcbTraceContainingVia.subcircuit_id ?? sourceTrace.subcircuit_id,
     })
   }
 
-  return errors
+  return warnings
 }

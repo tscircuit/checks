@@ -8,13 +8,15 @@ const createTraceCircuitJson = (viaCount: number): AnyCircuitElement[] => [
     type: "source_trace",
     source_trace_id: "source_trace_xtal",
     connected_source_port_ids: [],
-    connected_source_net_ids: [],
+    connected_source_net_ids: ["source_net_xtal"],
     max_via_count: 0,
+    subcircuit_id: "subcircuit_board",
   },
   {
     type: "pcb_trace",
     pcb_trace_id: "pcb_trace_xtal",
     source_trace_id: "source_trace_xtal",
+    subcircuit_id: "subcircuit_board",
     route: [
       { route_type: "wire", x: 0, y: 0, width: 0.15, layer: "top" },
       ...Array.from(
@@ -32,15 +34,23 @@ const createTraceCircuitJson = (viaCount: number): AnyCircuitElement[] => [
   },
 ]
 
-test("errors when a PCB trace exceeds max_via_count", async () => {
+test("warns when a PCB trace exceeds max_via_count", async () => {
   const circuitJson = createTraceCircuitJson(2)
 
   expect(checkPcbTraceViaCounts(circuitJson)).toEqual([
-    expect.objectContaining({
-      type: "pcb_trace_error",
-      pcb_trace_error_id: "max_via_count_exceeded_source_trace_xtal",
+    {
+      type: "pcb_trace_too_many_vias_warning",
+      pcb_trace_too_many_vias_warning_id:
+        "pcb_trace_too_many_vias_warning_source_trace_xtal",
+      warning_type: "pcb_trace_too_many_vias_warning",
+      message: "PCB trace uses 2 vias, exceeding the 0 maximum",
+      pcb_trace_id: "pcb_trace_xtal",
       source_trace_id: "source_trace_xtal",
-    }),
+      source_net_id: "source_net_xtal",
+      actual_via_count: 2,
+      maximum_via_count: 0,
+      subcircuit_id: "subcircuit_board",
+    },
   ])
   expect(await runAllRoutingChecks(circuitJson)).toEqual(
     expect.arrayContaining(checkPcbTraceViaCounts(circuitJson)),
