@@ -61,6 +61,28 @@ export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
     }
   }
 
+  if (
+    pad.type === "pcb_plated_hole" &&
+    pad.shape === "hole_with_polygon_pad"
+  ) {
+    // pad_outline is relative to the hole position in the pad's local frame;
+    // ccw_rotation rotates that frame about the hole center
+    const rotation = pad.ccw_rotation ?? 0
+    const angle = (rotation * Math.PI) / 180
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    const points = pad.pad_outline.map((point) => ({
+      x: pad.x + point.x * cos - point.y * sin,
+      y: pad.y + point.x * sin + point.y * cos,
+    }))
+    return {
+      minX: Math.min(...points.map((point) => point.x)),
+      minY: Math.min(...points.map((point) => point.y)),
+      maxX: Math.max(...points.map((point) => point.x)),
+      maxY: Math.max(...points.map((point) => point.y)),
+    }
+  }
+
   return getBoundsOfPcbElements([pad])
 }
 
@@ -153,6 +175,13 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
     "rect_pad_width" in pad &&
     "rect_pad_height" in pad
   ) {
+    return {
+      kind: "polygon" as const,
+      points: getPolygonPointsForPad(pad),
+    }
+  }
+
+  if (pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad") {
     return {
       kind: "polygon" as const,
       points: getPolygonPointsForPad(pad),
