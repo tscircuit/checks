@@ -1,8 +1,32 @@
 import { expect, test } from "bun:test"
+import { isPointInsidePolygon } from "@tscircuit/math-utils"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Fragment } from "react"
 import { Circuit } from "tscircuit"
 import { runAllPlacementChecks } from "../.."
+
+const displayPinLabels = {
+  pin1: ["1"],
+  pin2: ["2"],
+  pin3: ["3"],
+  pin4: ["4"],
+  pin5: ["5"],
+  pin6: ["6"],
+  pin7: ["7"],
+  pin8: ["8"],
+  pin9: ["9"],
+  pin10: ["10"],
+} as const
+
+const unusedDisplayPins = [
+  "pin1",
+  "pin2",
+  "pin4",
+  "pin5",
+  "pin6",
+  "pin7",
+  "pin9",
+]
 
 const displayFootprint = (
   <footprint>
@@ -12,7 +36,7 @@ const displayFootprint = (
           portHints={[`pin${index + 1}`]}
           shape="circle"
           pcbX={x}
-          pcbY={-3.81}
+          pcbY={-3.8735}
           outerDiameter="1.524mm"
           holeDiameter="0.762mm"
         />
@@ -24,13 +48,21 @@ const displayFootprint = (
           portHints={[`pin${index + 6}`]}
           shape="circle"
           pcbX={x}
-          pcbY={3.81}
+          pcbY={3.7465}
           outerDiameter="1.524mm"
           holeDiameter="0.762mm"
         />
       </Fragment>
     ))}
-    <courtyardrect width="13.7mm" height="10.7mm" />
+    <courtyardoutline
+      outline={[
+        { x: -6.854, y: -5.3427 },
+        { x: 6.854, y: -5.3427 },
+        { x: 6.854, y: 5.2665 },
+        { x: -6.854, y: 5.2665 },
+        { x: -6.854, y: -5.3427 },
+      ]}
+    />
   </footprint>
 )
 
@@ -38,70 +70,95 @@ const batteryHolderFootprint = (
   <footprint>
     <smtpad
       portHints={["pin1"]}
-      pcbX="-8.6mm"
+      pcbX={-8.599932}
+      pcbY={0}
       width="4.5mm"
       height="2.3mm"
       shape="rect"
     />
     <smtpad
       portHints={["pin2"]}
-      pcbX="8.6mm"
+      pcbX={8.599932}
+      pcbY={0}
       width="4.5mm"
       height="2.3mm"
       shape="rect"
     />
-    <courtyardrect width="22.2mm" height="15.4mm" />
+    <courtyardoutline
+      outline={[
+        { x: -11.104944, y: -7.7176 },
+        { x: 11.086656, y: -7.7176 },
+        { x: 11.086656, y: 7.6922 },
+        { x: -11.104944, y: 7.6922 },
+        { x: -11.104944, y: -7.7176 },
+      ]}
+    />
   </footprint>
 )
 
-test("repro: opposite-side battery holder covers through-hole display pins without a placement issue", async () => {
+function Display({
+  name,
+  pcbX,
+  segmentNet,
+}: {
+  name: string
+  pcbX: number
+  segmentNet: string
+}) {
+  return (
+    <chip
+      name={name}
+      pinLabels={displayPinLabels}
+      footprint={displayFootprint}
+      pcbX={pcbX}
+      pcbY={0}
+      pcbRotation="270deg"
+      noConnect={unusedDisplayPins}
+      connections={{
+        pin3: "net.GND",
+        pin8: "net.GND",
+        pin10: segmentNet,
+      }}
+    />
+  )
+}
+
+test("repro: bottom-side holder covers through-hole display pins without a placement issue", async () => {
   const circuit = new Circuit({
     platform: { placementDrcChecksDisabled: true },
   })
 
   circuit.add(
-    <board width="30mm" height="24mm">
-      <chip
-        name="DS1"
-        pcbX={0}
-        pcbY={0}
-        pinLabels={{
-          1: "1",
-          2: "2",
-          3: "GND1",
-          4: "4",
-          5: "5",
-          6: "6",
-          7: "7",
-          8: "GND2",
-          9: "9",
-          10: "SEG_A",
-        }}
-        footprint={displayFootprint}
-        noConnect={["pin1", "pin2", "pin4", "pin5", "pin6", "pin7", "pin9"]}
-        connections={{
-          GND1: "net.GND",
-          GND2: "net.GND",
-          SEG_A: "R1.pin2",
-        }}
+    <board width="40mm" height="30mm">
+      <Display name="DS_LEFT" pcbX={-5.5} segmentNet="net.LEFT_SEG_A" />
+      <Display name="DS_RIGHT" pcbX={9.5} segmentNet="net.RIGHT_SEG_A" />
+
+      <resistor
+        name="R_LEFT"
+        resistance="1kohm"
+        footprint="0603"
+        pcbX={-13}
+        pcbY={10}
+        connections={{ pin1: "net.VBAT", pin2: "net.LEFT_SEG_A" }}
+      />
+      <resistor
+        name="R_RIGHT"
+        resistance="1kohm"
+        footprint="0603"
+        pcbX={13}
+        pcbY={10}
+        connections={{ pin1: "net.VBAT", pin2: "net.RIGHT_SEG_A" }}
       />
 
       <chip
-        name="BT1"
+        name="BT_HOLDER"
         layer="bottom"
         pcbX={0}
         pcbY={0}
-        pinLabels={{ 1: "VBAT", 2: "GND" }}
+        pcbRotation="90deg"
+        pinLabels={{ pin1: ["1"], pin2: ["2"] }}
         footprint={batteryHolderFootprint}
-        connections={{ VBAT: "R1.pin1", GND: "net.GND" }}
-      />
-
-      <resistor
-        name="R1"
-        resistance="1kohm"
-        footprint="0603"
-        pcbX={0}
-        pcbY={9.5}
+        connections={{ pin1: "net.VBAT", pin2: "net.GND" }}
       />
     </board>,
   )
@@ -116,12 +173,43 @@ test("repro: opposite-side battery holder covers through-hole display pins witho
   const routedConnections = circuitJson.filter(
     (element) => element.type === "pcb_trace",
   )
+  const batterySource = circuitJson.find(
+    (element) =>
+      element.type === "source_component" && element.name === "BT_HOLDER",
+  )
+  if (batterySource?.type !== "source_component") {
+    throw new Error("Expected the battery holder source component")
+  }
 
-  expect(displayPlatedHoles).toHaveLength(10)
-  expect(routedConnections.length).toBeGreaterThanOrEqual(3)
+  const batteryComponent = circuitJson.find(
+    (element) =>
+      element.type === "pcb_component" &&
+      element.source_component_id === batterySource.source_component_id,
+  )
+  if (batteryComponent?.type !== "pcb_component") {
+    throw new Error("Expected the battery holder PCB component")
+  }
 
-  // Current bug: no issue is reported even though the through-hole pins extend
-  // into the battery holder's assembly space on the opposite side of the PCB.
+  const batteryCourtyard = circuitJson.find(
+    (element) =>
+      element.type === "pcb_courtyard_outline" &&
+      element.pcb_component_id === batteryComponent.pcb_component_id,
+  )
+
+  if (batteryCourtyard?.type !== "pcb_courtyard_outline") {
+    throw new Error("Expected the battery holder courtyard")
+  }
+
+  const displayPinsInsideHolderCourtyard = displayPlatedHoles.filter((hole) =>
+    isPointInsidePolygon({ x: hole.x, y: hole.y }, batteryCourtyard.outline),
+  )
+
+  expect(displayPlatedHoles).toHaveLength(20)
+  expect(displayPinsInsideHolderCourtyard).toHaveLength(10)
+  expect(routedConnections.length).toBeGreaterThanOrEqual(6)
+
+  // Current bug: no issue is reported even though display pins extend into the
+  // battery holder's assembly space on the opposite side of the PCB.
   expect(placementIssues).toHaveLength(0)
 
   expect(
