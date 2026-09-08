@@ -1,29 +1,34 @@
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { Fragment } from "react"
 import { Circuit } from "tscircuit"
 import { runAllPlacementChecks } from "../.."
 
 const displayFootprint = (
   <footprint>
     {[-5.08, -2.54, 0, 2.54, 5.08].map((x, index) => (
-      <platedhole
-        key={`lower-${index}`}
-        portHints={[`pin${index + 1}`]}
-        pcbX={x}
-        pcbY={-3.81}
-        outerDiameter="1.524mm"
-        holeDiameter="0.762mm"
-      />
+      <Fragment key={`lower-${index}`}>
+        <platedhole
+          portHints={[`pin${index + 1}`]}
+          shape="circle"
+          pcbX={x}
+          pcbY={-3.81}
+          outerDiameter="1.524mm"
+          holeDiameter="0.762mm"
+        />
+      </Fragment>
     ))}
     {[5.08, 2.54, 0, -2.54, -5.08].map((x, index) => (
-      <platedhole
-        key={`upper-${index}`}
-        portHints={[`pin${index + 6}`]}
-        pcbX={x}
-        pcbY={3.81}
-        outerDiameter="1.524mm"
-        holeDiameter="0.762mm"
-      />
+      <Fragment key={`upper-${index}`}>
+        <platedhole
+          portHints={[`pin${index + 6}`]}
+          shape="circle"
+          pcbX={x}
+          pcbY={3.81}
+          outerDiameter="1.524mm"
+          holeDiameter="0.762mm"
+        />
+      </Fragment>
     ))}
     <courtyardrect width="13.7mm" height="10.7mm" />
   </footprint>
