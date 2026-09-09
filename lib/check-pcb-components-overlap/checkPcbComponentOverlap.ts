@@ -47,6 +47,9 @@ const isCourtyardElement = (
   element.type === "pcb_courtyard_polygon" ||
   element.type === "pcb_courtyard_rect"
 
+const isHoleElement = (element: OverlappableElement): boolean =>
+  element.type === "pcb_hole" || element.type === "pcb_plated_hole"
+
 const formatOverlapElementDescription = (
   circuitJson: AnyCircuitElement[],
   element: OverlappableElement,
@@ -163,8 +166,8 @@ export function checkPcbComponentOverlap(
 
           if (
             (isCourtyardElement(elem1) || isCourtyardElement(elem2)) &&
-            elem1.type !== "pcb_hole" &&
-            elem2.type !== "pcb_hole"
+            !isHoleElement(elem1) &&
+            !isHoleElement(elem2)
           ) {
             continue
           }
