@@ -39,5 +39,8 @@
     "circuit-json": "*",
     "circuit-json-to-connectivity-map": "*",
     "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "flatbush": "^4.6.2"
   }
 }
