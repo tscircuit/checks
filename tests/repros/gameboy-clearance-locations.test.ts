@@ -15,7 +15,7 @@ const supplied = (raw as AnyCircuitElement[]).filter((element) =>
   element.type.endsWith("_clearance_error"),
 )
 
-test("Game Boy Advance: reproduce all 11 supplied clearance markers", () => {
+test("Game Boy Advance: place all 11 clearance markers at the offending copper", () => {
   const errors = [
     ...checkPadTraceClearance(circuit),
     ...checkViaTraceClearance(circuit),
@@ -24,7 +24,11 @@ test("Game Boy Advance: reproduce all 11 supplied clearance markers", () => {
   expect(errors).toHaveLength(11)
   // Generated IDs are reassigned by core in the supplied export.
   for (const [index, error] of errors.entries()) {
-    const { [`${error.type}_id`]: _id, ...expected } = supplied[index] as any
+    const {
+      [`${error.type}_id`]: _id,
+      center: _oldCenter,
+      ...expected
+    } = supplied[index] as any
     expect(error).toMatchObject(expected)
   }
   expect(errors.map(({ center }) => center)).toMatchSnapshot()

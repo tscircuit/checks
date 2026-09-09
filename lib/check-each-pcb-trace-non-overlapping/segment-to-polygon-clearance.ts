@@ -251,7 +251,7 @@ export const getSegmentToPolygonClearance = (
   )
 
 export const getSegmentToPillClearance = (
-  segment: PcbTraceSegment,
+  segment: Pick<PcbTraceSegment, "x1" | "y1" | "x2" | "y2">,
   pad: PillPad,
 ) => {
   const pill = getPillCenterLineForPad(pad)
