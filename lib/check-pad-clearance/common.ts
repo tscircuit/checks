@@ -298,35 +298,6 @@ export const getTraceSegments = (
   })
 }
 
-/**
- * Returns the center used to place a trace-related error in circuit-json.
- *
- * Clearance geometry is measured at the closest segment/obstacle points, but
- * placing the error there makes independent traces that pass the same obstacle
- * render on top of one another. Centering each error on its full trace keeps
- * placement deterministic and distinct without requiring renderer-side moves.
- */
-export const getTraceCenter = (segment: PcbTraceSegment) => {
-  const routePoints = segment._pcbTrace.route.flatMap((routePoint) => {
-    if (routePoint.route_type === "through_pad") {
-      return [routePoint.start, routePoint.end]
-    }
-
-    return [{ x: routePoint.x, y: routePoint.y }]
-  })
-  const firstPoint = routePoints[0]
-  const lastPoint = routePoints[routePoints.length - 1]
-
-  if (!firstPoint || !lastPoint) {
-    return midpoint(
-      { x: segment.x1, y: segment.y1 },
-      { x: segment.x2, y: segment.y2 },
-    )
-  }
-
-  return midpoint(firstPoint, lastPoint)
-}
-
 export type TraceClearanceObstacle = PadElement | PcbVia
 
 const getCenterBetweenCopperEdges = ({
@@ -347,6 +318,19 @@ const getCenterBetweenCopperEdges = ({
 
   const unitX = dx / distance
   const unitY = dy / distance
+  // For overlapping copper, choose a point in the shared interval. This also
+  // handles one circle containing the other without placing the marker outside
+  // the smaller shape. A polygon's nearest boundary has obstacleRadius=0.
+  if (distance <= traceRadius + obstacleRadius) {
+    const overlapStart = Math.max(-traceRadius, distance - obstacleRadius)
+    const overlapEnd = Math.min(traceRadius, distance + obstacleRadius)
+    const offset = (overlapStart + overlapEnd) / 2
+    return {
+      x: tracePoint.x + unitX * offset,
+      y: tracePoint.y + unitY * offset,
+    }
+  }
+
   const traceEdge = {
     x: tracePoint.x + unitX * traceRadius,
     y: tracePoint.y + unitY * traceRadius,
@@ -360,7 +344,7 @@ const getCenterBetweenCopperEdges = ({
 }
 
 export const getTraceObstacleClearance = (
-  segment: PcbTraceSegment,
+  segment: Pick<PcbTraceSegment, "x1" | "y1" | "x2" | "y2" | "thickness">,
   obstacle: TraceClearanceObstacle,
 ): { gap: number; center: { x: number; y: number } } => {
   const start = { x: segment.x1, y: segment.y1 }
@@ -419,3 +403,17 @@ export const getTraceObstacleClearance = (
 }
 
 export const isTraceObstacleOverlap = (gap: number): boolean => gap <= 0
+
+/** A via is a zero-length segment with the width of its outer copper.
+ * Use the same nearest-copper geometry as trace clearance markers. */
+export const getViaPadClearanceCenter = (via: PcbVia, pad: PadElement) =>
+  getTraceObstacleClearance(
+    {
+      x1: via.x,
+      y1: via.y,
+      x2: via.x,
+      y2: via.y,
+      thickness: via.outer_diameter,
+    },
+    pad,
+  ).center

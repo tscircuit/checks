@@ -32,12 +32,16 @@ test("repro breakout sot23 regulator overlap routing checks snapshot", async () 
         typeof center?.x === "number" && typeof center.y === "number",
     )
   expect(errorCenters).toHaveLength(2)
-  expect(
-    Math.hypot(
-      errorCenters[0]!.x - errorCenters[1]!.x,
-      errorCenters[0]!.y - errorCenters[1]!.y,
-    ),
-  ).toBeGreaterThan(1)
+  // Both traces nearly touch the same edge of the circular plated hole.
+  // Preserve those physical locations instead of separating markers by 1mm.
+  for (const error of errors) {
+    if (error.type !== "pcb_pad_trace_clearance_error") continue
+    const center = error.center!
+    expect(Math.hypot(center.x! + 4.73, center.y! + 1) - 0.75).toBeCloseTo(
+      error.actual_clearance! / 2,
+      10,
+    )
+  }
 
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
