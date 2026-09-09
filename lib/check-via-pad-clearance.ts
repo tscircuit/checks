@@ -19,7 +19,7 @@ import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   type PadElement,
   getPadBounds,
-  getPadCenter,
+  getViaPadClearanceCenter,
   getPadToPadGap,
   getPads,
 } from "./check-pad-clearance/common"
@@ -71,8 +71,6 @@ export function checkViaPadClearance(
       const gap = getPadToPadGap(via, pad)
       if (gap + EPSILON >= requiredClearance) continue
 
-      const viaCenter = getPadCenter(via)
-      const padCenter = getPadCenter(pad)
       errors.push({
         type: "pcb_pad_pad_clearance_error",
         pcb_pad_pad_clearance_error_id: `via_pad_clearance_${via.pcb_via_id}_${padId}`,
@@ -81,10 +79,7 @@ export function checkViaPadClearance(
         pcb_pad_ids: [via.pcb_via_id, padId],
         minimum_clearance: requiredClearance,
         actual_clearance: gap,
-        center: {
-          x: (viaCenter.x + padCenter.x) / 2,
-          y: (viaCenter.y + padCenter.y) / 2,
-        },
+        center: getViaPadClearanceCenter(via, pad),
       })
     }
   }
