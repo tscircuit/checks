@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test"
 import { isPointInsidePolygon } from "@tscircuit/math-utils"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import type { PcbFootprintOverlapError } from "circuit-json"
 import { Fragment } from "react"
 import { Circuit } from "tscircuit"
-import { runAllPlacementChecks } from "../.."
+import { runAllPlacementChecks } from "lib/run-all-checks"
 
 const displayPinLabels = {
   pin1: ["1"],
@@ -123,7 +124,7 @@ function Display({
   )
 }
 
-test("repro: bottom-side holder covers through-hole display pins without a placement issue", async () => {
+test("repro: bottom-side holder covering through-hole display pins reports placement issues", async () => {
   const circuit = new Circuit({
     platform: { placementDrcChecksDisabled: true },
   })
@@ -208,12 +209,27 @@ test("repro: bottom-side holder covers through-hole display pins without a place
   expect(displayPinsInsideHolderCourtyard).toHaveLength(10)
   expect(routedConnections.length).toBeGreaterThanOrEqual(6)
 
-  // Current bug: no issue is reported even though display pins extend into the
-  // battery holder's assembly space on the opposite side of the PCB.
-  expect(placementIssues).toHaveLength(0)
+  const platedHoleCourtyardIssues = placementIssues.filter(
+    (issue): issue is PcbFootprintOverlapError =>
+      issue.type === "pcb_footprint_overlap_error" &&
+      "pcb_plated_hole_ids" in issue &&
+      issue.pcb_plated_hole_ids?.length === 1 &&
+      issue.message.includes("pcb_courtyard_outline"),
+  )
+
+  expect(platedHoleCourtyardIssues).toHaveLength(10)
+  expect(
+    platedHoleCourtyardIssues.every((issue) =>
+      issue.pcb_plated_hole_ids?.some((id) =>
+        displayPinsInsideHolderCourtyard.some(
+          (hole) => hole.pcb_plated_hole_id === id,
+        ),
+      ),
+    ),
+  ).toBe(true)
 
   expect(
-    convertCircuitJsonToPcbSvg(circuitJson, {
+    convertCircuitJsonToPcbSvg([...circuitJson, ...placementIssues], {
       showCourtyards: true,
       shouldDrawErrors: true,
     }),
