@@ -5,7 +5,7 @@ import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
  * SVG renderer does not yet draw. Numbers correspond to the coordinate table. */
 export function renderClearanceLocations(
   circuit: AnyCircuitElement[],
-  errors: { center: { x: number; y: number } }[],
+  errors: { center?: { x?: number; y?: number } }[],
 ) {
   const width = 1200
   const height = 500
@@ -14,8 +14,11 @@ export function renderClearanceLocations(
   const svg = convertCircuitJsonToPcbSvg(circuit, { width, height, viewport })
   const groups = new Map<string, { x: number; y: number; labels: number[] }>()
   for (const [index, { center }] of errors.entries()) {
+    if (center?.x === undefined || center.y === undefined) {
+      throw new Error(`Missing position for clearance error ${index + 1}`)
+    }
     const key = JSON.stringify(center)
-    const group = groups.get(key) ?? { ...center, labels: [] }
+    const group = groups.get(key) ?? { x: center.x, y: center.y, labels: [] }
     group.labels.push(index + 1)
     groups.set(key, group)
   }
