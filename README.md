@@ -44,6 +44,26 @@ and output an array of arrays for any issues found.
 | [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs placement, schematic, netlist, pin specification, and routing checks and returns a combined list of issues. |
 
+## Consolidated placement overlaps
+
+`runAllPlacementChecks` and `runAllChecks` report one placement conflict per
+component pair when footprint overlap causes multiple footprint, pad clearance,
+and courtyard diagnostics. The message names the components, counts the conflicts,
+and suggests moving them apart. Separate component pairs, clearance-only issues,
+standalone elements, and unrelated routing diagnostics remain separate.
+
+The result uses the existing `pcb_footprint_overlap_error` type and retains the
+union of affected pad and hole IDs for rendering. The exported
+`PcbComponentOverlapError` interface adds `pcb_component_ids` and `related_errors`
+with the original diagnostics, including measured clearances. These extra context
+fields are provided by checks; older Circuit JSON schema parsers may strip them.
+
+Individual checks still return detailed diagnostics. Use
+`runAllPlacementChecks(circuitJson, { consolidateOverlaps: false })` to obtain raw
+aggregate results, for example to apply exclusions before calling
+`consolidatePcbOverlapErrors(circuitJson, errors)`. Consolidation does not mutate
+its inputs and can be applied again when combining runners.
+
 ## Implementation Details
 
 > [!NOTE]

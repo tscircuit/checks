@@ -1,3 +1,4 @@
+import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
 import type { AnyCircuitElement } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
@@ -32,8 +33,11 @@ import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
 
-export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
-  return [
+export async function runAllPlacementChecks(
+  circuitJson: AnyCircuitElement[],
+  { consolidateOverlaps = true } = {},
+) {
+  const errors = [
     ...checkCopperToBoardEdgeClearance(circuitJson),
     ...checkViasInPads(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
@@ -46,6 +50,9 @@ export async function runAllPlacementChecks(circuitJson: AnyCircuitElement[]) {
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
   ]
+  return consolidateOverlaps
+    ? consolidatePcbOverlapErrors(circuitJson, errors)
+    : errors
 }
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
