@@ -10,13 +10,13 @@ import type {
   PcbCourtyardOutline,
   PcbCourtyardPolygon,
   PcbCourtyardRect,
-  PcbFootprintOverlapError,
 } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import {
   getReadableNameForElementId,
   getReadableNameForPort,
 } from "lib/util/get-readable-names"
+import type { PcbComponentOverlapError } from "../consolidate-pcb-overlap-errors"
 import {
   type OverlappableElement,
   doPcbElementsOverlap,
@@ -69,8 +69,8 @@ const formatOverlapElementDescription = (
  */
 export function checkPcbComponentOverlap(
   circuitJson: AnyCircuitElement[],
-): PcbFootprintOverlapError[] {
-  const errors: PcbFootprintOverlapError[] = []
+): PcbComponentOverlapError[] {
+  const errors: PcbComponentOverlapError[] = []
 
   // Build connectivity map to check if components are electrically connected
   const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
@@ -194,11 +194,15 @@ export function checkPcbComponentOverlap(
             )
 
             // Create error object
-            const error: PcbFootprintOverlapError = {
+            const error: PcbComponentOverlapError = {
               type: "pcb_footprint_overlap_error",
               pcb_error_id: `pcb_footprint_overlap_${id1}_${id2}`,
               error_type: "pcb_footprint_overlap_error",
               message: `${elem1.type} ${elem1Description} overlaps with ${elem2.type} ${elem2Description}`,
+              pcb_component_ids: [
+                elem1.pcb_component_id,
+                elem2.pcb_component_id,
+              ].filter((id): id is string => Boolean(id)),
             }
 
             // Add relevant IDs based on element types

@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test"
 import { isPointInsidePolygon } from "@tscircuit/math-utils"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import type { PcbFootprintOverlapError } from "circuit-json"
 import { Fragment } from "react"
 import { Circuit } from "tscircuit"
 import { runAllPlacementChecks } from "lib/run-all-checks"
@@ -209,24 +208,21 @@ test("repro: bottom-side holder covering through-hole display pins reports place
   expect(displayPinsInsideHolderCourtyard).toHaveLength(10)
   expect(routedConnections.length).toBeGreaterThanOrEqual(6)
 
-  const platedHoleCourtyardIssues = placementIssues.filter(
-    (issue): issue is PcbFootprintOverlapError =>
-      issue.type === "pcb_footprint_overlap_error" &&
-      "pcb_plated_hole_ids" in issue &&
-      issue.pcb_plated_hole_ids?.length === 1 &&
-      issue.message.includes("pcb_courtyard_outline"),
+  const overlapIssues = placementIssues.filter(
+    (issue) => issue.type === "pcb_footprint_overlap_error",
   )
-
-  expect(platedHoleCourtyardIssues).toHaveLength(10)
+  // Each display conflicts with the holder independently.
+  expect(overlapIssues).toHaveLength(2)
   expect(
-    platedHoleCourtyardIssues.every((issue) =>
-      issue.pcb_plated_hole_ids?.some((id) =>
-        displayPinsInsideHolderCourtyard.some(
-          (hole) => hole.pcb_plated_hole_id === id,
-        ),
-      ),
-    ),
+    overlapIssues.every((issue) => issue.message.includes("BT_HOLDER")),
   ).toBe(true)
+  expect(
+    overlapIssues.flatMap((issue) => issue.pcb_plated_hole_ids ?? []).sort(),
+  ).toEqual(
+    displayPinsInsideHolderCourtyard
+      .map((hole) => hole.pcb_plated_hole_id)
+      .sort(),
+  )
 
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...placementIssues], {
