@@ -9,6 +9,7 @@ import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
 import { checkEachPcbPortConnectedToPcbTraces } from "./check-each-pcb-port-connected-to-pcb-trace"
 import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
+import { consolidatePinSpecificationWarnings } from "./consolidate-pin-specification-warnings"
 import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkPadPadClearance } from "./check-pad-pad-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
@@ -73,12 +74,16 @@ export async function runAllSchematicChecks(circuitJson: AnyCircuitElement[]) {
 
 export async function runAllPinSpecificationChecks(
   circuitJson: AnyCircuitElement[],
+  { consolidatePinWarnings = true } = {},
 ) {
-  return [
+  const warnings = [
     ...checkAllPinsInComponentAreUnderspecified(circuitJson),
     ...checkNoPowerPinDefined(circuitJson),
     ...checkNoGroundPinDefined(circuitJson),
   ]
+  return consolidatePinWarnings
+    ? consolidatePinSpecificationWarnings(circuitJson, warnings)
+    : warnings
 }
 
 export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {

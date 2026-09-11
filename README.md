@@ -33,6 +33,10 @@ and output an array of arrays for any issues found.
 | [`checkViasOffBoard`](./lib/check-pcb-components-out-of-board/checkViasOffBoard.ts) | Returns `pcb_placement_error` if any PCB via lies outside or crosses the board boundary. |
 | [`checkCopperToBoardEdgeClearance`](./lib/check-copper-to-board-edge-clearance.ts) | Checks via, SMT-pad, plated-hole, and copper-pour geometry against the polygon board outline and required edge clearance. |
 
+## Pin-specification warning consolidation
+
+Missing pin attributes, missing power roles, and missing ground roles are combined only for the same component and subcircuit. Partially specified components retain only the applicable reasons. Connectivity errors remain separate. The fixture shows three warnings becoming one summary. See [API, raw-output option, and before/after snapshot](./docs/consolidate-pin-specification-warnings.md).
+
 ## Aggregate check runner functions
 
 | Function | Description |
