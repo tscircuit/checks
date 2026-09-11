@@ -44,6 +44,10 @@ and output an array of arrays for any issues found.
 | [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs placement, schematic, netlist, pin specification, and routing checks and returns a combined list of issues. |
 
+## Missing-courtyard warning consolidation
+
+Missing courtyards are grouped by subcircuit. Overlap, clearance, and other placement diagnostics remain separate. The fixture shows four missing courtyards becoming one summary. See [API, raw-output option, and before/after snapshot](./docs/consolidate-missing-courtyard-warnings.md).
+
 ## Consolidated placement overlaps
 
 `runAllPlacementChecks` and `runAllChecks` report one placement conflict per
