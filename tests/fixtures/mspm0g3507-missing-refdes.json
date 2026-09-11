@@ -1,0 +1,893 @@
+[
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_1",
+    "ftype": "simple_resistor",
+    "name": "R_USB_DM_JOIN",
+    "manufacturer_part_number": "1206W4F0000T5E",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C17888"]
+    },
+    "resistance": 0,
+    "display_resistance": "0\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_2",
+    "ftype": "simple_resistor",
+    "name": "R_VBUS_A_LINK",
+    "manufacturer_part_number": "0402WGF0000TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C17168"]
+    },
+    "resistance": 0,
+    "display_resistance": "0\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_3",
+    "ftype": "simple_resistor",
+    "name": "R_VBUS_B_LINK",
+    "manufacturer_part_number": "0402WGF0000TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C17168"]
+    },
+    "resistance": 0,
+    "display_resistance": "0\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_6",
+    "ftype": "simple_resistor",
+    "name": "R_USB_CC1",
+    "manufacturer_part_number": "0402WGF5101TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25905"]
+    },
+    "resistance": 5100,
+    "display_resistance": "5.1k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_7",
+    "ftype": "simple_resistor",
+    "name": "R_USB_CC2",
+    "manufacturer_part_number": "0402WGF5101TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25905"]
+    },
+    "resistance": 5100,
+    "display_resistance": "5.1k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_8",
+    "ftype": "simple_capacitor",
+    "name": "C_USB_UART",
+    "manufacturer_part_number": "CL05B104KO5NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C1525"]
+    },
+    "capacitance": 1e-7,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "100nF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_9",
+    "ftype": "simple_resistor",
+    "name": "R_UART_TX",
+    "manufacturer_part_number": "0402WGF1001TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C11702"]
+    },
+    "resistance": 1000,
+    "display_resistance": "1k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_10",
+    "ftype": "simple_resistor",
+    "name": "R_UART_RX",
+    "manufacturer_part_number": "0402WGF1001TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C11702"]
+    },
+    "resistance": 1000,
+    "display_resistance": "1k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_12",
+    "ftype": "simple_capacitor",
+    "name": "C_REG_IN_BULK",
+    "manufacturer_part_number": "CL10A475KO8NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C19666"]
+    },
+    "capacitance": 4.7e-6,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "4.7uF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_13",
+    "ftype": "simple_capacitor",
+    "name": "C_REG_IN_BYPASS",
+    "manufacturer_part_number": "CL05B104KO5NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C1525"]
+    },
+    "capacitance": 1e-7,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "100nF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_14",
+    "ftype": "simple_capacitor",
+    "name": "C_REG_OUT_BULK",
+    "manufacturer_part_number": "CL10A106KP8NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C19702"]
+    },
+    "capacitance": 1e-5,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "10uF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_15",
+    "ftype": "simple_capacitor",
+    "name": "C_REG_OUT_BYPASS",
+    "manufacturer_part_number": "CL05B104KO5NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C1525"]
+    },
+    "capacitance": 1e-7,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "100nF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_17",
+    "ftype": "simple_capacitor",
+    "name": "C_MCU_BULK",
+    "manufacturer_part_number": "CL10A106KP8NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C19702"]
+    },
+    "capacitance": 1e-5,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "10uF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_18",
+    "ftype": "simple_capacitor",
+    "name": "C_MCU_BYPASS",
+    "manufacturer_part_number": "CL05B104KO5NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C1525"]
+    },
+    "capacitance": 1e-7,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "100nF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_19",
+    "ftype": "simple_capacitor",
+    "name": "C_MCU_VCORE",
+    "manufacturer_part_number": "CL10B474KA8NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C1623"]
+    },
+    "capacitance": 4.7e-7,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "470nF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_20",
+    "ftype": "simple_resistor",
+    "name": "R_RESET_PULLUP",
+    "manufacturer_part_number": "0402WGF4702TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25792"]
+    },
+    "resistance": 47000,
+    "display_resistance": "47k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_21",
+    "ftype": "simple_capacitor",
+    "name": "C_RESET",
+    "manufacturer_part_number": "CL05B103KB5NNNC",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C15195"]
+    },
+    "capacitance": 1e-8,
+    "max_decoupling_trace_length": 30,
+    "display_capacitance": "10nF",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_22",
+    "name": "SW_RESET",
+    "ftype": "simple_push_button",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C557591"]
+    },
+    "manufacturer_part_number": "TS342A2P-WZ",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_23",
+    "ftype": "simple_resistor",
+    "name": "R_BOOT_PULLDOWN",
+    "manufacturer_part_number": "0402WGF1002TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25744"]
+    },
+    "resistance": 10000,
+    "display_resistance": "10k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_24",
+    "name": "SW_BOOT",
+    "ftype": "simple_push_button",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C557591"]
+    },
+    "manufacturer_part_number": "TS342A2P-WZ",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_25",
+    "ftype": "simple_resistor",
+    "name": "R_I2C_SDA_PULLUP",
+    "manufacturer_part_number": "0402WGF4701TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25900"]
+    },
+    "resistance": 4700,
+    "display_resistance": "4.7k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_26",
+    "ftype": "simple_resistor",
+    "name": "R_I2C_SCL_PULLUP",
+    "manufacturer_part_number": "0402WGF4701TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25900"]
+    },
+    "resistance": 4700,
+    "display_resistance": "4.7k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_27",
+    "ftype": "simple_resistor",
+    "name": "R_POWER_LED",
+    "manufacturer_part_number": "0402WGF1001TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C11702"]
+    },
+    "resistance": 1000,
+    "display_resistance": "1k\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_28",
+    "ftype": "simple_led",
+    "name": "D_POWER",
+    "manufacturer_part_number": "XL-1608SYGC-06",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C965805"]
+    },
+    "are_pins_interchangeable": false,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_29",
+    "ftype": "simple_resistor",
+    "name": "R_RGB_RED",
+    "manufacturer_part_number": "0402WGF3300TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25104"]
+    },
+    "resistance": 330,
+    "display_resistance": "330\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_30",
+    "ftype": "simple_resistor",
+    "name": "R_RGB_GREEN",
+    "manufacturer_part_number": "0402WGF3300TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25104"]
+    },
+    "resistance": 330,
+    "display_resistance": "330\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_31",
+    "ftype": "simple_resistor",
+    "name": "R_RGB_BLUE",
+    "manufacturer_part_number": "0402WGF3300TCE",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C25104"]
+    },
+    "resistance": 330,
+    "display_resistance": "330\u03a9",
+    "are_pins_interchangeable": true,
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "source_component",
+    "source_component_id": "source_component_32",
+    "ftype": "simple_chip",
+    "name": "D_USER_RGB",
+    "manufacturer_part_number": "SZYY1615RGB-A 4pin",
+    "supplier_part_numbers": {
+      "jlcpcb": ["C3029072"]
+    },
+    "source_group_id": "source_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_1",
+    "center": {
+      "x": -14.65,
+      "y": 3.3099999999999996
+    },
+    "size": {
+      "width": 0.6,
+      "height": 0.65
+    },
+    "source_component_id": "source_component_1",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_right",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "0\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_2",
+    "center": {
+      "x": -11.779999999999998,
+      "y": 7.8
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_2",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_up",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "0\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_3",
+    "center": {
+      "x": -9.907499999999999,
+      "y": 5.827500000000001
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_3",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_up",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "0\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_6",
+    "center": {
+      "x": -16.74,
+      "y": 4.75
+    },
+    "size": {
+      "width": 0.6,
+      "height": 0.65
+    },
+    "source_component_id": "source_component_6",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_right",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "5.1k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_7",
+    "center": {
+      "x": -12.15,
+      "y": 3.3
+    },
+    "size": {
+      "width": 0.6,
+      "height": 0.65
+    },
+    "source_component_id": "source_component_7",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_right",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "5.1k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_8",
+    "center": {
+      "x": -3.2975000000000003,
+      "y": 2.8800000000000017
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_8",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "100nF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_9",
+    "center": {
+      "x": -2.8074999999999997,
+      "y": 8.2
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_9",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_up",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "1k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_10",
+    "center": {
+      "x": -4.2875000000000005,
+      "y": 7.599999999999998
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_10",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "1k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_12",
+    "center": {
+      "x": 5.147500000000001,
+      "y": 6.305
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_12",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "4.7uF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_13",
+    "center": {
+      "x": 2.6275000000000013,
+      "y": 6.305
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_13",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "100nF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_14",
+    "center": {
+      "x": 10.807500000000001,
+      "y": 6.205
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_14",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "10uF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_15",
+    "center": {
+      "x": 13.447500000000002,
+      "y": 6.205
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_15",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "100nF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_17",
+    "center": {
+      "x": -15.88,
+      "y": -6.66
+    },
+    "size": {
+      "width": 0.9,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_17",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "10uF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_18",
+    "center": {
+      "x": -16.46,
+      "y": -7.82
+    },
+    "size": {
+      "width": 0.9,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_18",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "100nF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_19",
+    "center": {
+      "x": -9.919999999999998,
+      "y": -4.659999999999998
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_19",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "470nF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_20",
+    "center": {
+      "x": -16.53,
+      "y": -4.779999999999999
+    },
+    "size": {
+      "width": 0.6,
+      "height": 0.65
+    },
+    "source_component_id": "source_component_20",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_right",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "47k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_21",
+    "center": {
+      "x": -15.341666666666667,
+      "y": -11.334999999999997
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_21",
+    "is_box_with_pins": true,
+    "symbol_name": "capacitor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "10nF",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_22",
+    "center": {
+      "x": -16.27,
+      "y": -9.280000000000001
+    },
+    "size": {
+      "width": 0.94,
+      "height": 0.718910699999999
+    },
+    "source_component_id": "source_component_22",
+    "is_box_with_pins": true,
+    "symbol_name": "push_button_normally_open_momentary_right",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_23",
+    "center": {
+      "x": -12.059166666666668,
+      "y": -10.865000000000002
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_23",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "10k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_24",
+    "center": {
+      "x": -15.11445535,
+      "y": -2.799999999999999
+    },
+    "size": {
+      "width": 0.718910699999999,
+      "height": 0.94
+    },
+    "source_component_id": "source_component_24",
+    "is_box_with_pins": true,
+    "symbol_name": "push_button_normally_open_momentary_up",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_25",
+    "center": {
+      "x": -4.165000000000002,
+      "y": -8.574999999999998
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_25",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "4.7k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_26",
+    "center": {
+      "x": -6.917500000000002,
+      "y": -4.759999999999998
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_26",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "4.7k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_27",
+    "center": {
+      "x": 16.73,
+      "y": 6.205
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_27",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "1k\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_28",
+    "center": {
+      "x": 16.73,
+      "y": 4.74
+    },
+    "size": {
+      "width": 0.65,
+      "height": 1.13
+    },
+    "source_component_id": "source_component_28",
+    "is_box_with_pins": true,
+    "symbol_name": "led_up",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_29",
+    "center": {
+      "x": 1.909999999999999,
+      "y": -3.8024999999999984
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_29",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_down",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "330\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_30",
+    "center": {
+      "x": 3.5499999999999994,
+      "y": -7.342499999999998
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_30",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_up",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "330\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_31",
+    "center": {
+      "x": 1.5099999999999991,
+      "y": -8.342499999999996
+    },
+    "size": {
+      "width": 0.65,
+      "height": 0.6
+    },
+    "source_component_id": "source_component_31",
+    "is_box_with_pins": true,
+    "symbol_name": "boxresistor_up",
+    "schematic_sheet_id": "schematic_sheet_0",
+    "symbol_display_value": "330\u03a9",
+    "schematic_group_id": "schematic_group_0"
+  },
+  {
+    "type": "schematic_component",
+    "schematic_component_id": "schematic_component_32",
+    "center": {
+      "x": 2.009999999999999,
+      "y": -6.042499999999997
+    },
+    "size": {
+      "width": 1.2,
+      "height": 1.3999999999999986
+    },
+    "source_component_id": "source_component_32",
+    "is_box_with_pins": false,
+    "schematic_sheet_id": "schematic_sheet_0",
+    "schematic_group_id": "schematic_group_0"
+  }
+]
