@@ -14,6 +14,7 @@ import { checkPadPadClearance } from "./check-pad-pad-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
 import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
 import { checkPcbComponentsMissingCourtyard } from "./check-pcb-components-missing-courtyard"
+import { consolidateMissingCourtyardWarnings } from "./consolidate-missing-courtyard-warnings"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
@@ -35,7 +36,7 @@ import { checkViasInPads } from "./check-vias-in-pads"
 
 export async function runAllPlacementChecks(
   circuitJson: AnyCircuitElement[],
-  { consolidateOverlaps = true } = {},
+  { consolidateOverlaps = true, consolidateMissingCourtyards = true } = {},
 ) {
   const errors = [
     ...checkCopperToBoardEdgeClearance(circuitJson),
@@ -50,9 +51,12 @@ export async function runAllPlacementChecks(
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
   ]
-  return consolidateOverlaps
+  const overlaps = consolidateOverlaps
     ? consolidatePcbOverlapErrors(circuitJson, errors)
     : errors
+  return consolidateMissingCourtyards
+    ? consolidateMissingCourtyardWarnings(circuitJson, overlaps)
+    : overlaps
 }
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
