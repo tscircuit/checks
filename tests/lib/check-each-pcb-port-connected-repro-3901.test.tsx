@@ -81,7 +81,8 @@ test("repro for #3901: two plated GND ports on bottom pour and no pcb traces", a
     {
       type: "pcb_port_not_connected_error",
       error_type: "pcb_port_not_connected_error",
-      message: "Ports [J1.1, J2.2] are not connected together through the same net.",
+      message:
+        "Ports [J1.1, J2.2] are not connected together through the same net.",
     },
   ])
 
