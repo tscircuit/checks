@@ -3,10 +3,8 @@ import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbComponentsMissingCourtyard } from "lib/check-pcb-components-missing-courtyard"
 
-describe("checkPcbComponentsMissingCourtyard repro #3902", () => {
-  // Capture the current bug: manually placed vias incorrectly require courtyards.
-  // When #3902 is fixed, update these expectations to exclude via warnings.
-  test("reproduces a false courtyard warning for a manually placed via", () => {
+describe("checkPcbComponentsMissingCourtyard regression", () => {
+  test("does not warn for a manually placed via", () => {
     const circuitJson = [
       {
         type: "source_manually_placed_via",
@@ -24,17 +22,10 @@ describe("checkPcbComponentsMissingCourtyard repro #3902", () => {
 
     const warnings = checkPcbComponentsMissingCourtyard(circuitJson)
 
-    expect(warnings).toHaveLength(1)
-    expect(warnings[0]).toMatchObject({
-      type: "pcb_component_missing_courtyard_warning",
-      warning_type: "pcb_component_missing_courtyard_warning",
-      message: "component has no courtyard",
-      pcb_component_id: "pcb_component_1",
-      source_component_id: "source_manually_placed_via_0",
-    })
+    expect(warnings).toHaveLength(0)
   })
 
-  test("reproduces an extra via warning alongside a real component warning", () => {
+  test("only warns for the real component alongside a manually placed via", () => {
     const circuitJson = [
       {
         type: "source_component",
@@ -66,22 +57,17 @@ describe("checkPcbComponentsMissingCourtyard repro #3902", () => {
 
     const warnings = checkPcbComponentsMissingCourtyard(circuitJson)
 
-    expect(warnings).toHaveLength(2)
+    expect(warnings).toHaveLength(1)
     expect(warnings).toMatchObject([
       {
         message: "R1 has no courtyard",
         pcb_component_id: "pcb_component_1",
         source_component_id: "source_component_1",
       },
-      {
-        message: "component has no courtyard",
-        pcb_component_id: "pcb_component_2",
-        source_component_id: "source_manually_placed_via_0",
-      },
     ])
   })
 
-  test("captures the PCB snapshot and current courtyard warnings", () => {
+  test("captures the PCB snapshot with only the real component courtyard warning", () => {
     const circuitJson = [
       {
         type: "pcb_board",
@@ -145,13 +131,6 @@ describe("checkPcbComponentsMissingCourtyard repro #3902", () => {
           "message": "R1 has no courtyard",
           "pcb_component_id": "pcb_component_1",
           "source_component_id": "source_component_1",
-          "type": "pcb_component_missing_courtyard_warning",
-          "warning_type": "pcb_component_missing_courtyard_warning",
-        },
-        {
-          "message": "component has no courtyard",
-          "pcb_component_id": "pcb_component_2",
-          "source_component_id": "source_manually_placed_via_0",
           "type": "pcb_component_missing_courtyard_warning",
           "warning_type": "pcb_component_missing_courtyard_warning",
         },
