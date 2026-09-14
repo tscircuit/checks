@@ -74,6 +74,9 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
   const warnings: SchematicComponentStylingWarning[] = []
 
   for (const schematicComponent of schematicComponents) {
+    // Named symbols provide their own reference text without schematic_text.
+    if (schematicComponent.symbol_name) continue
+
     if (!schematicComponent.source_component_id) continue
 
     const sourceComponent = sourceComponentById.get(
