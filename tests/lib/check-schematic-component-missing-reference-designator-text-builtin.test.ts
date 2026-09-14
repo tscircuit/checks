@@ -32,10 +32,12 @@ test("accepts reference designators rendered by library symbols without schemati
   ).toHaveLength(0)
 })
 
-test("still warns when a library symbol cannot display a meaningful reference designator", () => {
-  expect(checkSymbol("boxresistor_down", "R_ENC_SDA", "")).toHaveLength(1)
-  expect(checkSymbol("boxresistor_down", "R_ENC_SDA", "   ")).toHaveLength(1)
-  expect(checkSymbol("boxresistor_down", "unnamed_resistor1")).toHaveLength(1)
-  expect(checkSymbol("unknown_symbol")).toHaveLength(1)
-  expect(checkSymbol("not_connected_down")).toHaveLength(1)
+test("trusts named symbols without consulting a symbol library", () => {
+  expect(checkSymbol("external_library_symbol")).toHaveLength(0)
+  expect(checkSymbol("boxresistor_down", "R_ENC_SDA", "")).toHaveLength(0)
+  expect(checkSymbol("boxresistor_down", "unnamed_resistor1")).toHaveLength(0)
+})
+
+test("still checks components without a named symbol", () => {
+  expect(checkSymbol("")).toHaveLength(1)
 })

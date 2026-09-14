@@ -1,4 +1,3 @@
-import { type SchSymbol, symbols } from "schematic-symbols"
 import type {
   AnyCircuitElement,
   SchematicComponent,
@@ -75,35 +74,15 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
   const warnings: SchematicComponentStylingWarning[] = []
 
   for (const schematicComponent of schematicComponents) {
+    // Named symbols provide their own reference text without schematic_text.
+    if (schematicComponent.symbol_name) continue
+
     if (!schematicComponent.source_component_id) continue
 
     const sourceComponent = sourceComponentById.get(
       schematicComponent.source_component_id,
     )
     if (!sourceComponent) continue
-
-    // Library symbols render {REF} directly from the source component; they
-    // do not emit a separate schematic_text record. Match circuit-to-svg's
-    // display-name override semantics, including an explicitly empty override.
-    const symbol = schematicComponent.symbol_name
-      ? (symbols as Record<string, SchSymbol | undefined>)[
-          schematicComponent.symbol_name
-        ]
-      : undefined
-    const symbolReferenceDesignator = (
-      sourceComponent.display_name ??
-      sourceComponent.name ??
-      ""
-    ).trim()
-    if (
-      symbolReferenceDesignator &&
-      !isFallbackReferenceDesignator(symbolReferenceDesignator) &&
-      symbol?.primitives.some(
-        (primitive) => primitive.type === "text" && primitive.text === "{REF}",
-      )
-    ) {
-      continue
-    }
 
     const referenceDesignators = new Set(
       [sourceComponent.name, sourceComponent.display_name]
