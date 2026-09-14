@@ -31,13 +31,15 @@
     "format-si-unit": "^0.0.12",
     "tscircuit": "^0.0.2301",
     "tsup": "^8.2.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "schematic-symbols": "^0.0.244"
   },
   "peerDependencies": {
     "@flatten-js/core": "*",
     "@tscircuit/math-utils": "*",
     "circuit-json": "*",
     "circuit-json-to-connectivity-map": "*",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "schematic-symbols": "*"
   }
 }
