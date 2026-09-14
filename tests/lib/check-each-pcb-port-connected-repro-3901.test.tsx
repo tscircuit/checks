@@ -1,88 +1,126 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "tscircuit"
+import type { SourceNet } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkEachPcbPortConnectedToPcbTraces } from "lib/check-each-pcb-port-connected-to-pcb-trace"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
 
-const J1_FOOTPRINT = (
-  <footprint>
-    <platedhole
-      portHints={["1"]}
-      shape="circle"
-      pcbX={0}
-      pcbY={0}
-      outerDiameter="1mm"
-      holeDiameter="0.5mm"
-    />
-  </footprint>
-)
-
-const J2_FOOTPRINT = (
-  <footprint>
-    <platedhole
-      portHints={["2"]}
-      shape="circle"
-      pcbX={0}
-      pcbY={0}
-      outerDiameter="1mm"
-      holeDiameter="0.5mm"
-    />
-  </footprint>
-)
+// Use the issue's autorouter callback so routing runs without adding tracks.
+const explicitOnly = async () => {
+  const handlers: Record<string, (result: { traces: [] }) => void> = {}
+  return {
+    on: (event: string, callback: (result: { traces: [] }) => void) => {
+      handlers[event] = callback
+    },
+    start: () => handlers.complete({ traces: [] }),
+    stop: () => {},
+  }
+}
 
 test("repro for #3901: two plated GND ports on bottom pour and no pcb traces", async () => {
   const circuit = new Circuit()
   circuit.add(
-    <board width="12mm" height="8mm" routingDisabled>
-      <net name="GND" isGroundNet />
-
-      <connector
+    <board
+      width={10}
+      height={10}
+      layers={2}
+      autorouter={{ algorithmFn: explicitOnly }}
+    >
+      <net name="GND" />
+      <chip
         name="J1"
         pcbX={-2}
         pcbY={0}
-        layer="bottom"
-        footprint={J1_FOOTPRINT}
-        pinLabels={{ 1: ["1"] }}
-        connections={{ 1: "net.GND" }}
+        pinLabels={{ pin1: "GND" }}
+        footprint={
+          <footprint>
+            <platedhole
+              portHints={["1"]}
+              holeDiameter={0.8}
+              outerDiameter={1.4}
+              shape="circle"
+              pcbX={0}
+              pcbY={0}
+            />
+            <courtyardcircle radius={1} pcbX={0} pcbY={0} />
+          </footprint>
+        }
       />
+      <trace from="J1.pin1" to="net.GND" />
 
-      <connector
+      <chip
         name="J2"
         pcbX={2}
         pcbY={0}
-        layer="bottom"
-        footprint={J2_FOOTPRINT}
-        pinLabels={{ 2: ["2"] }}
-        connections={{ 2: "net.GND" }}
+        pinLabels={{ pin1: "GND" }}
+        footprint={
+          <footprint>
+            <platedhole
+              portHints={["1"]}
+              holeDiameter={0.8}
+              outerDiameter={1.4}
+              shape="circle"
+              pcbX={0}
+              pcbY={0}
+            />
+            <courtyardcircle radius={1} pcbX={0} pcbY={0} />
+          </footprint>
+        }
       />
-
-      <trace from=".J1 > .1" to=".J2 > .2" />
-      <copperpour layer="bottom" connectsTo="net.GND" />
+      <trace from="J2.pin1" to="net.GND" />
+      <via
+        name="VGND"
+        pcbX={0}
+        pcbY={0}
+        holeDiameter={0.3}
+        outerDiameter={0.6}
+        connectsTo="net.GND"
+      />
+      <copperpour
+        layer="bottom"
+        connectsTo="net.GND"
+        clearance={0.16}
+        boardEdgeMargin={0.31}
+      />
     </board>,
   )
 
   await circuit.renderUntilSettled()
 
   const circuitJson = circuit.getCircuitJson()
+  const groundNet = circuitJson.find(
+    (element): element is SourceNet =>
+      element.type === "source_net" && element.name === "GND",
+  )
+  expect(groundNet).toBeDefined()
+  expect(
+    circuitJson.filter((element) => element.type === "pcb_trace"),
+  ).toHaveLength(0)
+  expect(
+    circuitJson.filter((element) => element.type === "pcb_plated_hole"),
+  ).toHaveLength(2)
+  const copperPours = circuitJson.filter(
+    (element) => element.type === "pcb_copper_pour",
+  )
+  expect(copperPours).toHaveLength(1)
+  expect(copperPours[0]).toMatchObject({
+    layer: "bottom",
+    source_net_id: groundNet!.source_net_id,
+  })
+
   const errors = checkEachPcbPortConnectedToPcbTraces(circuitJson)
 
-  expect(errors).toHaveLength(3)
+  expect(errors).toHaveLength(2)
   expect(errors).toMatchObject([
     {
       type: "pcb_port_not_connected_error",
       error_type: "pcb_port_not_connected_error",
-      message: "Port [J1.1] is not connected to net [GND] by a PCB trace.",
+      message: "Port [J1.GND] is not connected to net [GND] by a PCB trace.",
     },
     {
       type: "pcb_port_not_connected_error",
       error_type: "pcb_port_not_connected_error",
-      message: "Port [J2.2] is not connected to net [GND] by a PCB trace.",
-    },
-    {
-      type: "pcb_port_not_connected_error",
-      error_type: "pcb_port_not_connected_error",
-      message:
-        "Ports [J1.1, J2.2] are not connected together through the same net.",
+      message: "Port [J2.GND] is not connected to net [GND] by a PCB trace.",
     },
   ])
 
@@ -99,17 +137,12 @@ test("repro for #3901: two plated GND ports on bottom pour and no pcb traces", a
     [
       {
         "error_type": "pcb_port_not_connected_error",
-        "message": "Port [J1.1] is not connected to net [GND] by a PCB trace.",
+        "message": "Port [J1.GND] is not connected to net [GND] by a PCB trace.",
         "type": "pcb_port_not_connected_error",
       },
       {
         "error_type": "pcb_port_not_connected_error",
-        "message": "Port [J2.2] is not connected to net [GND] by a PCB trace.",
-        "type": "pcb_port_not_connected_error",
-      },
-      {
-        "error_type": "pcb_port_not_connected_error",
-        "message": "Ports [J1.1, J2.2] are not connected together through the same net.",
+        "message": "Port [J2.GND] is not connected to net [GND] by a PCB trace.",
         "type": "pcb_port_not_connected_error",
       },
     ]
@@ -117,8 +150,9 @@ test("repro for #3901: two plated GND ports on bottom pour and no pcb traces", a
 
   expect(containsCircuitJsonId(errors[0]!.message)).toBe(false)
 
-  expect(
+  await expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+      layer: "bottom",
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path, "repro-3901")
