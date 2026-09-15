@@ -77,6 +77,9 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
     // Named symbols provide their own reference text without schematic_text.
     if (schematicComponent.symbol_name) continue
 
+    // Schematic boxes always provide their own reference designator.
+    if (schematicComponent.is_box_with_pins) continue
+
     if (!schematicComponent.source_component_id) continue
 
     const sourceComponent = sourceComponentById.get(
