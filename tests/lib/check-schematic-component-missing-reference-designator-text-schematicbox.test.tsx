@@ -3,18 +3,9 @@ import { checkSchematicComponentMissingReferenceDesignatorText } from "lib/check
 import { Circuit } from "tscircuit"
 import { createReferenceDesignatorCircuitJson } from "tests/fixtures/create-reference-designator-circuit-json"
 
-test.each([
-  ["U1_Clock_reset_and_debug", false],
-  ["U1 Power", false],
-  ["U1-Power", false],
-  ["U1A", false],
-  [undefined, false],
-  ["U10_Clock_reset_and_debug", true],
-  ["Clock_reset_and_debug", true],
-  ["", true],
-] as const)(
-  "checks schematicbox section label %s",
-  async (name, shouldWarn) => {
+test.each(["U1_Clock_reset_and_debug", "Clock_reset_and_debug", undefined])(
+  "does not warn for schematicbox section label %s",
+  async (name) => {
     const circuit = new Circuit()
     circuit.pcbDisabled = true
     circuit.add(
@@ -44,27 +35,16 @@ test.each([
     expect(sectionText).toBeDefined()
     const warnings =
       checkSchematicComponentMissingReferenceDesignatorText(circuitJson)
-    expect(warnings).toHaveLength(shouldWarn ? 1 : 0)
-    if (shouldWarn) {
-      expect(warnings[0]).toMatchObject({
-        schematic_component_id:
-          sectionText?.type === "schematic_text"
-            ? sectionText.schematic_component_id
-            : undefined,
-      })
-    }
+    expect(warnings).toHaveLength(0)
   },
 )
 
-test("section labels only satisfy the box they are attached to", () => {
-  const circuitJson = createReferenceDesignatorCircuitJson({
-    texts: ["U1_Clock_reset_and_debug"],
-  })
+test("skips boxes without separate text but still checks custom symbols", () => {
+  const circuitJson = createReferenceDesignatorCircuitJson()
   const schematicComponent = circuitJson.find(
     (element) => element.type === "schematic_component",
   )!
 
-  // A custom symbol still needs its exact reference designator.
   expect(
     checkSchematicComponentMissingReferenceDesignatorText(circuitJson),
   ).toHaveLength(1)
@@ -73,12 +53,4 @@ test("section labels only satisfy the box they are attached to", () => {
   expect(
     checkSchematicComponentMissingReferenceDesignatorText(circuitJson),
   ).toHaveLength(0)
-
-  const schematicText = circuitJson.find(
-    (element) => element.type === "schematic_text",
-  )!
-  schematicText.schematic_component_id = "another_schematic_component"
-  expect(
-    checkSchematicComponentMissingReferenceDesignatorText(circuitJson),
-  ).toHaveLength(1)
 })

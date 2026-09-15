@@ -10,20 +10,6 @@ type SourceComponent = Extract<AnyCircuitElement, { type: "source_component" }>
 const isFallbackReferenceDesignator = (name: string) =>
   /^unnamed_[a-z0-9_-]+\d+$/i.test(name)
 
-const isSchematicBoxReferenceDesignatorText = (
-  text: string,
-  referenceDesignator: string,
-) => {
-  // An unnamed schematicbox displays its chipRef selector (e.g. ".U1").
-  if (text === `.${referenceDesignator}`) return true
-  if (!text.startsWith(referenceDesignator)) return false
-
-  // Section labels include U1_Clock, U1 Power, U1-Power, and U1A.
-  // Require a section boundary so U10 cannot supply U1's reference text.
-  const sectionSuffix = text.slice(referenceDesignator.length)
-  return /^(?:[_\s-].+|[A-Z])$/.test(sectionSuffix)
-}
-
 const isTextWithinComponentBounds = (
   schematicText: SchematicText,
   schematicComponent: SchematicComponent,
@@ -91,6 +77,9 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
     // Named symbols provide their own reference text without schematic_text.
     if (schematicComponent.symbol_name) continue
 
+    // Schematic boxes always provide their own reference designator.
+    if (schematicComponent.is_box_with_pins) continue
+
     if (!schematicComponent.source_component_id) continue
 
     const sourceComponent = sourceComponentById.get(
@@ -114,12 +103,6 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
       [...referenceDesignators].some((referenceDesignator) =>
         componentTexts?.has(referenceDesignator),
       ) ||
-      (schematicComponent.is_box_with_pins === true &&
-        [...(componentTexts ?? [])].some((text) =>
-          [...referenceDesignators].some((referenceDesignator) =>
-            isSchematicBoxReferenceDesignatorText(text, referenceDesignator),
-          ),
-        )) ||
       customSymbolTexts.some(
         (schematicText) =>
           referenceDesignators.has(schematicText.text.trim()) &&
