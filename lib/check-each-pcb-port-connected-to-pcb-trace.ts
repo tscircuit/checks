@@ -11,6 +11,7 @@ import {
   PcbConnectivityMap,
 } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPort } from "./util/get-readable-names"
+import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
 
 function checkEachPcbPortConnectedToPcbTraces(
   circuitJson: AnyCircuitElement[],
@@ -32,6 +33,12 @@ function checkEachPcbPortConnectedToPcbTraces(
   // Generate the connectivity map from the circuit
   const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
   const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
+  let pourConnectivity: ReturnType<typeof getCopperPourConnectivity> | undefined
+  const getPourConnectivity = () =>
+    (pourConnectivity ??= getCopperPourConnectivity(
+      circuitJson,
+      connectivityMap,
+    ))
 
   // Create a map from source_port_id to pcb_port for quick lookup
   const sourcePortToPcbPort = new Map<string, PcbPort>()
@@ -58,7 +65,13 @@ function checkEachPcbPortConnectedToPcbTraces(
         pcbPort.pcb_port_id,
       )
 
-      if (connectedPcbTraces.length === 0) {
+      if (
+        connectedPcbTraces.length === 0 &&
+        !getPourConnectivity().isPortConnectedToNet(
+          pcbPort.pcb_port_id,
+          sourceTrace.connected_source_net_ids,
+        )
+      ) {
         const connectedNetNames = sourceTrace.connected_source_net_ids
           .map((sourceNetId) => sourceNetNameById.get(sourceNetId))
           .filter((name): name is string => Boolean(name))
@@ -121,7 +134,12 @@ function checkEachPcbPortConnectedToPcbTraces(
       ),
     )
 
-    if (pcbTraceIds.length === 0) {
+    if (
+      pcbTraceIds.length === 0 &&
+      !getPourConnectivity().arePortsConnected(
+        pcbPortsInTrace.map((port) => port.pcb_port_id),
+      )
+    ) {
       // Check if this is a trivial case (only 2 ports on same component)
       const uniqueComponentIds = new Set(
         pcbPortsInTrace.map((p) => p.pcb_component_id),

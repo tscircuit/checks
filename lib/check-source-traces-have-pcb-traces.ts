@@ -7,11 +7,12 @@ import type {
 } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
+import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
 
 /**
  * Check that each source_trace which connects source ports has at least one
- * pcb_trace associated with it. If a source_trace has no corresponding
- * pcb_trace, return an error for that source_trace.
+ * pcb_trace associated with it, or its ports physically joined through a
+ * same-net copper pour. Otherwise return an error for that source_trace.
  */
 function checkSourceTracesHavePcbTraces(
   circuitJson: AnyCircuitElement[],
@@ -30,6 +31,12 @@ function checkSourceTracesHavePcbTraces(
     pcbPorts.map((pcbPort) => [pcbPort.source_port_id, pcbPort]),
   )
   const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+  let pourConnectivity: ReturnType<typeof getCopperPourConnectivity> | undefined
+  const getPourConnectivity = () =>
+    (pourConnectivity ??= getCopperPourConnectivity(
+      circuitJson,
+      connectivityMap,
+    ))
 
   for (const sourceTrace of sourceTraces) {
     if (!sourceTrace.connected_source_port_ids?.length) continue
@@ -47,6 +54,15 @@ function checkSourceTracesHavePcbTraces(
       const connectedPcbPorts = sourceTrace.connected_source_port_ids
         .map((sourcePortId) => sourcePortToPcbPort.get(sourcePortId))
         .filter((pcbPort): pcbPort is PcbPort => pcbPort !== undefined)
+
+      if (
+        connectedPcbPorts.length ===
+          sourceTrace.connected_source_port_ids.length &&
+        getPourConnectivity().arePortsConnected(
+          connectedPcbPorts.map((port) => port.pcb_port_id),
+        )
+      )
+        continue
 
       // Find PCB components that these ports belong to
       const connectedPcbComponentIds = Array.from(
