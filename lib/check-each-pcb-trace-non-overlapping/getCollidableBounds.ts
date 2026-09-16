@@ -61,7 +61,9 @@ export const getCollidableBounds = (collidable: Collidable): Bounds => {
           collidable.shape === "polygon")) ||
       (collidable.type === "pcb_plated_hole" &&
         "rect_pad_width" in collidable &&
-        "rect_pad_height" in collidable)
+        "rect_pad_height" in collidable) ||
+      (collidable.type === "pcb_plated_hole" &&
+        collidable.shape === "hole_with_polygon_pad")
 
     if (isPolygon) {
       const polygonPoints = getPolygonPointsForPad(collidable)
