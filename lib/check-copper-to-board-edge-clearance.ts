@@ -1,82 +1,23 @@
-import * as Flatten from "@flatten-js/core"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,
-  PcbBoard,
   PcbComponent,
   PcbPlacementError,
 } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
-import {
-  getCopperGeometry,
-  pointsToPolygon,
-  type CopperElement,
-  type CopperGeometry,
-} from "./util/copper-geometry"
+import { convertCircuitJsonToFlattenJs } from "@tscircuit/circuit-json-to-flattenjs"
+type CopperElement = Extract<
+  AnyCircuitElement,
+  { type: "pcb_via" | "pcb_smtpad" | "pcb_plated_hole" | "pcb_copper_pour" }
+>
 
 const GEOMETRY_EPSILON = 1e-9
-
-const boardToPolygon = (board: PcbBoard): Flatten.Polygon | null => {
-  if (board.outline && board.outline.length >= 3) {
-    return pointsToPolygon(board.outline)
-  }
-
-  if (
-    !board.center ||
-    typeof board.width !== "number" ||
-    typeof board.height !== "number"
-  ) {
-    return null
-  }
-
-  const halfWidth = board.width / 2
-  const halfHeight = board.height / 2
-  return pointsToPolygon([
-    { x: board.center.x - halfWidth, y: board.center.y - halfHeight },
-    { x: board.center.x + halfWidth, y: board.center.y - halfHeight },
-    { x: board.center.x + halfWidth, y: board.center.y + halfHeight },
-    { x: board.center.x - halfWidth, y: board.center.y + halfHeight },
-  ])
-}
-
-const getCopperElementId = (element: CopperElement): string => {
-  if (element.type === "pcb_via") return element.pcb_via_id
-  if (element.type === "pcb_smtpad") return element.pcb_smtpad_id
-  if (element.type === "pcb_plated_hole") return element.pcb_plated_hole_id
-  return element.pcb_copper_pour_id
-}
 
 const getCopperElementLabel = (element: CopperElement): string => {
   if (element.type === "pcb_via") return "Via"
   if (element.type === "pcb_smtpad") return "SMT pad"
   if (element.type === "pcb_plated_hole") return "Plated hole"
   return "Copper pour"
-}
-
-const measureClearance = (
-  board: Flatten.Polygon,
-  geometry: CopperGeometry,
-): { isInside: boolean; clearance: number } => {
-  if (geometry.kind === "shapes") {
-    const isInside = geometry.shapes.every((shape) => board.contains(shape))
-    return {
-      isInside,
-      clearance: isInside
-        ? Math.min(
-            ...geometry.shapes.map((shape) => board.distanceTo(shape)[0]),
-          )
-        : 0,
-    }
-  }
-
-  const centerLineClearance = board.distanceTo(geometry.centerLine)[0]
-  const clearance = centerLineClearance - geometry.radius
-  const isInside =
-    board.contains(geometry.centerLine) && clearance >= -GEOMETRY_EPSILON
-  return {
-    isInside,
-    clearance: isInside ? Math.max(0, clearance) : 0,
-  }
 }
 
 /**
@@ -95,7 +36,8 @@ export function checkCopperToBoardEdgeClearance(
   const board = getPcbBoard(circuitJson)
   if (!board) return []
 
-  const boardPolygon = boardToPolygon(board)
+  const boardPolygon = convertCircuitJsonToFlattenJs([board], { strict: true })
+    .elements[0]?.shapes[0]
   if (!boardPolygon) return []
 
   const requiredClearance =
@@ -112,23 +54,25 @@ export function checkCopperToBoardEdgeClearance(
       .map((component) => component.pcb_component_id),
   )
 
-  const copperElements = circuitJson.filter(
-    (element): element is CopperElement =>
-      element.type === "pcb_via" ||
-      element.type === "pcb_smtpad" ||
-      element.type === "pcb_plated_hole" ||
-      element.type === "pcb_copper_pour",
+  const { elements: copperElements } = convertCircuitJsonToFlattenJs(
+    circuitJson,
+    {
+      elementTypes: [
+        "pcb_via",
+        "pcb_smtpad",
+        "pcb_plated_hole",
+        "pcb_copper_pour",
+      ],
+      includeDrillHoles: false,
+      strict: true,
+    },
   )
-  const componentCcwRotationsById = new Map<string, number>(
-    circuitJson
-      .filter(
-        (element): element is PcbComponent => element.type === "pcb_component",
-      )
-      .map((component) => [component.pcb_component_id, component.rotation]),
-  )
-
   const errors: PcbPlacementError[] = []
-  for (const element of copperElements) {
+  const seen = new Set<string>()
+  for (const geometry of copperElements) {
+    if (seen.has(geometry.elementId)) continue
+    seen.add(geometry.elementId)
+    const element = geometry.sourceElement as CopperElement
     if (
       (element.type === "pcb_smtpad" || element.type === "pcb_plated_hole") &&
       element.pcb_component_id &&
@@ -137,15 +81,19 @@ export function checkCopperToBoardEdgeClearance(
       continue
     }
 
-    const geometry = getCopperGeometry(element, componentCcwRotationsById)
-    if (!geometry) continue
-
-    const { isInside, clearance } = measureClearance(boardPolygon, geometry)
+    const isInside = geometry.shapes.every((shape) =>
+      boardPolygon.contains(shape),
+    )
+    const clearance = isInside
+      ? Math.min(
+          ...geometry.shapes.map((shape) => boardPolygon.distanceTo(shape)[0]),
+        )
+      : 0
     if (isInside && clearance + GEOMETRY_EPSILON >= requiredClearance) {
       continue
     }
 
-    const id = getCopperElementId(element)
+    const id = geometry.elementId
     const label = getCopperElementLabel(element)
     errors.push({
       type: "pcb_placement_error",

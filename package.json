@@ -31,7 +31,8 @@
     "format-si-unit": "^0.0.12",
     "tscircuit": "^0.0.2301",
     "tsup": "^8.2.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@tscircuit/circuit-json-to-flattenjs": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-to-flattenjs/0.0.2.tgz"
   },
   "peerDependencies": {
     "@flatten-js/core": "*",

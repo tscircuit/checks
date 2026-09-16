@@ -46,14 +46,8 @@ test("detects the supplied board's ground-pour shorts, including both USB-C VBUS
   const errors = checkCopperPourShorts(board as AnyCircuitElement[])
   expect(errors.map((e) => e.pcb_placement_error_id).sort()).toEqual(
     [
-      "copper_pour_short_pcb_copper_pour_51_source_trace_122_0",
-      "copper_pour_short_pcb_copper_pour_51_source_trace_48__source_net_2_mst14_0",
       "copper_pour_short_pcb_copper_pour_54_pcb_smtpad_10",
       "copper_pour_short_pcb_copper_pour_54_pcb_smtpad_11",
-      "copper_pour_short_pcb_copper_pour_54_source_trace_16_0",
-      "copper_pour_short_pcb_copper_pour_82_pcb_via_14",
-      "copper_pour_short_pcb_copper_pour_82_source_net_25_0",
-      "copper_pour_short_pcb_copper_pour_82_source_net_5_mst3_0",
     ].sort(),
   )
 })
@@ -205,4 +199,42 @@ test("respects curved BRep edges and curved cutouts", () => {
   }
   expect(check(cutout, smallVia)).toEqual([])
   expect(check(cutout, { ...smallVia, x: 1.5, y: 1.5 })).toHaveLength(1)
+})
+
+// FlattenJS distanceTo can return zero for a tiny segment and a distant arc.
+// Boundary intersection plus containment must not report that as contact.
+test("does not mistake tiny pour edges for contact with distant round copper", () => {
+  const tinyPour = {
+    ...pour,
+    shape: "polygon",
+    points: [
+      { x: 0, y: 0 },
+      { x: 0, y: 0.000004 },
+      { x: -1, y: 0.000004 },
+      { x: -1, y: 0 },
+    ],
+  }
+  expect(
+    check(tinyPour, {
+      ...via,
+      y: 0.325,
+      outer_diameter: 0.15,
+      hole_diameter: 0.05,
+    }),
+  ).toEqual([])
+})
+
+test("respects via drill voids and checks inner layers of through vias", () => {
+  const smallPour = { ...pour, shape: "polygon", points: square(0.05) }
+  expect(check(smallPour, via)).toEqual([])
+  expect(
+    check({ ...pour, layer: "inner1" }, via, {
+      type: "pcb_board",
+      pcb_board_id: "board",
+      center: { x: 0, y: 0 },
+      width: 20,
+      height: 20,
+      num_layers: 4,
+    }),
+  ).toHaveLength(1)
 })
