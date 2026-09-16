@@ -124,3 +124,41 @@ test("courtyards on same layer should still produce overlap error", () => {
   expect(errors).toHaveLength(1)
   expect(errors[0].type).toBe("pcb_courtyard_overlap_error")
 })
+
+test("courtyard overlap ignores components marked do not place", () => {
+  const circuitJson: any[] = [
+    {
+      type: "pcb_component",
+      pcb_component_id: "comp1",
+      do_not_place: true,
+      center: { x: 0, y: 0 },
+      layer: "top",
+    },
+    {
+      type: "pcb_courtyard_rect",
+      pcb_courtyard_rect_id: "cy1",
+      pcb_component_id: "comp1",
+      center: { x: 0, y: 0 },
+      width: 4,
+      height: 2,
+      layer: "top",
+    },
+    {
+      type: "pcb_component",
+      pcb_component_id: "comp2",
+      center: { x: 0, y: 0 },
+      layer: "top",
+    },
+    {
+      type: "pcb_courtyard_rect",
+      pcb_courtyard_rect_id: "cy2",
+      pcb_component_id: "comp2",
+      center: { x: 0, y: 0 },
+      width: 4,
+      height: 2,
+      layer: "top",
+    },
+  ]
+
+  expect(checkCourtyardOverlap(circuitJson)).toHaveLength(0)
+})
