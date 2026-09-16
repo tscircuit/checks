@@ -93,18 +93,21 @@ export function checkCourtyardOverlap(
   circuitJson: AnyCircuitElement[],
 ): PcbCourtyardOverlapError[] {
   const doNotPlaceComponentIds = new Set(
-    circuitJson
-      .filter((el) => el.type === "pcb_component" && el.do_not_place)
-      .map((el) => el.pcb_component_id),
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_component" && el.do_not_place
+        ? [el.pcb_component_id]
+        : [],
+    ),
   )
 
-  const courtyards = circuitJson.filter(
-    (el): el is CourtyardElement =>
-      (el.type === "pcb_courtyard_rect" ||
+  const courtyards = circuitJson
+    .filter(
+      (el): el is CourtyardElement =>
+        el.type === "pcb_courtyard_rect" ||
         el.type === "pcb_courtyard_circle" ||
-        el.type === "pcb_courtyard_outline") &&
-      !doNotPlaceComponentIds.has(el.pcb_component_id),
-  )
+        el.type === "pcb_courtyard_outline",
+    )
+    .filter((el) => !doNotPlaceComponentIds.has(el.pcb_component_id))
 
   // Group by component
   const byComponent = new Map<string, CourtyardElement[]>()
