@@ -6,15 +6,15 @@ import type {
   SourceNet,
 } from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
-import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import {
+  getPrimaryId,
   copperPolygonsTouch,
   getPlatedHolePolygon,
   getPourPolygon,
   getSmtPadPolygon,
   getTraceSegmentPolygon,
   getViaPolygon,
-} from "./copper-geometry"
+} from "@tscircuit/circuit-json-util"
 
 type NetId = NonNullable<ReturnType<ConnectivityMap["getNetConnectedToId"]>>
 type PcbPortId = PcbPort["pcb_port_id"]
