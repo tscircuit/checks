@@ -34,7 +34,6 @@
     "zod": "^3.23.8"
   },
   "peerDependencies": {
-    "@tscircuit/circuit-json-util": "^0.0.114",
     "@flatten-js/core": "*",
     "@tscircuit/math-utils": "*",
     "circuit-json": "*",
