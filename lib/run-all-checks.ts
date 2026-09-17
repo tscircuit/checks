@@ -1,6 +1,7 @@
 import { checkCopperPourShorts } from "./check-copper-pour-shorts"
 import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
+import { checkConfiguredPeripheralPins } from "./check-configured-peripheral-pins"
 import type { AnyCircuitElement } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
@@ -77,6 +78,7 @@ export async function runAllPinSpecificationChecks(
 ) {
   return [
     ...checkAllPinsInComponentAreUnderspecified(circuitJson),
+    ...checkConfiguredPeripheralPins(circuitJson),
     ...checkNoPowerPinDefined(circuitJson),
     ...checkNoGroundPinDefined(circuitJson),
   ]
