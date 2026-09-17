@@ -22,7 +22,7 @@ interface Conductor {
   polygon: Polygon
   layers: LayerRef[]
   netId: NetId
-  portId?: PcbPortId
+  portIds?: PcbPortId[]
   isPour?: boolean
 }
 
@@ -107,7 +107,7 @@ export function getCopperPourConnectivity(
           polygon: getSmtPadPolygon(copper),
           layers: [copper.layer],
           netId,
-          portId: copper.pcb_port_id,
+          portIds: copper.pcb_port_id ? [copper.pcb_port_id] : [],
         })
       } else if (copper.type === "pcb_plated_hole") {
         add({
@@ -119,7 +119,7 @@ export function getCopperPourConnectivity(
           ),
           layers: copper.layers,
           netId,
-          portId: copper.pcb_port_id,
+          portIds: copper.pcb_port_id ? [copper.pcb_port_id] : [],
         })
       } else {
         add({
@@ -130,6 +130,7 @@ export function getCopperPourConnectivity(
           ),
           layers: copper.layers,
           netId,
+          portIds: copper.pcb_port_ids,
         })
       }
     }
@@ -180,10 +181,12 @@ export function getCopperPourConnectivity(
   )
   const rootsByPort = new Map<PcbPortId, Set<number>>()
   for (const [i, conductor] of conductors.entries()) {
-    if (!conductor.portId || !pourRoots.has(find(i))) continue
-    const roots = rootsByPort.get(conductor.portId) ?? new Set<number>()
-    roots.add(find(i))
-    rootsByPort.set(conductor.portId, roots)
+    if (!pourRoots.has(find(i))) continue
+    for (const portId of conductor.portIds ?? []) {
+      const roots = rootsByPort.get(portId) ?? new Set<number>()
+      roots.add(find(i))
+      rootsByPort.set(portId, roots)
+    }
   }
   const portsByNet = new Map<NetId, PcbPortId[]>()
   for (const port of circuitJson) {
