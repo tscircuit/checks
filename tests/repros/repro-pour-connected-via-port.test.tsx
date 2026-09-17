@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { Circuit } from "tscircuit"
+import { Circuit } from "@tscircuit/core"
 import { checkEachPcbPortConnectedToPcbTraces } from "../../lib/check-each-pcb-port-connected-to-pcb-trace"
 
 // https://github.com/tscircuit/checks/issues/302
@@ -53,7 +53,7 @@ export default function PourConnectedViaPort() {
       <trace from=".R1 > .pin1" to="net.GND" />
       <via
         name="VGND"
-        pcbX={-1}
+        pcbX={-2}
         pcbY={2.5}
         holeDiameter={0.3}
         outerDiameter={0.6}
@@ -79,5 +79,13 @@ test("issue #302: a trace to a via port does not disconnect pour-only GND contac
     circuitJson.filter((e) => e.type === "pcb_copper_pour").length,
   ).toBeGreaterThan(0)
   expect(circuitJson.filter((e) => e.type === "pcb_trace")).toHaveLength(1)
+  const via = circuitJson.find((e) => e.type === "pcb_via")!
+  expect(via.pcb_port_ids).toHaveLength(2)
+  const trace = circuitJson.find((e) => e.type === "pcb_trace")!
+  const end = trace.route.at(-1)!
+  expect(end.route_type).toBe("wire")
+  if (end.route_type === "wire") {
+    expect(via.pcb_port_ids).toContain(end.end_pcb_port_id!)
+  }
   expect(checkEachPcbPortConnectedToPcbTraces(circuitJson)).toEqual([])
 })

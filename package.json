@@ -24,15 +24,16 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
-    "circuit-json": "^0.0.484",
+    "circuit-json": "^0.0.493",
     "circuit-json-to-connectivity-map": "^0.0.30",
     "circuit-to-svg": "^0.0.388",
     "debug": "^4.3.5",
     "format-si-unit": "^0.0.12",
-    "tscircuit": "^0.0.2301",
+    "tscircuit": "^0.0.2565",
     "tsup": "^8.2.3",
     "zod": "^3.23.8",
-    "@tscircuit/circuit-json-to-flattenjs": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-to-flattenjs/0.0.2.tgz"
+    "@tscircuit/circuit-json-to-flattenjs": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-to-flattenjs/0.0.2.tgz",
+    "@tscircuit/core": "^0.0.1930"
   },
   "peerDependencies": {
     "@flatten-js/core": "*",

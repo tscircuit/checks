@@ -67,26 +67,6 @@ export function getCopperPourConnectivity(
       .filter((e) => e.type === "pcb_component")
       .map((e) => [e.pcb_component_id, e]),
   )
-  const sourceViaIds = new Set(
-    circuitJson.flatMap((e) =>
-      e.type === "source_manually_placed_via"
-        ? [e.source_manually_placed_via_id]
-        : [],
-    ),
-  )
-  const viaSourcePortIds = new Set(
-    circuitJson.flatMap((e) =>
-      e.type === "source_port" &&
-      e.source_component_id !== undefined &&
-      sourceViaIds.has(e.source_component_id)
-        ? [e.source_port_id]
-        : [],
-    ),
-  )
-  const viaPorts = circuitJson.filter(
-    (e): e is PcbPort =>
-      e.type === "pcb_port" && viaSourcePortIds.has(e.source_port_id),
-  )
   if (pouredNets.size > 0) {
     for (const copper of circuitJson) {
       if (copper.type === "pcb_trace") {
@@ -150,18 +130,7 @@ export function getCopperPourConnectivity(
           ),
           layers: copper.layers,
           netId,
-          // Vias have no direct pcb_port_id reference. Their layer ports sit
-          // at the barrel center (inside the drill void), so match by position,
-          // net and layer rather than testing containment in the copper annulus.
-          portIds: viaPorts
-            .filter(
-              (port) =>
-                Math.abs(port.x - copper.x) <= tolerance / scale &&
-                Math.abs(port.y - copper.y) <= tolerance / scale &&
-                netForId(port.pcb_port_id) === netId &&
-                port.layers.some((layer) => copper.layers.includes(layer)),
-            )
-            .map((port) => port.pcb_port_id),
+          portIds: copper.pcb_port_ids,
         })
       }
     }

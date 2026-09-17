@@ -351,15 +351,20 @@ test("pour connectivity does not synthesize tracks or alter the circuit", () => 
 
 function viaPortFixture() {
   const { circuitJson } = fixture()
-  const via = { ...groundVia(), x: 0, y: 2 }
+  const via: PcbVia = {
+    ...groundVia(),
+    x: 0,
+    y: 2,
+    pcb_port_ids: ["via_port_top", "via_port_bottom"],
+  }
   circuitJson.push(via, {
     type: "source_manually_placed_via",
     source_manually_placed_via_id: "source_via",
     source_group_id: "source_group",
     source_net_id: "gnd",
   })
-  // A manual via emits separate layer ports plus a pin1 alias.
-  for (const name of ["top", "bottom", "pin1"] as const) {
+  // Core emits explicit references to the manual via's layer ports.
+  for (const name of ["top", "bottom"] as const) {
     circuitJson.push(
       {
         type: "source_port",
@@ -373,7 +378,7 @@ function viaPortFixture() {
         source_port_id: `via_source_${name}`,
         x: via.x,
         y: via.y,
-        layers: name === "pin1" ? ["top", "bottom"] : [name],
+        layers: [name],
       },
       {
         type: "source_trace",
@@ -386,7 +391,7 @@ function viaPortFixture() {
   return { circuitJson, via }
 }
 
-test("all manual via layer ports and aliases share the physical pour root", () => {
+test("all manual via layer ports share the physical pour root", () => {
   const { circuitJson } = viaPortFixture()
   const before = structuredClone(circuitJson)
   expect(disconnectedPorts(circuitJson)).toEqual([])
@@ -405,7 +410,6 @@ test("a same-net via outside the pour is still a disconnected peer", () => {
     "port0",
     "port1",
     "via_port_bottom",
-    "via_port_pin1",
     "via_port_top",
   ])
 })
@@ -417,13 +421,16 @@ test("via ports cannot reach a pour on a layer outside the barrel span", () => {
   expect(disconnectedPorts(circuitJson)).toContain("via_port_top")
 })
 
-test("a via port on an unsupported layer does not inherit the pour root", () => {
-  const { circuitJson } = viaPortFixture()
-  for (const port of circuitJson) {
-    if (port.type === "pcb_port" && port.pcb_port_id === "via_port_top") {
-      port.layers = ["inner1"]
-    }
-  }
+test("coincident via ports without explicit references remain disconnected", () => {
+  const { circuitJson, via } = viaPortFixture()
+  delete via.pcb_port_ids
+  expect(disconnectedPorts(circuitJson)).toContain("via_port_top")
+  expect(disconnectedPorts(circuitJson)).toContain("port0")
+})
+
+test("an unlisted via port is not inferred from its position or net", () => {
+  const { circuitJson, via } = viaPortFixture()
+  via.pcb_port_ids = ["via_port_bottom"]
   expect(disconnectedPorts(circuitJson)).toContain("via_port_top")
   expect(disconnectedPorts(circuitJson)).toContain("port0")
 })
@@ -441,8 +448,8 @@ test("via ports cannot inherit copper from a different net at the same position"
   expect(disconnectedPorts(circuitJson)).toContain("port0")
 })
 
-test("via ports displaced from the barrel cannot inherit its pour root", () => {
+test("explicit via port references do not depend on coordinate matching", () => {
   const { circuitJson, via } = viaPortFixture()
   via.x += 0.001
-  expect(disconnectedPorts(circuitJson)).toContain("via_port_top")
+  expect(disconnectedPorts(circuitJson)).toEqual([])
 })
