@@ -38,7 +38,7 @@
   "peerDependencies": {
     "@flatten-js/core": "*",
     "@tscircuit/math-utils": "*",
-    "circuit-json": "*",
+    "circuit-json": "^0.0.492",
     "circuit-json-to-connectivity-map": "*",
     "typescript": "^5.5.3"
   },
