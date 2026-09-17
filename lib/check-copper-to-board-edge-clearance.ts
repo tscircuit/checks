@@ -36,6 +36,19 @@ export function checkCopperToBoardEdgeClearance(
   const board = getPcbBoard(circuitJson)
   if (!board) return []
 
+  // Schematic-only/empty boards may have no dimensions yet. There is no
+  // copper-to-edge distance to measure until copper geometry exists.
+  if (
+    !circuitJson.some(
+      (element) =>
+        element.type === "pcb_via" ||
+        element.type === "pcb_smtpad" ||
+        element.type === "pcb_plated_hole" ||
+        element.type === "pcb_copper_pour",
+    )
+  )
+    return []
+
   const boardPolygon = convertCircuitJsonToFlattenJs([board], { strict: true })
     .elements[0]?.shapes[0]
   if (!boardPolygon) return []
