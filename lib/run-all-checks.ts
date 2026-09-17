@@ -1,3 +1,4 @@
+import { checkCopperPourShorts } from "./check-copper-pour-shorts"
 import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
 import type { AnyCircuitElement } from "circuit-json"
@@ -88,6 +89,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPcbTraceLengths(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson),
+    ...checkCopperPourShorts(circuitJson),
     ...checkPadTraceClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson),
     ...checkViaPadClearance(circuitJson),

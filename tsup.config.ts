@@ -5,5 +5,8 @@ export default defineConfig({
   format: ["esm"],
   dts: true,
   sourcemap: true,
-  noExternal: ["@tscircuit/jlcpcb-manufacturing-specs"],
+  noExternal: [
+    "@tscircuit/jlcpcb-manufacturing-specs",
+    "@tscircuit/circuit-json-to-flattenjs",
+  ],
 })
