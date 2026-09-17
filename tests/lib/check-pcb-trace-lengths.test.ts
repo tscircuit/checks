@@ -51,13 +51,13 @@ const circuitJson = [
   },
 ] as AnyCircuitElement[]
 
-test("warns when a PCB trace exceeds its source trace maximum length", () => {
+test("errors when a PCB trace exceeds its source trace maximum length", () => {
   expect(checkPcbTraceLengths(circuitJson)).toEqual([
     {
-      type: "pcb_trace_too_long_warning",
-      pcb_trace_too_long_warning_id:
-        "pcb_trace_too_long_warning_overlength_pcb_trace",
-      warning_type: "pcb_trace_too_long_warning",
+      type: "pcb_trace_too_long_error",
+      pcb_trace_too_long_error_id:
+        "pcb_trace_too_long_error_overlength_pcb_trace",
+      error_type: "pcb_trace_too_long_error",
       message: "PCB trace is 12.00mm long, exceeding the 10mm maximum",
       pcb_trace_id: "overlength_pcb_trace",
       source_trace_id: "overlength_source_trace",
@@ -73,7 +73,7 @@ test("is included in the routing check pipeline", async () => {
   const results = await runAllRoutingChecks(circuitJson)
 
   expect(
-    results.filter((result) => result.type === "pcb_trace_too_long_warning"),
+    results.filter((result) => result.type === "pcb_trace_too_long_error"),
   ).toEqual(checkPcbTraceLengths(circuitJson))
 })
 
@@ -212,7 +212,7 @@ test("retains a violation on the exact two-port PCB trace", () => {
   ])
 })
 
-test("retains one-port-to-net trace length warnings", () => {
+test("retains one-port-to-net trace length errors", () => {
   const portToNetCircuitJson = [
     {
       type: "source_trace",
@@ -268,6 +268,39 @@ test("keeps existing attribution when no exact endpoint route is exposed", () =>
       source_trace_id: "source_trace_without_endpoint_metadata",
       actual_trace_length: 7,
       maximum_trace_length: 5,
+    }),
+  ])
+})
+
+test("enforces max_length across multiple PCB route fragments", () => {
+  const circuit: AnyCircuitElement[] = [
+    {
+      type: "source_trace",
+      source_trace_id: "source",
+      connected_source_port_ids: [],
+      connected_source_net_ids: [],
+      max_length: 10,
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "fragment_1",
+      source_trace_id: "source",
+      trace_length: 6,
+      route: [],
+    },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "fragment_2",
+      source_trace_id: "source",
+      trace_length: 6,
+      route: [],
+    },
+  ]
+  expect(checkPcbTraceLengths(circuit)).toEqual([
+    expect.objectContaining({
+      type: "pcb_trace_too_long_error",
+      actual_trace_length: 12,
+      maximum_trace_length: 10,
     }),
   ])
 })
