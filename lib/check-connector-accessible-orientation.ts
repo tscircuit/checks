@@ -103,11 +103,15 @@ export function checkConnectorAccessibleOrientation(
       component.pcb_component_id,
     )
 
+    const message = component.insertion_direction
+      ? `${componentName} is facing ${facingDirection} but should face ${recommendedFacingDirection} so the connector is accessible from the board edge`
+      : `${componentName} is inferred to face ${facingDirection} from its cable insertion center because no explicit footprint insertionDirection is defined, but should face ${recommendedFacingDirection} so the connector is accessible from the board edge. Set insertionDirection on the <footprint> to specify the actual direction in the footprint's unrotated orientation; for example, <footprint insertionDirection="from_above"> for a connector accessed from above the PCB (+Z).`
+
     warnings.push({
       type: "pcb_connector_not_in_accessible_orientation_warning",
       warning_type: "pcb_connector_not_in_accessible_orientation_warning",
       pcb_connector_not_in_accessible_orientation_warning_id: `pcb_connector_not_in_accessible_orientation_warning_${component.pcb_component_id}`,
-      message: `${componentName} is facing ${facingDirection} but should face ${recommendedFacingDirection} so the connector is accessible from the board edge`,
+      message,
       pcb_component_id: component.pcb_component_id,
       source_component_id: component.source_component_id,
       pcb_board_id: board.pcb_board_id,
