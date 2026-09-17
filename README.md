@@ -189,3 +189,10 @@ Copper-pour short and board-edge clearance checks use
 Its versioned jscdn tarball is a development dependency bundled into this package
 by tsup, so consumers do not need a separate converter dependency or GitHub
 Packages authentication.
+
+Run `bun benchmarks/copper-pour-shorts.ts` to benchmark the supplied MSPM0G3507
+board and verify its two expected shorts. The pour check uses a per-layer
+Flatbush index of individual copper shapes and checks one point per face for
+containment after ruling out boundary intersections. In an alternating local
+Bun 1.3.2 benchmark, median time fell from 2.07 s to 227 ms (about 9× faster).
+Timings include geometry conversion and vary with hardware and load.

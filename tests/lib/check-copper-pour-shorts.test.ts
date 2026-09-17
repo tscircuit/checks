@@ -238,3 +238,49 @@ test("respects via drill voids and checks inner layers of through vias", () => {
     }),
   ).toHaveLength(1)
 })
+
+test("spatial index retains touching boxes, separates layers, and ignores distant copper", () => {
+  const pads = Array.from({ length: 80 }, (_, i) => ({
+    type: "pcb_smtpad",
+    pcb_smtpad_id: `far_${i}`,
+    shape: "rect",
+    x: -100 - i * 3,
+    y: 100,
+    width: 1,
+    height: 1,
+    layer: "top",
+  }))
+  const touching = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "touching",
+    shape: "rect",
+    x: -5.5,
+    y: 0,
+    width: 1,
+    height: 1,
+    layer: "top",
+  }
+  expect(
+    check(pour, ...pads, touching, {
+      ...touching,
+      pcb_smtpad_id: "bottom",
+      layer: "bottom",
+    }).map((e) => e.pcb_placement_error_id),
+  ).toEqual(["copper_pour_short_pour_touching"])
+  expect(check(pour)).toEqual([])
+})
+
+test("containment works in both directions when boundaries do not intersect", () => {
+  const pad = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "pad",
+    shape: "rect",
+    x: 0,
+    y: 0,
+    width: 20,
+    height: 20,
+    layer: "top",
+  }
+  expect(check(pour, pad)).toHaveLength(1)
+  expect(check(pour, { ...pad, width: 1, height: 1 })).toHaveLength(1)
+})

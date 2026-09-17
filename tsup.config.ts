@@ -8,5 +8,7 @@ export default defineConfig({
   noExternal: [
     "@tscircuit/jlcpcb-manufacturing-specs",
     "@tscircuit/circuit-json-to-flattenjs",
+    "flatbush",
+    "flatqueue",
   ],
 })

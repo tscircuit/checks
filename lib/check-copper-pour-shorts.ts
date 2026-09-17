@@ -1,6 +1,10 @@
+import Flatbush from "flatbush"
 import * as Flatten from "@flatten-js/core"
 import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
-import { convertCircuitJsonToFlattenJs } from "@tscircuit/circuit-json-to-flattenjs"
+import {
+  convertCircuitJsonToFlattenJs,
+  type FlattenElement,
+} from "@tscircuit/circuit-json-to-flattenjs"
 import type { AnyCircuitElement, PcbPlacementError } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 
@@ -11,11 +15,12 @@ function touchesPour(
 ): boolean {
   if (!pour.box.intersect(geometry.box)) return false
   // distanceTo can report zero between tiny BRep segments and distant arcs.
-  // Test actual boundary intersections and containment instead.
+  // Test actual boundary intersections and containment instead. Once boundaries
+  // are disjoint, one point per face suffices; walking every pour vertex is costly.
   return (
     pour.intersect(geometry).length > 0 ||
-    geometry.vertices.some((point) => pour.contains(point)) ||
-    pour.vertices.some((point) => geometry.contains(point))
+    [...geometry.faces].some((face) => pour.contains(face.first.start)) ||
+    [...pour.faces].some((face) => geometry.contains(face.first.start))
   )
 }
 
@@ -35,6 +40,28 @@ export function checkCopperPourShorts(
     ],
     strict: true,
   })
+  // Index individual shapes, not whole trace bounds, separately on each layer.
+  // A long routed trace can have a large bounding box but few nearby segments.
+  const layers = new Map<
+    string | null,
+    { element: FlattenElement; shape: Flatten.Polygon }[]
+  >()
+  for (const element of copper) {
+    const entries = layers.get(element.layer) ?? []
+    for (const shape of element.shapes) entries.push({ element, shape })
+    layers.set(element.layer, entries)
+  }
+  const indexes = new Map(
+    [...layers].map(([layer, entries]) => {
+      const index = new Flatbush(entries.length)
+      for (const { shape } of entries) {
+        const b = shape.box
+        index.add(b.xmin, b.ymin, b.xmax, b.ymax)
+      }
+      index.finish()
+      return [layer, { index, entries }] as const
+    }),
+  )
   const netNames = new Map(
     circuitJson
       .filter((e) => e.type === "source_net")
@@ -45,9 +72,17 @@ export function checkCopperPourShorts(
     const element = pour.sourceElement
     if (element.type !== "pcb_copper_pour") continue
     const netId = element.source_net_id
-    for (const other of copper) {
-      if (pour.elementId === other.elementId || other.layer !== pour.layer)
-        continue
+    const { index, entries } = indexes.get(pour.layer)!
+    const candidates = new Set<number>()
+    for (const shape of pour.shapes) {
+      const b = shape.box
+      for (const i of index.search(b.xmin, b.ymin, b.xmax, b.ymax))
+        candidates.add(i)
+    }
+    // Preserve source order so error output is deterministic across index layouts.
+    for (const i of [...candidates].sort((a, b) => a - b)) {
+      const { element: other, shape: otherShape } = entries[i]
+      if (pour.elementId === other.elementId) continue
       const otherNetId =
         other.sourceElement.type === "pcb_copper_pour"
           ? other.sourceElement.source_net_id
@@ -61,9 +96,7 @@ export function checkCopperPourShorts(
       const id = `copper_pour_short_${[pour.elementId, other.elementId].sort().join("_")}`
       if (
         errors.has(id) ||
-        !pour.shapes.some((shape) =>
-          other.shapes.some((otherShape) => touchesPour(shape, otherShape)),
-        )
+        !pour.shapes.some((shape) => touchesPour(shape, otherShape))
       )
         continue
       errors.set(id, {
