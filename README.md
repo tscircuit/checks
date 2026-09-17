@@ -34,6 +34,10 @@ and output an array of arrays for any issues found.
 | [`checkCopperPourShorts`](./lib/check-copper-pour-shorts.ts) | Detects copper-pour contact with different-net traces, pads, plated holes, vias, and pours, respecting layers and BRep cutouts. Included in routing checks. |
 | [`checkCopperToBoardEdgeClearance`](./lib/check-copper-to-board-edge-clearance.ts) | Checks via, SMT-pad, plated-hole, and copper-pour geometry against the polygon board outline and required edge clearance. |
 
+## Pin-specification warning consolidation
+
+Missing pin attributes, missing power roles, and missing ground roles are combined only for the same component and subcircuit. Partially specified components retain only the applicable reasons. Connectivity errors remain separate. The fixture shows three warnings becoming one summary. See [API, raw-output option, and before/after snapshot](./docs/consolidate-pin-specification-warnings.md).
+
 ## Aggregate check runner functions
 
 | Function | Description |
