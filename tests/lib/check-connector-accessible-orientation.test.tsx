@@ -116,6 +116,13 @@ test("connector orientation warning is emitted when cable insertion points inwar
   const warnings = checkConnectorAccessibleOrientation(circuitJson as any)
 
   expect(warnings).toHaveLength(1)
+  expect(warnings[0].message).toContain("is inferred to face")
+  expect(warnings[0].message).toContain(
+    "no explicit footprint insertionDirection",
+  )
+  expect(warnings[0].message).toContain(
+    '<footprint insertionDirection="from_above">',
+  )
   expect(warnings[0]).toMatchObject({
     type: "pcb_connector_not_in_accessible_orientation_warning",
     facing_direction: "y-",
@@ -208,6 +215,8 @@ test("connector orientation check uses insertion_direction when present", () => 
     facing_direction: "y-",
     recommended_facing_direction: "x-",
   })
+  expect(warnings[0].message).not.toContain("inferred")
+  expect(warnings[0].message).not.toContain("no explicit")
 })
 
 test("connector orientation check skips from_above insertion direction", () => {
