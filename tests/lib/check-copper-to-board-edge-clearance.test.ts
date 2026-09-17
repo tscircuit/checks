@@ -533,3 +533,18 @@ test("reports clearance error for edge-contact SMT pad when is_allowed_to_be_off
   expect(errors).toHaveLength(1)
   expect(errors[0].type).toBe("pcb_placement_error")
 })
+
+test("does not convert an empty schematic-only board into edge geometry", async () => {
+  const emptyBoard = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "empty",
+      center: { x: 0, y: 0 },
+      width: 0,
+      height: 0,
+      num_layers: 2,
+    },
+  ] as AnyCircuitElement[]
+  expect(checkCopperToBoardEdgeClearance(emptyBoard)).toEqual([])
+  expect(await runAllPlacementChecks(emptyBoard)).toEqual([])
+})
