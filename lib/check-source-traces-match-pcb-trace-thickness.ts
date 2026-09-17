@@ -40,16 +40,7 @@ export function checkSourceTracesMatchPcbTraceThickness(
     )
     if (relatedPcbTraces.length === 0) continue
 
-    const actualWireWidths = relatedPcbTraces.flatMap((pcbTrace) =>
-      pcbTrace.route
-        .filter((point) => point.route_type === "wire")
-        .map((point) => point.width),
-    )
-    if (actualWireWidths.length === 0) continue
-
-    const actualThickness = Math.min(...actualWireWidths)
-    if (actualThickness >= requestedThickness) continue
-
+    let actualThickness = requestedThickness
     let undersizedSegment:
       | { pcb_trace_id: string; center: { x: number; y: number } }
       | undefined
@@ -62,8 +53,9 @@ export function checkSourceTracesMatchPcbTraceThickness(
         if (point.route_type !== "wire" || nextPoint.route_type !== "wire") {
           continue
         }
-        if (point.width !== actualThickness) continue
+        if (point.width >= actualThickness) continue
 
+        actualThickness = point.width
         undersizedSegment = {
           pcb_trace_id: relatedPcbTrace.pcb_trace_id,
           center: {
@@ -71,10 +63,7 @@ export function checkSourceTracesMatchPcbTraceThickness(
             y: (point.y + nextPoint.y) / 2,
           },
         }
-        break
       }
-
-      if (undersizedSegment) break
     }
 
     if (!undersizedSegment) continue
