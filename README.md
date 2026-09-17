@@ -5,6 +5,10 @@ and output an array of arrays for any issues found.
 
 [Getting Started Contributor Video](https://share.cleanshot.com/pk216661)
 
+## Reference-designator warning consolidation
+
+Missing reference designators are grouped by schematic sheet and subcircuit. Other styling rules remain separate. The MSPM0G3507 fixture reproduces 28 warnings becoming one summary. See [API, raw-output option, and before/after snapshot](./docs/consolidate-reference-designator-warnings.md).
+
 ## Function Overview
 
 | Function | Description |
