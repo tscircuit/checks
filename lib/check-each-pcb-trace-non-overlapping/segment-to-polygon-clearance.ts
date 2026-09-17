@@ -72,6 +72,27 @@ export const getPillCenterLineForPad = (pad: PillPad) => {
   }
 }
 
+/**
+ * `pad_outline` of a `hole_with_polygon_pad` plated hole is relative to the
+ * hole position and is rotated by `ccw_rotation` (see core's PlatedHole and
+ * the board-edge clearance check).
+ */
+export const getPolygonPadHolePoints = (
+  pad: Extract<PcbPlatedHole, { shape: "hole_with_polygon_pad" }>,
+): Point[] => {
+  const ccwRotation = pad.ccw_rotation ?? 0
+  return pad.pad_outline.map((point) => {
+    const rotated = rotatePoint(point, ccwRotation)
+    return { x: pad.x + rotated.x, y: pad.y + rotated.y }
+  })
+}
+
+export const isPolygonPadHole = (pad: {
+  type: string
+  shape?: string
+}): pad is Extract<PcbPlatedHole, { shape: "hole_with_polygon_pad" }> =>
+  pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad"
+
 export const getPolygonPointsForPad = (pad: PolygonalPad): Point[] => {
   if (pad.type === "pcb_smtpad") {
     if (pad.shape === "polygon") return pad.points
@@ -87,6 +108,9 @@ export const getPolygonPointsForPad = (pad: PolygonalPad): Point[] => {
     }
   }
 
+  if (pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad") {
+    return getPolygonPadHolePoints(pad)
+  }
   if (
     pad.type === "pcb_plated_hole" &&
     "rect_pad_width" in pad &&
