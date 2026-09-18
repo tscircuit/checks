@@ -181,22 +181,3 @@ export type PCBTraceError = z.infer<typeof pcb_trace_error>
 Checks whether source nets with exactly the same nonblank name belong to one electrical network, including across subcircuits. Returns one `source_confusing_net_name_warning` per ambiguous name with the affected `source_net_ids`. Connectivity follows source traces, shared ports, and both forms of internal component pin connections; a shared name or scoped connectivity key alone does not connect nets.
 
 Included in `runAllNetlistChecks` and `runAllChecks`. This checks logical source connectivity; PCB routing continuity remains a separate check.
-
-### Routed length requirements
-
-`checkPcbTraceLengths` reports `pcb_trace_too_long_error` when a source trace's
-routed length exceeds `source_trace.max_length` (millimeters). This replaces the
-previous `pcb_trace_too_long_warning` result. The old warning schema remains
-available for reading existing Circuit JSON.
-
-`checkPcbBusLengthSkew` reports `pcb_bus_length_skew_error` when the difference
-between the longest and shortest routed bus members exceeds
-`source_bus.max_length_skew`. A `source_bus` lists resolved `source_trace_ids`,
-not trace names or port selectors. Both checks run in `runAllRoutingChecks` and
-`runAllChecks`.
-
-Lengths use `pcb_trace.trace_length` when supplied, otherwise route geometry with
-a 1.6mm fallback per via. Route fragments are summed per source trace. When an
-explicit two-port trace has an exact endpoint route, unrelated branches sharing
-its source trace ID are excluded. Unrouted bus members are skipped; connectivity
-checks report missing routes. Limits are inclusive, including zero skew.
