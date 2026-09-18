@@ -55,7 +55,9 @@ test("trace-obstacle checks classify each pair as overlap or clearance", async (
     },
   ]
 
-  const overlapErrors = checkEachPcbTraceNonOverlapping(circuitJson)
+  const overlapErrors = checkEachPcbTraceNonOverlapping(circuitJson).filter(
+    (diagnostic) => diagnostic.type === "pcb_trace_error",
+  )
   const padClearanceErrors = checkPadTraceClearance(circuitJson)
   const viaClearanceErrors = checkViaTraceClearance(circuitJson)
   const errors = await runAllChecks(circuitJson)

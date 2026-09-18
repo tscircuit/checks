@@ -45,6 +45,25 @@ and output an array of arrays for any issues found.
 | [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkEachPcbTraceNonOverlapping`, `checkCopperPourShorts`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs placement, schematic, netlist, pin specification, and routing checks and returns a combined list of issues. |
 
+## Advisory keepouts
+
+For a `pcb_keepout` with `warning_only: true`, `checkPcbCopperOverKeepout`
+(pads, plated holes, and vias) and `checkEachPcbTraceNonOverlapping` return
+`pcb_keepout_overlap_warning` instead of the usual error for that keepout.
+Rectangle, circle, and outline keepouts use the existing geometry checks.
+Omitted or `false` retains normal errors, and unrelated violations remain errors.
+Layer filtering and `excluded_pcb_component_ids` still apply, including connected
+trace exclusions.
+
+Warnings identify the keepout and affected copper. Placement warnings are grouped
+by component/keepout (or standalone copper/keepout), retaining the involved pad,
+plated-hole, or via IDs. Trace warnings are grouped by trace/keepout even when
+multiple segments violate the region. Aggregate runners preserve the warnings.
+
+These two checks now return unions of errors and warnings. Callers that need only
+errors should narrow on `diagnostic.type` before accessing error-specific fields.
+The warning schema requires `circuit-json` 0.0.494 or newer.
+
 ## Consolidated placement overlaps
 
 `runAllPlacementChecks` and `runAllChecks` report one placement conflict per

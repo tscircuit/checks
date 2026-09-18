@@ -5,7 +5,9 @@ import { checkViaTraceClearance } from "lib/check-via-trace-clearance"
 import keyboard1 from "tests/assets/keyboard1.json"
 
 test("keyboard1", () => {
-  const overlapErrors = checkEachPcbTraceNonOverlapping(keyboard1)
+  const overlapErrors = checkEachPcbTraceNonOverlapping(keyboard1).filter(
+    (diagnostic) => diagnostic.type === "pcb_trace_error",
+  )
   const clearanceErrors = [
     ...checkPadTraceClearance(keyboard1),
     ...checkViaTraceClearance(keyboard1),

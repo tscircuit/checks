@@ -22,7 +22,11 @@ describe("checkEachPcbTraceNonOverlapping", () => {
         ],
       },
     ]
-    expect(checkEachPcbTraceNonOverlapping(soup)).toEqual([])
+    expect(
+      checkEachPcbTraceNonOverlapping(soup).filter(
+        (diagnostic) => diagnostic.type === "pcb_trace_error",
+      ),
+    ).toEqual([])
   })
 
   test("should return an error when traces overlap", async () => {
@@ -84,7 +88,9 @@ describe("checkEachPcbTraceNonOverlapping", () => {
         ],
       },
     ]
-    const errors = checkEachPcbTraceNonOverlapping(soup)
+    const errors = checkEachPcbTraceNonOverlapping(soup).filter(
+      (diagnostic) => diagnostic.type === "pcb_trace_error",
+    )
     expect(errors).toHaveLength(1)
     expect(errors[0].message).toContain("overlap")
     expect(errors[0].pcb_trace_id).toBe("trace1")
@@ -109,7 +115,11 @@ describe("checkEachPcbTraceNonOverlapping", () => {
         ],
       },
     ]
-    expect(checkEachPcbTraceNonOverlapping(soup)).toEqual([])
+    expect(
+      checkEachPcbTraceNonOverlapping(soup).filter(
+        (diagnostic) => diagnostic.type === "pcb_trace_error",
+      ),
+    ).toEqual([])
   })
 
   test("should return an error when a trace overlaps with a pcb_smtpad", () => {
@@ -133,7 +143,9 @@ describe("checkEachPcbTraceNonOverlapping", () => {
         layer: "top",
       },
     ]
-    const errors = checkEachPcbTraceNonOverlapping(soup)
+    const errors = checkEachPcbTraceNonOverlapping(soup).filter(
+      (diagnostic) => diagnostic.type === "pcb_trace_error",
+    )
     expect(errors).toHaveLength(1)
     expect(errors[0].message).toContain("overlaps with")
     expect(errors[0].pcb_trace_id).toBe("trace1")
@@ -199,9 +211,15 @@ describe("checkEachPcbTraceNonOverlapping", () => {
       },
     ]
 
-    expect(checkEachPcbTraceNonOverlapping(circuitJson)).toHaveLength(1)
     expect(
-      checkEachPcbTraceNonOverlapping(circuitJson, { minClearance: 0 }),
+      checkEachPcbTraceNonOverlapping(circuitJson).filter(
+        (diagnostic) => diagnostic.type === "pcb_trace_error",
+      ),
+    ).toHaveLength(1)
+    expect(
+      checkEachPcbTraceNonOverlapping(circuitJson, { minClearance: 0 }).filter(
+        (diagnostic) => diagnostic.type === "pcb_trace_error",
+      ),
     ).toEqual([])
   })
 
@@ -238,9 +256,15 @@ describe("checkEachPcbTraceNonOverlapping", () => {
       },
     ]
 
-    expect(checkEachPcbTraceNonOverlapping(circuitJson)).toEqual([])
     expect(
-      checkEachPcbTraceNonOverlapping(circuitJson, { minClearance: 0.1 }),
+      checkEachPcbTraceNonOverlapping(circuitJson).filter(
+        (diagnostic) => diagnostic.type === "pcb_trace_error",
+      ),
+    ).toEqual([])
+    expect(
+      checkEachPcbTraceNonOverlapping(circuitJson, {
+        minClearance: 0.1,
+      }).filter((diagnostic) => diagnostic.type === "pcb_trace_error"),
     ).toEqual([])
   })
 
@@ -269,7 +293,9 @@ describe("checkEachPcbTraceNonOverlapping", () => {
     ]
 
     expect(
-      checkEachPcbTraceNonOverlapping(circuitJson, { minClearance: 0.1 }),
+      checkEachPcbTraceNonOverlapping(circuitJson, {
+        minClearance: 0.1,
+      }).filter((diagnostic) => diagnostic.type === "pcb_trace_error"),
     ).toEqual([])
   })
 
@@ -310,7 +336,9 @@ describe("checkEachPcbTraceNonOverlapping", () => {
       },
     ]
 
-    const errors = checkEachPcbTraceNonOverlapping(circuitJson)
+    const errors = checkEachPcbTraceNonOverlapping(circuitJson).filter(
+      (diagnostic) => diagnostic.type === "pcb_trace_error",
+    )
 
     expect(errors).toHaveLength(1)
     expect(errors[0].message).toContain("overlaps with")

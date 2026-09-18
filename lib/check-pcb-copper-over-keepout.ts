@@ -3,6 +3,7 @@ import type {
   AnyCircuitElement,
   PCBKeepout,
   PcbPlacementError,
+  PcbKeepoutOverlapWarning,
   PcbVia,
 } from "circuit-json"
 import {
@@ -52,7 +53,7 @@ const getReadableCopperName = (
 
 export function checkPcbCopperOverKeepout(
   circuitJson: AnyCircuitElement[],
-): PcbPlacementError[] {
+): (PcbPlacementError | PcbKeepoutOverlapWarning)[] {
   const keepouts = cju(circuitJson).pcb_keepout.list() as PCBKeepout[]
   if (keepouts.length === 0) return []
 
@@ -60,7 +61,7 @@ export function checkPcbCopperOverKeepout(
     ...getPads(circuitJson),
     ...(cju(circuitJson).pcb_via.list() as PcbVia[]),
   ]
-  const errors = new Map<string, PcbPlacementError>()
+  const errors = new Map<string, PcbPlacementError | PcbKeepoutOverlapWarning>()
 
   for (const keepout of keepouts) {
     const excludedComponentIds = new Set(
@@ -85,6 +86,37 @@ export function checkPcbCopperOverKeepout(
 
       const ownerId = getErrorOwnerId(copperElement)
       const errorId = `copper_over_keepout_${ownerId}_${keepout.pcb_keepout_id}`
+      if (keepout.warning_only) {
+        const copperIdField =
+          copperElement.type === "pcb_smtpad"
+            ? "pcb_smtpad_ids"
+            : copperElement.type === "pcb_plated_hole"
+              ? "pcb_plated_hole_ids"
+              : "pcb_via_ids"
+        const existing = errors.get(errorId)
+        if (existing?.type === "pcb_keepout_overlap_warning") {
+          existing[copperIdField] = Array.from(
+            new Set([
+              ...(existing[copperIdField] ?? []),
+              getPrimaryId(copperElement),
+            ]),
+          )
+        } else {
+          errors.set(errorId, {
+            type: "pcb_keepout_overlap_warning",
+            warning_type: "pcb_keepout_overlap_warning",
+            pcb_keepout_overlap_warning_id: `pcb_keepout_overlap_warning_${errorId}`,
+            pcb_keepout_id: keepout.pcb_keepout_id,
+            message: `Copper for ${getReadableCopperName(circuitJson, copperElement)} overlaps advisory PCB keepout "${keepout.description ?? keepout.pcb_keepout_id}"`,
+            ...(copperComponentId
+              ? { pcb_component_ids: [copperComponentId] }
+              : {}),
+            [copperIdField]: [getPrimaryId(copperElement)],
+            subcircuit_id: copperElement.subcircuit_id ?? keepout.subcircuit_id,
+          })
+        }
+        continue
+      }
       if (errors.has(errorId)) continue
 
       errors.set(errorId, {

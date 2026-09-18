@@ -56,9 +56,9 @@ test("checks outline keepouts using their polygon rather than bounding box", () 
   })
   expect(getPadCenter(keepout)).toEqual({ x: 3, y: 3 })
   expect(
-    checkPcbCopperOverKeepout(circuitJson).map(
-      (error) => error.pcb_placement_error_id,
-    ),
+    checkPcbCopperOverKeepout(circuitJson)
+      .filter((diagnostic) => diagnostic.type === "pcb_placement_error")
+      .map((error) => error.pcb_placement_error_id),
   ).toEqual([
     "copper_over_keepout_pad_inside_keepout_triangle",
     "copper_over_keepout_via_inside_keepout_triangle",
