@@ -45,15 +45,12 @@ const BusSkewViolation = ({ errorMessage }: { errorMessage?: string }) => (
       color="white"
     />
     <pcbnotetext
-      text={'<bus name="DATA" connections={["D0", "D1"]}'}
+      text={`<bus name="DATA" connections={["D0", "D1"]}
+  maxLengthSkew="2mm" />`}
+      pcbX={-10}
       pcbY={12}
-      fontSize={0.8}
-      color="#ffd166"
-    />
-    <pcbnotetext
-      text={'  maxLengthSkew="2mm" />'}
-      pcbY={10.3}
-      fontSize={0.8}
+      anchorAlignment="top_left"
+      fontSize={0.9}
       color="#ffd166"
     />
     <pcbnotetext text="D0: 20 mm total" pcbY={8.3} fontSize={0.9} />
@@ -68,14 +65,16 @@ const BusSkewViolation = ({ errorMessage }: { errorMessage?: string }) => (
       fontSize={1}
       color="#ff6b6b"
     />
-    {errorMessage?.split(", ").map((line, index) => (
+    {errorMessage && (
       <pcbnotetext
-        text={index === 0 ? `DRC: ${line}` : line}
-        pcbY={-12.5 - index * 1.8}
+        text={`DRC: ${errorMessage.replace(", ", ",\n")}`}
+        pcbX={-10}
+        pcbY={-12.5}
+        anchorAlignment="top_left"
         fontSize={0.8}
         color="#ff6b6b"
       />
-    ))}
+    )}
   </board>
 )
 

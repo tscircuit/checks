@@ -32,33 +32,15 @@ const TraceLengthViolation = ({ errorMessage }: { errorMessage?: string }) => (
       color="white"
     />
     <pcbnotetext
-      text={'<trace name="D1" from=".TX > .pin1" to=".RX > .pin1"'}
+      text={`<trace name="D1" from=".TX > .pin1" to=".RX > .pin1"
+  maxLength="24mm" thickness={0.35}
+  pcbPathRelativeTo=".TX > .pin1"
+  pcbPath={[{ x: 0, y: 0 }, { x: 0, y: -5 },
+    { x: 20, y: -5 }, { x: 20, y: 0 }]} />`}
+      pcbX={-12}
       pcbY={15.8}
-      fontSize={0.8}
-      color="#ffd166"
-    />
-    <pcbnotetext
-      text={'  maxLength="24mm" thickness={0.35}'}
-      pcbY={14.2}
-      fontSize={0.8}
-      color="#ffd166"
-    />
-    <pcbnotetext
-      text={'  pcbPathRelativeTo=".TX > .pin1"'}
-      pcbY={12.6}
-      fontSize={0.8}
-      color="#ffd166"
-    />
-    <pcbnotetext
-      text={"  pcbPath={[{ x: 0, y: 0 }, { x: 0, y: -5 },"}
-      pcbY={11.0}
-      fontSize={0.8}
-      color="#ffd166"
-    />
-    <pcbnotetext
-      text={"    { x: 20, y: -5 }, { x: 20, y: 0 }]} />"}
-      pcbY={9.4}
-      fontSize={0.8}
+      anchorAlignment="top_left"
+      fontSize={0.9}
       color="#ffd166"
     />
     <pcbnotetext text="TX" pcbX={-10} pcbY={7} fontSize={0.9} />
@@ -78,14 +60,16 @@ const TraceLengthViolation = ({ errorMessage }: { errorMessage?: string }) => (
       fontSize={1}
       color="#ff6b6b"
     />
-    {errorMessage?.split(", ").map((line, index) => (
+    {errorMessage && (
       <pcbnotetext
-        text={index === 0 ? `DRC: ${line}` : line}
-        pcbY={-12 - index * 1.8}
+        text={`DRC: ${errorMessage.replace(", ", ",\n")}`}
+        pcbX={-10}
+        pcbY={-12.5}
+        anchorAlignment="top_left"
         fontSize={0.8}
         color="#ff6b6b"
       />
-    ))}
+    )}
   </board>
 )
 
