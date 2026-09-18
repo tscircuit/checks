@@ -45,9 +45,15 @@ const BusSkewViolation = ({ errorMessage }: { errorMessage?: string }) => (
       color="white"
     />
     <pcbnotetext
-      text="maxLengthSkew = 2 mm"
-      pcbY={11.5}
-      fontSize={1}
+      text={'<bus name="DATA" connections={["D0", "D1"]}'}
+      pcbY={12}
+      fontSize={0.8}
+      color="#ffd166"
+    />
+    <pcbnotetext
+      text={'  maxLengthSkew="2mm" />'}
+      pcbY={10.3}
+      fontSize={0.8}
       color="#ffd166"
     />
     <pcbnotetext text="D0: 20 mm total" pcbY={8.3} fontSize={0.9} />

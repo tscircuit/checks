@@ -7,7 +7,7 @@ import {
 } from "../fixtures/length-matching-visual"
 
 const TraceLengthViolation = ({ errorMessage }: { errorMessage?: string }) => (
-  <board width={44} height={34} routingDisabled schematicDisabled>
+  <board width={44} height={40} routingDisabled schematicDisabled>
     <LengthTestTerminal name="TX" x={-10} y={5} />
     <LengthTestTerminal name="RX" x={10} y={5} />
     <trace
@@ -27,14 +27,38 @@ const TraceLengthViolation = ({ errorMessage }: { errorMessage?: string }) => (
 
     <pcbnotetext
       text="D1: TRACE-LENGTH VIOLATION"
-      pcbY={14}
+      pcbY={18}
       fontSize={1.15}
       color="white"
     />
     <pcbnotetext
-      text="maxLength = 24 mm"
-      pcbY={11.5}
-      fontSize={1}
+      text={'<trace name="D1" from=".TX > .pin1" to=".RX > .pin1"'}
+      pcbY={15.8}
+      fontSize={0.8}
+      color="#ffd166"
+    />
+    <pcbnotetext
+      text={'  maxLength="24mm" thickness={0.35}'}
+      pcbY={14.2}
+      fontSize={0.8}
+      color="#ffd166"
+    />
+    <pcbnotetext
+      text={'  pcbPathRelativeTo=".TX > .pin1"'}
+      pcbY={12.6}
+      fontSize={0.8}
+      color="#ffd166"
+    />
+    <pcbnotetext
+      text={"  pcbPath={[{ x: 0, y: 0 }, { x: 0, y: -5 },"}
+      pcbY={11.0}
+      fontSize={0.8}
+      color="#ffd166"
+    />
+    <pcbnotetext
+      text={"    { x: 20, y: -5 }, { x: 20, y: 0 }]} />"}
+      pcbY={9.4}
+      fontSize={0.8}
       color="#ffd166"
     />
     <pcbnotetext text="TX" pcbX={-10} pcbY={7} fontSize={0.9} />
@@ -81,7 +105,7 @@ test("trace length DRC is explained on the PCB with each detour segment labeled"
   expect(
     convertCircuitJsonToPcbSvg([...annotated, ...errors], {
       width: 1000,
-      height: 800,
+      height: 900,
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
