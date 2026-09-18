@@ -26,6 +26,9 @@ export function checkDifferentNetViaSpacing(
   minClearance ??=
     getBoardDrcValue(board, "min_via_hole_edge_to_via_hole_edge_clearance") ??
     jlcMinTolerances.min_via_hole_edge_to_via_hole_edge_clearance
+  const copperClearance =
+    getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
+    jlcMinTolerances.min_pad_edge_to_pad_edge_clearance!
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const errors: PcbViaClearanceError[] = []
   const reported = new Set<string>()
@@ -37,9 +40,18 @@ export function checkDifferentNetViaSpacing(
       // TODO: It is a very inefficient piece of code, the way to fix it is to use flatbush.
       if (viasAreAtSameLocation(viaA, viaB)) continue
       if (connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
-      const gap =
-        distance(viaA, viaB) - viaA.hole_diameter / 2 - viaB.hole_diameter / 2
-      if (gap + EPSILON >= minClearance!) continue
+      const centerDistance = distance(viaA, viaB)
+      const holeGap =
+        centerDistance - viaA.hole_diameter / 2 - viaB.hole_diameter / 2
+      const copperGap =
+        centerDistance - viaA.outer_diameter / 2 - viaB.outer_diameter / 2
+      const holeTooClose = holeGap + EPSILON < minClearance!
+      // The copper annular rings (outer_diameter) can overlap into a short while
+      // the drill holes stay far enough apart, which the hole-edge check misses.
+      const copperTooClose = copperGap + EPSILON < copperClearance!
+      if (!holeTooClose && !copperTooClose) continue
+      const gap = holeTooClose ? holeGap : copperGap
+      const minimumClearance = holeTooClose ? minClearance! : copperClearance!
       const pairId = [viaA.pcb_via_id, viaB.pcb_via_id].sort().join("_")
       if (reported.has(pairId)) continue
       reported.add(pairId)
@@ -57,7 +69,7 @@ export function checkDifferentNetViaSpacing(
         )}mm)`,
         error_type: "pcb_via_clearance_error",
         pcb_via_ids: [viaA.pcb_via_id, viaB.pcb_via_id],
-        minimum_clearance: minClearance,
+        minimum_clearance: minimumClearance,
         actual_clearance: gap,
         pcb_center: {
           x: (viaA.x + viaB.x) / 2,
