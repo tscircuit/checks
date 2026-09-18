@@ -33,7 +33,8 @@
     "tsup": "^8.2.3",
     "zod": "^3.23.8",
     "@tscircuit/circuit-json-to-flattenjs": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-to-flattenjs/0.0.2.tgz",
-    "@tscircuit/core": "^0.0.1930"
+    "@tscircuit/core": "^0.0.1930",
+    "tscircuit-for-length-tests": "npm:tscircuit@0.0.2568"
   },
   "peerDependencies": {
     "@flatten-js/core": "*",
