@@ -1,50 +1,88 @@
 import { expect, test } from "bun:test"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbTraceLengths } from "../../lib/check-pcb-trace-lengths"
 import {
-  lengthComparisonSvg,
-  measuredMembers,
-  renderLengthMatchingBoard,
+  LengthTestTerminal,
+  renderLengthTestBoard,
 } from "../fixtures/length-matching-visual"
 
-test("TSX maxLength measures the routed detour and shows the actual overlength error", async () => {
-  const cases = []
-  for (const maxLength of [24, 30]) {
-    const circuit = await renderLengthMatchingBoard({ maxLength })
-    expect(measuredMembers(circuit)).toEqual([
-      { name: "D0", length: 20 },
-      { name: "D1", length: 30 },
-    ])
-    expect(
-      circuit.find((e) => e.type === "source_trace" && e.name === "D1"),
-    ).toMatchObject({ max_length: maxLength })
-    const errors = checkPcbTraceLengths(circuit)
-    expect(errors).toHaveLength(maxLength === 24 ? 1 : 0)
-    if (errors.length)
-      expect(errors[0]).toMatchObject({
-        type: "pcb_trace_too_long_error",
-        actual_trace_length: 30,
-        maximum_trace_length: 24,
-      })
-    cases.push({
-      title:
-        maxLength === 24
-          ? "Detour exceeds maximum"
-          : "Detour exactly at maximum",
-      jsx: [
-        '<trace name="D1" from=".TX1 > .pin1"',
-        `  to=".RX1 > .pin1" maxLength={${maxLength}} />`,
-      ],
-      circuit,
-      errors,
-      comparison: `30.00 mm routed length  ${errors.length ? ">" : "="}  ${maxLength.toFixed(2)} mm maximum`,
-    })
-  }
+const TraceLengthViolation = ({ errorMessage }: { errorMessage?: string }) => (
+  <board width={44} height={34} routingDisabled schematicDisabled>
+    <LengthTestTerminal name="TX" x={-10} y={5} />
+    <LengthTestTerminal name="RX" x={10} y={5} />
+    <trace
+      name="D1"
+      from=".TX > .pin1"
+      to=".RX > .pin1"
+      thickness={0.35}
+      maxLength="24mm"
+      pcbPathRelativeTo=".TX > .pin1"
+      pcbPath={[
+        { x: 0, y: 0 },
+        { x: 0, y: -5 },
+        { x: 20, y: -5 },
+        { x: 20, y: 0 },
+      ]}
+    />
+
+    <pcbnotetext
+      text="D1: TRACE-LENGTH VIOLATION"
+      pcbY={14}
+      fontSize={1.15}
+      color="white"
+    />
+    <pcbnotetext
+      text="maxLength = 24 mm"
+      pcbY={11.5}
+      fontSize={1}
+      color="#ffd166"
+    />
+    <pcbnotetext text="TX" pcbX={-10} pcbY={7} fontSize={0.9} />
+    <pcbnotetext text="RX" pcbX={10} pcbY={7} fontSize={0.9} />
+    <pcbnotetext text="D1" pcbY={3} fontSize={1} />
+    <pcbnotetext text="5 mm" pcbX={-13} pcbY={2.5} fontSize={0.8} />
+    <pcbnotetext text="5 mm" pcbX={13} pcbY={2.5} fontSize={0.8} />
+    <pcbnotetext text="20 mm" pcbY={-1.5} fontSize={0.8} />
+    <pcbnotetext
+      text="Routed length = 5 + 20 + 5 = 30 mm"
+      pcbY={-5}
+      fontSize={1}
+    />
+    <pcbnotetext
+      text="30 mm > 24 mm limit: 6 mm too long"
+      pcbY={-8}
+      fontSize={1}
+      color="#ff6b6b"
+    />
+    {errorMessage?.split(", ").map((line, index) => (
+      <pcbnotetext
+        text={index === 0 ? `DRC: ${line}` : line}
+        pcbY={-12 - index * 1.8}
+        fontSize={0.8}
+        color="#ff6b6b"
+      />
+    ))}
+  </board>
+)
+
+test("trace length DRC is explained on the PCB with each detour segment labeled", async () => {
+  const circuit = await renderLengthTestBoard(<TraceLengthViolation />)
+  const errors = checkPcbTraceLengths(circuit)
+  expect(errors).toHaveLength(1)
+  expect(errors[0]).toMatchObject({
+    type: "pcb_trace_too_long_error",
+    actual_trace_length: 30,
+    maximum_trace_length: 24,
+  })
+  const annotated = await renderLengthTestBoard(
+    <TraceLengthViolation errorMessage={errors[0].message} />,
+  )
+  expect(checkPcbTraceLengths(annotated)).toEqual(errors)
   expect(
-    lengthComparisonSvg({
-      title: "Trace maximum length",
-      subtitle:
-        "D1 endpoints are 20 mm apart, but its copper route is 30 mm. The routed length determines the result.",
-      cases,
+    convertCircuitJsonToPcbSvg([...annotated, ...errors], {
+      width: 1000,
+      height: 800,
+      shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
 })
