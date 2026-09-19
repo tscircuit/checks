@@ -22,7 +22,16 @@ export const checkPcbBusLengthSkew = (
     const members = [...new Set(bus.source_trace_ids)].flatMap((id) => {
       const traces = tracesBySource
         .get(id)
-        ?.filter((t) => t.trace_length !== undefined || t.route.length > 1)
+        ?.filter(
+          (t) =>
+            t.trace_length !== undefined ||
+            t.route.length > 1 ||
+            t.route.some(
+              (point) =>
+                point.route_type === "through_pad" ||
+                point.route_type === "via",
+            ),
+        )
       if (!traces?.length) return []
       return [
         {
