@@ -44,7 +44,9 @@ test("reports a via inside a circular keepout on a shared layer", () => {
       text: "VIA ERROR",
     },
   ] as AnyCircuitElement[]
-  const errors = checkPcbCopperOverKeepout(circleKeepoutCircuitJson)
+  const errors = checkPcbCopperOverKeepout(circleKeepoutCircuitJson).filter(
+    (diagnostic) => diagnostic.type === "pcb_placement_error",
+  )
 
   expect(errors).toHaveLength(1)
   expect(errors[0]?.pcb_placement_error_id).toBe(

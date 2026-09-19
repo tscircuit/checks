@@ -129,7 +129,9 @@ const circuitJson = [
 ] as AnyCircuitElement[]
 
 test("reports non-excluded component copper inside a keepout once", async () => {
-  const errors = checkPcbCopperOverKeepout(circuitJson)
+  const errors = checkPcbCopperOverKeepout(circuitJson).filter(
+    (diagnostic) => diagnostic.type === "pcb_placement_error",
+  )
 
   expect(errors).toHaveLength(1)
   expect(errors[0]?.pcb_placement_error_id).toBe(

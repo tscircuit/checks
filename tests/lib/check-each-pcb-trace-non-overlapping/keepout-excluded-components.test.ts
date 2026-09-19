@@ -57,7 +57,7 @@ test("keepout component exclusions suppress only connected trace violations", ()
   const errors = checkEachPcbTraceNonOverlapping(circuitJson, {
     connMap,
     minClearance: 0,
-  })
+  }).filter((diagnostic) => diagnostic.type === "pcb_trace_error")
   expect(errors.map((error) => error.pcb_trace_id)).toEqual(["trace_reported"])
   expect(errors[0]?.pcb_trace_error_id).toBe(
     "overlap_trace_reported_keepout_antenna",

@@ -11,6 +11,7 @@ import type {
   PcbPort,
   PcbSmtPad,
   PcbTraceError,
+  PcbKeepoutOverlapWarning,
 } from "circuit-json"
 import {
   type ConnectivityMap,
@@ -62,8 +63,8 @@ export function checkEachPcbTraceNonOverlapping(
     connMap?: ConnectivityMap
     minClearance?: number
   } = {},
-): PcbTraceError[] {
-  const errors: PcbTraceError[] = []
+): (PcbTraceError | PcbKeepoutOverlapWarning)[] {
+  const errors: (PcbTraceError | PcbKeepoutOverlapWarning)[] = []
   addStartAndEndPortIdsIfMissing(circuitJson)
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const board = getPcbBoard(circuitJson)
@@ -334,6 +335,23 @@ export function checkEachPcbTraceNonOverlapping(
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
         if (errorIds.has(pcb_trace_error_id)) continue
         errorIds.add(pcb_trace_error_id)
+        if (obj.type === "pcb_keepout" && obj.warning_only) {
+          errors.push({
+            type: "pcb_keepout_overlap_warning",
+            warning_type: "pcb_keepout_overlap_warning",
+            pcb_keepout_overlap_warning_id: `pcb_keepout_overlap_warning_${pcb_trace_error_id}`,
+            pcb_keepout_id: obj.pcb_keepout_id,
+            pcb_trace_ids: [segmentA.pcb_trace_id],
+            message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} violates advisory PCB keepout "${obj.description ?? obj.pcb_keepout_id}"`,
+            center: getClosestPointBetweenSegmentAndBounds(
+              segmentA,
+              getCollidableBounds(obj),
+            ),
+            subcircuit_id:
+              segmentA._pcbTrace.subcircuit_id ?? obj.subcircuit_id,
+          })
+          continue
+        }
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
