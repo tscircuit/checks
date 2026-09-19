@@ -72,6 +72,14 @@ export function checkPcbComponentOverlap(
 ): PcbComponentOverlapError[] {
   const errors: PcbComponentOverlapError[] = []
 
+  const doNotPlaceComponentIds = new Set(
+    circuitJson.flatMap((element) =>
+      element.type === "pcb_component" && element.do_not_place
+        ? [element.pcb_component_id]
+        : [],
+    ),
+  )
+
   // Build connectivity map to check if components are electrically connected
   const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
 
@@ -148,6 +156,9 @@ export function checkPcbComponentOverlap(
     for (let j = i + 1; j < componentsWithElements.length; j++) {
       const comp1 = componentsWithElements[i]
       const comp2 = componentsWithElements[j]
+      const pairIncludesDoNotPlaceComponent =
+        doNotPlaceComponentIds.has(comp1.component_id) ||
+        doNotPlaceComponentIds.has(comp2.component_id)
 
       // First check if component bounds overlap
       if (!comp1.bounds || !comp2.bounds) {
@@ -163,6 +174,13 @@ export function checkPcbComponentOverlap(
         for (const elem2 of comp2.elements) {
           const id1 = getPrimaryId(elem1)
           const id2 = getPrimaryId(elem2)
+
+          if (
+            pairIncludesDoNotPlaceComponent &&
+            (isCourtyardElement(elem1) || isCourtyardElement(elem2))
+          ) {
+            continue
+          }
 
           if (
             (isCourtyardElement(elem1) || isCourtyardElement(elem2)) &&
