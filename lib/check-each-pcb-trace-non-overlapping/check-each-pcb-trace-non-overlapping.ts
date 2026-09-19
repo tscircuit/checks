@@ -105,7 +105,9 @@ export function checkEachPcbTraceNonOverlapping(
   const pcbPorts = cju(circuitJson).pcb_port.list()
   const pcbHoles = cju(circuitJson).pcb_hole.list()
   const pcbVias = cju(circuitJson).pcb_via.list()
-  const pcbKeepouts = cju(circuitJson).pcb_keepout.list()
+  const pcbKeepouts = cju(circuitJson)
+    .pcb_keepout.list()
+    .filter((keepout) => !keepout.allow_traces)
 
   const pcbComponentConnectionElements: PcbComponentConnectionElement[] = [
     ...pcbPorts,

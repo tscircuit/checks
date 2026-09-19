@@ -69,6 +69,8 @@ export function checkPcbCopperOverKeepout(
     )
 
     for (const copperElement of copper) {
+      if (keepout.allow_placements && copperElement.type !== "pcb_via") continue
+
       const copperComponentId =
         "pcb_component_id" in copperElement
           ? copperElement.pcb_component_id
