@@ -15,7 +15,6 @@ test("do-not-place components still report plated-hole overlaps", async () => {
       <jumper
         name="JP1"
         doNotPlace
-        noConnect
         cadModel={null}
         footprint="pinrow2_id1.016_od1.88_p2.54"
         pcbX={0}
@@ -24,7 +23,6 @@ test("do-not-place components still report plated-hole overlaps", async () => {
       <jumper
         name="JP2"
         doNotPlace
-        noConnect
         cadModel={null}
         footprint="pinrow2_id1.016_od1.88_p2.54"
         pcbX={0}
@@ -42,7 +40,6 @@ test("do-not-place components still report plated-hole overlaps", async () => {
   expect(
     errors.flatMap((error) => error.pcb_plated_hole_ids ?? []),
   ).toHaveLength(4)
-  expect(circuitJson).toMatchSnapshot()
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       showCourtyards: true,

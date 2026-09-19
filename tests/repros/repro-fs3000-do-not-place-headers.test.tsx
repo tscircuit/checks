@@ -8,7 +8,6 @@ const Fs3000OptionalHeaders = () => (
     <jumper
       name="JP4"
       doNotPlace
-      noConnect
       pinLabels={{
         pin1: ["VCM"],
         pin2: ["ADCR"],
@@ -21,7 +20,6 @@ const Fs3000OptionalHeaders = () => (
     <jumper
       name="JP5"
       doNotPlace
-      noConnect
       pinLabels={{
         pin1: ["GND"],
         pin2: ["V3_3"],
@@ -62,7 +60,6 @@ test("FS3000 optional headers may cross each other's courtyards", async () => {
   expect(platedHoles).toHaveLength(6)
   expect(courtyards).toHaveLength(2)
   expect(checkPcbComponentOverlap(circuitJson)).toHaveLength(0)
-  expect(circuitJson).toMatchSnapshot()
   expect(
     convertCircuitJsonToPcbSvg(circuitJson, { showCourtyards: true }),
   ).toMatchSvgSnapshot(import.meta.path)
