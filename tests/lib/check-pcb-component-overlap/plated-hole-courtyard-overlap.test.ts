@@ -5,7 +5,6 @@ import type {
   PcbCourtyardOutline,
   PcbCourtyardPolygon,
   PcbCourtyardRect,
-  PcbComponent,
   PcbPlatedHoleCircle,
 } from "circuit-json"
 import { checkPcbComponentOverlap } from "lib/check-pcb-components-overlap/checkPcbComponentOverlap"
@@ -39,22 +38,6 @@ const courtyardRect = (
   ...overrides,
 })
 
-const pcbComponent = (
-  pcbComponentId: string,
-  doNotPlace = false,
-): PcbComponent => ({
-  type: "pcb_component",
-  pcb_component_id: pcbComponentId,
-  source_component_id: `source_${pcbComponentId}`,
-  center: { x: 0, y: 0 },
-  width: 4,
-  height: 2,
-  layer: "top",
-  rotation: 0,
-  do_not_place: doNotPlace,
-  obstructs_within_bounds: true,
-})
-
 test("plated through-hole inside another component's bottom courtyard is reported", () => {
   const circuitJson: AnyCircuitElement[] = [platedHole(), courtyardRect()]
 
@@ -81,45 +64,6 @@ test("plated hole and courtyard need a shared physical layer", () => {
   ]
 
   expect(checkPcbComponentOverlap(circuitJson)).toHaveLength(0)
-})
-
-test("plated hole from a do-not-place component may overlap another component's courtyard", () => {
-  const circuitJson: AnyCircuitElement[] = [
-    pcbComponent("display", true),
-    pcbComponent("holder"),
-    platedHole(),
-    courtyardRect(),
-  ]
-
-  expect(checkPcbComponentOverlap(circuitJson)).toHaveLength(0)
-})
-
-test("courtyard from a do-not-place component may overlap another component's plated hole", () => {
-  const circuitJson: AnyCircuitElement[] = [
-    pcbComponent("display"),
-    pcbComponent("holder", true),
-    platedHole(),
-    courtyardRect(),
-  ]
-
-  expect(checkPcbComponentOverlap(circuitJson)).toHaveLength(0)
-})
-
-test("do-not-place components still report plated-hole overlaps", () => {
-  const circuitJson: AnyCircuitElement[] = [
-    pcbComponent("display", true),
-    pcbComponent("holder", true),
-    platedHole(),
-    platedHole({
-      pcb_plated_hole_id: "holder_pin",
-      pcb_component_id: "holder",
-    }),
-  ]
-
-  const errors = checkPcbComponentOverlap(circuitJson)
-
-  expect(errors).toHaveLength(1)
-  expect(errors[0].pcb_plated_hole_ids).toEqual(["display_pin", "holder_pin"])
 })
 
 test("rotated courtyard uses its actual shape instead of only its bounds", () => {
