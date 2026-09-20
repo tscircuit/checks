@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPadPadClearance } from "../../lib/check-pad-pad-clearance"
 import { checkPadTraceClearance } from "../../lib/check-pad-trace-clearance"
 import { checkViaPadClearance } from "../../lib/check-via-pad-clearance"
@@ -76,6 +77,19 @@ for (const rotation of [0, 37]) {
         check([pad(cornerRadius), obstacle(d)], {
           minClearance: minimumClearance,
         })
+
+      test("snapshots the legal rounded-corner clearance fixture", () => {
+        // Snapshot the physical geometry without baking the erroneous DRC result
+        // into the visual baseline. The assertion below reproduces that error.
+        const svg = convertCircuitJsonToPcbSvg([pad(0.5), obstacle(1.3)], {
+          width: 500,
+          height: 500,
+        })
+        expect(svg).toMatchSvgSnapshot(
+          import.meta.path,
+          `${name}-rounded-corner-${rotation}deg`,
+        )
+      })
 
       test("does not flag a legal gap beside the rounded corner", () => {
         expect(errors(0.5, 1.3)).toHaveLength(0)
