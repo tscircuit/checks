@@ -103,7 +103,18 @@ export function checkTestPointAccessibility(
       element.type === "pcb_component" &&
       sourceTestPointIds.has(element.source_component_id),
   )
-  const courtyards = circuitJson.filter(isCourtyardElement)
+  const doNotPlaceComponentIds = new Set(
+    circuitJson.flatMap((element) =>
+      element.type === "pcb_component" && element.do_not_place
+        ? [element.pcb_component_id]
+        : [],
+    ),
+  )
+  const courtyards = circuitJson
+    .filter(isCourtyardElement)
+    .filter(
+      (courtyard) => !doNotPlaceComponentIds.has(courtyard.pcb_component_id),
+    )
   const errors: PcbPlacementError[] = []
   const reportedComponentPairs = new Set<string>()
 
