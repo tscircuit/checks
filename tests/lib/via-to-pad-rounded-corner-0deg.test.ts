@@ -18,7 +18,6 @@ const pad = (cornerRadius: number): AnyCircuitElement => ({
   width: 2,
   height: 2,
   corner_radius: cornerRadius,
-  ccw_rotation: 0,
   layer: "top",
 })
 
