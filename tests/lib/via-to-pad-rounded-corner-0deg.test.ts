@@ -46,7 +46,7 @@ test("snapshots via-to-pad rounded-corner clearance at 0 degrees", () => {
   )
 })
 
-test.failing("accepts the legal via-to-pad gap at 0 degrees", () => {
+test("accepts the legal via-to-pad gap at 0 degrees", () => {
   expect(errors(0.5, 1.3)).toHaveLength(0)
 })
 

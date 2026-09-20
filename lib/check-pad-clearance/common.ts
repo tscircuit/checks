@@ -171,10 +171,51 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
   }
 }
 
+// A rounded rectangle is an inset rectangle expanded by corner_radius.
+// At the maximum radius its inset collapses, so use the existing pill geometry.
+const getRoundedPadCore = (pad: CopperClearanceElement) => {
+  if (
+    pad.type !== "pcb_smtpad" ||
+    (pad.shape !== "rect" && pad.shape !== "rotated_rect") ||
+    !pad.corner_radius ||
+    pad.corner_radius <= 0
+  )
+    return null
+
+  const radius = Math.min(pad.corner_radius, pad.width / 2, pad.height / 2)
+  if (radius === Math.min(pad.width, pad.height) / 2) {
+    const core: PcbSmtPad = {
+      ...pad,
+      shape: "rotated_pill",
+      radius,
+      ccw_rotation: pad.shape === "rotated_rect" ? pad.ccw_rotation : 0,
+    }
+    return { core, radius: 0 }
+  }
+  return {
+    core: {
+      ...pad,
+      width: pad.width - 2 * radius,
+      height: pad.height - 2 * radius,
+      corner_radius: 0,
+    },
+    radius,
+  }
+}
+
 export const getPadToPadGap = (
   padA: CopperClearanceElement,
   padB: CopperClearanceElement,
-) => {
+): number => {
+  const roundedA = getRoundedPadCore(padA)
+  const roundedB = getRoundedPadCore(padB)
+  if (roundedA || roundedB) {
+    return (
+      getPadToPadGap(roundedA?.core ?? padA, roundedB?.core ?? padB) -
+      (roundedA?.radius ?? 0) -
+      (roundedB?.radius ?? 0)
+    )
+  }
   if (isPillPad(padA) && isPillPad(padB)) {
     const pillA = getPillCenterLineForPad(padA)
     const pillB = getPillCenterLineForPad(padB)
@@ -347,6 +388,9 @@ export const getTraceObstacleClearance = (
   segment: Pick<PcbTraceSegment, "x1" | "y1" | "x2" | "y2" | "thickness">,
   obstacle: TraceClearanceObstacle,
 ): { gap: number; center: { x: number; y: number } } => {
+  const rounded = getRoundedPadCore(obstacle)
+  if (rounded) obstacle = rounded.core
+  const obstacleRadius = rounded?.radius ?? 0
   const start = { x: segment.x1, y: segment.y1 }
   const end = { x: segment.x2, y: segment.y2 }
   const traceRadius = segment.thickness / 2
@@ -392,12 +436,12 @@ export const getTraceObstacleClearance = (
     getPolygonShape(obstacle).points,
   )
   return {
-    gap: clearance.distance - traceRadius,
+    gap: clearance.distance - traceRadius - obstacleRadius,
     center: getCenterBetweenCopperEdges({
       tracePoint: clearance.tracePoint,
       obstaclePoint: clearance.obstaclePoint,
       traceRadius,
-      obstacleRadius: 0,
+      obstacleRadius,
     }),
   }
 }
