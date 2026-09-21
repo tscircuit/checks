@@ -1,11 +1,17 @@
-import type { Arc, Box, Point, Polygon, Segment } from "@flatten-js/core"
-import Flatbush from "flatbush"
+import {
+  Box,
+  type Arc,
+  type Point,
+  type Polygon,
+  type PolygonEdge,
+  type Segment,
+} from "@flatten-js/core"
 
 interface PolygonGeometry {
   box: Box
   facePoints: Point[]
   edges: (Segment | Arc)[]
-  edgeIndex?: Flatbush
+  edgeIndex: Polygon["edges"]
 }
 
 /** Cache only for one connectivity pass: the input polygons must remain unchanged. */
@@ -18,22 +24,11 @@ export function createCopperPolygonContactTester(tolerance: number) {
         box: polygon.box,
         facePoints: [...polygon.faces].map((face) => face.first.start),
         edges: [...polygon.edges].map((edge) => edge.shape),
+        edgeIndex: polygon.edges,
       }
       cache.set(polygon, geometry)
     }
     return geometry
-  }
-  const getEdgeIndex = (geometry: PolygonGeometry) => {
-    if (!geometry.edgeIndex) {
-      const index = new Flatbush(geometry.edges.length)
-      for (const edge of geometry.edges) {
-        const box = edge.box
-        index.add(box.xmin, box.ymin, box.xmax, box.ymax)
-      }
-      index.finish()
-      geometry.edgeIndex = index
-    }
-    return geometry.edgeIndex
   }
   return (a: Polygon, b: Polygon): boolean => {
     if (a.isEmpty() || b.isEmpty()) return false
@@ -62,16 +57,22 @@ export function createCopperPolygonContactTester(tolerance: number) {
     // boxes include near contacts; the exact arc/segment distance decides.
     const [small, large] =
       ga.edges.length <= gb.edges.length ? [ga, gb] : [gb, ga]
-    const index = getEdgeIndex(large)
     for (const edge of small.edges) {
       const box = edge.box
-      for (const i of index.search(
+      const queryBox = new Box(
         box.xmin - tolerance,
         box.ymin - tolerance,
         box.xmax + tolerance,
         box.ymax + tolerance,
-      )) {
-        if (edge.distanceTo(large.edges[i])[0] <= tolerance) return true
+      )
+      // Polygon.edges is already an indexed PlanarSet of PolygonEdge objects.
+      // Flatten's generic search declaration returns AnyShape[], so narrow it
+      // to the actual element type of this polygon-owned collection.
+      const candidates = large.edgeIndex.search(
+        queryBox,
+      ) as unknown as PolygonEdge[]
+      for (const candidate of candidates) {
+        if (edge.distanceTo(candidate.shape)[0] <= tolerance) return true
       }
     }
     return false

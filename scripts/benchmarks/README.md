@@ -57,3 +57,30 @@ pass. It checks a representative point from every face for containment, then
 uses Flatbush to select nearby edges for exact segment/arc distance tests. Holes,
 separate faces, and the existing scaled contact tolerance remain part of the
 calculation. The same 59 diagnostics and SHA-256 above were preserved.
+
+## Flatten.js PlanarSet alternative
+
+This alternative to PR #318 uses the existing `polygon.edges` PlanarSet rather
+than constructing a second Flatbush index. A tolerance-expanded `Box` query
+returns candidate polygon edges, followed by the same exact segment/arc distance
+predicate. Cached bounds, representative points, and containment logic are
+identical to the Flatbush version.
+
+Compared against the Flatbush implementation at `efabc07` using the same fixture,
+dependencies, Bun 1.3.2, and machine. Each entry is the arithmetic mean from a
+separate five-run process; there were no concurrent tests. Reversing the order
+checks whether the small difference is reproducible:
+
+| Run order | Flatbush average | PlanarSet average |
+| --- | ---: | ---: |
+| Flatbush, then PlanarSet | 1,561.04 ms | 1,549.63 ms |
+| PlanarSet, then Flatbush | 1,611.99 ms | 1,611.15 ms |
+
+All 20 runs returned the same 59 diagnostics and the SHA-256 recorded above.
+The difference is below 1% in both comparisons: neither implementation has a
+meaningful demonstrated speed advantage on this board. PlanarSet avoids building
+and maintaining the additional edge index. No memory savings were measured.
+Flatbush remains in use for the other routing checks.
+
+Run `bun scripts/benchmarks/benchmark01-am3552.ts` on this branch and on `efabc07`
+with identical installed dependencies to repeat the comparison.
