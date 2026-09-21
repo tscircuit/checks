@@ -1,3 +1,4 @@
+import { createCopperPolygonContactTester } from "./create-copper-polygon-contact-tester"
 import type { Polygon } from "@flatten-js/core"
 import type {
   AnyCircuitElement,
@@ -8,7 +9,6 @@ import type {
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import {
   getPrimaryId,
-  copperPolygonsTouch,
   getPlatedHolePolygon,
   getPourPolygon,
   getSmtPadPolygon,
@@ -39,6 +39,7 @@ export function getCopperPourConnectivity(
   // Scale before geometric predicates to preserve tiny edges in solver BReps.
   const scale = 1e6
   const tolerance = 1e-7 * scale
+  const copperPolygonsTouch = createCopperPolygonContactTester(tolerance)
   const conductors: Conductor[] = []
   const pouredNets = new Set<NetId>()
   const netForId = (id: string) => connectivity.getNetConnectedToId(id)
@@ -166,13 +167,7 @@ export function getCopperPourConnectivity(
         )
       )
         continue
-      if (
-        copperPolygonsTouch(
-          conductors[i].polygon,
-          conductors[j].polygon,
-          tolerance,
-        )
-      )
+      if (copperPolygonsTouch(conductors[i].polygon, conductors[j].polygon))
         parent[find(j)] = find(i)
     }
   }
