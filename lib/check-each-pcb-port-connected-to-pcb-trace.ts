@@ -1,3 +1,4 @@
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import type {
   PcbPort,
   SourceTrace,
@@ -8,13 +9,21 @@ import type {
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import {
   getFullConnectivityMapFromCircuitJson,
-  PcbConnectivityMap,
+  type PcbConnectivityMap,
+  type ConnectivityMap,
 } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPort } from "./util/get-readable-names"
 import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
 
 function checkEachPcbPortConnectedToPcbTraces(
   circuitJson: AnyCircuitElement[],
+  {
+    connMap,
+    pcbConnectivityMap,
+  }: {
+    connMap?: ConnectivityMap
+    pcbConnectivityMap?: PcbConnectivityMap
+  } = {},
 ): PcbPortNotConnectedError[] {
   addStartAndEndPortIdsIfMissing(circuitJson)
   const sourceTraces: SourceTrace[] = circuitJson.filter(
@@ -31,8 +40,9 @@ function checkEachPcbPortConnectedToPcbTraces(
   const errors: PcbPortNotConnectedError[] = []
 
   // Generate the connectivity map from the circuit
-  const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
-  const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
+  const connectivityMap =
+    connMap ?? getFullConnectivityMapFromCircuitJson(circuitJson)
+  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
   let pourConnectivity: ReturnType<typeof getCopperPourConnectivity> | undefined
   const getPourConnectivity = () =>
     (pourConnectivity ??= getCopperPourConnectivity(

@@ -5,7 +5,10 @@ import type {
   PcbTraceMissingError,
   SourceTrace,
 } from "circuit-json"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import {
+  type ConnectivityMap,
+  getFullConnectivityMapFromCircuitJson,
+} from "circuit-json-to-connectivity-map"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
 import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
 
@@ -16,6 +19,7 @@ import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper
  */
 function checkSourceTracesHavePcbTraces(
   circuitJson: AnyCircuitElement[],
+  { connMap }: { connMap?: ConnectivityMap } = {},
 ): PcbTraceMissingError[] {
   const errors: PcbTraceMissingError[] = []
   const sourceTraces = circuitJson.filter(
@@ -30,7 +34,8 @@ function checkSourceTracesHavePcbTraces(
   const sourcePortToPcbPort = new Map(
     pcbPorts.map((pcbPort) => [pcbPort.source_port_id, pcbPort]),
   )
-  const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+  const connectivityMap =
+    connMap ?? getFullConnectivityMapFromCircuitJson(circuitJson)
   let pourConnectivity: ReturnType<typeof getCopperPourConnectivity> | undefined
   const getPourConnectivity = () =>
     (pourConnectivity ??= getCopperPourConnectivity(

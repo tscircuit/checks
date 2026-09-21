@@ -6,7 +6,10 @@ import {
   type FlattenElement,
 } from "@tscircuit/circuit-json-to-flattenjs"
 import type { AnyCircuitElement, PcbPlacementError } from "circuit-json"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import {
+  type ConnectivityMap,
+  getFullConnectivityMapFromCircuitJson,
+} from "circuit-json-to-connectivity-map"
 
 /** Filled polygons include their holes, so copper wholly in a cutout is safe. */
 function touchesPour(
@@ -27,9 +30,10 @@ function touchesPour(
 /** Detect accidental copper contact, rather than enforcing a clearance margin. */
 export function checkCopperPourShorts(
   circuitJson: AnyCircuitElement[],
+  { connMap }: { connMap?: ConnectivityMap } = {},
 ): PcbPlacementError[] {
   if (!circuitJson.some((e) => e.type === "pcb_copper_pour")) return []
-  const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+  connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const { elements: copper } = convertCircuitJsonToFlattenJs(circuitJson, {
     elementTypes: [
       "pcb_smtpad",

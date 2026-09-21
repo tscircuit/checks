@@ -1,3 +1,6 @@
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { checkCopperPourShorts } from "./check-copper-pour-shorts"
 import { checkPcbBusLengthSkew } from "./check-pcb-bus-length-skew"
 import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
@@ -84,20 +87,27 @@ export async function runAllPinSpecificationChecks(
 }
 
 export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
+  // Infer endpoint IDs before taking connectivity snapshots. Keep these maps
+  // local to this pass so edits to the same circuit array cannot leave stale data.
+  addStartAndEndPortIdsIfMissing(circuitJson)
+  const connectivity = {
+    connMap: getFullConnectivityMapFromCircuitJson(circuitJson),
+    pcbConnectivityMap: createIndexedPcbConnectivityMap(circuitJson),
+  }
   return [
-    ...checkEachPcbPortConnectedToPcbTraces(circuitJson),
-    ...checkSourceTracesHavePcbTraces(circuitJson),
+    ...checkEachPcbPortConnectedToPcbTraces(circuitJson, connectivity),
+    ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
     ...checkPcbTraceLengths(circuitJson),
     ...checkPcbBusLengthSkew(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),
-    ...checkEachPcbTraceNonOverlapping(circuitJson),
-    ...checkCopperPourShorts(circuitJson),
-    ...checkPadTraceClearance(circuitJson),
-    ...checkViaTraceClearance(circuitJson),
-    ...checkViaPadClearance(circuitJson),
-    ...checkSameNetViaSpacing(circuitJson),
-    ...checkDifferentNetViaSpacing(circuitJson),
-    ...checkTracesAreContiguous(circuitJson),
+    ...checkEachPcbTraceNonOverlapping(circuitJson, connectivity),
+    ...checkCopperPourShorts(circuitJson, connectivity),
+    ...checkPadTraceClearance(circuitJson, connectivity),
+    ...checkViaTraceClearance(circuitJson, connectivity),
+    ...checkViaPadClearance(circuitJson, connectivity),
+    ...checkSameNetViaSpacing(circuitJson, connectivity),
+    ...checkDifferentNetViaSpacing(circuitJson, connectivity),
+    ...checkTracesAreContiguous(circuitJson, connectivity),
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
 }

@@ -1,3 +1,4 @@
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import type {
   AnyCircuitElement,
   PcbTraceError,
@@ -18,7 +19,7 @@ import {
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
-  PcbConnectivityMap,
+  type PcbConnectivityMap,
 } from "circuit-json-to-connectivity-map"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 import { endpointTouchesVia, getViaContactIndex } from "./via-contact-index"
@@ -276,6 +277,13 @@ function getMissingConnectionErrorCenter({
 
 function checkTracesAreContiguous(
   circuitJson: AnyCircuitElement[],
+  {
+    connMap,
+    pcbConnectivityMap,
+  }: {
+    connMap?: ConnectivityMap
+    pcbConnectivityMap?: PcbConnectivityMap
+  } = {},
 ): PcbTraceError[] {
   const errors: PcbTraceError[] = []
 
@@ -296,8 +304,8 @@ function checkTracesAreContiguous(
   ) as PcbPlatedHole[]
 
   const padMap = new Map<PcbPortId, PcbPad[]>()
-  const pcbConnectivityMap = new PcbConnectivityMap(circuitJson)
-  let fullConnectivityMap: ConnectivityMap | undefined
+  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
+  let fullConnectivityMap: ConnectivityMap | undefined = connMap
   let traceWireSegmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer | undefined
   const getFullConnectivityMap = () => {
     fullConnectivityMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
