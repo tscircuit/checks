@@ -1,4 +1,4 @@
-import { createIndexedPcbConnectivityMap } from "../util/create-indexed-pcb-connectivity-map"
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import type {
   AnyCircuitElement,
   PcbTraceError,
@@ -8,28 +8,168 @@ import type {
   PcbSmtPad,
   PcbPlatedHole,
 } from "circuit-json"
-import type {
-  ConnectivityMap,
-  PcbConnectivityMap,
-} from "circuit-json-to-connectivity-map"
+import { pointToSegmentDistance } from "@tscircuit/math-utils"
+import { isPointInPad } from "./is-point-in-pad"
+import { distance } from "../util/distance"
+import { getPcbPortIdsConnectedToRoutePoint } from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
 import {
   getReadableNameForPcbPort,
   getReadableNameForPcbTrace,
 } from "@tscircuit/circuit-json-util"
-import { distance } from "../util/distance"
-import { getPcbPortIdsConnectedToRoutePoint } from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
 import {
-  routePointTouchesPad,
-  type PcbPad,
-  type PcbTraceRoutePoint,
-} from "../util/route-point-touches-pad"
+  type ConnectivityMap,
+  getFullConnectivityMapFromCircuitJson,
+  type PcbConnectivityMap,
+} from "circuit-json-to-connectivity-map"
+import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import { endpointTouchesVia, getViaContactIndex } from "./via-contact-index"
 
 type PcbPortId = PcbPort["pcb_port_id"]
+type PcbTraceRoutePoint = PcbTrace["route"][number]
 type PcbTraceWireRoutePoint = Extract<
   PcbTraceRoutePoint,
   { route_type: "wire" }
 >
-const VIA_ALIGNMENT_TOLERANCE_MM = 0.01
+type PcbPad = PcbSmtPad | PcbPlatedHole
+
+interface TraceWireSegment {
+  trace: PcbTrace
+  start: PcbTraceWireRoutePoint
+  end: PcbTraceWireRoutePoint
+}
+
+type TraceWireSegmentsByNetAndLayer = Map<
+  string,
+  Map<string, TraceWireSegment[]>
+>
+
+const ENDPOINT_CONTACT_EPSILON = 1e-9
+const TRACE_SEGMENT_GEOMETRY_EPSILON = 1e-9
+
+function routePointTouchesPad(point: PcbTraceRoutePoint, pad: PcbPad) {
+  return (
+    point.route_type === "wire" &&
+    getLayersOfPcbElement(pad).includes(point.layer) &&
+    isPointInPad(point, pad)
+  )
+}
+
+function getTraceWireSegmentsByNetAndLayer(
+  pcbTraces: PcbTrace[],
+  fullConnectivityMap: ConnectivityMap,
+): TraceWireSegmentsByNetAndLayer {
+  const segmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer = new Map()
+
+  for (const trace of pcbTraces) {
+    // Interpolated segments need position-dependent width evaluation. Keep
+    // this focused fix conservative until that geometry is available here.
+    if (trace.route_thickness_mode === "interpolated") continue
+
+    const netId = fullConnectivityMap.getNetConnectedToId(trace.pcb_trace_id)
+    if (!netId) continue
+
+    for (let i = 0; i < trace.route.length - 1; i++) {
+      const start = trace.route[i]
+      const end = trace.route[i + 1]
+
+      if (start.route_type !== "wire" || end.route_type !== "wire") continue
+      if (start.layer !== end.layer) continue
+      if (
+        Math.hypot(start.x - end.x, start.y - end.y) <=
+        TRACE_SEGMENT_GEOMETRY_EPSILON
+      ) {
+        continue
+      }
+
+      const segmentsByLayer = segmentsByNetAndLayer.get(netId) ?? new Map()
+      const segments = segmentsByLayer.get(start.layer) ?? []
+      segments.push({ trace, start, end })
+      segmentsByLayer.set(start.layer, segments)
+      segmentsByNetAndLayer.set(netId, segmentsByLayer)
+    }
+  }
+
+  return segmentsByNetAndLayer
+}
+
+function getEndpointTraceCopperWidth(
+  trace: PcbTrace,
+  endpoint: "start" | "end",
+): number | undefined {
+  // Interpolated traces have flat longitudinal ends, so a point-radius contact
+  // test would overestimate their endpoint copper.
+  if (trace.route_thickness_mode === "interpolated") return undefined
+
+  let segmentStartIndex = endpoint === "start" ? 0 : trace.route.length - 2
+  const indexStep = endpoint === "start" ? 1 : -1
+
+  while (segmentStartIndex >= 0 && segmentStartIndex < trace.route.length - 1) {
+    const segmentStart = trace.route[segmentStartIndex]
+    const segmentEnd = trace.route[segmentStartIndex + 1]
+
+    if (
+      segmentStart?.route_type !== "wire" ||
+      segmentEnd?.route_type !== "wire" ||
+      segmentStart.layer !== segmentEnd.layer
+    ) {
+      return undefined
+    }
+
+    if (
+      Math.hypot(segmentStart.x - segmentEnd.x, segmentStart.y - segmentEnd.y) >
+      TRACE_SEGMENT_GEOMETRY_EPSILON
+    ) {
+      // A constant-width segment takes its thickness from its start route point.
+      return segmentStart.width
+    }
+
+    segmentStartIndex += indexStep
+  }
+
+  return undefined
+}
+
+function routePointTouchesLogicallyConnectedTraceCopper({
+  point,
+  endpointTraceCopperWidth,
+  ownerTrace,
+  traceWireSegmentsByNetAndLayer,
+  fullConnectivityMap,
+}: {
+  point: PcbTraceRoutePoint
+  endpointTraceCopperWidth: number
+  ownerTrace: PcbTrace
+  traceWireSegmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer
+  fullConnectivityMap: ConnectivityMap
+}): boolean {
+  if (point.route_type !== "wire") return false
+
+  const ownerNetId = fullConnectivityMap.getNetConnectedToId(
+    ownerTrace.pcb_trace_id,
+  )
+  if (!ownerNetId) return false
+  const candidateSegments =
+    traceWireSegmentsByNetAndLayer.get(ownerNetId)?.get(point.layer) ?? []
+
+  // Logical connectivity selects the eligible net. Geometry must still prove
+  // that this exact endpoint directly touches copper outside its owner trace.
+  for (const segment of candidateSegments) {
+    if (segment.trace.pcb_trace_id === ownerTrace.pcb_trace_id) continue
+
+    const maximumContactDistance =
+      endpointTraceCopperWidth / 2 +
+      segment.start.width / 2 +
+      ENDPOINT_CONTACT_EPSILON
+    if (
+      pointToSegmentDistance(point, segment.start, segment.end) <=
+      maximumContactDistance
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
 
 function getRoutePointCenter(point: PcbTraceRoutePoint) {
   if (point.route_type === "through_pad") {
@@ -70,31 +210,28 @@ function getMissingConnectionErrorCenter({
   expectedPorts,
   padMap,
 }: {
-  firstPoint: PcbTraceRoutePoint
-  lastPoint: PcbTraceRoutePoint
+  firstPoint: PcbTrace["route"][number]
+  lastPoint: PcbTrace["route"][number]
   port: PcbPort
   expectedPorts: PcbPort[]
   padMap: Map<PcbPortId, PcbPad[]>
 }) {
-  let errorLocation: PcbTraceWireRoutePoint | undefined
-  let firstWirePoint: PcbTraceWireRoutePoint | undefined
-  if (firstPoint.route_type === "wire") {
-    firstWirePoint = firstPoint
-  }
-  let lastWirePoint: PcbTraceWireRoutePoint | undefined
-  if (lastPoint.route_type === "wire") {
-    lastWirePoint = lastPoint
-  }
-  const firstPointReferencesPort = getPcbPortIdsConnectedToRoutePoint(
+  let errorLocation:
+    | Extract<PcbTrace["route"][number], { route_type: "wire" }>
+    | undefined
+  const firstWirePoint =
+    firstPoint.route_type === "wire" ? firstPoint : undefined
+  const lastWirePoint = lastPoint.route_type === "wire" ? lastPoint : undefined
+  const firstWirePointReferencesPort = getPcbPortIdsConnectedToRoutePoint(
     firstPoint,
   ).includes(port.pcb_port_id)
-  const lastPointReferencesPort = getPcbPortIdsConnectedToRoutePoint(
+  const lastWirePointReferencesPort = getPcbPortIdsConnectedToRoutePoint(
     lastPoint,
   ).includes(port.pcb_port_id)
 
-  if (firstPointReferencesPort && firstWirePoint) {
+  if (firstWirePointReferencesPort && firstWirePoint) {
     errorLocation = firstWirePoint
-  } else if (lastPointReferencesPort && lastWirePoint) {
+  } else if (lastWirePointReferencesPort && lastWirePoint) {
     errorLocation = lastWirePoint
   } else if (
     routePointConnectsToAnotherExpectedPort(
@@ -117,33 +254,31 @@ function getMissingConnectionErrorCenter({
   ) {
     errorLocation = firstWirePoint
   } else if (firstWirePoint && lastWirePoint) {
-    if (distance(firstWirePoint, port) <= distance(lastWirePoint, port)) {
-      errorLocation = firstWirePoint
-    } else {
-      errorLocation = lastWirePoint
-    }
+    errorLocation =
+      distance(firstWirePoint, port) <= distance(lastWirePoint, port)
+        ? firstWirePoint
+        : lastWirePoint
   } else if (firstWirePoint) {
     errorLocation = firstWirePoint
   } else if (lastWirePoint) {
     errorLocation = lastWirePoint
   }
 
-  if (errorLocation) {
-    return { x: errorLocation.x, y: errorLocation.y }
-  }
-
   const firstPointCenter = getRoutePointCenter(firstPoint)
   const lastPointCenter = getRoutePointCenter(lastPoint)
-  return {
-    x: (firstPointCenter.x + lastPointCenter.x) / 2,
-    y: (firstPointCenter.y + lastPointCenter.y) / 2,
-  }
+
+  return errorLocation
+    ? { x: errorLocation.x, y: errorLocation.y }
+    : {
+        x: (firstPointCenter.x + lastPointCenter.x) / 2,
+        y: (firstPointCenter.y + lastPointCenter.y) / 2,
+      }
 }
 
-/** Validates required-port connectivity and alignment at route vias. */
 function checkTracesAreContiguous(
   circuitJson: AnyCircuitElement[],
   {
+    connMap,
     pcbConnectivityMap,
   }: {
     connMap?: ConnectivityMap
@@ -170,6 +305,27 @@ function checkTracesAreContiguous(
 
   const padMap = new Map<PcbPortId, PcbPad[]>()
   pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
+  let fullConnectivityMap: ConnectivityMap | undefined = connMap
+  let traceWireSegmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer | undefined
+  const getFullConnectivityMap = () => {
+    fullConnectivityMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+    return fullConnectivityMap
+  }
+  const getTraceWireSegmentIndex = () => {
+    traceWireSegmentsByNetAndLayer ??= getTraceWireSegmentsByNetAndLayer(
+      pcbTraces,
+      getFullConnectivityMap(),
+    )
+    return traceWireSegmentsByNetAndLayer
+  }
+  let viaContactIndex: ReturnType<typeof getViaContactIndex> | undefined
+  const getViaIndex = () => {
+    viaContactIndex ??= getViaContactIndex(
+      circuitJson,
+      getFullConnectivityMap(),
+    )
+    return viaContactIndex
+  }
   const checkedSourceTraceIds = new Set<string>()
 
   for (const pad of pcbSmtPads) {
@@ -271,12 +427,11 @@ function checkTracesAreContiguous(
       (st) => st.source_trace_id === trace.source_trace_id,
     )
 
-    let expectedPorts: PcbPort[] = []
-    if (sourceTrace) {
-      expectedPorts = pcbPorts.filter((port) =>
-        sourceTrace.connected_source_port_ids?.includes(port.source_port_id),
-      )
-    }
+    const expectedPorts = sourceTrace
+      ? pcbPorts.filter((port) =>
+          sourceTrace.connected_source_port_ids?.includes(port.source_port_id),
+        )
+      : []
 
     for (let i = 1; i < trace.route.length - 1; i++) {
       const prevPoint = trace.route[i - 1]
@@ -289,14 +444,12 @@ function checkTracesAreContiguous(
 
         if (prevIsWire && nextIsWire) {
           const prevAligned =
-            Math.abs(prevPoint.x - currentPoint.x) <
-              VIA_ALIGNMENT_TOLERANCE_MM &&
-            Math.abs(prevPoint.y - currentPoint.y) < VIA_ALIGNMENT_TOLERANCE_MM
+            Math.abs(prevPoint.x - currentPoint.x) < 0.01 &&
+            Math.abs(prevPoint.y - currentPoint.y) < 0.01
 
           const nextAligned =
-            Math.abs(nextPoint.x - currentPoint.x) <
-              VIA_ALIGNMENT_TOLERANCE_MM &&
-            Math.abs(nextPoint.y - currentPoint.y) < VIA_ALIGNMENT_TOLERANCE_MM
+            Math.abs(nextPoint.x - currentPoint.x) < 0.01 &&
+            Math.abs(nextPoint.y - currentPoint.y) < 0.01
 
           if (!prevAligned || !nextAligned) {
             const traceName = getReadableNameForPcbTrace(
@@ -327,15 +480,12 @@ function checkTracesAreContiguous(
     )
 
     // Validate required ports once for the complete routed source trace.
-    let portsToCheck = expectedPorts
-    if (sourceTrace) {
-      if (checkedSourceTraceIds.has(sourceTrace.source_trace_id)) {
-        portsToCheck = []
-      }
+    if (sourceTrace && expectedPorts.length > 0) {
+      if (checkedSourceTraceIds.has(sourceTrace.source_trace_id)) continue
       checkedSourceTraceIds.add(sourceTrace.source_trace_id)
     }
 
-    for (const port of portsToCheck) {
+    for (const port of expectedPorts) {
       if (!port.pcb_port_id) continue
 
       const pads = padMap.get(port.pcb_port_id)
@@ -385,6 +535,111 @@ function checkTracesAreContiguous(
           center: errorCenter,
           pcb_component_ids: [],
           pcb_port_ids: [port.pcb_port_id],
+        })
+      }
+    }
+
+    // For net-level traces (no expected ports), check if endpoints are floating
+    if (expectedPorts.length === 0) {
+      let firstConnectsToAnyPad = false
+      let lastConnectsToAnyPad = false
+
+      for (const pads of padMap.values()) {
+        if (pads.some((pad) => routePointTouchesPad(firstPoint, pad))) {
+          firstConnectsToAnyPad = true
+        }
+        if (pads.some((pad) => routePointTouchesPad(lastPoint, pad))) {
+          lastConnectsToAnyPad = true
+        }
+      }
+
+      const firstEndpointTraceCopperWidth = !firstConnectsToAnyPad
+        ? getEndpointTraceCopperWidth(trace, "start")
+        : undefined
+      const lastEndpointTraceCopperWidth = !lastConnectsToAnyPad
+        ? getEndpointTraceCopperWidth(trace, "end")
+        : undefined
+      const firstConnectsToLogicallyConnectedTraceCopper =
+        firstEndpointTraceCopperWidth !== undefined &&
+        routePointTouchesLogicallyConnectedTraceCopper({
+          point: firstPoint,
+          endpointTraceCopperWidth: firstEndpointTraceCopperWidth,
+          ownerTrace: trace,
+          traceWireSegmentsByNetAndLayer: getTraceWireSegmentIndex(),
+          fullConnectivityMap: getFullConnectivityMap(),
+        })
+      const lastConnectsToLogicallyConnectedTraceCopper =
+        lastEndpointTraceCopperWidth !== undefined &&
+        routePointTouchesLogicallyConnectedTraceCopper({
+          point: lastPoint,
+          endpointTraceCopperWidth: lastEndpointTraceCopperWidth,
+          ownerTrace: trace,
+          traceWireSegmentsByNetAndLayer: getTraceWireSegmentIndex(),
+          fullConnectivityMap: getFullConnectivityMap(),
+        })
+      const firstIsConnected =
+        firstConnectsToAnyPad ||
+        firstConnectsToLogicallyConnectedTraceCopper ||
+        (firstEndpointTraceCopperWidth !== undefined &&
+          endpointTouchesVia({
+            point: firstPoint,
+            width: firstEndpointTraceCopperWidth,
+            ownerTrace: trace,
+            index: getViaIndex(),
+            connectivity: getFullConnectivityMap(),
+          }))
+      const lastIsConnected =
+        lastConnectsToAnyPad ||
+        lastConnectsToLogicallyConnectedTraceCopper ||
+        (lastEndpointTraceCopperWidth !== undefined &&
+          endpointTouchesVia({
+            point: lastPoint,
+            width: lastEndpointTraceCopperWidth,
+            ownerTrace: trace,
+            index: getViaIndex(),
+            connectivity: getFullConnectivityMap(),
+          }))
+      const endpointsAreSame =
+        firstPoint.route_type === "wire" &&
+        lastPoint.route_type === "wire" &&
+        firstPoint.layer === lastPoint.layer &&
+        Math.hypot(firstPoint.x - lastPoint.x, firstPoint.y - lastPoint.y) <=
+          ENDPOINT_CONTACT_EPSILON
+
+      if (!firstIsConnected && firstPoint.route_type === "wire") {
+        errors.push({
+          type: "pcb_trace_error",
+          message: `Trace [${traceName}] has disconnected endpoint at (${firstPoint.x.toFixed(2)}, ${firstPoint.y.toFixed(2)})`,
+          source_trace_id:
+            sourceTrace?.source_trace_id ||
+            trace.source_trace_id ||
+            `!${trace.pcb_trace_id}`,
+          error_type: "pcb_trace_error",
+          pcb_trace_id: trace.pcb_trace_id,
+          pcb_trace_error_id: `disconnected_endpoint_${trace.pcb_trace_id}_start`,
+          center: { x: firstPoint.x, y: firstPoint.y },
+          pcb_component_ids: [],
+          pcb_port_ids: [],
+        })
+      }
+      if (
+        !lastIsConnected &&
+        lastPoint.route_type === "wire" &&
+        !(endpointsAreSame && !firstIsConnected)
+      ) {
+        errors.push({
+          type: "pcb_trace_error",
+          message: `Trace [${traceName}] has disconnected endpoint at (${lastPoint.x.toFixed(2)}, ${lastPoint.y.toFixed(2)})`,
+          source_trace_id:
+            sourceTrace?.source_trace_id ||
+            trace.source_trace_id ||
+            `!${trace.pcb_trace_id}`,
+          error_type: "pcb_trace_error",
+          pcb_trace_id: trace.pcb_trace_id,
+          pcb_trace_error_id: `disconnected_endpoint_${trace.pcb_trace_id}_end`,
+          center: { x: lastPoint.x, y: lastPoint.y },
+          pcb_component_ids: [],
+          pcb_port_ids: [],
         })
       }
     }

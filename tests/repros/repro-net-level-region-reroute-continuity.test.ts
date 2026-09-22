@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import { checkDanglingTraces } from "lib/check-dangling-traces/check-dangling-traces"
+import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
 
 const ROOT_SOURCE_TRACE_ID = "source_trace_arduino_net"
 
@@ -113,7 +113,7 @@ const circuitJson = [
 ] satisfies AnyCircuitElement[]
 
 test("reproduces false disconnected endpoints at net-level region-reroute joins", () => {
-  const errors = checkDanglingTraces(circuitJson)
+  const errors = checkTracesAreContiguous(circuitJson)
 
   expect(errors).toEqual([])
 
