@@ -4,6 +4,9 @@ import type { AnyCircuitElement, LayerRef, PcbTrace } from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { createCopperPolygonContactTester } from "../copper-pour-connectivity/create-copper-polygon-contact-tester"
 
+const POLYGON_SCALE = 1e6
+const CONTACT_EPSILON_MM = 1e-9
+
 type NetId = NonNullable<ReturnType<ConnectivityMap["getNetConnectedToId"]>>
 
 /** Copper contact in right-handed board-world XY coordinates, +X right and
@@ -14,7 +17,6 @@ export function getPourContactTester(
   circuitJson: AnyCircuitElement[],
   connectivity: ConnectivityMap,
 ) {
-  const scale = 1e6
   const pourPolygonsByNetId = new Map<
     NetId,
     { layer: LayerRef; polygon: Polygon }[]
@@ -26,12 +28,14 @@ export function getPourContactTester(
     const pours = pourPolygonsByNetId.get(net) ?? []
     pours.push({
       layer: pour.layer,
-      polygon: getPourPolygon(pour).scale(scale, scale),
+      polygon: getPourPolygon(pour).scale(POLYGON_SCALE, POLYGON_SCALE),
     })
     pourPolygonsByNetId.set(net, pours)
   }
-  const copperPolygonsTouch = createCopperPolygonContactTester(1e-9 * scale)
-  return (
+  const copperPolygonsTouch = createCopperPolygonContactTester(
+    CONTACT_EPSILON_MM * POLYGON_SCALE,
+  )
+  return function copperTouchesPour(
     net: NetId,
     layers: string[],
     center: Pick<
@@ -40,25 +44,34 @@ export function getPourContactTester(
     >,
     radius: number,
     holeRadius = 0,
-  ) => {
+  ) {
     const pours = pourPolygonsByNetId.get(net)
     if (!pours?.length) return false
     if (radius === 0) {
-      const contactPoint = new Point(center.x * scale, center.y * scale)
+      const contactPoint = new Point(
+        center.x * POLYGON_SCALE,
+        center.y * POLYGON_SCALE,
+      )
       return pours.some(
         (pour) =>
           layers.includes(pour.layer) && pour.polygon.contains(contactPoint),
       )
     }
-    const copper =
-      holeRadius > 0
-        ? getViaPolygon(center, radius * 2, holeRadius * 2).scale(scale, scale)
-        : new Polygon(
-            new Circle(
-              new Point(center.x * scale, center.y * scale),
-              radius * scale,
-            ),
-          )
+    let copper: Polygon
+    if (holeRadius > 0) {
+      // A pour inside the drill hole does not touch the via's copper ring.
+      copper = getViaPolygon(center, radius * 2, holeRadius * 2).scale(
+        POLYGON_SCALE,
+        POLYGON_SCALE,
+      )
+    } else {
+      copper = new Polygon(
+        new Circle(
+          new Point(center.x * POLYGON_SCALE, center.y * POLYGON_SCALE),
+          radius * POLYGON_SCALE,
+        ),
+      )
+    }
     return pours.some(
       (pour) =>
         layers.includes(pour.layer) &&
