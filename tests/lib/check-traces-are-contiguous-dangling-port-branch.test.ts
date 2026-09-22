@@ -68,6 +68,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_0",
         text: "DANGLING BRANCH: SOURCE-ASSOCIATED TRACE",
         anchor_position: { x: 1, y: 3.1 },
@@ -78,6 +79,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_1",
         text: "BROKEN: DRC reports 0 errors; expected 1",
         anchor_position: { x: 1, y: 2.6 },
@@ -88,6 +90,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_2",
         text: "Free endpoint",
         anchor_position: { x: 1, y: 2.22 },
@@ -98,6 +101,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_3",
         text: "TX pad",
         anchor_position: { x: 0, y: -0.42 },
@@ -108,6 +112,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_4",
         text: "RX pad",
         anchor_position: { x: 2, y: -0.42 },
@@ -118,6 +123,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_5",
         text: "Both pads connect, but the extra branch is open.",
         anchor_position: { x: 1, y: -0.9 },
