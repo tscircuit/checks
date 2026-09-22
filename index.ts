@@ -1,3 +1,4 @@
+export { checkDanglingTraces } from "./lib/check-dangling-traces/check-dangling-traces"
 export { checkCopperPourShorts } from "./lib/check-copper-pour-shorts"
 export { checkEachPcbPortConnectedToPcbTraces } from "./lib/check-each-pcb-port-connected-to-pcb-trace"
 export { checkEachPcbTraceNonOverlapping } from "./lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"

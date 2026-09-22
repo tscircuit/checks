@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
-import { getPourContactTester } from "../../lib/check-traces-are-contiguous/pour-contact-index"
+import { getPourContactTester } from "../../lib/check-dangling-traces/pour-contact-index"
 
 test("pour contact preserves the via drill hole and handles point-only vias", () => {
   const circuit: AnyCircuitElement[] = [

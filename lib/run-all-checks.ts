@@ -1,3 +1,4 @@
+import { checkDanglingTraces } from "./check-dangling-traces/check-dangling-traces"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
@@ -5,7 +6,7 @@ import { checkCopperPourShorts } from "./check-copper-pour-shorts"
 import { checkPcbBusLengthSkew } from "./check-pcb-bus-length-skew"
 import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, PcbTrace } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkCopperToBoardEdgeClearance } from "./check-copper-to-board-edge-clearance"
@@ -94,6 +95,25 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     connMap: getFullConnectivityMapFromCircuitJson(circuitJson),
     pcbConnectivityMap: createIndexedPcbConnectivityMap(circuitJson),
   }
+  const contiguousTraceErrors = checkTracesAreContiguous(
+    circuitJson,
+    connectivity,
+  )
+  const tracesWithMissingConnections = new Set<PcbTrace["pcb_trace_id"]>()
+  for (const error of contiguousTraceErrors) {
+    if (error.pcb_trace_id && error.pcb_port_ids.length > 0) {
+      tracesWithMissingConnections.add(error.pcb_trace_id)
+    }
+  }
+  // A missing-port error already explains the break on that trace fragment.
+  const danglingTraceErrors = checkDanglingTraces(
+    circuitJson,
+    connectivity,
+  ).filter(
+    (error) =>
+      !error.pcb_trace_id ||
+      !tracesWithMissingConnections.has(error.pcb_trace_id),
+  )
   return [
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson, connectivity),
     ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
@@ -107,7 +127,8 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkViaPadClearance(circuitJson, connectivity),
     ...checkSameNetViaSpacing(circuitJson, connectivity),
     ...checkDifferentNetViaSpacing(circuitJson, connectivity),
-    ...checkTracesAreContiguous(circuitJson, connectivity),
+    ...contiguousTraceErrors,
+    ...danglingTraceErrors,
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
 }

@@ -1,3 +1,9 @@
+import type {
+  ConnectivityNetId,
+  PcbTraceId,
+  PcbViaId,
+  PcbCopperLayer,
+} from "./types"
 import {
   all_layers,
   type AnyCircuitElement,
@@ -9,20 +15,20 @@ import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import { getPads, getPadToPadGap } from "../check-pad-clearance/common"
 import { getPourContactTester } from "./pour-contact-index"
-import { isPointInPad } from "./is-point-in-pad"
+import { isPointInPad } from "../check-traces-are-contiguous/is-point-in-pad"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 
 type ViaContact = {
   x: number
   y: number
-  ownerTraceId?: string
+  ownerTraceId?: PcbTraceId
   radius?: number
   holeRadius?: number
   touchesPadOrPour: boolean
-  touchingTraceIds: Set<string>
+  touchingTraceIds: Set<PcbTraceId>
 }
 
-type ViaContactIndex = Map<string, Map<string, ViaContact[]>>
+type ViaContactIndex = Map<ConnectivityNetId, Map<PcbCopperLayer, ViaContact[]>>
 const CONTACT_EPSILON = 1e-9
 
 /** Index actual via copper independently of lateral trace segments. */
@@ -47,8 +53,8 @@ export function getViaContactIndex(
     boardLayerStack.push("bottom")
   }
   const addViaContact = (
-    id: string,
-    layers: string[],
+    id: PcbTraceId | PcbViaId,
+    layers: PcbCopperLayer[],
     contact: Omit<ViaContact, "touchesPadOrPour" | "touchingTraceIds">,
   ) => {
     if (![contact.x, contact.y].every(Number.isFinite)) return
@@ -81,7 +87,7 @@ export function getViaContactIndex(
         } as PcbVia
         return getPadToPadGap(viaGeometry, pad) <= CONTACT_EPSILON
       })
-    const touchingTraceIds = new Set<string>()
+    const touchingTraceIds = new Set<PcbTraceId>()
     for (const trace of traces) {
       if (
         trace.route_thickness_mode === "interpolated" ||
@@ -125,7 +131,7 @@ export function getViaContactIndex(
       touchingTraceIds,
     }
     const contactsByLayer =
-      viaContactIndex.get(net) ?? new Map<string, ViaContact[]>()
+      viaContactIndex.get(net) ?? new Map<PcbCopperLayer, ViaContact[]>()
     for (const layer of layers) {
       const contacts = contactsByLayer.get(layer) ?? []
       contacts.push(viaContact)

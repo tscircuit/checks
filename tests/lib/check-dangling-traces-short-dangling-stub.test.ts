@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import type { AnyCircuitElement } from "circuit-json"
-import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
 
 // Exact two-fragment geometry from am3352-dev-board-4layer-dogbone. Removing
 // expected ports isolates a second gap: the short stub touches the trunk cap.
@@ -161,7 +161,7 @@ test("reports the AM3352 short ground stub", async () => {
       },
     ] satisfies AnyCircuitElement[]),
   )
-  const errors = checkTracesAreContiguous(circuitJson)
+  const errors = checkDanglingTraces(circuitJson)
   expect(errors).toHaveLength(1)
   expect(errors[0].pcb_trace_error_id).toBe(
     "disconnected_endpoint_fr_source_net_4_288_end",

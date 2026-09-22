@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { AnyCircuitElement, PcbTrace } from "circuit-json"
-import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkDanglingTraces } from "lib/check-dangling-traces/check-dangling-traces"
 
 const TARGET_TRACE_ID = "pcb_trace_target"
 
@@ -55,7 +55,7 @@ function anchorPad(x: number, y: number, layer: PcbLayer = "top") {
 }
 
 function targetEndpointErrorIds(circuitJson: AnyCircuitElement[]) {
-  return checkTracesAreContiguous(circuitJson)
+  return checkDanglingTraces(circuitJson)
     .filter((error) => error.pcb_trace_id === TARGET_TRACE_ID)
     .map((error) => error.pcb_trace_error_id)
 }

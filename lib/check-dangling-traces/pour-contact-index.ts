@@ -1,3 +1,4 @@
+import type { ConnectivityNetId, PcbCopperLayer } from "./types"
 import { Circle, Point, Polygon } from "@flatten-js/core"
 import { getPourPolygon, getViaPolygon } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, LayerRef, PcbTrace } from "circuit-json"
@@ -6,8 +7,6 @@ import { createCopperPolygonContactTester } from "../copper-pour-connectivity/cr
 
 const POLYGON_SCALE = 1e6
 const CONTACT_EPSILON_MM = 1e-9
-
-type NetId = NonNullable<ReturnType<ConnectivityMap["getNetConnectedToId"]>>
 
 /** Copper contact in right-handed board-world XY coordinates, +X right and
  * +Y up, in mm. Centers are points; their radius describes circular copper.
@@ -18,7 +17,7 @@ export function getPourContactTester(
   connectivity: ConnectivityMap,
 ) {
   const pourPolygonsByNetId = new Map<
-    NetId,
+    ConnectivityNetId,
     { layer: LayerRef; polygon: Polygon }[]
   >()
   for (const pour of circuitJson) {
@@ -36,8 +35,8 @@ export function getPourContactTester(
     CONTACT_EPSILON_MM * POLYGON_SCALE,
   )
   return function copperTouchesPour(
-    net: NetId,
-    layers: string[],
+    net: ConnectivityNetId,
+    layers: PcbCopperLayer[],
     center: Pick<
       Extract<PcbTrace["route"][number], { route_type: "wire" }>,
       "x" | "y"

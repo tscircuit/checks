@@ -1,7 +1,8 @@
+import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import type { AnyCircuitElement, PcbTrace } from "circuit-json"
-import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
 
 const wire = (x: number, y: number): PcbTrace["route"][number] => ({
   route_type: "wire",
@@ -125,7 +126,7 @@ test("reports a source-associated dangling branch", async () => {
         type: "pcb_note_text",
         font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_5",
-        text: "Both pads connect, but the extra branch is open.",
+        text: "Contiguity: 0 errors. Dangling endpoints: 1.",
         anchor_position: { x: 1, y: -0.9 },
         font_size: 0.19,
         color: "#5994dc",
@@ -134,7 +135,8 @@ test("reports a source-associated dangling branch", async () => {
       },
     ] satisfies AnyCircuitElement[]),
   )
-  const errors = checkTracesAreContiguous(circuitJson)
+  expect(checkTracesAreContiguous(circuitJson)).toEqual([])
+  const errors = checkDanglingTraces(circuitJson)
   expect(errors).toHaveLength(1)
   expect(errors[0].pcb_trace_error_id).toBe(
     "disconnected_endpoint_pcb_trace_branch_end",

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import { any_circuit_element, type AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkDanglingTraces } from "lib/check-dangling-traces/check-dangling-traces"
 import { getViaInPadSensorRegion } from "../fixtures/via-in-pad-sensor-region"
 
 test("accepts connected sensor-board endpoints with intentional via-in-pad", async () => {
@@ -11,7 +11,7 @@ test("accepts connected sensor-board endpoints with intentional via-in-pad", asy
       any_circuit_element.parse(element)
     }
   }
-  const errors = checkTracesAreContiguous(circuitJson)
+  const errors = checkDanglingTraces(circuitJson)
 
   expect(
     errors.every((error) =>

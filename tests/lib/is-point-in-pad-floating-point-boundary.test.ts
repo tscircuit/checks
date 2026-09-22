@@ -1,3 +1,4 @@
+import { checkDanglingTraces } from "lib/check-dangling-traces/check-dangling-traces"
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
@@ -201,7 +202,10 @@ const expectBoundaryContacts = (
   circuitJson: AnyCircuitElement[],
   snapshotName: string,
 ) => {
-  const errors = checkTracesAreContiguous(circuitJson)
+  const errors = [
+    ...checkTracesAreContiguous(circuitJson),
+    ...checkDanglingTraces(circuitJson),
+  ]
   expect(errors).toHaveLength(0)
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {

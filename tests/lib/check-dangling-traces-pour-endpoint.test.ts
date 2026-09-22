@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement, PcbCopperPour } from "circuit-json"
-import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
 
 const pour = {
   type: "pcb_copper_pour",
@@ -41,9 +41,7 @@ function endpointErrors(copperPour: PcbCopperPour) {
     },
     copperPour,
   ]
-  return checkTracesAreContiguous(circuit).map(
-    (error) => error.pcb_trace_error_id,
-  )
+  return checkDanglingTraces(circuit).map((error) => error.pcb_trace_error_id)
 }
 test("requires actual same-net same-layer pour copper at an endpoint", () => {
   // same-layer same-net pour copper terminates a trace

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement, PcbTrace } from "circuit-json"
-import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
 
 type WirePoint = Extract<PcbTrace["route"][number], { route_type: "wire" }>
 const wire = (x: number, y: number, width = 0.2): WirePoint => ({
@@ -31,7 +31,7 @@ function endpointErrors(route: WirePoint[], candidate: WirePoint[]) {
       route: candidate,
     },
   ]
-  return checkTracesAreContiguous(circuit)
+  return checkDanglingTraces(circuit)
     .filter((error) => error.pcb_trace_id === "target")
     .map((error) => error.pcb_trace_error_id)
 }
