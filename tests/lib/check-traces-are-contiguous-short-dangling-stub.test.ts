@@ -71,7 +71,7 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
     },
   )
   circuitJson.push(
-    ...[
+    ...([
       {
         type: "pcb_board",
         pcb_board_id: "pcb_board_0",
@@ -152,7 +152,7 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
         anchor_alignment: "center",
         layer: "top",
       },
-    ],
+    ] satisfies AnyCircuitElement[]),
   )
   const errors = checkTracesAreContiguous(circuitJson)
   // This first PR records the broken baseline; the fix must change this to 1.

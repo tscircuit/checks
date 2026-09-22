@@ -18,6 +18,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       type: "source_trace",
       source_trace_id: "source_trace_1",
       connected_source_port_ids: ["source_port_1", "source_port_2"],
+      connected_source_net_ids: [],
     },
     ...[0, 2].flatMap((x, i): AnyCircuitElement[] => [
       {
@@ -54,7 +55,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
     },
   ]
   circuitJson.push(
-    ...[
+    ...([
       {
         type: "pcb_board",
         pcb_board_id: "pcb_board_0",
@@ -125,7 +126,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
         anchor_alignment: "center",
         layer: "top",
       },
-    ],
+    ] satisfies AnyCircuitElement[]),
   )
   const errors = checkTracesAreContiguous(circuitJson)
   // This first PR records the broken baseline; the fix must change this to 1.
