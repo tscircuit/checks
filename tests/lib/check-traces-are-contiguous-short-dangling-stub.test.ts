@@ -5,8 +5,8 @@ import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/
 
 // Exact two-fragment geometry from am3352-dev-board-4layer-dogbone. Removing
 // expected ports isolates a second gap: the short stub touches the trunk cap.
-// This is a topology expectation, beyond the current copper-continuity rule.
-test("reproduces missed DRC on the AM3352 short ground stub", async () => {
+// Junction contact must not conceal the exposed copper beyond that junction.
+test("reports the AM3352 short ground stub", async () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "source_trace",
@@ -84,6 +84,7 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_0",
         text: "AM3352: SHORT GND STUB PAST A VIA",
         anchor_position: { x: 10.7, y: 3 },
@@ -94,8 +95,9 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_1",
-        text: "BROKEN: DRC reports 0 errors; expected 1",
+        text: "FIXED: DRC reports the dangling endpoint",
         anchor_position: { x: 10.7, y: 2.65 },
         font_size: 0.14,
         color: "#ff6b6b",
@@ -104,6 +106,7 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_2",
         text: "0.04999 mm tip overlaps the junction copper cap",
         anchor_position: { x: 10.7, y: 2.28 },
@@ -114,6 +117,7 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_3",
         text: "Free tip at (10.875, 1.44999)",
         anchor_position: { x: 10.7, y: 1.92 },
@@ -124,6 +128,7 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_4",
         text: "GND via",
         anchor_position: { x: 11.75, y: 1.17 },
@@ -134,6 +139,7 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_5",
         text: "C_X1 GND pad",
         anchor_position: { x: 10.71, y: 0.05 },
@@ -144,6 +150,7 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_6",
         text: "Copper contact at the base does not terminate the tip.",
         anchor_position: { x: 10.7, y: -0.35 },
@@ -155,8 +162,10 @@ test("reproduces missed DRC on the AM3352 short ground stub", async () => {
     ] satisfies AnyCircuitElement[]),
   )
   const errors = checkTracesAreContiguous(circuitJson)
-  // This first PR records the broken baseline; the fix must change this to 1.
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(1)
+  expect(errors[0].pcb_trace_error_id).toBe(
+    "disconnected_endpoint_fr_source_net_4_288_end",
+  )
   await expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,

@@ -8,6 +8,7 @@ import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import { getPads, getPadToPadGap } from "../check-pad-clearance/common"
+import { getPourContactTester } from "./pour-contact-index"
 import { isPointInPad } from "./is-point-in-pad"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 
@@ -16,7 +17,8 @@ type ViaContact = {
   y: number
   ownerTraceId?: string
   radius?: number
-  touchesPad: boolean
+  holeRadius?: number
+  touchesPadOrPour: boolean
   touchingTraceIds: Set<string>
 }
 
@@ -29,6 +31,7 @@ export function getViaContactIndex(
   connectivity: ConnectivityMap,
 ): ViaContactIndex {
   const index: ViaContactIndex = new Map()
+  const touchesPour = getPourContactTester(circuitJson, connectivity)
   const pads = getPads(circuitJson)
   const traces = circuitJson.filter((element) => element.type === "pcb_trace")
   const vias = circuitJson.filter((element) => element.type === "pcb_via")
@@ -46,29 +49,37 @@ export function getViaContactIndex(
   const add = (
     id: string,
     layers: string[],
-    contact: Omit<ViaContact, "touchesPad" | "touchingTraceIds">,
+    contact: Omit<ViaContact, "touchesPadOrPour" | "touchingTraceIds">,
   ) => {
     if (![contact.x, contact.y].every(Number.isFinite)) return
     const net = connectivity.getNetConnectedToId(id)
     if (!net) return
-    const touchesPad = pads.some((pad) => {
-      if (
-        connectivity.getNetConnectedToId(getPrimaryId(pad)) !== net ||
-        !getLayersOfPcbElement(pad).some((layer) => layers.includes(layer))
-      )
-        return false
-      if (contact.radius === undefined) return isPointInPad(contact, pad)
-      const viaGeometry = {
-        type: "pcb_via",
-        pcb_via_id: id,
-        x: contact.x,
-        y: contact.y,
-        outer_diameter: contact.radius * 2,
-        hole_diameter: 0,
+    const touchesPadOrPour =
+      touchesPour(
+        net,
         layers,
-      } as PcbVia
-      return getPadToPadGap(viaGeometry, pad) <= CONTACT_EPSILON
-    })
+        contact,
+        contact.radius ?? 0,
+        contact.holeRadius,
+      ) ||
+      pads.some((pad) => {
+        if (
+          connectivity.getNetConnectedToId(getPrimaryId(pad)) !== net ||
+          !getLayersOfPcbElement(pad).some((layer) => layers.includes(layer))
+        )
+          return false
+        if (contact.radius === undefined) return isPointInPad(contact, pad)
+        const viaGeometry = {
+          type: "pcb_via",
+          pcb_via_id: id,
+          x: contact.x,
+          y: contact.y,
+          outer_diameter: contact.radius * 2,
+          hole_diameter: 0,
+          layers,
+        } as PcbVia
+        return getPadToPadGap(viaGeometry, pad) <= CONTACT_EPSILON
+      })
     const touchingTraceIds = new Set<string>()
     for (const trace of traces) {
       if (
@@ -97,7 +108,11 @@ export function getViaContactIndex(
         }
       }
     }
-    const copper: ViaContact = { ...contact, touchesPad, touchingTraceIds }
+    const copper: ViaContact = {
+      ...contact,
+      touchesPadOrPour,
+      touchingTraceIds,
+    }
     const byLayer = index.get(net) ?? new Map<string, ViaContact[]>()
     for (const layer of layers) {
       const contacts = byLayer.get(layer) ?? []
@@ -115,6 +130,7 @@ export function getViaContactIndex(
       y: via.y,
       ownerTraceId: via.pcb_trace_id,
       radius: via.outer_diameter / 2,
+      holeRadius: via.hole_diameter / 2,
     })
   }
 
@@ -181,9 +197,9 @@ export function endpointTouchesVia({
   return (index.get(net)?.get(point.layer) ?? []).some((via) => {
     if (via.ownerTraceId === ownerTrace.pcb_trace_id) return false
     // A lone via does not establish an onward connection. Its barrel must
-    // reach a same-net pad or another nondegenerate trace on a physical layer.
+    // reach a same-net pad, pour, or another nondegenerate trace on a physical layer.
     if (
-      !via.touchesPad &&
+      !via.touchesPadOrPour &&
       ![...via.touchingTraceIds].some((id) => id !== ownerTrace.pcb_trace_id)
     )
       return false

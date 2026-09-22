@@ -11,8 +11,8 @@ const wire = (x: number, y: number): PcbTrace["route"][number] => ({
   width: 0.2,
 })
 
-// Known false negative: checking the required ports must not skip later branches.
-test("reproduces missed DRC on a source-associated dangling branch", async () => {
+// Checking the required ports must not skip later branches.
+test("reports a source-associated dangling branch", async () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "source_trace",
@@ -68,6 +68,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_0",
         text: "DANGLING BRANCH: SOURCE-ASSOCIATED TRACE",
         anchor_position: { x: 1, y: 3.1 },
@@ -78,8 +79,9 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_1",
-        text: "BROKEN: DRC reports 0 errors; expected 1",
+        text: "FIXED: DRC reports the dangling endpoint",
         anchor_position: { x: 1, y: 2.6 },
         font_size: 0.19,
         color: "#ff6b6b",
@@ -88,9 +90,10 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_2",
         text: "Free endpoint",
-        anchor_position: { x: 1, y: 2.22 },
+        anchor_position: { x: 2.5, y: 1.9 },
         font_size: 0.17,
         color: "#ff6b6b",
         anchor_alignment: "center",
@@ -98,6 +101,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_3",
         text: "TX pad",
         anchor_position: { x: 0, y: -0.42 },
@@ -108,6 +112,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_4",
         text: "RX pad",
         anchor_position: { x: 2, y: -0.42 },
@@ -118,6 +123,7 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
       },
       {
         type: "pcb_note_text",
+        font: "tscircuit2024",
         pcb_note_text_id: "pcb_note_text_5",
         text: "Both pads connect, but the extra branch is open.",
         anchor_position: { x: 1, y: -0.9 },
@@ -129,8 +135,10 @@ test("reproduces missed DRC on a source-associated dangling branch", async () =>
     ] satisfies AnyCircuitElement[]),
   )
   const errors = checkTracesAreContiguous(circuitJson)
-  // This first PR records the broken baseline; the fix must change this to 1.
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(1)
+  expect(errors[0].pcb_trace_error_id).toBe(
+    "disconnected_endpoint_pcb_trace_branch_end",
+  )
   await expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,
