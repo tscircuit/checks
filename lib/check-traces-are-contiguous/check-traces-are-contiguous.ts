@@ -541,7 +541,7 @@ function checkTracesAreContiguous(
     }
 
     // For net-level traces (no expected ports), check if endpoints are floating
-    if (expectedPorts.length === 0 && !isAntennaTrace(trace)) {
+    if (expectedPorts.length === 0 && !isAntennaTrace(trace, circuitJson)) {
       let firstConnectsToAnyPad = false
       let lastConnectsToAnyPad = false
 

@@ -9,7 +9,7 @@ test("intentional antenna copper does not exempt a dangling feed branch", async 
   circuit.add(
     <board width={20} height={14} schematicDisabled>
       <antenna
-        name="ANT1"
+        name="Radio"
         antennaShape="2.4ghz_quarter_wave_monopole"
         pcbPath={[
           { x: 0, y: 0 },
@@ -26,8 +26,6 @@ test("intentional antenna copper does not exempt a dangling feed branch", async 
   )
   await circuit.renderUntilSettled()
   const radiator = circuit.db.pcb_trace.list()[0]!
-  // The pinned core predates the marker; model the new producer contract here.
-  Object.assign(radiator, { is_antenna_trace: true })
   const board = circuit.children[0]!
   board.add(
     new PcbTrace({
