@@ -173,3 +173,77 @@ test("does not expose IDs when names or endpoints are unavailable", () => {
     'PCB trace "unnamed" shorts to itself, bypassing part of its length-matched route',
   )
 })
+
+function viaCircuit(diameter = 0.7): AnyCircuitElement[] {
+  const json = circuit([
+    [-4, 0],
+    [4, 0],
+    [4, 3],
+    [0, 3],
+    [0, 0.4],
+  ])
+  const trace = json[2] as PcbTrace
+  trace.route.push(
+    {
+      route_type: "via",
+      x: 0,
+      y: 0.4,
+      from_layer: "top",
+      to_layer: "bottom",
+      outer_diameter: diameter,
+    },
+    { route_type: "wire", x: 0, y: 0.4, width: 0.2, layer: "bottom" },
+    { route_type: "wire", x: -2, y: 0.4, width: 0.2, layer: "bottom" },
+  )
+  return json
+}
+
+test("detects via copper touching a remote wire without intersecting centerlines", () => {
+  const errors = checkPcbTraceSelfShorts(viaCircuit())
+  expect(errors).toHaveLength(1)
+  expect(errors[0]!.center).toEqual({ x: 0, y: 0.2 })
+})
+
+test("allows positive via copper clearance and intentional entry/exit", () => {
+  expect(checkPcbTraceSelfShorts(viaCircuit(0.5))).toEqual([])
+})
+
+test("uses materialized via copper diameter and layers", () => {
+  const json = viaCircuit(0.5)
+  const via = {
+    type: "pcb_via" as const,
+    pcb_via_id: "via",
+    pcb_trace_id: "trace",
+    x: 0,
+    y: 0.4,
+    outer_diameter: 0.7,
+    hole_diameter: 0.3,
+    layers: ["top", "bottom"] as ("top" | "bottom")[],
+  }
+  json.push(via)
+  expect(checkPcbTraceSelfShorts(json)).toHaveLength(1)
+  via.layers = ["bottom"]
+  expect(checkPcbTraceSelfShorts(json)).toEqual([])
+})
+
+test("allows short subdivisions of the normal via connection", () => {
+  const json = viaCircuit(0.5)
+  const trace = json[2] as PcbTrace
+  trace.route.splice(4, 0, {
+    route_type: "wire",
+    x: 0,
+    y: 0.5,
+    width: 0.2,
+    layer: "top",
+  })
+  expect(checkPcbTraceSelfShorts(json)).toEqual([])
+})
+
+test("checks via copper on intermediate layers of the board stack", () => {
+  const json = viaCircuit()
+  const trace = json[2] as PcbTrace
+  for (const point of trace.route.slice(0, 2)) {
+    if (point.route_type === "wire") point.layer = "inner1"
+  }
+  expect(checkPcbTraceSelfShorts(json)).toHaveLength(1)
+})
