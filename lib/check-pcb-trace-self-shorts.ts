@@ -1,3 +1,4 @@
+import { cju } from "@tscircuit/circuit-json-util"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
 import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
 import { getClosestPointBetweenSegments } from "./check-each-pcb-trace-non-overlapping/getClosestPointBetweenSegments"
@@ -21,6 +22,7 @@ export function checkPcbTraceSelfShorts(
         : [],
     ),
   )
+  const db = cju(circuitJson)
   const errors: PcbTraceError[] = []
   for (const trace of circuitJson) {
     if (trace.type !== "pcb_trace") continue
@@ -94,13 +96,30 @@ export function checkPcbTraceSelfShorts(
             { x: b.x2, y: b.y2 },
           ) - contactDistance
         if (gap > 1e-9) continue
+        const sourceTrace = db.source_trace.get(trace.source_trace_id)
+        const endpointNames = (sourceTrace?.connected_source_port_ids ?? [])
+          .map((id) => {
+            const port = db.source_port.get(id)
+            const component = port?.source_component_id
+              ? db.source_component.get(port.source_component_id)
+              : undefined
+            return component?.name && port?.name
+              ? `${component.name}.${port.name}`
+              : undefined
+          })
+          .filter((name): name is string => Boolean(name))
+        const traceName =
+          sourceTrace?.name ||
+          sourceTrace?.display_name ||
+          endpointNames.join(" → ") ||
+          "unnamed"
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
           pcb_trace_error_id: `self_short_${trace.pcb_trace_id}`,
           pcb_trace_id: trace.pcb_trace_id,
           source_trace_id: trace.source_trace_id,
-          message: `PCB trace ${trace.pcb_trace_id} shorts to itself, bypassing part of its length-matched route`,
+          message: `PCB trace "${traceName}" shorts to itself, bypassing part of its length-matched route`,
           center: getClosestPointBetweenSegments(a, b),
           pcb_component_ids: [],
           pcb_port_ids: getPcbPortIdsConnectedToTraces([trace]),

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import type { AnyCircuitElement, PcbTrace } from "circuit-json"
+import type { AnyCircuitElement, PcbTrace, SourceTrace } from "circuit-json"
 import {
   checkPcbTraceSelfShorts,
   checkEachPcbTraceNonOverlapping,
@@ -152,4 +152,24 @@ test("checks same-layer segments separated by via transitions", () => {
     { route_type: "via", x: 0, y: 4, from_layer: "bottom", to_layer: "top" },
   )
   expect(checkPcbTraceSelfShorts(json)).toHaveLength(1)
+})
+
+test("uses trace names instead of IDs in diagnostic messages", () => {
+  const json = circuit(crossing)
+  const source = json[1] as SourceTrace
+  source.name = "DATA_P"
+  expect(checkPcbTraceSelfShorts(json)[0]!.message).toBe(
+    'PCB trace "DATA_P" shorts to itself, bypassing part of its length-matched route',
+  )
+  delete source.name
+  source.display_name = "USB data positive"
+  expect(checkPcbTraceSelfShorts(json)[0]!.message).toContain(
+    '"USB data positive"',
+  )
+})
+
+test("does not expose IDs when names or endpoints are unavailable", () => {
+  expect(checkPcbTraceSelfShorts(circuit(crossing))[0]!.message).toBe(
+    'PCB trace "unnamed" shorts to itself, bypassing part of its length-matched route',
+  )
 })
