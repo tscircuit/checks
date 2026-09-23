@@ -1,4 +1,5 @@
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
+import { isAntennaTrace } from "../util/is-antenna-trace"
 import type {
   AnyCircuitElement,
   PcbTraceError,
@@ -540,7 +541,7 @@ function checkTracesAreContiguous(
     }
 
     // For net-level traces (no expected ports), check if endpoints are floating
-    if (expectedPorts.length === 0) {
+    if (expectedPorts.length === 0 && !isAntennaTrace(trace)) {
       let firstConnectsToAnyPad = false
       let lastConnectsToAnyPad = false
 

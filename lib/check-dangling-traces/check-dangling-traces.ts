@@ -1,4 +1,5 @@
 import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
+import { isAntennaTrace } from "../util/is-antenna-trace"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPcbTrace } from "@tscircuit/circuit-json-util"
 import {
@@ -24,6 +25,8 @@ export function checkDanglingTraces(
   const getEndpointContact = createEndpointContactTester(circuitJson, connMap)
 
   for (const trace of pcbTraces) {
+    // Radiating copper intentionally has open ends; feed traces remain checked.
+    if (isAntennaTrace(trace)) continue
     if (trace.route.length === 0) continue
     const firstPoint = trace.route[0]
     const lastPoint = trace.route[trace.route.length - 1]
@@ -61,7 +64,7 @@ export function checkDanglingTraces(
         type: "pcb_trace_error",
         error_type: "pcb_trace_error",
         pcb_trace_error_id: `disconnected_endpoint_${trace.pcb_trace_id}_${side}`,
-        message: `Trace [${traceName}] has disconnected endpoint at (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`,
+        message: `Trace [${traceName}] has dangling endpoint at (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`,
         source_trace_id: trace.source_trace_id || `!${trace.pcb_trace_id}`,
         pcb_trace_id: trace.pcb_trace_id,
         center: { x: point.x, y: point.y },
