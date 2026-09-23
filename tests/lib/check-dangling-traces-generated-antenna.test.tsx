@@ -17,7 +17,15 @@ test("generated antenna open end is intentional in both routing checks", async (
     </board>,
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  // The released core does not emit the proposed Circuit JSON marker yet.
+  // This antenna-only fixture explicitly supplies the producer's future output.
+  const circuitJson = circuit
+    .getCircuitJson()
+    .map((element) =>
+      element.type === "pcb_trace"
+        ? { ...element, is_antenna_trace: true }
+        : element,
+    )
   expect(checkDanglingTraces(circuitJson)).toEqual([])
   expect(checkTracesAreContiguous(circuitJson)).toEqual([])
   await expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(

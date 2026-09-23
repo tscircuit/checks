@@ -37,7 +37,16 @@ test("intentional antenna copper does not exempt a dangling feed branch", async 
     }),
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  // The released core does not emit the proposed Circuit JSON marker yet.
+  // Mark only the radiator in this consumer fixture, never its shared-source branch.
+  const circuitJson = circuit
+    .getCircuitJson()
+    .map((element) =>
+      element.type === "pcb_trace" &&
+      element.pcb_trace_id === radiator.pcb_trace_id
+        ? { ...element, is_antenna_trace: true }
+        : element,
+    )
   const errors = checkDanglingTraces(circuitJson)
   expect(errors).toHaveLength(1)
   expect(errors[0].center).toEqual({ x: -3, y: 2 })

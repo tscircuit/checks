@@ -25,8 +25,8 @@ export function checkDanglingTraces(
   const getEndpointContact = createEndpointContactTester(circuitJson, connMap)
 
   for (const trace of pcbTraces) {
-    // Inferred antenna copper has intentional open ends; feed traces remain checked.
-    if (isAntennaTrace(trace, circuitJson)) continue
+    // Marked antenna copper has intentional open ends; feed traces remain checked.
+    if (isAntennaTrace(trace)) continue
     if (trace.route.length === 0) continue
     const firstPoint = trace.route[0]
     const lastPoint = trace.route[trace.route.length - 1]
