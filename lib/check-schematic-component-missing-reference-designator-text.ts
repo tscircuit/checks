@@ -10,16 +10,8 @@ type SourceComponent = Extract<AnyCircuitElement, { type: "source_component" }>
 const isFallbackReferenceDesignator = (name: string) =>
   /^unnamed_[a-z0-9_-]+\d+$/i.test(name)
 
-/**
- * Text placeholders that render as the component's reference designator (or
- * display name). Text holding any of these satisfies the reference-designator
- * check because core substitutes them before display. `{REFDES}` is accepted
- * for tolerance with older symbols even though core only substitutes `{REF}`
- * and `{NAME}` - the warning message now points users at `{REF}`.
- */
 const REFERENCE_DESIGNATOR_PLACEHOLDERS = new Set([
   "{REF}",
-  "{REFDES}",
   "{REFERENCE}",
   "{NAME}",
 ])
@@ -117,7 +109,9 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
       [...referenceDesignators].some((referenceDesignator) =>
         componentTexts?.has(referenceDesignator),
       ) ||
-      componentTexts?.has("{REF}") ||
+      [...(componentTexts ?? [])].some((text) =>
+        REFERENCE_DESIGNATOR_PLACEHOLDERS.has(text),
+      ) ||
       customSymbolTexts.some(
         (schematicText) =>
           (referenceDesignators.has(schematicText.text.trim()) ||
