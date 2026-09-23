@@ -42,6 +42,19 @@ export type Collidable =
   | PCBKeepout
 
 export const getCollidableBounds = (collidable: Collidable): Bounds => {
+  if (
+    collidable.type === "pcb_hole" &&
+    (collidable.hole_shape === "pill" ||
+      collidable.hole_shape === "rotated_pill")
+  ) {
+    const pill = getPillCenterLineForPad(collidable)
+    return {
+      minX: Math.min(pill.start.x, pill.end.x) - pill.radius,
+      minY: Math.min(pill.start.y, pill.end.y) - pill.radius,
+      maxX: Math.max(pill.start.x, pill.end.x) + pill.radius,
+      maxY: Math.max(pill.start.y, pill.end.y) + pill.radius,
+    }
+  }
   if (collidable.type === "pcb_trace_segment") {
     return {
       minX: Math.min(collidable.x1, collidable.x2),

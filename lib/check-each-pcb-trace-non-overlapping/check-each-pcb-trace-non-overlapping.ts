@@ -43,6 +43,7 @@ import {
 } from "./getCollidableBounds"
 import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
 import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
+import { getSegmentToPillClearance } from "./segment-to-polygon-clearance"
 
 type PcbComponentConnectionElement = PcbPort | PcbSmtPad | PcbPlatedHole
 
@@ -282,15 +283,24 @@ export function checkEachPcbTraceNonOverlapping(
         continue
       }
 
-      const isCircular = obj.type === "pcb_hole"
-
-      if (isCircular) {
-        const radius = getRadiusOfCircuitJsonElement(obj)
-        const distance = segmentToCircleMinDistance(
-          { x: segmentA.x1, y: segmentA.y1 },
-          { x: segmentA.x2, y: segmentA.y2 },
-          { x: obj.x, y: obj.y, radius },
+      if (obj.type === "pcb_hole") {
+        let distance: number
+        let center = getClosestPointBetweenSegmentAndBounds(
+          segmentA,
+          getCollidableBounds(obj),
         )
+        if (obj.hole_shape === "pill" || obj.hole_shape === "rotated_pill") {
+          const clearance = getSegmentToPillClearance(segmentA, obj)
+          distance = clearance.distance - clearance.radius
+          center = clearance.center
+        } else {
+          const radius = getRadiusOfCircuitJsonElement(obj)
+          distance = segmentToCircleMinDistance(
+            { x: segmentA.x1, y: segmentA.y1 },
+            { x: segmentA.x2, y: segmentA.y2 },
+            { x: obj.x, y: obj.y, radius },
+          )
+        }
         const gap = distance - segmentA.thickness / 2
         if (gap > minClearance - EPSILON) continue
 
@@ -306,10 +316,7 @@ export function checkEachPcbTraceNonOverlapping(
             gap,
           ),
           pcb_trace_id: segmentA.pcb_trace_id,
-          center: getClosestPointBetweenSegmentAndBounds(
-            segmentA,
-            getCollidableBounds(obj),
-          ),
+          center,
           source_trace_id: "",
           pcb_trace_error_id,
           pcb_component_ids: [
@@ -322,6 +329,7 @@ export function checkEachPcbTraceNonOverlapping(
             "pcb_port_id" in obj ? obj.pcb_port_id : undefined,
           ].filter(Boolean) as string[],
         })
+        continue
       }
 
       // Handle generic case of hitting the bounds of any collidable obstacle
