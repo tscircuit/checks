@@ -93,7 +93,28 @@ test("a pill hole aborts routing checks instead of returning a different-net cro
     expect.arrayContaining(errors),
   )
 
-  expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
-    import.meta.path,
-  )
+  // Overlay the control's real DRC finding; the original check throws instead.
+  expect(
+    convertCircuitJsonToPcbSvg(
+      [
+        ...circuitJson,
+        ...errors,
+        {
+          type: "pcb_note_text",
+          pcb_note_text_id: "drc-control-caption",
+          font: "tscircuit2024",
+          font_size: 0.22,
+          text: "With slot: DRC crashes. Marker: slot-removed control.",
+          anchor_position: { x: 0, y: -2.6 },
+          anchor_alignment: "center",
+          layer: "top",
+        },
+      ],
+      {
+        shouldDrawErrors: true,
+        showErrorsInTextOverlay: true,
+        showPcbNotes: true,
+      },
+    ),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
