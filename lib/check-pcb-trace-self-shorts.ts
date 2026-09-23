@@ -86,6 +86,12 @@ export function checkPcbTraceSelfShorts(
           (a.x2 - a.x1) * (b.x2 - b.x1) + (a.y2 - a.y1) * (b.y2 - b.y1)
         const cross =
           (a.x2 - a.x1) * (b.y2 - b.y1) - (a.y2 - a.y1) * (b.x2 - b.x1)
+        const directionLengthProduct =
+          Math.hypot(a.x2 - a.x1, a.y2 - a.y1) *
+          Math.hypot(b.x2 - b.x1, b.y2 - b.y1)
+        // Compare normalized directions: roundoff can make a right-angle dot
+        // product slightly negative, especially at tiny chamfer segments.
+        const isForwardOrRightAngle = dot >= -1e-9 * directionLengthProduct
         const adjacent = a.run === b.run && b.startDistance === a.endDistance
         // An immediately retraced segment is a short too; ordinary adjacent
         // bends share copper intentionally.
@@ -93,8 +99,10 @@ export function checkPcbTraceSelfShorts(
         if (
           !adjacent &&
           a.run === b.run &&
-          b.startDistance - a.endDistance < contactDistance &&
-          dot >= 0
+          // A right-angle connector can have sqrt(2) times the straight-line
+          // distance. Its local copper overlap is still part of the same bend.
+          b.startDistance - a.endDistance <= Math.SQRT2 * contactDistance &&
+          isForwardOrRightAngle
         )
           continue
         const gap =

@@ -247,3 +247,35 @@ test("checks via copper on intermediate layers of the board stack", () => {
   }
   expect(checkPcbTraceSelfShorts(json)).toHaveLength(1)
 })
+
+test("allows a right-angle bend separated by a tiny chamfer despite dot-product roundoff", () => {
+  const points = [
+    [0.932397, 1.1261236700981092],
+    [1.0136761230218632, 1.044844547076246],
+    [1.0136778769781367, 1.044844547076246],
+    [2.049838793085201, 2.08100546318331],
+  ]
+  const [[ax, ay], [bx, by], [cx, cy], [dx, dy]] = points
+  // The vectors are perpendicular to rounding precision, but their raw dot
+  // product is negative. Keep this fixture sensitive to the original failure.
+  expect((bx! - ax!) * (dx! - cx!) + (by! - ay!) * (dy! - cy!)).toBeLessThan(0)
+  expect(checkPcbTraceSelfShorts(circuit(points, 0.08128))).toEqual([])
+})
+
+test("allows local copper overlap across a short stepped bend", () => {
+  expect(
+    checkPcbTraceSelfShorts(
+      circuit(
+        [
+          [2.8831170000000017, -0.8640400000000001],
+          [3.2137656237132153, -1.1946886237132113],
+          [3.2137656237132153, -1.2276338530943416],
+          [3.2001192628880584, -1.2412802139194983],
+          [3.2001192628880584, -1.2742254433006286],
+          [3.3150665412377434, -1.3891727216503138],
+        ],
+        0.08128,
+      ),
+    ),
+  ).toEqual([])
+})
