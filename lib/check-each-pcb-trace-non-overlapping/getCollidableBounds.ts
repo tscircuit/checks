@@ -43,9 +43,10 @@ export type Collidable =
 
 export const getCollidableBounds = (collidable: Collidable): Bounds => {
   if (
-    collidable.type === "pcb_hole" &&
-    (collidable.hole_shape === "pill" ||
-      collidable.hole_shape === "rotated_pill")
+    (collidable.type === "pcb_hole" &&
+      (collidable.hole_shape === "pill" ||
+        collidable.hole_shape === "rotated_pill")) ||
+    (collidable.type === "pcb_smtpad" && collidable.shape === "rotated_pill")
   ) {
     const pill = getPillCenterLineForPad(collidable)
     return {
@@ -83,19 +84,6 @@ export const getCollidableBounds = (collidable: Collidable): Bounds => {
         minY: Math.min(...polygonPoints.map((point) => point.y)),
         maxX: Math.max(...polygonPoints.map((point) => point.x)),
         maxY: Math.max(...polygonPoints.map((point) => point.y)),
-      }
-    }
-
-    if (
-      collidable.type === "pcb_smtpad" &&
-      collidable.shape === "rotated_pill"
-    ) {
-      const pill = getPillCenterLineForPad(collidable)
-      return {
-        minX: Math.min(pill.start.x, pill.end.x) - pill.radius,
-        minY: Math.min(pill.start.y, pill.end.y) - pill.radius,
-        maxX: Math.max(pill.start.x, pill.end.x) + pill.radius,
-        maxY: Math.max(pill.start.y, pill.end.y) + pill.radius,
       }
     }
   }

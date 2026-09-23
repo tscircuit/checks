@@ -23,6 +23,33 @@ test.each([
   },
   { name: "clear straight edge", hole: horizontalSlot, x: 0, y: 1.3, count: 0 },
   {
+    name: "exact required clearance",
+    hole: horizontalSlot,
+    x: 0,
+    y: 1.2,
+    count: 0,
+  },
+  {
+    name: "equal dimensions form a circle",
+    hole: { ...horizontalSlot, hole_width: 2 },
+    x: 0.9,
+    y: 0.9,
+    count: 0,
+  },
+  {
+    name: "translated rotated slot overlap",
+    hole: {
+      ...horizontalSlot,
+      hole_shape: "rotated_pill",
+      ccw_rotation: 90,
+      x: 10,
+      y: 10,
+    },
+    x: 10,
+    y: 11.8,
+    count: 1,
+  },
+  {
     name: "rounded end overlap",
     hole: horizontalSlot,
     x: 1.7,
