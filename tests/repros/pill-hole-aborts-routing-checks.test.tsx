@@ -14,14 +14,23 @@ test("a pill hole aborts routing checks instead of returning a different-net cro
       <net name="B" />
       <testpoint
         name="A1"
+        footprintVariant="pad"
         pcbX={-4}
         pcbY={-2}
         layer="bottom"
         padDiameter={0.5}
       />
-      <testpoint name="A2" pcbX={4} pcbY={2} layer="bottom" padDiameter={0.5} />
+      <testpoint
+        name="A2"
+        footprintVariant="pad"
+        pcbX={4}
+        pcbY={2}
+        layer="bottom"
+        padDiameter={0.5}
+      />
       <testpoint
         name="B1"
+        footprintVariant="pad"
         pcbX={-4}
         pcbY={2}
         layer="bottom"
@@ -29,6 +38,7 @@ test("a pill hole aborts routing checks instead of returning a different-net cro
       />
       <testpoint
         name="B2"
+        footprintVariant="pad"
         pcbX={4}
         pcbY={-2}
         layer="bottom"
@@ -38,13 +48,19 @@ test("a pill hole aborts routing checks instead of returning a different-net cro
         path={[".A1 > .pin1", ".A2 > .pin1", "net.A"]}
         thickness={0.2}
         pcbPathRelativeTo=".A1 > .pin1"
-        pcbPath={["bottom", { x: 0, y: 0 }, { x: 8, y: 4 }]}
+        pcbPath={[
+          { x: 0, y: 0 },
+          { x: 8, y: 4 },
+        ]}
       />
       <trace
         path={[".B1 > .pin1", ".B2 > .pin1", "net.B"]}
         thickness={0.2}
         pcbPathRelativeTo=".B1 > .pin1"
-        pcbPath={["bottom", { x: 0, y: 0 }, { x: 8, y: -4 }]}
+        pcbPath={[
+          { x: 0, y: 0 },
+          { x: 8, y: -4 },
+        ]}
       />
       <hole name="slot" shape="pill" width={1} height={0.5} pcbX={2} pcbY={0} />
     </board>,
@@ -53,6 +69,18 @@ test("a pill hole aborts routing checks instead of returning a different-net cro
   const circuitJson = circuit.getCircuitJson()
   const traces = circuitJson.filter((element) => element.type === "pcb_trace")
   expect(traces).toHaveLength(2)
+  expect(
+    circuitJson.filter((element) => element.type === "pcb_trace_error"),
+  ).toHaveLength(0)
+  for (const trace of traces) {
+    for (const point of trace.route) {
+      expect(point).toMatchObject({
+        route_type: "wire",
+        layer: "bottom",
+        width: 0.2,
+      })
+    }
+  }
   const connectivity = getFullConnectivityMapFromCircuitJson(circuitJson)
   expect(
     connectivity.areIdsConnected(
