@@ -148,47 +148,51 @@ test("control: an explicit endpoint via and top landing remove the layer mismatc
   expect(getTrace().route.at(-1)).toMatchObject({ layer: "inner2" })
 })
 
-test.failing(
-  "continuity checker should report the missing inner2-to-top connection",
-  () => {
-    expect(
-      checkTracesAreContiguous(freshCircuit()).some(diagnosesMissingConnection),
-    ).toBe(true)
-  },
-)
+test("continuity checker should report the missing inner2-to-top connection", () => {
+  expect(
+    checkTracesAreContiguous(freshCircuit()).some(diagnosesMissingConnection),
+  ).toBe(true)
+})
 
-test.failing(
-  "port checker should not accept the endpoint port ID as copper connectivity",
-  () => {
-    expect(
-      checkEachPcbPortConnectedToPcbTraces(freshCircuit()).some(
-        diagnosesMissingConnection,
-      ),
-    ).toBe(true)
-  },
-)
+test("port checker should not accept the endpoint port ID as copper connectivity", () => {
+  expect(
+    checkEachPcbPortConnectedToPcbTraces(freshCircuit()).some(
+      diagnosesMissingConnection,
+    ),
+  ).toBe(true)
+})
 
-test.failing(
-  "aggregate routing checks should report this missing via",
-  async () => {
-    expect(
-      (await runAllRoutingChecks(freshCircuit())).some(
-        diagnosesMissingConnection,
-      ),
-    ).toBe(true)
-  },
-)
+test("aggregate routing checks should report this missing via", async () => {
+  expect(
+    (await runAllRoutingChecks(freshCircuit())).some(
+      diagnosesMissingConnection,
+    ),
+  ).toBe(true)
+})
 
-// Snapshot annotation only: neither the input JSON nor the checker's result is
-// modified. The orange segment is the literal route, red is top-layer copper.
+// Render actual checker diagnostics on a clone of the literal board. The arrow
+// highlights the reported endpoint; orange is inner2 and red is top copper.
 function zoomSnapshot() {
   const width = 1200
   const height = 1000
   const viewport = { minX: -9.7, maxX: -7.5, minY: -3.7, maxY: -1.3 }
-  const svg = convertCircuitJsonToPcbSvg(freshCircuit(), {
+  const circuit = freshCircuit()
+  const detectedErrors = checkTracesAreContiguous(circuit).filter(
+    diagnosesMissingConnection,
+  )
+  expect(detectedErrors).toHaveLength(1)
+  expect(detectedErrors[0]).toMatchObject({
+    center: location,
+    pcb_port_ids: [PORT_ID],
+    pcb_component_ids: ["pcb_component_18"],
+  })
+  expect(detectedErrors[0].message).toContain("inner2")
+  const svg = convertCircuitJsonToPcbSvg([...circuit, ...detectedErrors], {
     width,
     height,
     viewport,
+    shouldDrawErrors: true,
+    showErrorsInTextOverlay: false,
     showSolderMask: false,
     colorOverrides: {
       copper: { top: "#c93636", inner2: "#f0a332", bottom: "#568cce" },
@@ -215,9 +219,9 @@ function zoomSnapshot() {
     <circle cx="${existingVia.x}" cy="${existingVia.y}" r="${0.075 * scale}" fill="#ff19da"/>
     <circle cx="${endpoint.x}" cy="${endpoint.y}" r="62" fill="none" stroke="#ffffff" stroke-width="4" stroke-dasharray="9 6"/>
     <rect x="20" y="16" width="1160" height="136" rx="12" fill="#101923"/>
-    <text x="42" y="55" fill="white" font-size="28">PMID: inner2 trace ends on a top-only U2 B2 pad</text>
+    <text x="42" y="55" fill="white" font-size="28">DRC: missing via from inner2 to U2 B2 (top)</text>
     <text x="42" y="91" fill="#f0a332" font-size="24">Orange = inner2  /  Red = top  /  Magenta = existing drill</text>
-    <text x="42" y="126" fill="#c8d5e5" font-size="22">Literal v1.1.3 JSON • source_net_6_mst1_0 • no via at the circled endpoint</text>
+    <text x="42" y="126" fill="#c8d5e5" font-size="22">Literal v1.1.3 JSON • source_net_6_mst1_0 • checker error at the circled endpoint</text>
     <path d="M 1020 660 L ${endpoint.x + 53} ${endpoint.y - 48}" fill="none" stroke="white" stroke-width="5"/>
     <path d="M ${endpoint.x + 53} ${endpoint.y - 48} l 27 -5 l -14 -18 Z" fill="white"/>
     <rect x="480" y="910" width="700" height="66" rx="8" fill="#101923"/>
