@@ -6,8 +6,12 @@ import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangl
 test("generated antenna open end is not dangling", async () => {
   const circuit = new Circuit()
   circuit.add(
-    <board width={30} height={25} schematicDisabled routingDisabled>
-      <antenna name="Radio" antennaShape="2.4ghz_quarter_wave_monopole" />
+    <board width={70} height={25} schematicDisabled routingDisabled>
+      <antenna
+        name="Radio"
+        pcbX={-15.5}
+        antennaShape="2.4ghz_quarter_wave_monopole"
+      />
       <pcbnotetext
         text="Generated antenna: open end is intentional"
         pcbY={-9}
