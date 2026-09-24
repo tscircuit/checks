@@ -6,6 +6,7 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   noExternal: [
+    "@tscircuit/circuit-json-schematic-placement-analysis",
     "@tscircuit/jlcpcb-manufacturing-specs",
     "@tscircuit/circuit-json-to-flattenjs",
   ],
