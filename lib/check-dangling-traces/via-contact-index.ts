@@ -1,8 +1,9 @@
-import type {
-  ConnectivityNetId,
-  PcbTraceId,
-  PcbViaId,
-  PcbCopperLayer,
+import {
+  CONTACT_EPSILON_MM,
+  type ConnectivityNetId,
+  type PcbCopperLayer,
+  type PcbTraceId,
+  type PcbViaId,
 } from "./types"
 import {
   all_layers,
@@ -14,281 +15,265 @@ import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import { getPads, getPadToPadGap } from "../check-pad-clearance/common"
-import { getPourContactTester } from "./pour-contact-index"
+import type { getPourContactTester } from "./pour-contact-index"
 import { isPointInPad } from "../check-traces-are-contiguous/is-point-in-pad"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import type { PcbTraceRoutePoint } from "../util/route-point-touches-pad"
 
-type ViaContact = {
+/** Via copper in board XY coordinates (mm). */
+interface ViaCopper {
+  id: PcbTraceId | PcbViaId
+  layers: PcbCopperLayer[]
   x: number
   y: number
   ownerTraceId?: PcbTraceId
+  /** Route-only vias without a diameter can only prove exact center contact. */
   radius?: number
   holeRadius?: number
+}
+
+interface ViaContact {
+  viaCopper: ViaCopper
   touchesPadOrPour: boolean
   touchingTraceIds: Set<PcbTraceId>
 }
 
 type ViaContactIndex = Map<ConnectivityNetId, Map<PcbCopperLayer, ViaContact[]>>
-const CONTACT_EPSILON = 1e-9
 
-type ViaContactContext = {
-  connectivity: ConnectivityMap
-  viaContactIndex: ViaContactIndex
+interface ViaContactContext {
+  circuitJson: AnyCircuitElement[]
+  connMap: ConnectivityMap
   touchesPour: ReturnType<typeof getPourContactTester>
-  pads: ReturnType<typeof getPads>
-  traces: PcbTrace[]
 }
 
-function addViaContact(
-  {
-    id,
-    layers,
-    contact,
-  }: {
-    id: PcbTraceId | PcbViaId
-    layers: PcbCopperLayer[]
-    contact: Omit<ViaContact, "touchesPadOrPour" | "touchingTraceIds">
-  },
-  {
-    connectivity,
-    viaContactIndex,
-    touchesPour,
-    pads,
-    traces,
-  }: ViaContactContext,
-) {
-  if (![contact.x, contact.y].every(Number.isFinite)) return
-  const netId = connectivity.getNetConnectedToId(id)
-  if (!netId) return
-  const touchesPadOrPour =
-    touchesPour({
-      netId,
-      layers,
-      center: contact,
-      radius: contact.radius ?? 0,
-      holeRadius: contact.holeRadius,
-    }) ||
-    pads.some((pad) => {
-      if (
-        connectivity.getNetConnectedToId(getPrimaryId(pad)) !== netId ||
-        !getLayersOfPcbElement(pad).some((layer) => layers.includes(layer))
-      ) {
-        return false
-      }
-      if (contact.radius === undefined) return isPointInPad(contact, pad)
-      const viaGeometry: PcbVia = {
-        type: "pcb_via",
-        pcb_via_id: id,
-        x: contact.x,
-        y: contact.y,
-        outer_diameter: contact.radius * 2,
-        hole_diameter: 0,
-        layers: all_layers.filter((layer) => layers.includes(layer)),
-      }
-      return getPadToPadGap(viaGeometry, pad) <= CONTACT_EPSILON
-    })
-  const touchingTraceIds = new Set<PcbTraceId>()
-  for (const trace of traces) {
-    if (
-      trace.route_thickness_mode === "interpolated" ||
-      connectivity.getNetConnectedToId(trace.pcb_trace_id) !== netId
-    ) {
-      continue
-    }
-    for (let i = 1; i < trace.route.length; i++) {
-      const segmentStart = trace.route[i - 1]!
-      const segmentEnd = trace.route[i]!
-      if (
-        segmentStart.route_type !== "wire" ||
-        segmentEnd.route_type !== "wire" ||
-        segmentStart.layer !== segmentEnd.layer ||
-        !layers.includes(segmentStart.layer) ||
-        !Number.isFinite(segmentStart.width) ||
-        segmentStart.width <= 0 ||
-        Math.hypot(
-          segmentStart.x - segmentEnd.x,
-          segmentStart.y - segmentEnd.y,
-        ) <= CONTACT_EPSILON
-      ) {
-        continue
-      }
-      let contactDistance = 0
-      if (contact.radius !== undefined) {
-        contactDistance = contact.radius + segmentStart.width / 2
-      }
-      if (
-        pointToSegmentDistance(contact, segmentStart, segmentEnd) <=
-        contactDistance + CONTACT_EPSILON
-      ) {
-        touchingTraceIds.add(trace.pcb_trace_id)
-        break
-      }
-    }
-  }
-  const viaContact: ViaContact = {
-    x: contact.x,
-    y: contact.y,
-    ownerTraceId: contact.ownerTraceId,
-    radius: contact.radius,
-    holeRadius: contact.holeRadius,
-    touchesPadOrPour,
-    touchingTraceIds,
-  }
-  const contactsByLayer =
-    viaContactIndex.get(netId) ?? new Map<PcbCopperLayer, ViaContact[]>()
-  for (const layer of layers) {
-    const contacts = contactsByLayer.get(layer) ?? []
-    contacts.push(viaContact)
-    contactsByLayer.set(layer, contacts)
-  }
-  viaContactIndex.set(netId, contactsByLayer)
-}
-
-/** Index actual via copper independently of lateral trace segments. */
-export function getViaContactIndex(
-  circuitJson: AnyCircuitElement[],
-  connectivity: ConnectivityMap,
-): ViaContactIndex {
-  const viaContactIndex: ViaContactIndex = new Map()
-  const touchesPour = getPourContactTester(circuitJson, connectivity)
-  const pads = getPads(circuitJson)
-  const traces = circuitJson.filter((element) => element.type === "pcb_trace")
-  const vias = circuitJson.filter((element) => element.type === "pcb_via")
-  const board = circuitJson.find((element) => element.type === "pcb_board")
-  const layerCount = board?.num_layers
-  const innerLayers = all_layers.filter((layer) => layer.startsWith("inner"))
-  let boardInnerLayers = innerLayers
+function getBoardLayerStack(circuitJson: AnyCircuitElement[]) {
+  const layerCount = circuitJson.find(
+    (element) => element.type === "pcb_board",
+  )?.num_layers
+  let innerLayers = all_layers.filter((layer) => layer.startsWith("inner"))
   if (layerCount !== undefined) {
-    boardInnerLayers = innerLayers.slice(0, Math.max(0, layerCount - 2))
+    innerLayers = innerLayers.slice(0, Math.max(0, layerCount - 2))
   }
-  const boardLayerStack = ["top", ...boardInnerLayers]
-  if (layerCount !== 1) {
-    boardLayerStack.push("bottom")
-  }
-  const viaContactContext = {
-    connectivity,
-    viaContactIndex,
-    touchesPour,
-    pads,
-    traces,
-  }
+  const boardLayerStack: string[] = ["top", ...innerLayers]
+  if (layerCount !== 1) boardLayerStack.push("bottom")
+  return boardLayerStack
+}
 
-  for (const via of vias) {
-    if (!Number.isFinite(via.outer_diameter) || via.outer_diameter <= 0)
-      continue
-    addViaContact(
-      {
-        id: via.pcb_via_id,
-        layers: getLayersOfPcbElement(via),
-        contact: {
-          x: via.x,
-          y: via.y,
-          ownerTraceId: via.pcb_trace_id,
-          radius: via.outer_diameter / 2,
-          holeRadius: via.hole_diameter / 2,
-        },
-      },
-      viaContactContext,
+function getPcbViaCoppers(vias: PcbVia[]): ViaCopper[] {
+  return vias
+    .filter(
+      (via) => Number.isFinite(via.outer_diameter) && via.outer_diameter > 0,
     )
-  }
+    .map((via) => ({
+      id: via.pcb_via_id,
+      layers: getLayersOfPcbElement(via),
+      x: via.x,
+      y: via.y,
+      ownerTraceId: via.pcb_trace_id,
+      radius: via.outer_diameter / 2,
+      holeRadius: via.hole_diameter / 2,
+    }))
+}
 
-  // Route-only inputs may not have materialized pcb_via records yet. Expand
-  // their physical span using the board stack, including intermediate layers.
-  for (const trace of circuitJson) {
-    if (trace.type !== "pcb_trace") continue
+/**
+ * Route-only inputs may not have materialized pcb_via records yet. Their
+ * physical span covers every board layer between from_layer and to_layer.
+ */
+function getRouteViaCoppers(
+  { traces, vias }: { traces: PcbTrace[]; vias: PcbVia[] },
+  { circuitJson, connMap }: ViaContactContext,
+): ViaCopper[] {
+  const boardLayerStack = getBoardLayerStack(circuitJson)
+  const viaCoppers: ViaCopper[] = []
+  for (const trace of traces) {
     for (const point of trace.route) {
       if (point.route_type !== "via") continue
-      if (
-        vias.some(
-          (via) =>
-            Math.hypot(via.x - point.x, via.y - point.y) <= CONTACT_EPSILON &&
-            (via.pcb_trace_id === trace.pcb_trace_id ||
-              (!via.pcb_trace_id &&
-                connectivity.areIdsConnected(
-                  via.pcb_via_id,
-                  trace.pcb_trace_id,
-                ))),
-        )
-      ) {
-        continue
-      }
+      const hasPcbVia = vias.some(
+        (via) =>
+          Math.hypot(via.x - point.x, via.y - point.y) <= CONTACT_EPSILON_MM &&
+          (via.pcb_trace_id === trace.pcb_trace_id ||
+            (!via.pcb_trace_id &&
+              connMap.areIdsConnected(via.pcb_via_id, trace.pcb_trace_id))),
+      )
+      if (hasPcbVia) continue
       const fromLayerIndex = boardLayerStack.indexOf(point.from_layer)
       const toLayerIndex = boardLayerStack.indexOf(point.to_layer)
       if (fromLayerIndex < 0 || toLayerIndex < 0) continue
       const diameter = point.outer_diameter
-      if (
-        diameter !== undefined &&
-        (!Number.isFinite(diameter) || diameter <= 0)
-      ) {
-        continue
-      }
       let radius: number | undefined
       if (diameter !== undefined) {
+        if (!Number.isFinite(diameter) || diameter <= 0) continue
         radius = diameter / 2
       }
-      addViaContact(
-        {
-          id: trace.pcb_trace_id,
-          layers: boardLayerStack.slice(
-            Math.min(fromLayerIndex, toLayerIndex),
-            Math.max(fromLayerIndex, toLayerIndex) + 1,
-          ),
-          contact: {
-            x: point.x,
-            y: point.y,
-            ownerTraceId: trace.pcb_trace_id,
-            radius,
-          },
-        },
-        viaContactContext,
-      )
+      viaCoppers.push({
+        id: trace.pcb_trace_id,
+        layers: boardLayerStack.slice(
+          Math.min(fromLayerIndex, toLayerIndex),
+          Math.max(fromLayerIndex, toLayerIndex) + 1,
+        ),
+        x: point.x,
+        y: point.y,
+        ownerTraceId: trace.pcb_trace_id,
+        radius,
+      })
     }
   }
-  return viaContactIndex
+  return viaCoppers
 }
 
-export function endpointTouchesVia({
-  point,
-  width,
-  ownerTrace,
-  index,
-  connectivity,
+function viaTouchesPad({
+  viaCopper,
+  pad,
 }: {
-  point: PcbTrace["route"][number]
-  width: number
-  ownerTrace: PcbTrace
-  index: ViaContactIndex
-  connectivity: ConnectivityMap
-}): boolean {
-  if (point.route_type !== "wire" || !Number.isFinite(width) || width <= 0)
-    return false
-  const netId = connectivity.getNetConnectedToId(ownerTrace.pcb_trace_id)
-  if (!netId) return false
-  const vias = index.get(netId)?.get(point.layer) ?? []
-  for (const via of vias) {
-    if (via.ownerTraceId === ownerTrace.pcb_trace_id) continue
+  viaCopper: ViaCopper
+  pad: ReturnType<typeof getPads>[number]
+}) {
+  if (viaCopper.radius === undefined) return isPointInPad(viaCopper, pad)
+  const viaGeometry: PcbVia = {
+    type: "pcb_via",
+    pcb_via_id: viaCopper.id,
+    x: viaCopper.x,
+    y: viaCopper.y,
+    outer_diameter: viaCopper.radius * 2,
+    hole_diameter: 0,
+    layers: all_layers.filter((layer) => viaCopper.layers.includes(layer)),
+  }
+  return getPadToPadGap(viaGeometry, pad) <= CONTACT_EPSILON_MM
+}
 
-    // A lone via needs an onward connection to a pad, pour, or another trace.
-    let hasOnwardConnection = via.touchesPadOrPour
-    for (const traceId of via.touchingTraceIds) {
-      if (traceId !== ownerTrace.pcb_trace_id) {
-        hasOnwardConnection = true
-        break
-      }
+function traceTouchesVia({
+  trace,
+  viaCopper,
+}: {
+  trace: PcbTrace
+  viaCopper: ViaCopper
+}) {
+  if (trace.route_thickness_mode === "interpolated") return false
+  for (let i = 1; i < trace.route.length; i++) {
+    const segmentStart = trace.route[i - 1]!
+    const segmentEnd = trace.route[i]!
+    if (
+      segmentStart.route_type !== "wire" ||
+      segmentEnd.route_type !== "wire" ||
+      segmentStart.layer !== segmentEnd.layer ||
+      !viaCopper.layers.includes(segmentStart.layer) ||
+      !Number.isFinite(segmentStart.width) ||
+      segmentStart.width <= 0 ||
+      Math.hypot(
+        segmentStart.x - segmentEnd.x,
+        segmentStart.y - segmentEnd.y,
+      ) <= CONTACT_EPSILON_MM
+    ) {
+      continue
     }
-    if (!hasOnwardConnection) continue
-
-    // Without a diameter, a route-only via can only prove exact center contact.
     let contactDistance = 0
-    if (via.radius !== undefined) {
-      contactDistance = via.radius + width / 2
+    if (viaCopper.radius !== undefined) {
+      contactDistance = viaCopper.radius + segmentStart.width / 2
     }
     if (
-      Math.hypot(point.x - via.x, point.y - via.y) <=
-      contactDistance + CONTACT_EPSILON
+      pointToSegmentDistance(viaCopper, segmentStart, segmentEnd) <=
+      contactDistance + CONTACT_EPSILON_MM
     ) {
       return true
     }
   }
   return false
+}
+
+/** Indexes via copper by net and layer, with the copper each via reaches. */
+export function getViaContactIndex(ctx: ViaContactContext): ViaContactIndex {
+  const { circuitJson, connMap, touchesPour } = ctx
+  const pads = getPads(circuitJson)
+  const traces = circuitJson.filter((element) => element.type === "pcb_trace")
+  const vias = circuitJson.filter((element) => element.type === "pcb_via")
+  const viaCoppers = [
+    ...getPcbViaCoppers(vias),
+    ...getRouteViaCoppers({ traces, vias }, ctx),
+  ]
+  const viaContactIndex: ViaContactIndex = new Map()
+
+  for (const viaCopper of viaCoppers) {
+    if (!Number.isFinite(viaCopper.x) || !Number.isFinite(viaCopper.y)) continue
+    const netId = connMap.getNetConnectedToId(viaCopper.id)
+    if (!netId) continue
+    const touchesPadOrPour =
+      touchesPour({
+        netId,
+        layers: viaCopper.layers,
+        center: viaCopper,
+        radius: viaCopper.radius ?? 0,
+        holeRadius: viaCopper.holeRadius,
+      }) ||
+      pads.some(
+        (pad) =>
+          connMap.getNetConnectedToId(getPrimaryId(pad)) === netId &&
+          getLayersOfPcbElement(pad).some((layer) =>
+            viaCopper.layers.includes(layer),
+          ) &&
+          viaTouchesPad({ viaCopper, pad }),
+      )
+    const touchingTraceIds = new Set<PcbTraceId>()
+    for (const trace of traces) {
+      if (
+        connMap.getNetConnectedToId(trace.pcb_trace_id) === netId &&
+        traceTouchesVia({ trace, viaCopper })
+      ) {
+        touchingTraceIds.add(trace.pcb_trace_id)
+      }
+    }
+
+    const viaContact: ViaContact = {
+      viaCopper,
+      touchesPadOrPour,
+      touchingTraceIds,
+    }
+    const contactsByLayer =
+      viaContactIndex.get(netId) ?? new Map<PcbCopperLayer, ViaContact[]>()
+    for (const layer of viaCopper.layers) {
+      const contacts = contactsByLayer.get(layer) ?? []
+      contacts.push(viaContact)
+      contactsByLayer.set(layer, contacts)
+    }
+    viaContactIndex.set(netId, contactsByLayer)
+  }
+  return viaContactIndex
+}
+
+/** A via connects an endpoint only when it also reaches other copper. */
+export function endpointTouchesVia(
+  {
+    trace,
+    point,
+    width,
+  }: {
+    trace: PcbTrace
+    point: Extract<PcbTraceRoutePoint, { route_type: "wire" }>
+    width: number
+  },
+  {
+    connMap,
+    viaContactIndex,
+  }: { connMap: ConnectivityMap; viaContactIndex: ViaContactIndex },
+): boolean {
+  if (!Number.isFinite(width) || width <= 0) return false
+  const netId = connMap.getNetConnectedToId(trace.pcb_trace_id)
+  if (!netId) return false
+  const viaContacts = viaContactIndex.get(netId)?.get(point.layer) ?? []
+  return viaContacts.some(
+    ({ viaCopper, touchesPadOrPour, touchingTraceIds }) => {
+      if (viaCopper.ownerTraceId === trace.pcb_trace_id) return false
+      const hasOnwardConnection =
+        touchesPadOrPour ||
+        [...touchingTraceIds].some((traceId) => traceId !== trace.pcb_trace_id)
+      if (!hasOnwardConnection) return false
+      let contactDistance = 0
+      if (viaCopper.radius !== undefined) {
+        contactDistance = viaCopper.radius + width / 2
+      }
+      return (
+        Math.hypot(point.x - viaCopper.x, point.y - viaCopper.y) <=
+        contactDistance + CONTACT_EPSILON_MM
+      )
+    },
+  )
 }

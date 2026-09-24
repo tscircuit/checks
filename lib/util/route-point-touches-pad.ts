@@ -5,7 +5,6 @@ import { getLayersOfPcbElement } from "./getLayersOfPcbElement"
 export type PcbPad = PcbSmtPad | PcbPlatedHole
 export type PcbTraceRoutePoint = PcbTrace["route"][number]
 
-/** Board-world points in mm: +X right, +Y up, +Z above, right-handed. */
 export function routePointTouchesPad(point: PcbTraceRoutePoint, pad: PcbPad) {
   return (
     point.route_type === "wire" &&

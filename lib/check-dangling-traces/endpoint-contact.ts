@@ -1,97 +1,194 @@
-import type { ConnectivityNetId, PcbTraceLayer } from "./types"
-import type { AnyCircuitElement, PcbTrace } from "circuit-json"
+import { CONTACT_EPSILON_MM, type ConnectivityNetId } from "./types"
+import type { AnyCircuitElement, LayerRef, PcbTrace } from "circuit-json"
 import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import {
   getFullConnectivityMapFromCircuitJson,
   type ConnectivityMap,
 } from "circuit-json-to-connectivity-map"
-import {
-  routePointTouchesPad,
-  type PcbTraceRoutePoint,
+import type {
+  PcbPad,
+  PcbTraceRoutePoint,
 } from "../util/route-point-touches-pad"
 import { getPourContactTester } from "./pour-contact-index"
 import { endpointTouchesVia, getViaContactIndex } from "./via-contact-index"
 
-type PcbTraceWireRoutePoint = Extract<
+export type PcbTraceWireRoutePoint = Extract<
   PcbTraceRoutePoint,
   { route_type: "wire" }
 >
 export type TraceEndpoint = "start" | "end"
+
+/** The first non-zero-length wire segment reached from a trace endpoint. */
+export interface TerminalWireSegment {
+  /** Constant-width segments take their width from their first route point. */
+  width: number
+  /** Farthest point of the straight run that leaves the endpoint. */
+  inwardPoint: PcbTraceWireRoutePoint
+}
+
 interface TraceWireSegment {
   trace: PcbTrace
-  // This pair supplies the copper width and distance used for contact.
   start: PcbTraceWireRoutePoint
   end: PcbTraceWireRoutePoint
-  // The full straight span keeps subdivision from hiding a branch.
+  // The full straight run keeps route subdivision from hiding a branch.
   centerlineStart: PcbTraceWireRoutePoint
   centerlineEnd: PcbTraceWireRoutePoint
 }
 
 type TraceWireSegmentsByNetAndLayer = Map<
   ConnectivityNetId,
-  Map<PcbTraceLayer, TraceWireSegment[]>
+  Map<LayerRef, TraceWireSegment[]>
 >
 
-const ENDPOINT_CONTACT_EPSILON = 1e-9
-const TRACE_SEGMENT_GEOMETRY_EPSILON = 1e-9
+export interface EndpointContactContext {
+  circuitJson: AnyCircuitElement[]
+  portPads: PcbPad[]
+  connMap?: ConnectivityMap
+  touchesPour?: ReturnType<typeof getPourContactTester>
+  traceWireSegmentsByNetAndLayer?: TraceWireSegmentsByNetAndLayer
+  viaContactIndex?: ReturnType<typeof getViaContactIndex>
+}
+
+/** Walks from `anchorPoint` through `route[fromIndex]` while the route stays straight. */
+function getStraightRunEnd({
+  route,
+  anchorPoint,
+  fromIndex,
+  step,
+}: {
+  route: PcbTraceRoutePoint[]
+  anchorPoint: PcbTraceWireRoutePoint
+  fromIndex: number
+  step: 1 | -1
+}): PcbTraceWireRoutePoint {
+  let runEnd = anchorPoint
+  for (let i = fromIndex; i >= 0 && i < route.length; i += step) {
+    const nextPoint = route[i]!
+    if (
+      nextPoint.route_type !== "wire" ||
+      nextPoint.layer !== anchorPoint.layer ||
+      pointToSegmentDistance(runEnd, anchorPoint, nextPoint) >
+        CONTACT_EPSILON_MM
+    ) {
+      break
+    }
+    runEnd = nextPoint
+  }
+  return runEnd
+}
+
+export function getTerminalWireSegment(
+  trace: PcbTrace,
+  endpoint: TraceEndpoint,
+): TerminalWireSegment | undefined {
+  // Interpolated traces have flat longitudinal ends, so a point-radius contact
+  // test would overestimate their endpoint copper.
+  if (trace.route_thickness_mode === "interpolated") return undefined
+
+  const { route } = trace
+  let outerIndex = 0
+  let step: 1 | -1 = 1
+  if (endpoint === "end") {
+    outerIndex = route.length - 1
+    step = -1
+  }
+  let innerIndex = outerIndex + step
+  while (innerIndex >= 0 && innerIndex < route.length) {
+    const outerPoint = route[outerIndex]!
+    const innerPoint = route[innerIndex]!
+    if (
+      outerPoint.route_type !== "wire" ||
+      innerPoint.route_type !== "wire" ||
+      outerPoint.layer !== innerPoint.layer
+    ) {
+      return undefined
+    }
+    const isDuplicatePoint =
+      Math.hypot(outerPoint.x - innerPoint.x, outerPoint.y - innerPoint.y) <=
+      CONTACT_EPSILON_MM
+    if (!isDuplicatePoint) {
+      let width = outerPoint.width
+      if (endpoint === "end") width = innerPoint.width
+      const inwardPoint = getStraightRunEnd({
+        route,
+        anchorPoint: outerPoint,
+        fromIndex: innerIndex,
+        step,
+      })
+      return { width, inwardPoint }
+    }
+    outerIndex = innerIndex
+    innerIndex += step
+  }
+  return undefined
+}
+
+/** Walks backward from segment `start`→`end` while the route stays straight. */
+function getStraightRunStart({
+  route,
+  startIndex,
+  start,
+  end,
+}: {
+  route: PcbTraceRoutePoint[]
+  startIndex: number
+  start: PcbTraceWireRoutePoint
+  end: PcbTraceWireRoutePoint
+}): PcbTraceWireRoutePoint {
+  let runStart = start
+  for (let i = startIndex - 1; i >= 0; i--) {
+    const previousPoint = route[i]!
+    if (
+      previousPoint.route_type !== "wire" ||
+      previousPoint.layer !== end.layer ||
+      pointToSegmentDistance(runStart, previousPoint, end) > CONTACT_EPSILON_MM
+    ) {
+      break
+    }
+    runStart = previousPoint
+  }
+  return runStart
+}
 
 function getTraceWireSegmentsByNetAndLayer(
-  pcbTraces: PcbTrace[],
-  fullConnectivityMap: ConnectivityMap,
+  circuitJson: AnyCircuitElement[],
+  connMap: ConnectivityMap,
 ): TraceWireSegmentsByNetAndLayer {
   const segmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer = new Map()
 
-  for (const trace of pcbTraces) {
-    // Interpolated segments need position-dependent width evaluation. Keep
-    // this focused fix conservative until that geometry is available here.
+  for (const trace of circuitJson) {
+    if (trace.type !== "pcb_trace") continue
+    // Interpolated segments need position-dependent width evaluation, which
+    // this check does not model yet.
     if (trace.route_thickness_mode === "interpolated") continue
-
-    const netId = fullConnectivityMap.getNetConnectedToId(trace.pcb_trace_id)
+    const netId = connMap.getNetConnectedToId(trace.pcb_trace_id)
     if (!netId) continue
 
     for (let i = 0; i < trace.route.length - 1; i++) {
-      const start = trace.route[i]
-      const end = trace.route[i + 1]
-
+      const start = trace.route[i]!
+      const end = trace.route[i + 1]!
       if (start.route_type !== "wire" || end.route_type !== "wire") continue
       if (start.layer !== end.layer) continue
-      if (
-        Math.hypot(start.x - end.x, start.y - end.y) <=
-        TRACE_SEGMENT_GEOMETRY_EPSILON
-      ) {
+      if (Math.hypot(start.x - end.x, start.y - end.y) <= CONTACT_EPSILON_MM) {
         continue
       }
 
-      const segmentsByLayer = segmentsByNetAndLayer.get(netId) ?? new Map()
+      const centerlineStart = getStraightRunStart({
+        route: trace.route,
+        startIndex: i,
+        start,
+        end,
+      })
+      const centerlineEnd = getStraightRunEnd({
+        route: trace.route,
+        anchorPoint: centerlineStart,
+        fromIndex: i + 1,
+        step: 1,
+      })
+      const segmentsByLayer =
+        segmentsByNetAndLayer.get(netId) ??
+        new Map<LayerRef, TraceWireSegment[]>()
       const segments = segmentsByLayer.get(start.layer) ?? []
-      // Preserve the physical straight span even if the route subdivides it.
-      // Copper width still comes from the original segment's start point.
-      let centerlineStart = start
-      let centerlineEnd = end
-      for (let j = i - 1; j >= 0; j--) {
-        const previous = trace.route[j]
-        if (
-          previous.route_type !== "wire" ||
-          previous.layer !== start.layer ||
-          pointToSegmentDistance(centerlineStart, previous, centerlineEnd) >
-            TRACE_SEGMENT_GEOMETRY_EPSILON
-        ) {
-          break
-        }
-        centerlineStart = previous
-      }
-      for (let j = i + 2; j < trace.route.length; j++) {
-        const next = trace.route[j]
-        if (
-          next.route_type !== "wire" ||
-          next.layer !== start.layer ||
-          pointToSegmentDistance(centerlineEnd, centerlineStart, next) >
-            TRACE_SEGMENT_GEOMETRY_EPSILON
-        ) {
-          break
-        }
-        centerlineEnd = next
-      }
       segments.push({ trace, start, end, centerlineStart, centerlineEnd })
       segmentsByLayer.set(start.layer, segments)
       segmentsByNetAndLayer.set(netId, segmentsByLayer)
@@ -101,227 +198,129 @@ function getTraceWireSegmentsByNetAndLayer(
   return segmentsByNetAndLayer
 }
 
-function getEndpointTraceWireSegment(
-  trace: PcbTrace,
-  endpoint: TraceEndpoint,
-): Pick<TraceWireSegment, "start" | "end"> | undefined {
-  // Interpolated traces have flat longitudinal ends, so a point-radius contact
-  // test would overestimate their endpoint copper.
-  if (trace.route_thickness_mode === "interpolated") return undefined
-
-  let scanIndex = 0
-  let scanDirection = 1
-  if (endpoint === "end") {
-    scanIndex = trace.route.length - 2
-    scanDirection = -1
-  }
-
-  while (scanIndex >= 0 && scanIndex < trace.route.length - 1) {
-    const segmentStart = trace.route[scanIndex]
-    const segmentEnd = trace.route[scanIndex + 1]
-
-    if (
-      segmentStart?.route_type !== "wire" ||
-      segmentEnd?.route_type !== "wire" ||
-      segmentStart.layer !== segmentEnd.layer
-    ) {
-      return undefined
-    }
-
-    if (
-      Math.hypot(segmentStart.x - segmentEnd.x, segmentStart.y - segmentEnd.y) >
-      TRACE_SEGMENT_GEOMETRY_EPSILON
-    ) {
-      // A constant-width segment takes its thickness from its start route point.
-      return { start: segmentStart, end: segmentEnd }
-    }
-
-    // Skip duplicate endpoint points; they do not define a wire segment.
-    scanIndex += scanDirection
-  }
-
-  return undefined
-}
-
-function getEndpointTraceCopperWidth(trace: PcbTrace, endpoint: TraceEndpoint) {
-  return getEndpointTraceWireSegment(trace, endpoint)?.start.width
-}
-
-// Follow the straight centerline so subdividing a route does not hide a branch.
-function getEndpointInwardPoint(trace: PcbTrace, endpoint: TraceEndpoint) {
-  const terminalSegment = getEndpointTraceWireSegment(trace, endpoint)
-  if (!terminalSegment) return undefined
-  let outerPoint = terminalSegment.start
-  let inwardPoint = terminalSegment.end
-  let step = 1
-  if (endpoint === "end") {
-    outerPoint = terminalSegment.end
-    inwardPoint = terminalSegment.start
-    step = -1
-  }
-  let routeIndex = trace.route.indexOf(inwardPoint) + step
-  while (routeIndex >= 0 && routeIndex < trace.route.length) {
-    const nextPoint = trace.route[routeIndex]
-    if (nextPoint.route_type !== "wire" || nextPoint.layer !== outerPoint.layer)
-      break
-    if (
-      pointToSegmentDistance(inwardPoint, outerPoint, nextPoint) >
-      TRACE_SEGMENT_GEOMETRY_EPSILON
-    ) {
-      break
-    }
-    inwardPoint = nextPoint
-    routeIndex += step
-  }
-  return inwardPoint
-}
-
-function routePointTouchesLogicallyConnectedTraceCopper({
+function endpointTouchesTraceSegment({
   point,
-  endpointTraceCopperWidth,
-  ownerTrace,
-  traceWireSegmentsByNetAndLayer,
-  fullConnectivityMap,
+  terminalSegment,
+  segment,
 }: {
-  point: PcbTraceRoutePoint
-  endpointTraceCopperWidth: number
-  ownerTrace: PcbTrace
-  traceWireSegmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer
-  fullConnectivityMap: ConnectivityMap
-}): boolean {
-  if (point.route_type !== "wire") return false
+  point: PcbTraceWireRoutePoint
+  terminalSegment: TerminalWireSegment
+  segment: TraceWireSegment
+}) {
+  const distance = pointToSegmentDistance(point, segment.start, segment.end)
+  const endpointRadius = terminalSegment.width / 2
+  const segmentRadius = segment.start.width / 2
 
-  const ownerNetId = fullConnectivityMap.getNetConnectedToId(
-    ownerTrace.pcb_trace_id,
-  )
-  if (!ownerNetId) return false
-  const candidateSegments =
-    traceWireSegmentsByNetAndLayer.get(ownerNetId)?.get(point.layer) ?? []
-
-  let endpoint: TraceEndpoint = "end"
-  if (ownerTrace.route[0] === point) {
-    endpoint = "start"
-  }
-  const inwardNeighbor = getEndpointInwardPoint(ownerTrace, endpoint)
-
-  // Logical connectivity selects the eligible net. Geometry must still prove
-  // that this exact endpoint directly touches copper outside its owner trace.
-  for (const segment of candidateSegments) {
-    if (segment.trace.pcb_trace_id === ownerTrace.pcb_trace_id) continue
-
-    // Copper fully contained in a wider conductor does not form a free spur.
-    if (
-      pointToSegmentDistance(point, segment.start, segment.end) +
-        endpointTraceCopperWidth / 2 <=
-      segment.start.width / 2 + ENDPOINT_CONTACT_EPSILON
-    ) {
-      return true
-    }
-
-    // A short branch can sit inside the rounded copper at its own junction.
-    // Contact at the inward neighbor cannot justify its outward, free end.
-    if (
-      inwardNeighbor?.route_type === "wire" &&
-      inwardNeighbor.layer === point.layer &&
-      pointToSegmentDistance(
-        inwardNeighbor,
-        segment.centerlineStart,
-        segment.centerlineEnd,
-      ) <= TRACE_SEGMENT_GEOMETRY_EPSILON &&
-      pointToSegmentDistance(
-        point,
-        segment.centerlineStart,
-        segment.centerlineEnd,
-      ) > TRACE_SEGMENT_GEOMETRY_EPSILON
-    ) {
-      continue
-    }
-
-    const maximumContactDistance =
-      endpointTraceCopperWidth / 2 +
-      segment.start.width / 2 +
-      ENDPOINT_CONTACT_EPSILON
-    if (
-      pointToSegmentDistance(point, segment.start, segment.end) <=
-      maximumContactDistance
-    ) {
-      return true
-    }
+  // Copper fully contained in a wider conductor does not form a free spur.
+  if (distance + endpointRadius <= segmentRadius + CONTACT_EPSILON_MM) {
+    return true
   }
 
-  return false
+  // A short branch can sit inside the rounded copper at its own junction.
+  // Contact at the junction cannot justify the branch's free outward end.
+  const branchesFromSegment =
+    pointToSegmentDistance(
+      terminalSegment.inwardPoint,
+      segment.centerlineStart,
+      segment.centerlineEnd,
+    ) <= CONTACT_EPSILON_MM &&
+    pointToSegmentDistance(
+      point,
+      segment.centerlineStart,
+      segment.centerlineEnd,
+    ) > CONTACT_EPSILON_MM
+  if (branchesFromSegment) return false
+
+  return distance <= endpointRadius + segmentRadius + CONTACT_EPSILON_MM
 }
 
-/** Tests endpoint copper contact in board XY coordinates (mm). */
-export function createEndpointContactTester(
+export function createEndpointContactContext(
   circuitJson: AnyCircuitElement[],
   connMap?: ConnectivityMap,
-) {
-  const pcbTraces = circuitJson.filter(
-    (element) => element.type === "pcb_trace",
-  )
-  const pads = circuitJson
+): EndpointContactContext {
+  const portPads = circuitJson
     .filter(
       (element) =>
         element.type === "pcb_smtpad" || element.type === "pcb_plated_hole",
     )
     .filter((pad) => pad.pcb_port_id)
-  let fullConnectivityMap = connMap
-  let traceSegments: TraceWireSegmentsByNetAndLayer | undefined
-  let viaContacts: ReturnType<typeof getViaContactIndex> | undefined
-  let touchesPour: ReturnType<typeof getPourContactTester> | undefined
+  return { circuitJson, portPads, connMap }
+}
 
-  return (trace: PcbTrace, endpoint: TraceEndpoint) => {
-    let point = trace.route[0]
-    if (endpoint === "end") point = trace.route[trace.route.length - 1]
-    const width = getEndpointTraceCopperWidth(trace, endpoint)
-    const hasWireSegment = width !== undefined
-    if (pads.some((pad) => routePointTouchesPad(point, pad))) {
-      return { isConnected: true, hasWireSegment }
-    }
-    if (point.route_type !== "wire" || width === undefined) {
-      return { isConnected: false, hasWireSegment }
-    }
+// Contact geometry is built on first need, so boards whose endpoints all touch
+// pads never build connectivity, pour, trace, or via indexes.
+function getCachedConnMap(ctx: EndpointContactContext) {
+  ctx.connMap ??= getFullConnectivityMapFromCircuitJson(ctx.circuitJson)
+  return ctx.connMap
+}
 
-    fullConnectivityMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
-    const connectivity = fullConnectivityMap
-    const netId = connectivity.getNetConnectedToId(trace.pcb_trace_id)
-    touchesPour ??= getPourContactTester(circuitJson, connectivity)
-    if (
-      netId &&
-      touchesPour({
-        netId,
-        layers: [point.layer],
-        center: point,
-        radius: width / 2,
-      })
-    ) {
-      return { isConnected: true, hasWireSegment }
-    }
+function getCachedPourContactTester(ctx: EndpointContactContext) {
+  ctx.touchesPour ??= getPourContactTester(
+    ctx.circuitJson,
+    getCachedConnMap(ctx),
+  )
+  return ctx.touchesPour
+}
 
-    traceSegments ??= getTraceWireSegmentsByNetAndLayer(pcbTraces, connectivity)
-    if (
-      routePointTouchesLogicallyConnectedTraceCopper({
-        point,
-        endpointTraceCopperWidth: width,
-        ownerTrace: trace,
-        traceWireSegmentsByNetAndLayer: traceSegments,
-        fullConnectivityMap: connectivity,
-      })
-    ) {
-      return { isConnected: true, hasWireSegment }
-    }
+function getCachedTraceWireSegments(ctx: EndpointContactContext) {
+  ctx.traceWireSegmentsByNetAndLayer ??= getTraceWireSegmentsByNetAndLayer(
+    ctx.circuitJson,
+    getCachedConnMap(ctx),
+  )
+  return ctx.traceWireSegmentsByNetAndLayer
+}
 
-    viaContacts ??= getViaContactIndex(circuitJson, connectivity)
-    return {
-      isConnected: endpointTouchesVia({
-        point,
-        width,
-        ownerTrace: trace,
-        index: viaContacts,
-        connectivity,
-      }),
-      hasWireSegment,
-    }
+function getCachedViaContactIndex(ctx: EndpointContactContext) {
+  ctx.viaContactIndex ??= getViaContactIndex({
+    circuitJson: ctx.circuitJson,
+    connMap: getCachedConnMap(ctx),
+    touchesPour: getCachedPourContactTester(ctx),
+  })
+  return ctx.viaContactIndex
+}
+
+/** Tests whether a wire endpoint touches other same-net copper (board XY, mm). */
+export function endpointTouchesNetCopper(
+  {
+    trace,
+    point,
+    terminalSegment,
+  }: {
+    trace: PcbTrace
+    point: PcbTraceWireRoutePoint
+    terminalSegment: TerminalWireSegment
+  },
+  ctx: EndpointContactContext,
+): boolean {
+  const connMap = getCachedConnMap(ctx)
+  const netId = connMap.getNetConnectedToId(trace.pcb_trace_id)
+
+  const touchesPour = getCachedPourContactTester(ctx)
+  if (
+    netId &&
+    touchesPour({
+      netId,
+      layers: [point.layer],
+      center: point,
+      radius: terminalSegment.width / 2,
+    })
+  ) {
+    return true
   }
+
+  const traceWireSegments = getCachedTraceWireSegments(ctx)
+  if (netId) {
+    const segments = traceWireSegments.get(netId)?.get(point.layer) ?? []
+    const touchesTrace = segments.some(
+      (segment) =>
+        segment.trace.pcb_trace_id !== trace.pcb_trace_id &&
+        endpointTouchesTraceSegment({ point, terminalSegment, segment }),
+    )
+    if (touchesTrace) return true
+  }
+
+  return endpointTouchesVia(
+    { trace, point, width: terminalSegment.width },
+    { connMap, viaContactIndex: getCachedViaContactIndex(ctx) },
+  )
 }

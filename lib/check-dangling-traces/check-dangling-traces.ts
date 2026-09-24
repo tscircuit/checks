@@ -1,30 +1,87 @@
 import type {
   AnyCircuitElement,
   PcbPort,
+  PcbTrace,
   PcbTraceError,
   SourceTrace,
 } from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPcbTrace } from "@tscircuit/circuit-json-util"
+import { routePointTouchesPad } from "../util/route-point-touches-pad"
 import {
-  createEndpointContactTester,
+  createEndpointContactContext,
+  endpointTouchesNetCopper,
+  getTerminalWireSegment,
+  type EndpointContactContext,
+  type PcbTraceWireRoutePoint,
   type TraceEndpoint,
 } from "./endpoint-contact"
+import { CONTACT_EPSILON_MM } from "./types"
 
 type SourceTraceId = SourceTrace["source_trace_id"]
 type SourcePortId = PcbPort["source_port_id"]
 
-const ENDPOINT_CONTACT_EPSILON_MM = 1e-9
+interface DanglingEndpoint {
+  endpoint: TraceEndpoint
+  point: PcbTraceWireRoutePoint
+}
+
+function isEndpointDangling(
+  {
+    trace,
+    endpoint,
+    point,
+    hasExpectedPorts,
+  }: DanglingEndpoint & { trace: PcbTrace; hasExpectedPorts: boolean },
+  ctx: EndpointContactContext,
+): boolean {
+  if (ctx.portPads.some((pad) => routePointTouchesPad(point, pad))) {
+    return false
+  }
+  const terminalSegment = getTerminalWireSegment(trace, endpoint)
+  if (!terminalSegment) {
+    // Port-connected via-only fragments have no lateral wire end to inspect.
+    return !hasExpectedPorts
+  }
+  return !endpointTouchesNetCopper({ trace, point, terminalSegment }, ctx)
+}
+
+function getDanglingEndpoints(
+  { trace, hasExpectedPorts }: { trace: PcbTrace; hasExpectedPorts: boolean },
+  ctx: EndpointContactContext,
+): DanglingEndpoint[] {
+  const routeEndpoints = [
+    { endpoint: "start" as const, point: trace.route[0]! },
+    { endpoint: "end" as const, point: trace.route[trace.route.length - 1]! },
+  ]
+  const danglingEndpoints: DanglingEndpoint[] = []
+  for (const { endpoint, point } of routeEndpoints) {
+    if (point.route_type !== "wire") continue
+    if (isEndpointDangling({ trace, endpoint, point, hasExpectedPorts }, ctx)) {
+      danglingEndpoints.push({ endpoint, point })
+    }
+  }
+
+  // A closed loop's shared start and end point is reported once.
+  const [start, end] = danglingEndpoints
+  if (
+    start &&
+    end &&
+    start.point.layer === end.point.layer &&
+    Math.hypot(start.point.x - end.point.x, start.point.y - end.point.y) <=
+      CONTACT_EPSILON_MM
+  ) {
+    danglingEndpoints.pop()
+  }
+  return danglingEndpoints
+}
 
 /** Reports exposed trace endpoints, independently of required-port connectivity. */
 export function checkDanglingTraces(
   circuitJson: AnyCircuitElement[],
-  { connMap }: { connMap?: ConnectivityMap } = {},
+  options: { connMap?: ConnectivityMap } = {},
 ): PcbTraceError[] {
-  const errors: PcbTraceError[] = []
-  const pcbTraces = circuitJson.filter(
-    (element) => element.type === "pcb_trace",
-  )
+  const ctx = createEndpointContactContext(circuitJson, options.connMap)
   const sourceTracesById = new Map<SourceTraceId, SourceTrace>()
   const sourcePortIdsWithPcbPorts = new Set<SourcePortId>()
   for (const element of circuitJson) {
@@ -35,41 +92,27 @@ export function checkDanglingTraces(
       sourcePortIdsWithPcbPorts.add(element.source_port_id)
     }
   }
-  const getEndpointContact = createEndpointContactTester(circuitJson, connMap)
 
-  for (const trace of pcbTraces) {
+  const errors: PcbTraceError[] = []
+  for (const trace of circuitJson) {
+    if (trace.type !== "pcb_trace" || trace.route.length === 0) continue
     // Marked antenna copper has intentional open ends; feed traces remain checked.
     if (trace.is_antenna_trace === true) continue
-    if (trace.route.length === 0) continue
-    const firstPoint = trace.route[0]
-    const lastPoint = trace.route[trace.route.length - 1]
-    let sourceTrace: SourceTrace | undefined
+
+    let hasExpectedPorts = false
     if (trace.source_trace_id) {
-      sourceTrace = sourceTracesById.get(trace.source_trace_id)
+      const sourceTrace = sourceTracesById.get(trace.source_trace_id)
+      hasExpectedPorts = Boolean(
+        sourceTrace?.connected_source_port_ids.some((sourcePortId) =>
+          sourcePortIdsWithPcbPorts.has(sourcePortId),
+        ),
+      )
     }
-    const hasExpectedPorts = sourceTrace?.connected_source_port_ids.some((id) =>
-      sourcePortIdsWithPcbPorts.has(id),
-    )
-    const endpoints: { side: TraceEndpoint; point: typeof firstPoint }[] = [
-      { side: "start", point: firstPoint },
-      { side: "end", point: lastPoint },
-    ]
-    const endpointsCoincide =
-      firstPoint.route_type === "wire" &&
-      lastPoint.route_type === "wire" &&
-      firstPoint.layer === lastPoint.layer &&
-      Math.hypot(firstPoint.x - lastPoint.x, firstPoint.y - lastPoint.y) <=
-        ENDPOINT_CONTACT_EPSILON_MM
-    let startErrorReported = false
 
-    for (const { side, point } of endpoints) {
-      if (point.route_type !== "wire") continue
-      const contact = getEndpointContact(trace, side)
-      if (contact.isConnected) continue
-      // Port-connected via-only fragments have no lateral wire end to inspect.
-      if (hasExpectedPorts && !contact.hasWireSegment) continue
-      if (side === "end" && endpointsCoincide && startErrorReported) continue
-
+    for (const { endpoint, point } of getDanglingEndpoints(
+      { trace, hasExpectedPorts },
+      ctx,
+    )) {
       const traceName = getReadableNameForPcbTrace(
         circuitJson,
         trace.pcb_trace_id,
@@ -77,7 +120,7 @@ export function checkDanglingTraces(
       errors.push({
         type: "pcb_trace_error",
         error_type: "pcb_trace_error",
-        pcb_trace_error_id: `disconnected_endpoint_${trace.pcb_trace_id}_${side}`,
+        pcb_trace_error_id: `disconnected_endpoint_${trace.pcb_trace_id}_${endpoint}`,
         message: `Trace [${traceName}] has dangling endpoint at (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`,
         source_trace_id: trace.source_trace_id || `!${trace.pcb_trace_id}`,
         pcb_trace_id: trace.pcb_trace_id,
@@ -85,7 +128,6 @@ export function checkDanglingTraces(
         pcb_component_ids: [],
         pcb_port_ids: [],
       })
-      if (side === "start") startErrorReported = true
     }
   }
   return errors
