@@ -6,8 +6,12 @@ import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 test("generated antenna open end is not dangling", async () => {
   const circuit = new Circuit()
   circuit.add(
-    <board width={30} height={25} schematicDisabled routingDisabled>
-      <antenna name="Radio" antennaShape="2.4ghz_quarter_wave_monopole" />
+    <board width={70} height={25} schematicDisabled routingDisabled>
+      <antenna
+        name="Radio"
+        pcbX={-15.5}
+        antennaShape="2.4ghz_quarter_wave_monopole"
+      />
       <pcbnotetext
         text="BROKEN: intentional antenna end reported as error"
         pcbY={-9}
