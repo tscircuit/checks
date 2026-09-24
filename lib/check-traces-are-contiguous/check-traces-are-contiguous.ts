@@ -1,3 +1,4 @@
+import { getTracePortLayerMismatches } from "../util/trace-port-layer-connectivity"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import type {
   AnyCircuitElement,
@@ -285,7 +286,19 @@ function checkTracesAreContiguous(
     pcbConnectivityMap?: PcbConnectivityMap
   } = {},
 ): PcbTraceError[] {
-  const errors: PcbTraceError[] = []
+  const errors: PcbTraceError[] = getTracePortLayerMismatches(circuitJson).map(
+    ({ trace, point, index, port, padLayers }) => ({
+      type: "pcb_trace_error",
+      error_type: "pcb_trace_error",
+      pcb_trace_error_id: `missing_layer_connection_${trace.pcb_trace_id}_${index}_${port.pcb_port_id}`,
+      pcb_trace_id: trace.pcb_trace_id,
+      source_trace_id: trace.source_trace_id ?? `!${trace.pcb_trace_id}`,
+      pcb_port_ids: [port.pcb_port_id],
+      pcb_component_ids: port.pcb_component_id ? [port.pcb_component_id] : [],
+      center: { x: point.x, y: point.y },
+      message: `Trace [${getReadableNameForPcbTrace(circuitJson, trace.pcb_trace_id)}] on ${point.layer} is missing a via connection to port [${getReadableNameForPcbPort(circuitJson, port.pcb_port_id)}] on ${padLayers.join(", ")}.`,
+    }),
+  )
 
   const pcbPorts = circuitJson.filter(
     (el) => el.type === "pcb_port",

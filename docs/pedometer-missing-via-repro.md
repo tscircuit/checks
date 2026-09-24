@@ -2,8 +2,9 @@
 
 The literal published board contains a PMID trace ending on `inner2` directly
 under U2's top-only B2 pad, without a via. The current checks miss this connection
-error. This change is a reproduction, not a production DRC fix or a hardware
-repair recommendation.
+error. The original reproduction is retained below as historical evidence.
+The regression now passes with layer-aware trace/port attachment checking; this
+is not a hardware repair recommendation.
 
 ## Source and fixture integrity
 
@@ -50,7 +51,7 @@ The tests inspect **all** standalone vias and route-via entries: none is within
 asserted. A top trace (`source_net_6_mst0_0`) also touches B2; that does not connect
 the inner2 copper through the board dielectric.
 
-## What the current checks do
+## Behavior at the original reproduction baseline
 
 1. `checkEachPcbPortConnectedToPcbTraces` skips source traces with fewer than two
    source ports. This source trace has one port (`source_port_80`) and one net.
@@ -65,7 +66,7 @@ the inner2 copper through the board dielectric.
    missing-via endpoint. This is **not** a claim that the current aggregate check
    returns zero errors or reproduces the viewer's displayed error count.
 
-## Tests and visual evidence
+## Original reproduction tests and visual evidence
 
 Run:
 
@@ -79,7 +80,7 @@ bun test
 On this machine the old Sharp dependency required `npm rebuild sharp` after Bun
 blocked its install script. No dependency or lockfile change is included.
 
-The focused file has eight tests: fixture checksum, exact geometry and missing
+At the reproduction baseline, the focused file had eight tests: fixture checksum, exact geometry and missing
 via evidence, checker execution smoke tests, an in-memory valid-via control,
 three expected-failure tests, and the visual snapshot. `test.failing` means the
 three desired diagnostic assertions currently fail as expected; these are not
@@ -101,7 +102,7 @@ no copper geometry is invented or moved. Orange is inner2, red is top, magenta
 marks existing drills. The white arrow and dashed circle are explanatory
 annotations, **not an error emitted by the current checker**.
 
-Validation: 8 focused tests pass (including 3 expected failures); all 105 tests
+Original validation: 8 focused tests pass (including 3 expected failures); all 105 tests
 across 54 files pass; TypeScript and formatting of the new test pass. The three
 unwrapped diagnostic assertions were also run and each failed as expected.
 
@@ -112,3 +113,31 @@ and C10 = 0 V, with open-circuit resistance between C4's and C9's PMID pads.
 This JSON defect matches the supplied PCB viewer screenshot. It does not alone
 prove the cause of every measured hardware disconnection: the manufactured
 Gerbers, chip-internal paths, assembly, and other routes require separate review.
+
+
+## Fix and current regression coverage
+
+The shared `trace-port-layer-connectivity` helper validates each explicit wire-to-port
+attachment against the actual pad layers (or the port layers for port-only data).
+A cross-layer attachment needs a physical via that touches the endpoint copper
+and the target pad and spans both layers. Standalone vias and route-only vias are
+supported; emitted barrel spans override route declarations. Plated pads retain
+their emitted layers. A via on a different net still represents physical copper
+contact; short-circuit checks remain responsible for reporting that separate fault.
+
+Both the port checker and continuity checker report missing attachments, including
+the exact endpoint coordinates and affected port/component. The indexed PCB
+connectivity map rejects those false port edges too. This closes the metadata gap
+without changing the literal fixture, inferred IDs, or unrelated same-layer
+connectivity behavior. It does not replace the general route-continuity checks.
+
+All three original `test.failing` cases are now ordinary regression assertions.
+The zoomed snapshot includes the real continuity error returned by the checker;
+its arrow and layer overlay remain explanatory annotations. The test asserts the
+error's center and port/component IDs before rendering it.
+
+The additional focused controls cover same-layer pads, standalone and owned vias,
+buried/wrong-span vias, lateral gaps, via-to-pad contact, non-plated holes,
+port-only input, actual pad layers overriding broad port metadata, plated holes,
+route-only barrel spans, emitted-via precedence, start endpoints, duplicate
+references, and a valid neighboring trace that must not excuse the bad attachment.

@@ -1,3 +1,4 @@
+import { createTracePortLayerConnectivity } from "./trace-port-layer-connectivity"
 import type { AnyCircuitElement } from "circuit-json"
 import {
   ConnectivityMap,
@@ -86,6 +87,7 @@ export function createIndexedPcbConnectivityMap(
       }
     }
   }
+  const layerConnectivity = createTracePortLayerConnectivity(circuitJson)
   const connectionsByPort = new Map<string, string[][]>()
   for (const trace of traces) {
     for (const point of trace.route) {
@@ -95,6 +97,7 @@ export function createIndexedPcbConnectivityMap(
         point.end_pcb_port_id,
       ])) {
         if (!portId || !map.portIdToElm.has(portId)) continue
+        if (!layerConnectivity.canConnect(point, portId)) continue
         const entries = connectionsByPort.get(portId) ?? []
         entries.push(
           point.start_pcb_port_id === portId
