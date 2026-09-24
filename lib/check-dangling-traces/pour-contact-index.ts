@@ -1,17 +1,39 @@
 import type { ConnectivityNetId, PcbCopperLayer } from "./types"
 import { Circle, Point, Polygon } from "@flatten-js/core"
 import { getPourPolygon, getViaPolygon } from "@tscircuit/circuit-json-util"
-import type { AnyCircuitElement, LayerRef, PcbTrace } from "circuit-json"
+import type { AnyCircuitElement, LayerRef } from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { createCopperPolygonContactTester } from "../copper-pour-connectivity/create-copper-polygon-contact-tester"
 
 const POLYGON_SCALE = 1e6
 const CONTACT_EPSILON_MM = 1e-9
 
-/** Copper contact in right-handed board-world XY coordinates, +X right and
- * +Y up, in mm. Centers are points; their radius describes circular copper.
- * Retains pour holes and faces rather than treating its bounds as copper.
- */
+// Copper geometry uses board XY coordinates in mm before scaling.
+function getContactCopperPolygon({
+  center,
+  radius,
+  holeRadius,
+}: {
+  center: { x: number; y: number }
+  radius: number
+  holeRadius: number
+}): Polygon {
+  if (holeRadius > 0) {
+    // A pour inside the drill hole does not touch the via's copper ring.
+    return getViaPolygon(center, radius * 2, holeRadius * 2).scale(
+      POLYGON_SCALE,
+      POLYGON_SCALE,
+    )
+  }
+  return new Polygon(
+    new Circle(
+      new Point(center.x * POLYGON_SCALE, center.y * POLYGON_SCALE),
+      radius * POLYGON_SCALE,
+    ),
+  )
+}
+
+/** Preserve pour holes and faces when testing copper contact. */
 export function getPourContactTester(
   circuitJson: AnyCircuitElement[],
   connectivity: ConnectivityMap,
@@ -22,29 +44,32 @@ export function getPourContactTester(
   >()
   for (const pour of circuitJson) {
     if (pour.type !== "pcb_copper_pour" || !pour.source_net_id) continue
-    const net = connectivity.getNetConnectedToId(pour.source_net_id)
-    if (!net) continue
-    const pours = pourPolygonsByNetId.get(net) ?? []
+    const netId = connectivity.getNetConnectedToId(pour.source_net_id)
+    if (!netId) continue
+    const pours = pourPolygonsByNetId.get(netId) ?? []
     pours.push({
       layer: pour.layer,
       polygon: getPourPolygon(pour).scale(POLYGON_SCALE, POLYGON_SCALE),
     })
-    pourPolygonsByNetId.set(net, pours)
+    pourPolygonsByNetId.set(netId, pours)
   }
   const copperPolygonsTouch = createCopperPolygonContactTester(
     CONTACT_EPSILON_MM * POLYGON_SCALE,
   )
-  return function copperTouchesPour(
-    net: ConnectivityNetId,
-    layers: PcbCopperLayer[],
-    center: Pick<
-      Extract<PcbTrace["route"][number], { route_type: "wire" }>,
-      "x" | "y"
-    >,
-    radius: number,
+  return ({
+    netId,
+    layers,
+    center,
+    radius,
     holeRadius = 0,
-  ) {
-    const pours = pourPolygonsByNetId.get(net)
+  }: {
+    netId: ConnectivityNetId
+    layers: PcbCopperLayer[]
+    center: { x: number; y: number }
+    radius: number
+    holeRadius?: number
+  }) => {
+    const pours = pourPolygonsByNetId.get(netId)
     if (!pours?.length) return false
     if (radius === 0) {
       const contactPoint = new Point(
@@ -56,21 +81,7 @@ export function getPourContactTester(
           layers.includes(pour.layer) && pour.polygon.contains(contactPoint),
       )
     }
-    let copper: Polygon
-    if (holeRadius > 0) {
-      // A pour inside the drill hole does not touch the via's copper ring.
-      copper = getViaPolygon(center, radius * 2, holeRadius * 2).scale(
-        POLYGON_SCALE,
-        POLYGON_SCALE,
-      )
-    } else {
-      copper = new Polygon(
-        new Circle(
-          new Point(center.x * POLYGON_SCALE, center.y * POLYGON_SCALE),
-          radius * POLYGON_SCALE,
-        ),
-      )
-    }
+    const copper = getContactCopperPolygon({ center, radius, holeRadius })
     return pours.some(
       (pour) =>
         layers.includes(pour.layer) &&

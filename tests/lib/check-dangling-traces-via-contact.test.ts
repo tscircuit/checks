@@ -27,57 +27,90 @@ const board: PcbBoard = {
   num_layers: 4,
 }
 
-function sourceTrace(sourceTraceId: string, sourceNetId = "source_net_a") {
+function sourceTrace(
+  sourceTraceId: string,
+  connected_source_port_ids: string[] = [],
+) {
   return {
     type: "source_trace" as const,
     source_trace_id: sourceTraceId,
-    connected_source_port_ids: [],
-    connected_source_net_ids: [sourceNetId],
+    connected_source_port_ids,
+    connected_source_net_ids: ["source_net_a"],
   }
 }
 
-function wirePoint(
-  x: number,
-  y: number,
-  layer: PcbLayer = "top",
+function wirePoint({
+  x,
+  y,
+  layer = "top",
   width = 0.2,
-): WirePoint {
-  return { route_type: "wire", x, y, layer, width }
-}
-
-function viaPoint(
-  fromLayer: PcbLayer = "top",
-  toLayer: PcbLayer = "bottom",
-  diameter?: number,
-): ViaPoint {
+  start_pcb_port_id,
+  end_pcb_port_id,
+}: {
+  x: number
+  y: number
+  layer?: PcbLayer
+  width?: number
+  start_pcb_port_id?: string
+  end_pcb_port_id?: string
+}): WirePoint {
   return {
-    route_type: "via",
-    x: 0,
-    y: 0,
-    from_layer: fromLayer,
-    to_layer: toLayer,
-    ...(diameter === undefined ? {} : { outer_diameter: diameter }),
+    route_type: "wire",
+    x,
+    y,
+    layer,
+    width,
+    start_pcb_port_id,
+    end_pcb_port_id,
   }
 }
 
-function trace(
-  pcbTraceId: string,
-  route: RoutePoint[],
-  sourceTraceId?: string,
-): PcbTrace {
+function viaPoint({
+  from_layer = "top",
+  to_layer = "bottom",
+  outer_diameter,
+  x = 0,
+}: {
+  from_layer?: PcbLayer
+  to_layer?: PcbLayer
+  outer_diameter?: number
+  x?: number
+} = {}): ViaPoint {
+  return { route_type: "via", x, y: 0, from_layer, to_layer, outer_diameter }
+}
+
+function trace({
+  pcb_trace_id,
+  source_trace_id,
+  route,
+}: {
+  pcb_trace_id: string
+  source_trace_id?: string
+  route: PcbTrace["route"]
+}): PcbTrace {
   return {
     type: "pcb_trace",
-    pcb_trace_id: pcbTraceId,
+    pcb_trace_id,
+    source_trace_id,
     route,
-    ...(sourceTraceId === undefined ? {} : { source_trace_id: sourceTraceId }),
   }
 }
 
-function anchorPad(x: number, y: number, layer: PcbLayer = "top") {
+function anchorPad({
+  x,
+  y,
+  layer = "top",
+  pcb_port_id = `pcb_port_anchor_${x}_${y}_${layer}`,
+}: {
+  x: number
+  y: number
+  layer?: PcbLayer
+  pcb_port_id?: string
+}) {
   return {
     type: "pcb_smtpad" as const,
     pcb_smtpad_id: `pcb_smtpad_anchor_${x}_${y}_${layer}`,
-    pcb_port_id: `pcb_port_anchor_${x}_${y}_${layer}`,
+    pcb_port_id,
     shape: "rect" as const,
     x,
     y,
@@ -87,32 +120,59 @@ function anchorPad(x: number, y: number, layer: PcbLayer = "top") {
   }
 }
 
-function materializedVia(overrides: Partial<PcbVia> = {}): PcbVia {
-  return {
+function materializedVia({
+  pcb_trace_id,
+  source_net_id,
+  x = 0,
+  y = 0,
+  layers = ["top", "inner1", "inner2", "bottom"],
+}: {
+  pcb_trace_id?: string | null
+  source_net_id?: string
+  x?: number
+  y?: number
+  layers?: PcbVia["layers"]
+} = {}): PcbVia {
+  if (pcb_trace_id === undefined) {
+    pcb_trace_id = BRANCH_TRACE_ID
+  }
+  const pcbVia: PcbVia = {
     type: "pcb_via",
     pcb_via_id: "pcb_via_branch",
-    pcb_trace_id: BRANCH_TRACE_ID,
-    x: 0,
-    y: 0,
+    source_net_id,
+    x,
+    y,
     hole_diameter: 0.2,
     outer_diameter: 0.4,
-    layers: ["top", "inner1", "inner2", "bottom"],
-    ...overrides,
+    layers,
   }
+  if (pcb_trace_id !== null) {
+    pcbVia.pcb_trace_id = pcb_trace_id
+  }
+  return pcbVia
 }
 
-function targetCircuit(
-  layer: PcbLayer = "top",
+function targetCircuit({
+  layer = "top",
   endX = 0,
-  viaAnchorLayer: PcbLayer = layer === "top" ? "bottom" : "top",
-): AnyCircuitElement[] {
+  viaAnchorLayer,
+  branchRoute = [],
+}: {
+  layer?: PcbLayer
+  endX?: number
+  viaAnchorLayer?: PcbLayer
+  branchRoute?: RoutePoint[]
+} = {}): AnyCircuitElement[] {
+  if (viaAnchorLayer === undefined) {
+    viaAnchorLayer = "top"
+    if (layer === "top") {
+      viaAnchorLayer = "bottom"
+    }
+  }
   return [
     board,
     sourceTrace("source_trace_target"),
-    {
-      ...sourceTrace("source_trace_branch"),
-      connected_source_port_ids: ["source_port_via_anchor"],
-    },
+    sourceTrace("source_trace_branch", ["source_port_via_anchor"]),
     {
       type: "pcb_port",
       pcb_port_id: "pcb_port_via_anchor",
@@ -121,14 +181,26 @@ function targetCircuit(
       y: 0,
       layers: [viaAnchorLayer],
     },
-    { ...anchorPad(0, 0, viaAnchorLayer), pcb_port_id: "pcb_port_via_anchor" },
-    anchorPad(-2, 0, layer),
-    trace(
-      TARGET_TRACE_ID,
-      [wirePoint(-2, 0, layer), wirePoint(endX, 0, layer)],
-      "source_trace_target",
-    ),
-    trace(BRANCH_TRACE_ID, [], "source_trace_branch"),
+    anchorPad({
+      x: 0,
+      y: 0,
+      layer: viaAnchorLayer,
+      pcb_port_id: "pcb_port_via_anchor",
+    }),
+    anchorPad({ x: -2, y: 0, layer }),
+    trace({
+      pcb_trace_id: TARGET_TRACE_ID,
+      route: [
+        wirePoint({ x: -2, y: 0, layer }),
+        wirePoint({ x: endX, y: 0, layer }),
+      ],
+      source_trace_id: "source_trace_target",
+    }),
+    trace({
+      pcb_trace_id: BRANCH_TRACE_ID,
+      route: branchRoute,
+      source_trace_id: "source_trace_branch",
+    }),
   ]
 }
 
@@ -142,7 +214,7 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   for (const layer of ["top", "inner1", "inner2", "bottom"] as const) {
     test(`accepts materialized through-via contact on ${layer}`, () => {
       expect(
-        targetErrorIds([...targetCircuit(layer), materializedVia()]),
+        targetErrorIds([...targetCircuit({ layer }), materializedVia()]),
       ).toEqual([])
     })
   }
@@ -150,9 +222,9 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("accepts a via linked directly to the shared source net", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("inner1"),
+        ...targetCircuit({ layer: "inner1" }),
         materializedVia({
-          pcb_trace_id: undefined,
+          pcb_trace_id: null,
           source_net_id: "source_net_a",
         }),
       ]),
@@ -161,14 +233,17 @@ describe("net-level wire endpoints contacting separate via copper", () => {
 
   test("accepts contact at the combined trace and via copper radii", () => {
     expect(
-      targetErrorIds([...targetCircuit("inner1", 0.3), materializedVia()]),
+      targetErrorIds([
+        ...targetCircuit({ layer: "inner1", endX: 0.3 }),
+        materializedVia(),
+      ]),
     ).toEqual([])
   })
 
   test("rejects a copper-radius near miss", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("inner1", 0.300000002),
+        ...targetCircuit({ layer: "inner1", endX: 0.300000002 }),
         materializedVia(),
       ]),
     ).toEqual([END_ERROR])
@@ -177,9 +252,9 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("rejects a via on a different source net", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("inner1"),
+        ...targetCircuit({ layer: "inner1" }),
         materializedVia({
-          pcb_trace_id: undefined,
+          pcb_trace_id: null,
           source_net_id: "source_net_other",
         }),
       ]),
@@ -189,8 +264,8 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("rejects an unlinked via with no known logical net", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("inner1"),
-        materializedVia({ pcb_trace_id: undefined }),
+        ...targetCircuit({ layer: "inner1" }),
+        materializedVia({ pcb_trace_id: null }),
       ]),
     ).toEqual([END_ERROR])
   })
@@ -198,7 +273,7 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("rejects contact on a layer outside a buried via span", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("top"),
+        ...targetCircuit({ layer: "top" }),
         materializedVia({ layers: ["inner1", "inner2"] }),
       ]),
     ).toEqual([END_ERROR])
@@ -207,16 +282,21 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("accepts a buried via on its declared copper layers", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("inner2", 0, "inner1"),
+        ...targetCircuit({
+          layer: "inner2",
+          endX: 0,
+          viaAnchorLayer: "inner1",
+        }),
         materializedVia({ layers: ["inner1", "inner2"] }),
       ]),
     ).toEqual([])
   })
 
   test("rejects an isolated same-net via with no onward copper", () => {
-    const circuitJson = targetCircuit("inner1").filter(
-      (el) =>
-        el.type !== "pcb_smtpad" || el.pcb_port_id !== "pcb_port_via_anchor",
+    const circuitJson = targetCircuit({ layer: "inner1" }).filter(
+      (element) =>
+        element.type !== "pcb_smtpad" ||
+        element.pcb_port_id !== "pcb_port_via_anchor",
     )
     expect(targetErrorIds([...circuitJson, materializedVia()])).toEqual([
       END_ERROR,
@@ -226,7 +306,7 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("does not use a top pad as onward copper for a buried via", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("inner2"),
+        ...targetCircuit({ layer: "inner2" }),
         materializedVia({ layers: ["inner1", "inner2"] }),
       ]),
     ).toEqual([END_ERROR])
@@ -235,7 +315,7 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("rejects a remote via even when it belongs to the same logical net", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("inner1"),
+        ...targetCircuit({ layer: "inner1" }),
         materializedVia({ x: 2, y: 2 }),
       ]),
     ).toEqual([END_ERROR])
@@ -244,33 +324,41 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("does not use a trace's own via to excuse its dangling endpoint", () => {
     expect(
       targetErrorIds([
-        ...targetCircuit("inner1"),
+        ...targetCircuit({ layer: "inner1" }),
         materializedVia({ pcb_trace_id: TARGET_TRACE_ID }),
       ]),
     ).toEqual([END_ERROR])
   })
 
   test("accepts a via-in-pad stub whose lower end is a route via", () => {
-    const circuitJson = targetCircuit("inner1").filter(
-      (el) => el.type !== "pcb_trace" || el.pcb_trace_id !== BRANCH_TRACE_ID,
+    const circuitJson = targetCircuit({ layer: "inner1" }).filter(
+      (element) =>
+        element.type !== "pcb_trace" ||
+        element.pcb_trace_id !== BRANCH_TRACE_ID,
     )
     circuitJson.push(
-      trace(
-        BRANCH_TRACE_ID,
-        [wirePoint(0, 0, "top"), viaPoint("top", "bottom", 0.4)],
-        "source_trace_branch",
-      ),
+      trace({
+        pcb_trace_id: BRANCH_TRACE_ID,
+        route: [
+          wirePoint({ x: 0, y: 0, layer: "top" }),
+          viaPoint({
+            from_layer: "top",
+            to_layer: "bottom",
+            outer_diameter: 0.4,
+          }),
+        ],
+        source_trace_id: "source_trace_branch",
+      }),
       materializedVia(),
     )
     expect(targetErrorIds(circuitJson)).toEqual([])
   })
 
   test("uses materialized via layers instead of a conflicting route span", () => {
-    const circuitJson = targetCircuit("inner2").map((el) =>
-      el.type === "pcb_trace" && el.pcb_trace_id === BRANCH_TRACE_ID
-        ? { ...el, route: [viaPoint("top", "bottom", 0.4)] }
-        : el,
-    )
+    const circuitJson = targetCircuit({
+      layer: "inner2",
+      branchRoute: [viaPoint({ outer_diameter: 0.4 })],
+    })
     expect(
       targetErrorIds([
         ...circuitJson,
@@ -280,16 +368,15 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   })
 
   test("honors materialized via layers when only source-net identity is present", () => {
-    const circuitJson = targetCircuit("inner2").map((el) =>
-      el.type === "pcb_trace" && el.pcb_trace_id === BRANCH_TRACE_ID
-        ? { ...el, route: [viaPoint("top", "bottom", 0.4)] }
-        : el,
-    )
+    const circuitJson = targetCircuit({
+      layer: "inner2",
+      branchRoute: [viaPoint({ outer_diameter: 0.4 })],
+    })
     expect(
       targetErrorIds([
         ...circuitJson,
         materializedVia({
-          pcb_trace_id: undefined,
+          pcb_trace_id: null,
           source_net_id: "source_net_a",
           layers: ["top", "inner1"],
         }),
@@ -298,33 +385,35 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   })
 
   test("accepts via copper touching a rotated pad outside the via center", () => {
-    const circuitJson = targetCircuit("inner1").map((el) =>
-      el.type === "pcb_smtpad" && el.pcb_port_id === "pcb_port_via_anchor"
-        ? {
-            ...el,
-            shape: "rotated_rect" as const,
-            x: 0.3,
-            y: 0,
-            width: 0.2,
-            height: 0.2,
-            ccw_rotation: 45,
-          }
-        : el,
+    const circuitJson = targetCircuit({ layer: "inner1" }).filter(
+      (element) =>
+        element.type !== "pcb_smtpad" ||
+        element.pcb_port_id !== "pcb_port_via_anchor",
     )
+    circuitJson.push({
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pcb_smtpad_rotated_anchor",
+      pcb_port_id: "pcb_port_via_anchor",
+      layer: "top",
+      shape: "rotated_rect",
+      x: 0.3,
+      y: 0,
+      width: 0.2,
+      height: 0.2,
+      ccw_rotation: 45,
+    })
     expect(targetErrorIds([...circuitJson, materializedVia()])).toEqual([])
   })
 
   test("accepts onward same-net wire copper without a pad", () => {
-    const circuitJson = targetCircuit("inner1")
-      .filter(
-        (el) =>
-          el.type !== "pcb_smtpad" || el.pcb_port_id !== "pcb_port_via_anchor",
-      )
-      .map((el) =>
-        el.type === "pcb_trace" && el.pcb_trace_id === BRANCH_TRACE_ID
-          ? { ...el, route: [wirePoint(0, -1, "top"), wirePoint(0, 1, "top")] }
-          : el,
-      )
+    const circuitJson = targetCircuit({
+      layer: "inner1",
+      branchRoute: [wirePoint({ x: 0, y: -1 }), wirePoint({ x: 0, y: 1 })],
+    }).filter(
+      (element) =>
+        element.type !== "pcb_smtpad" ||
+        element.pcb_port_id !== "pcb_port_via_anchor",
+    )
     circuitJson.push(materializedVia())
     const before = structuredClone(circuitJson)
     expect(targetErrorIds(circuitJson)).toEqual([])
@@ -332,16 +421,14 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   })
 
   test("rejects onward wire copper outside the via span", () => {
-    const circuitJson = targetCircuit("inner1")
-      .filter(
-        (el) =>
-          el.type !== "pcb_smtpad" || el.pcb_port_id !== "pcb_port_via_anchor",
-      )
-      .map((el) =>
-        el.type === "pcb_trace" && el.pcb_trace_id === BRANCH_TRACE_ID
-          ? { ...el, route: [wirePoint(0, -1, "top"), wirePoint(0, 1, "top")] }
-          : el,
-      )
+    const circuitJson = targetCircuit({
+      layer: "inner1",
+      branchRoute: [wirePoint({ x: 0, y: -1 }), wirePoint({ x: 0, y: 1 })],
+    }).filter(
+      (element) =>
+        element.type !== "pcb_smtpad" ||
+        element.pcb_port_id !== "pcb_port_via_anchor",
+    )
     expect(
       targetErrorIds([
         ...circuitJson,
@@ -353,10 +440,10 @@ describe("net-level wire endpoints contacting separate via copper", () => {
   test("uses port connectivity when routed traces have no source_trace_id", () => {
     const circuitJson = [
       board,
-      {
-        ...sourceTrace("source_trace_ports"),
-        connected_source_port_ids: ["source_port_target", "source_port_branch"],
-      },
+      sourceTrace("source_trace_ports", [
+        "source_port_target",
+        "source_port_branch",
+      ]),
       {
         type: "pcb_port",
         pcb_port_id: "pcb_port_target",
@@ -373,77 +460,126 @@ describe("net-level wire endpoints contacting separate via copper", () => {
         y: 0,
         layers: ["top"],
       },
-      { ...anchorPad(-2, 0, "inner1"), pcb_port_id: "pcb_port_target" },
-      { ...anchorPad(0, 0, "top"), pcb_port_id: "pcb_port_branch" },
-      trace(TARGET_TRACE_ID, [
-        { ...wirePoint(-2, 0, "inner1"), start_pcb_port_id: "pcb_port_target" },
-        { ...wirePoint(0, 0, "inner1"), end_pcb_port_id: "pcb_port_branch" },
-      ]),
-      trace(BRANCH_TRACE_ID, [
-        {
-          ...wirePoint(0, 0, "top"),
-          start_pcb_port_id: "pcb_port_branch",
-          end_pcb_port_id: "pcb_port_branch",
-        },
-        viaPoint("top", "bottom", 0.4),
-      ]),
+      anchorPad({
+        x: -2,
+        y: 0,
+        layer: "inner1",
+        pcb_port_id: "pcb_port_target",
+      }),
+      anchorPad({ x: 0, y: 0, layer: "top", pcb_port_id: "pcb_port_branch" }),
+      trace({
+        pcb_trace_id: TARGET_TRACE_ID,
+        route: [
+          wirePoint({
+            x: -2,
+            y: 0,
+            layer: "inner1",
+            start_pcb_port_id: "pcb_port_target",
+          }),
+          wirePoint({
+            x: 0,
+            y: 0,
+            layer: "inner1",
+            end_pcb_port_id: "pcb_port_branch",
+          }),
+        ],
+      }),
+      trace({
+        pcb_trace_id: BRANCH_TRACE_ID,
+        route: [
+          wirePoint({
+            x: 0,
+            y: 0,
+            layer: "top",
+            start_pcb_port_id: "pcb_port_branch",
+            end_pcb_port_id: "pcb_port_branch",
+          }),
+          viaPoint({
+            from_layer: "top",
+            to_layer: "bottom",
+            outer_diameter: 0.4,
+          }),
+        ],
+      }),
       materializedVia(),
     ] satisfies AnyCircuitElement[]
     expect(targetErrorIds(circuitJson)).toEqual([])
   })
 })
 
-describe("contact with a separate route-only via", () => {
-  function withRouteVia(
-    layer: PcbLayer,
-    point: ViaPoint,
-    endX = 0,
-  ): AnyCircuitElement[] {
-    return targetCircuit(layer, endX).map((el) =>
-      el.type === "pcb_trace" && el.pcb_trace_id === BRANCH_TRACE_ID
-        ? { ...el, route: [point] }
-        : el,
-    )
-  }
+function withRouteVia({
+  layer,
+  via,
+  endX = 0,
+}: { layer: PcbLayer; via: ViaPoint; endX?: number }): AnyCircuitElement[] {
+  return targetCircuit({ layer, endX, branchRoute: [via] })
+}
 
+describe("contact with a separate route-only via", () => {
   for (const layer of ["top", "inner1", "inner2", "bottom"] as const) {
     test(`accepts a through-via center on ${layer} without optional diameter`, () => {
-      expect(targetErrorIds(withRouteVia(layer, viaPoint()))).toEqual([])
+      expect(targetErrorIds(withRouteVia({ layer, via: viaPoint() }))).toEqual(
+        [],
+      )
     })
   }
 
   test("uses explicit route-via diameter for noncentral copper contact", () => {
     expect(
       targetErrorIds(
-        withRouteVia("inner2", viaPoint("top", "bottom", 0.4), 0.3),
+        withRouteVia({
+          layer: "inner2",
+          via: viaPoint({
+            from_layer: "top",
+            to_layer: "bottom",
+            outer_diameter: 0.4,
+          }),
+          endX: 0.3,
+        }),
       ),
     ).toEqual([])
   })
 
   test("does not invent a diameter for a route-only via", () => {
-    expect(targetErrorIds(withRouteVia("inner2", viaPoint(), 0.15))).toEqual([
-      END_ERROR,
-    ])
+    expect(
+      targetErrorIds(
+        withRouteVia({ layer: "inner2", via: viaPoint(), endX: 0.15 }),
+      ),
+    ).toEqual([END_ERROR])
   })
 
   test("accepts an inner-layer contact within a blind via span", () => {
     expect(
-      targetErrorIds(withRouteVia("inner1", viaPoint("top", "inner1"))),
+      targetErrorIds(
+        withRouteVia({
+          layer: "inner1",
+          via: viaPoint({ from_layer: "top", to_layer: "inner1" }),
+        }),
+      ),
     ).toEqual([])
   })
 
   test("rejects an inner-layer contact outside a blind via span", () => {
     expect(
-      targetErrorIds(withRouteVia("inner2", viaPoint("top", "inner1"))),
+      targetErrorIds(
+        withRouteVia({
+          layer: "inner2",
+          via: viaPoint({ from_layer: "top", to_layer: "inner1" }),
+        }),
+      ),
     ).toEqual([END_ERROR])
   })
 
   test("rejects a physically coincident route via on another net", () => {
-    const circuitJson = withRouteVia("inner1", viaPoint()).map((el) =>
-      el.type === "source_trace" && el.source_trace_id === "source_trace_branch"
-        ? { ...el, connected_source_net_ids: ["source_net_other"] }
-        : el,
-    )
+    const circuitJson = withRouteVia({ layer: "inner1", via: viaPoint() })
+    for (const element of circuitJson) {
+      if (
+        element.type === "source_trace" &&
+        element.source_trace_id === "source_trace_branch"
+      ) {
+        element.connected_source_net_ids = ["source_net_other"]
+      }
+    }
     expect(targetErrorIds(circuitJson)).toEqual([END_ERROR])
   })
 
@@ -451,19 +587,19 @@ describe("contact with a separate route-only via", () => {
     const circuitJson = [
       board,
       sourceTrace("source_trace_target"),
-      anchorPad(-2, 0, "top"),
-      anchorPad(2, 0, "bottom"),
-      trace(
-        TARGET_TRACE_ID,
-        [
-          wirePoint(-2, 0, "top"),
-          wirePoint(0, 0, "top"),
-          { ...viaPoint("top", "bottom", 0.4), x: 0.1 },
-          wirePoint(0, 0, "bottom"),
-          wirePoint(2, 0, "bottom"),
+      anchorPad({ x: -2, y: 0, layer: "top" }),
+      anchorPad({ x: 2, y: 0, layer: "bottom" }),
+      trace({
+        pcb_trace_id: TARGET_TRACE_ID,
+        route: [
+          wirePoint({ x: -2, y: 0, layer: "top" }),
+          wirePoint({ x: 0, y: 0, layer: "top" }),
+          viaPoint({ outer_diameter: 0.4, x: 0.1 }),
+          wirePoint({ x: 0, y: 0, layer: "bottom" }),
+          wirePoint({ x: 2, y: 0, layer: "bottom" }),
         ],
-        "source_trace_target",
-      ),
+        source_trace_id: "source_trace_target",
+      }),
     ] satisfies AnyCircuitElement[]
     expect(
       checkTracesAreContiguous(circuitJson).map(

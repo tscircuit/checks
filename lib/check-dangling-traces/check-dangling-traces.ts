@@ -1,4 +1,9 @@
-import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbPort,
+  PcbTraceError,
+  SourceTrace,
+} from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPcbTrace } from "@tscircuit/circuit-json-util"
 import {
@@ -6,7 +11,10 @@ import {
   type TraceEndpoint,
 } from "./endpoint-contact"
 
-const ENDPOINT_CONTACT_EPSILON = 1e-9
+type SourceTraceId = SourceTrace["source_trace_id"]
+type SourcePortId = PcbPort["source_port_id"]
+
+const ENDPOINT_CONTACT_EPSILON_MM = 1e-9
 
 /** Reports exposed trace endpoints, independently of required-port connectivity. */
 export function checkDanglingTraces(
@@ -17,16 +25,16 @@ export function checkDanglingTraces(
   const pcbTraces = circuitJson.filter(
     (element) => element.type === "pcb_trace",
   )
-  const sourceTracesById = new Map(
-    circuitJson
-      .filter((element) => element.type === "source_trace")
-      .map((trace) => [trace.source_trace_id, trace]),
-  )
-  const sourcePortIdsWithPcbPorts = new Set(
-    circuitJson
-      .filter((element) => element.type === "pcb_port")
-      .map((port) => port.source_port_id),
-  )
+  const sourceTracesById = new Map<SourceTraceId, SourceTrace>()
+  const sourcePortIdsWithPcbPorts = new Set<SourcePortId>()
+  for (const element of circuitJson) {
+    if (element.type === "source_trace") {
+      sourceTracesById.set(element.source_trace_id, element)
+    }
+    if (element.type === "pcb_port") {
+      sourcePortIdsWithPcbPorts.add(element.source_port_id)
+    }
+  }
   const getEndpointContact = createEndpointContactTester(circuitJson, connMap)
 
   for (const trace of pcbTraces) {
@@ -35,22 +43,23 @@ export function checkDanglingTraces(
     if (trace.route.length === 0) continue
     const firstPoint = trace.route[0]
     const lastPoint = trace.route[trace.route.length - 1]
-    const sourceTrace = trace.source_trace_id
-      ? sourceTracesById.get(trace.source_trace_id)
-      : undefined
+    let sourceTrace: SourceTrace | undefined
+    if (trace.source_trace_id) {
+      sourceTrace = sourceTracesById.get(trace.source_trace_id)
+    }
     const hasExpectedPorts = sourceTrace?.connected_source_port_ids.some((id) =>
       sourcePortIdsWithPcbPorts.has(id),
     )
-    const endpoints = [
+    const endpoints: { side: TraceEndpoint; point: typeof firstPoint }[] = [
       { side: "start", point: firstPoint },
       { side: "end", point: lastPoint },
-    ] satisfies { side: TraceEndpoint; point: typeof firstPoint }[]
+    ]
     const endpointsCoincide =
       firstPoint.route_type === "wire" &&
       lastPoint.route_type === "wire" &&
       firstPoint.layer === lastPoint.layer &&
       Math.hypot(firstPoint.x - lastPoint.x, firstPoint.y - lastPoint.y) <=
-        ENDPOINT_CONTACT_EPSILON
+        ENDPOINT_CONTACT_EPSILON_MM
     let startErrorReported = false
 
     for (const { side, point } of endpoints) {

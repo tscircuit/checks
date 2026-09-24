@@ -20,6 +20,14 @@ const independentChecks = [
   checks.checkPcbTracesOutOfBoard,
 ]
 
+async function checkAgainstIndependent(circuit: AnyCircuitElement[]) {
+  const copy = structuredClone(circuit)
+  const expected = independentChecks.map((check) => check(copy)).flat()
+  const actual = await checks.runAllRoutingChecks(circuit)
+  expect(actual).toEqual(expected)
+  return actual
+}
+
 test("routing maps include inferred endpoints and are rebuilt after editing the same array", async () => {
   const circuit: AnyCircuitElement[] = [
     ...[0, 1].map((i) => ({
@@ -47,18 +55,11 @@ test("routing maps include inferred endpoints and are rebuilt after editing the 
       ],
     },
   ]
-  const checkAgainstIndependent = async () => {
-    const copy = structuredClone(circuit)
-    const expected = independentChecks.map((check) => check(copy)).flat()
-    const actual = await checks.runAllRoutingChecks(circuit)
-    expect(actual).toEqual(expected)
-    return actual
-  }
-  const before = await checkAgainstIndependent()
+  const before = await checkAgainstIndependent(circuit)
   const trace = circuit.find((e) => e.type === "pcb_trace")!
   if (trace.type !== "pcb_trace") throw new Error("Missing trace")
   trace.route = []
-  const after = await checkAgainstIndependent()
+  const after = await checkAgainstIndependent(circuit)
   expect(after).not.toEqual(before)
 })
 

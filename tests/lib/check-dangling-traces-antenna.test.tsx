@@ -39,14 +39,15 @@ test("intentional antenna copper does not exempt a dangling feed branch", async 
   await circuit.renderUntilSettled()
   // Core's marker support is merged in tscircuit/core#4132 but not released yet.
   // Supply the published Circuit JSON field only on the radiator, not the feed.
-  const circuitJson = circuit
-    .getCircuitJson()
-    .map((element) =>
+  const circuitJson = circuit.getCircuitJson()
+  for (const element of circuitJson) {
+    if (
       element.type === "pcb_trace" &&
       element.pcb_trace_id === radiator.pcb_trace_id
-        ? { ...element, is_antenna_trace: true }
-        : element,
-    )
+    ) {
+      element.is_antenna_trace = true
+    }
+  }
   const errors = checkDanglingTraces(circuitJson)
   expect(errors).toHaveLength(1)
   expect(errors[0].center).toEqual({ x: -3, y: 2 })

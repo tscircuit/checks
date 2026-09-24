@@ -147,10 +147,7 @@ function getEndpointTraceCopperWidth(trace: PcbTrace, endpoint: TraceEndpoint) {
   return getEndpointTraceWireSegment(trace, endpoint)?.start.width
 }
 
-/** Follow a terminal straight centerline in board-world mm (+X right, +Y up).
- * All values are points, in the right-handed XY plane. Subdividing the same
- * copper segment must not change whether its outward endpoint is a branch.
- */
+// Follow the straight centerline so subdividing a route does not hide a branch.
 function getEndpointInwardPoint(trace: PcbTrace, endpoint: TraceEndpoint) {
   const terminalSegment = getEndpointTraceWireSegment(trace, endpoint)
   if (!terminalSegment) return undefined
@@ -255,9 +252,7 @@ function routePointTouchesLogicallyConnectedTraceCopper({
   return false
 }
 
-/** Tests terminal copper in board-world mm (+X right, +Y up, +Z above,
- * right-handed). Route coordinates are points, not directions.
- */
+/** Tests endpoint copper contact in board XY coordinates (mm). */
 export function createEndpointContactTester(
   circuitJson: AnyCircuitElement[],
   connMap?: ConnectivityMap,
@@ -272,15 +267,11 @@ export function createEndpointContactTester(
     )
     .filter((pad) => pad.pcb_port_id)
   let fullConnectivityMap = connMap
-  function getConnectivity() {
-    fullConnectivityMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
-    return fullConnectivityMap
-  }
   let traceSegments: TraceWireSegmentsByNetAndLayer | undefined
   let viaContacts: ReturnType<typeof getViaContactIndex> | undefined
   let touchesPour: ReturnType<typeof getPourContactTester> | undefined
 
-  return function getEndpointContact(trace: PcbTrace, endpoint: TraceEndpoint) {
+  return (trace: PcbTrace, endpoint: TraceEndpoint) => {
     let point = trace.route[0]
     if (endpoint === "end") point = trace.route[trace.route.length - 1]
     const width = getEndpointTraceCopperWidth(trace, endpoint)
@@ -292,10 +283,19 @@ export function createEndpointContactTester(
       return { isConnected: false, hasWireSegment }
     }
 
-    const connectivity = getConnectivity()
+    fullConnectivityMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+    const connectivity = fullConnectivityMap
     const netId = connectivity.getNetConnectedToId(trace.pcb_trace_id)
     touchesPour ??= getPourContactTester(circuitJson, connectivity)
-    if (netId && touchesPour(netId, [point.layer], point, width / 2)) {
+    if (
+      netId &&
+      touchesPour({
+        netId,
+        layers: [point.layer],
+        center: point,
+        radius: width / 2,
+      })
+    ) {
       return { isConnected: true, hasWireSegment }
     }
 

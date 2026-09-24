@@ -19,13 +19,12 @@ test("generated antenna open end is intentional in both routing checks", async (
   await circuit.renderUntilSettled()
   // Core's marker support is merged in tscircuit/core#4132 but not released yet.
   // This antenna-only fixture supplies the published Circuit JSON field.
-  const circuitJson = circuit
-    .getCircuitJson()
-    .map((element) =>
-      element.type === "pcb_trace"
-        ? { ...element, is_antenna_trace: true }
-        : element,
-    )
+  const circuitJson = circuit.getCircuitJson()
+  for (const element of circuitJson) {
+    if (element.type === "pcb_trace") {
+      element.is_antenna_trace = true
+    }
+  }
   expect(checkDanglingTraces(circuitJson)).toEqual([])
   expect(checkTracesAreContiguous(circuitJson)).toEqual([])
   await expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
