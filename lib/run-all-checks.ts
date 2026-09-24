@@ -29,6 +29,7 @@ import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSchematicComponentMissingReferenceDesignatorText } from "./check-schematic-component-missing-reference-designator-text"
 import { checkSchematicComponentPortsOutsideBody } from "./check-schematic-component-ports-outside-body"
+import { checkSchematicPlacement } from "./check-schematic-placement"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
 import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
@@ -73,6 +74,7 @@ export async function runAllSchematicChecks(circuitJson: AnyCircuitElement[]) {
     ...checkSchematicComponentExcessiveVerticalPadding(circuitJson),
     ...checkSchematicComponentMissingReferenceDesignatorText(circuitJson),
     ...checkSchematicComponentPortsOutsideBody(circuitJson),
+    ...checkSchematicPlacement(circuitJson),
   ]
 }
 
