@@ -1,5 +1,4 @@
 import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
-import { isAntennaTrace } from "../util/is-antenna-trace"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPcbTrace } from "@tscircuit/circuit-json-util"
 import {
@@ -18,23 +17,29 @@ export function checkDanglingTraces(
   const pcbTraces = circuitJson.filter(
     (element) => element.type === "pcb_trace",
   )
-  const sourceTraces = circuitJson.filter(
-    (element) => element.type === "source_trace",
+  const sourceTracesById = new Map(
+    circuitJson
+      .filter((element) => element.type === "source_trace")
+      .map((trace) => [trace.source_trace_id, trace]),
   )
-  const pcbPorts = circuitJson.filter((element) => element.type === "pcb_port")
+  const sourcePortIdsWithPcbPorts = new Set(
+    circuitJson
+      .filter((element) => element.type === "pcb_port")
+      .map((port) => port.source_port_id),
+  )
   const getEndpointContact = createEndpointContactTester(circuitJson, connMap)
 
   for (const trace of pcbTraces) {
     // Marked antenna copper has intentional open ends; feed traces remain checked.
-    if (isAntennaTrace(trace)) continue
+    if (trace.is_antenna_trace === true) continue
     if (trace.route.length === 0) continue
     const firstPoint = trace.route[0]
     const lastPoint = trace.route[trace.route.length - 1]
-    const sourceTrace = sourceTraces.find(
-      (source) => source.source_trace_id === trace.source_trace_id,
-    )
-    const hasExpectedPorts = pcbPorts.some((port) =>
-      sourceTrace?.connected_source_port_ids.includes(port.source_port_id),
+    const sourceTrace = trace.source_trace_id
+      ? sourceTracesById.get(trace.source_trace_id)
+      : undefined
+    const hasExpectedPorts = sourceTrace?.connected_source_port_ids.some((id) =>
+      sourcePortIdsWithPcbPorts.has(id),
     )
     const endpoints = [
       { side: "start", point: firstPoint },

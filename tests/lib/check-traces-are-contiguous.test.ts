@@ -210,7 +210,7 @@ test("repro02 should report the J_VMOTOR GND trace disconnected endpoint", async
       pcb_trace_id: "source_net_0_mst2_0",
       pcb_trace_error_id: "disconnected_endpoint_source_net_0_mst2_0_end",
       message:
-        "Trace [trace[.J_VMOTOR > port.pin2]] has disconnected endpoint at (22.03, -10.22)",
+        "Trace [trace[.J_VMOTOR > port.pin2]] has dangling endpoint at (22.03, -10.22)",
     }),
   )
 })

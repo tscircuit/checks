@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test"
-import type { AnyCircuitElement, PcbTrace } from "circuit-json"
+import { type AnyCircuitElement, type PcbTrace, pcb_trace } from "circuit-json"
 import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
 import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
 
 function fixture(marker?: boolean): AnyCircuitElement[] {
-  const trace: PcbTrace & { is_antenna_trace?: boolean } = {
+  const trace: PcbTrace = {
     type: "pcb_trace",
     pcb_trace_id: "radiator",
     source_trace_id: "source_trace_1",
@@ -48,53 +48,51 @@ function fixture(marker?: boolean): AnyCircuitElement[] {
       obstructs_within_bounds: true,
       layer: "top",
     },
-    trace,
+    pcb_trace.parse(trace),
   ]
 }
 
-for (const check of [checkDanglingTraces, checkTracesAreContiguous]) {
-  describe(check.name, () => {
-    test("explicit true exempts open radiator endpoints without naming metadata", () => {
-      const circuitJson = fixture(true).filter(
-        (element) => element.type === "pcb_trace",
-      )
-      expect(check(circuitJson)).toEqual([])
+describe("antenna trace marker", () => {
+  test("explicit true exempts open radiator endpoints without naming metadata", () => {
+    const circuitJson = fixture(true).filter(
+      (element) => element.type === "pcb_trace",
+    )
+    expect(checkDanglingTraces(circuitJson)).toEqual([])
+  })
+
+  for (const marker of [false, undefined]) {
+    test(`${marker === false ? "false" : "omitted"} is checked despite antenna names, feed aliases, and component ownership`, () => {
+      const errors = checkDanglingTraces(fixture(marker))
+      expect(errors).toHaveLength(2)
+      expect(errors.map((error) => error.center)).toEqual([
+        { x: 0, y: 0 },
+        { x: 4, y: 0 },
+      ])
     })
+  }
 
-    for (const marker of [false, undefined]) {
-      test(`${marker === false ? "false" : "omitted"} is checked despite antenna names, feed aliases, and component ownership`, () => {
-        const errors = check(fixture(marker))
-        expect(errors).toHaveLength(2)
-        expect(errors.map((error) => error.center)).toEqual([
-          { x: 0, y: 0 },
-          { x: 4, y: 0 },
-        ])
-      })
-    }
-
-    test("an unmarked feed sharing the radiator's source and component stays checked", () => {
-      const circuitJson = fixture(true)
-      const radiator = circuitJson.find(
-        (element): element is PcbTrace => element.type === "pcb_trace",
-      )!
-      circuitJson.push({
-        ...radiator,
-        is_antenna_trace: false,
-        pcb_trace_id: "feed",
-        route: [
-          { route_type: "wire", x: 0, y: 0, width: 0.2, layer: "top" },
-          { route_type: "wire", x: 0, y: -3, width: 0.2, layer: "top" },
-        ],
-      } as PcbTrace)
-      const errors = check(circuitJson)
-      expect(errors).toHaveLength(1)
-      expect(errors[0]).toMatchObject({
-        pcb_trace_id: "feed",
-        center: { x: 0, y: -3 },
-      })
+  test("an unmarked feed sharing the radiator's source and component stays checked", () => {
+    const circuitJson = fixture(true)
+    const radiator = circuitJson.find(
+      (element): element is PcbTrace => element.type === "pcb_trace",
+    )!
+    circuitJson.push({
+      ...radiator,
+      is_antenna_trace: false,
+      pcb_trace_id: "feed",
+      route: [
+        { route_type: "wire", x: 0, y: 0, width: 0.2, layer: "top" },
+        { route_type: "wire", x: 0, y: -3, width: 0.2, layer: "top" },
+      ],
+    })
+    const errors = checkDanglingTraces(circuitJson)
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toMatchObject({
+      pcb_trace_id: "feed",
+      center: { x: 0, y: -3 },
     })
   })
-}
+})
 
 test("marked antenna copper still requires its declared port connection", () => {
   const circuitJson = fixture(true)

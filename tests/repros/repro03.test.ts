@@ -15,6 +15,15 @@ test("motor controller should report the motor controller overlap", async () => 
     }),
   )
 
+  // A missing required port must not hide a separate dangling endpoint.
+  expect(routingIssues).toContainEqual(
+    expect.objectContaining({
+      message: expect.stringContaining(
+        "has dangling endpoint at (-16.40, 1.59)",
+      ),
+    }),
+  )
+
   await expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...routingIssues], {
       shouldDrawErrors: true,

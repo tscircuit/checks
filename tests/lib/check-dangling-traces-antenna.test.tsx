@@ -37,8 +37,8 @@ test("intentional antenna copper does not exempt a dangling feed branch", async 
     }),
   )
   await circuit.renderUntilSettled()
-  // The released core does not emit the proposed Circuit JSON marker yet.
-  // Mark only the radiator in this consumer fixture, never its shared-source branch.
+  // Core's marker support is merged in tscircuit/core#4132 but not released yet.
+  // Supply the published Circuit JSON field only on the radiator, not the feed.
   const circuitJson = circuit
     .getCircuitJson()
     .map((element) =>

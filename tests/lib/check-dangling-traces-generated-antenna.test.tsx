@@ -17,8 +17,8 @@ test("generated antenna open end is intentional in both routing checks", async (
     </board>,
   )
   await circuit.renderUntilSettled()
-  // The released core does not emit the proposed Circuit JSON marker yet.
-  // This antenna-only fixture explicitly supplies the producer's future output.
+  // Core's marker support is merged in tscircuit/core#4132 but not released yet.
+  // This antenna-only fixture supplies the published Circuit JSON field.
   const circuitJson = circuit
     .getCircuitJson()
     .map((element) =>

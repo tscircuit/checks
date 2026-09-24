@@ -1,3 +1,4 @@
+import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { describe, expect, test } from "bun:test"
 import type {
   AnyCircuitElement,
@@ -5,7 +6,7 @@ import type {
   PcbTrace,
   PcbVia,
 } from "circuit-json"
-import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkDanglingTraces } from "lib/check-dangling-traces/check-dangling-traces"
 
 const TARGET_TRACE_ID = "pcb_trace_target"
 const BRANCH_TRACE_ID = "pcb_trace_branch"
@@ -132,7 +133,7 @@ function targetCircuit(
 }
 
 function targetErrorIds(circuitJson: AnyCircuitElement[]) {
-  return checkTracesAreContiguous(circuitJson)
+  return checkDanglingTraces(circuitJson)
     .filter((error) => error.pcb_trace_id === TARGET_TRACE_ID)
     .map((error) => error.pcb_trace_error_id)
 }
@@ -464,8 +465,10 @@ describe("contact with a separate route-only via", () => {
         "source_trace_target",
       ),
     ] satisfies AnyCircuitElement[]
-    expect(targetErrorIds(circuitJson)).toEqual([
-      "misaligned_via_pcb_trace_target_2",
-    ])
+    expect(
+      checkTracesAreContiguous(circuitJson).map(
+        (error) => error.pcb_trace_error_id,
+      ),
+    ).toEqual(["misaligned_via_pcb_trace_target_2"])
   })
 })
