@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { schematic_component_styling_warning } from "circuit-json"
 import {
   checkSchematicPlacement,
   runAllChecks,
@@ -27,9 +28,45 @@ test("converts inverted rails to a warning with component, port and sheet associ
       schematic_port_ids: ["schematic_port_1", "schematic_port_2"],
     },
   ])
+  expect(schematic_component_styling_warning.parse(warnings[0])).toEqual(
+    warnings[0],
+  )
   expect(checkSchematicPlacement(circuitJson)).toEqual(warnings)
+  expect(checkSchematicPlacement([...circuitJson, ...warnings])).toEqual(
+    warnings,
+  )
   expect(circuitJson).toEqual(original)
 })
+
+test.each([undefined, "component_subcircuit"])(
+  "preserves component scope and falls back to the owning group: %s",
+  (componentSubcircuitId) => {
+    const circuitJson = createInvertedRailsCircuitJson()
+    const component = circuitJson.find(
+      (element) => element.type === "schematic_component",
+    )!
+    component.subcircuit_id = componentSubcircuitId
+    component.schematic_group_id = "schematic_group_1"
+    circuitJson.push({
+      type: "schematic_group",
+      schematic_group_id: "schematic_group_1",
+      source_group_id: "source_group_1",
+      subcircuit_id: "group_subcircuit",
+      schematic_sheet_id: "schematic_sheet_1",
+      center: { x: 0, y: 0 },
+      width: 4,
+      height: 4,
+      schematic_component_ids: [component.schematic_component_id],
+    })
+
+    const warnings = checkSchematicPlacement(circuitJson)
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]?.subcircuit_id).toBe(
+      componentSubcircuitId ?? "group_subcircuit",
+    )
+    expect(warnings[0]?.schematic_sheet_id).toBe("schematic_sheet_1")
+  },
+)
 
 test("runAllSchematicChecks and runAllChecks include inverted rails exactly once", async () => {
   const circuitJson = createInvertedRailsCircuitJson()

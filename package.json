@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
-    "@tscircuit/circuit-json-schematic-placement-analysis": "https://codeload.github.com/tscircuit/circuit-json-schematic-placement-analysis/tar.gz/247623ffd643302f06a5bbb0dfe928999df79a0d",
+    "@tscircuit/circuit-json-schematic-placement-analysis": "https://codeload.github.com/tscircuit/circuit-json-schematic-placement-analysis/tar.gz/5239d6ba8a335502523eecc62a10892be69ec52a",
     "@tscircuit/circuit-json-util": "^0.0.114",
     "@tscircuit/jlcpcb-manufacturing-specs": "git+https://github.com/tscircuit/jlcpcb-manufacturing-specs#e08af159db01a37db007e33f0a7268d0e4a279a5",
     "@tscircuit/log-soup": "^1.0.2",
