@@ -5,7 +5,7 @@ import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/
 import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
 
 // Both required pads connect, but a saved branch still has a free end.
-test("reports a source-associated dangling branch", async () => {
+test("source-associated branch has a free endpoint", async () => {
   const circuit = new Circuit()
   circuit.add(
     <board width={7} height={5} schematicDisabled routingDisabled>

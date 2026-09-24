@@ -5,7 +5,7 @@ import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangl
 
 // AM3352 geometry translated by (-10.7, -1.3) mm to center the example.
 // The 0.04999 mm stub overlaps its junction's rounded copper cap.
-test("reports the AM3352 short ground stub", async () => {
+test("AM3352 short ground stub has a free endpoint", async () => {
   const circuit = new Circuit()
   circuit.add(
     <board width={4.6} height={4} layers={4} schematicDisabled routingDisabled>
