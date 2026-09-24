@@ -203,9 +203,11 @@ function zoomSnapshot() {
     x: width / 2 + (p.x - (viewport.minX + viewport.maxX) / 2) * scale,
     y: height / 2 - (p.y - (viewport.minY + viewport.maxY) / 2) * scale,
   })
-  const points = getTrace()
-    .route.filter((p) => p.route_type === "wire" && p.layer === "inner2")
-    .map(project)
+  const points = getTrace().route.flatMap((point) =>
+    point.route_type === "wire" && point.layer === "inner2"
+      ? [project(point)]
+      : [],
+  )
   const endpoint = project(location)
   const existingVia = project({ x: -9.224567805024478, y: -1.8811807033690149 })
   const overlay = `<g font-family="Arial, sans-serif">
