@@ -6,13 +6,14 @@ import {
   pointToSegmentClosestPoint,
   segmentToSegmentMinDistance,
 } from "@tscircuit/math-utils"
-import type { PcbPlatedHole, PcbSmtPad } from "circuit-json"
+import type { PcbHole, PcbPlatedHole, PcbSmtPad } from "circuit-json"
 import type { PcbTraceSegment } from "./getCollidableBounds"
 
 type PolygonalPad = PcbSmtPad | PcbPlatedHole
 type PillPad =
   | Extract<PcbSmtPad, { shape: "pill" | "rotated_pill" }>
   | Extract<PcbPlatedHole, { shape: "oval" | "pill" }>
+type PillHole = Extract<PcbHole, { hole_shape: "pill" | "rotated_pill" }>
 
 const rotatePoint = (point: Point, angleDegrees: number): Point => {
   const angle = (angleDegrees * Math.PI) / 180
@@ -49,17 +50,27 @@ export const getRotatedRectPoints = ({
   })
 }
 
-export const getPillCenterLineForPad = (pad: PillPad) => {
-  const width = pad.type === "pcb_plated_hole" ? pad.outer_width : pad.width
-  const height = pad.type === "pcb_plated_hole" ? pad.outer_height : pad.height
-  const radius =
-    pad.type === "pcb_plated_hole" ? Math.min(width, height) / 2 : pad.radius
-  const ccwRotation =
-    pad.type === "pcb_plated_hole"
-      ? pad.ccw_rotation
-      : pad.shape === "rotated_pill"
-        ? pad.ccw_rotation
-        : 0
+export const getPillCenterLineForPad = (pad: PillPad | PillHole) => {
+  let width: number
+  let height: number
+  let radius: number
+  let ccwRotation = 0
+  if (pad.type === "pcb_hole") {
+    width = pad.hole_width
+    height = pad.hole_height
+    radius = Math.min(width, height) / 2
+    if (pad.hole_shape === "rotated_pill") ccwRotation = pad.ccw_rotation
+  } else if (pad.type === "pcb_plated_hole") {
+    width = pad.outer_width
+    height = pad.outer_height
+    radius = Math.min(width, height) / 2
+    ccwRotation = pad.ccw_rotation
+  } else {
+    width = pad.width
+    height = pad.height
+    radius = pad.radius
+    if (pad.shape === "rotated_pill") ccwRotation = pad.ccw_rotation
+  }
   const halfLineLength = Math.max(Math.max(width, height) / 2 - radius, 0)
   const axis =
     width >= height ? { x: halfLineLength, y: 0 } : { x: 0, y: halfLineLength }
@@ -252,7 +263,7 @@ export const getSegmentToPolygonClearance = (
 
 export const getSegmentToPillClearance = (
   segment: Pick<PcbTraceSegment, "x1" | "y1" | "x2" | "y2">,
-  pad: PillPad,
+  pad: PillPad | PillHole,
 ) => {
   const pill = getPillCenterLineForPad(pad)
   const closest = getClosestPointsBetweenSegments(
