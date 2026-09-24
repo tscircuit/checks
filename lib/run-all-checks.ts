@@ -25,6 +25,7 @@ import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
+import { checkPlatedHoleDrillClearance } from "./check-plated-hole-drill-clearance"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSchematicComponentMissingReferenceDesignatorText } from "./check-schematic-component-missing-reference-designator-text"
@@ -51,6 +52,7 @@ export async function runAllPlacementChecks(
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPcbComponentsMissingCourtyard(circuitJson),
     ...checkPadPadClearance(circuitJson),
+    ...checkPlatedHoleDrillClearance(circuitJson),
     ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
