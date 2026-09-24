@@ -30,7 +30,7 @@ test("warns visually for a TSX custom symbol without a refdes", async () => {
     type: "schematic_component_styling_warning",
     styling_issue_type: "missing_reference_designator_text",
     message:
-      'Schematic component is missing schematic reference designator text. For a custom symbol, add name="{REFDES}" inside the symbol.',
+      'Schematic component is missing schematic reference designator text. For a custom symbol, add <schematictext text="{REF}" /> inside the symbol.',
   })
   expect(
     convertCircuitJsonToSchematicSvg([...circuitJson, ...warnings], {
