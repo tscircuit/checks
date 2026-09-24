@@ -1,4 +1,3 @@
-import { checkDanglingTraces } from "./check-dangling-traces/check-dangling-traces"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
@@ -109,7 +108,6 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkSameNetViaSpacing(circuitJson, connectivity),
     ...checkDifferentNetViaSpacing(circuitJson, connectivity),
     ...checkTracesAreContiguous(circuitJson, connectivity),
-    ...checkDanglingTraces(circuitJson, connectivity),
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
 }
