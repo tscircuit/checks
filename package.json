@@ -30,6 +30,7 @@
     "circuit-to-svg": "^0.0.388",
     "debug": "^4.3.5",
     "format-si-unit": "^0.0.12",
+    "schematic-symbols": "^0.0.244",
     "tscircuit": "^0.0.2565",
     "tsup": "^8.2.3",
     "zod": "^3.23.8",
