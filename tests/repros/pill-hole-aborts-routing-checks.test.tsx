@@ -5,7 +5,7 @@ import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkEachPcbTraceNonOverlapping } from "../../lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 import { runAllRoutingChecks } from "../../lib/run-all-checks"
 
-test("a pill hole aborts routing checks instead of returning a different-net crossing", async () => {
+test("routing checks report a different-net crossing beside a pill hole", async () => {
   // Run this repository's checker explicitly after core produces the fixture.
   const circuit = new Circuit({ platform: { routingDrcChecksDisabled: true } })
   circuit.add(
@@ -89,12 +89,9 @@ test("a pill hole aborts routing checks instead of returning a different-net cro
     ),
   ).toBe(false)
 
-  expect(() =>
-    checkEachPcbTraceNonOverlapping(structuredClone(circuitJson)),
-  ).toThrow("Could not determine radius of element:")
-  await expect(
-    runAllRoutingChecks(structuredClone(circuitJson)),
-  ).rejects.toThrow("Could not determine radius of element:")
+  const errorsWithSlot = checkEachPcbTraceNonOverlapping(
+    structuredClone(circuitJson),
+  )
 
   // Diagnostic control only: remove the hole, keeping every copper element.
   const withoutSlot = circuitJson.filter(
@@ -107,8 +104,15 @@ test("a pill hole aborts routing checks instead of returning a different-net cro
     center: { x: 0, y: 0 },
   })
   expect(errors[0].message).toContain("(accidental contact)")
-  expect(await runAllRoutingChecks(withoutSlot)).toEqual(errors)
-  expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
-    import.meta.path,
+  expect(errorsWithSlot).toEqual(errors)
+  expect(await runAllRoutingChecks(structuredClone(circuitJson))).toEqual(
+    errors,
   )
+  expect(await runAllRoutingChecks(withoutSlot)).toEqual(errors)
+  expect(
+    convertCircuitJsonToPcbSvg([...circuitJson, ...errorsWithSlot], {
+      shouldDrawErrors: true,
+      showErrorsInTextOverlay: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
