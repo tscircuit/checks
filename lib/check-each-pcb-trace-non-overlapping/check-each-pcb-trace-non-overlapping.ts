@@ -1,3 +1,4 @@
+import { checkPcbTraceSelfShorts } from "../check-pcb-trace-self-shorts"
 import { cju, getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import {
@@ -65,7 +66,8 @@ export function checkEachPcbTraceNonOverlapping(
     minClearance?: number
   } = {},
 ): (PcbTraceError | PcbKeepoutOverlapWarning)[] {
-  const errors: (PcbTraceError | PcbKeepoutOverlapWarning)[] = []
+  const errors: (PcbTraceError | PcbKeepoutOverlapWarning)[] =
+    checkPcbTraceSelfShorts(circuitJson)
   addStartAndEndPortIdsIfMissing(circuitJson)
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const board = getPcbBoard(circuitJson)
