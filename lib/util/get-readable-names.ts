@@ -1,5 +1,6 @@
 import type {
   AnyCircuitElement,
+  PcbCutout,
   PcbPlatedHole,
   PcbSmtPad,
   SourceTrace,
@@ -42,12 +43,39 @@ const firstReadableName = (
 export const getReadableNameForComponent = (
   circuitJson: AnyCircuitElement[],
   pcbComponentId: string,
-): string =>
-  sanitizeReadableName(
+): string => {
+  // getReadableNameForElement returns "pcb_component[#pcb_component_0]" for a
+  // pcb_component, which sanitizes away to the generic fallback. Resolve the
+  // source component first so errors name the part the user actually wrote.
+  const pcbComponent = circuitJson.find(
+    (element) =>
+      element.type === "pcb_component" &&
+      element.pcb_component_id === pcbComponentId,
+  )
+
+  if (pcbComponent?.type === "pcb_component") {
+    const sourceComponent = circuitJson.find(
+      (element) =>
+        element.type === "source_component" &&
+        element.source_component_id === pcbComponent.source_component_id,
+    )
+
+    if (sourceComponent?.type === "source_component") {
+      const readableName = sanitizeReadableName(
+        sourceComponent.name,
+        sourceComponent.source_component_id,
+        "",
+      )
+      if (readableName) return readableName
+    }
+  }
+
+  return sanitizeReadableName(
     getReadableNameForElement(circuitJson, pcbComponentId),
     pcbComponentId,
     "component",
   )
+}
 
 export const getReadableNameForPort = (
   circuitJson: AnyCircuitElement[],
@@ -207,6 +235,40 @@ export const getReadableNameForGroup = (
 
 export const containsCircuitJsonId = (message: string): boolean =>
   CIRCUIT_JSON_ID_PATTERN.test(message)
+
+/**
+ * Cutouts have no source element to borrow a name from, so they are described
+ * by their shape and location instead of their pcb_cutout_id, which would
+ * otherwise leak a circuit-json id into a user-facing message.
+ */
+export function getReadableNameForCutout(cutout: PcbCutout): string {
+  const center = getCenterOfCutout(cutout)
+
+  return `${cutout.shape} cutout at (${center.x.toFixed(2)}mm, ${center.y.toFixed(2)}mm)`
+}
+
+const getCenterOfCutout = (cutout: PcbCutout) => {
+  switch (cutout.shape) {
+    case "polygon":
+      return getCenterOfPoints(cutout.points)
+    case "path":
+      return getCenterOfPoints(cutout.route)
+    default:
+      return cutout.center
+  }
+}
+
+const getCenterOfPoints = (points: Array<{ x: number; y: number }>) => {
+  if (points.length === 0) return { x: 0, y: 0 }
+
+  const xs = points.map((point) => point.x)
+  const ys = points.map((point) => point.y)
+
+  return {
+    x: (Math.min(...xs) + Math.max(...xs)) / 2,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2,
+  }
+}
 
 export function getReadableNameForFootprintPad(
   circuitJson: AnyCircuitElement[],
