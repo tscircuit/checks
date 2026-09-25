@@ -18,16 +18,41 @@ test("repro: circular mounting copper fits but its bounds cross the rounded boar
           </footprint>
         }
       />
+      <pcbnotetext
+        text="H1: circular mounting pad"
+        pcbX={21.5}
+        pcbY={25.4}
+        fontSize={0.32}
+      />
+      <pcbnotetext
+        text="Copper fits; square bounds cross the edge"
+        pcbX={21.5}
+        pcbY={19}
+        fontSize={0.26}
+      />
     </board>,
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = circuit
+    .getCircuitJson()
+    .filter((element) => element.type !== "pcb_component_outside_board_error")
   const errors = checkPcbComponentsOutOfBoard(circuitJson)
 
   expect(checkCopperToBoardEdgeClearance(circuitJson)).toHaveLength(0)
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain("0.21mm")
-  expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
-    import.meta.path,
-  )
+  expect(
+    convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+      shouldDrawErrors: true,
+      width: 1000,
+      height: 800,
+      backgroundColor: "#f8fafc",
+      colorOverrides: {
+        copper: { top: "#b76b25" },
+        drill: "#f8fafc",
+        boardOutline: "#334155",
+      },
+      viewport: { minX: 18, minY: 18, maxX: 26, maxY: 26 },
+    }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
