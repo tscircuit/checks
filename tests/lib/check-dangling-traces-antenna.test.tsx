@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test"
 import { Circuit, PcbTrace } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { runAllRoutingChecks } from "../../lib/run-all-checks"
 import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
 import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
 
@@ -53,6 +54,12 @@ test("intentional antenna copper does not exempt a dangling feed branch", async 
   expect(errors[0].center).toEqual({ x: -3, y: 2 })
   expect(errors[0].message).toContain("dangling endpoint")
   expect(checkTracesAreContiguous(circuitJson)).toEqual([])
+  const routingErrors = await runAllRoutingChecks(circuitJson)
+  expect(
+    routingErrors.filter((error) =>
+      error.message.includes("dangling endpoint"),
+    ),
+  ).toEqual(errors)
   await expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,
