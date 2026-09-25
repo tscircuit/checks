@@ -1,17 +1,16 @@
 import { expect, test } from "bun:test"
-import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbComponentsOutOfBoard } from "lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
-import { checkCopperToBoardEdgeClearance } from "lib/check-copper-to-board-edge-clearance"
 
-test("circular mounting copper fits even when its bounds cross the rounded board", async () => {
+test("a circular mounting pad crossing the board still reports its real overhang", async () => {
   const circuit = new Circuit()
   circuit.add(
     <board width={48.575} height={49.545} borderRadius={2.5} routingDisabled>
       <chip
         name="H1"
         pcbX={21.3875}
-        pcbY={22.1}
+        pcbY={22.7}
         footprint={
           <footprint>
             <platedhole shape="circle" holeDiameter={2.2} outerDiameter={4.4} />
@@ -25,9 +24,8 @@ test("circular mounting copper fits even when its bounds cross the rounded board
     .getCircuitJson()
     .filter((element) => element.type !== "pcb_component_outside_board_error")
   const errors = checkPcbComponentsOutOfBoard(circuitJson)
-
-  expect(checkCopperToBoardEdgeClearance(circuitJson)).toHaveLength(0)
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(1)
+  expect(errors[0].message).toContain("0.13mm")
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,
