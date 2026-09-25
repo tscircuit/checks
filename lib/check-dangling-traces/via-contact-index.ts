@@ -26,7 +26,6 @@ interface ViaCopper {
   layers: PcbCopperLayer[]
   x: number
   y: number
-  ownerTraceId?: PcbTraceId
   /** Route-only vias without a diameter can only prove exact center contact. */
   radius?: number
   holeRadius?: number
@@ -69,7 +68,6 @@ function getPcbViaCoppers(vias: PcbVia[]): ViaCopper[] {
       layers: getLayersOfPcbElement(via),
       x: via.x,
       y: via.y,
-      ownerTraceId: via.pcb_trace_id,
       radius: via.outer_diameter / 2,
       holeRadius: via.hole_diameter / 2,
     }))
@@ -113,7 +111,6 @@ function getRouteViaCoppers(
         ),
         x: point.x,
         y: point.y,
-        ownerTraceId: trace.pcb_trace_id,
         radius,
       })
     }
@@ -261,7 +258,6 @@ export function endpointTouchesVia(
   const viaContacts = viaContactIndex.get(netId)?.get(point.layer) ?? []
   return viaContacts.some(
     ({ viaCopper, touchesPadOrPour, touchingTraceIds }) => {
-      if (viaCopper.ownerTraceId === trace.pcb_trace_id) return false
       const hasOnwardConnection =
         touchesPadOrPour ||
         [...touchingTraceIds].some((traceId) => traceId !== trace.pcb_trace_id)
