@@ -52,3 +52,4 @@ export {
   type PcbComponentOverlapError,
 } from "./lib/consolidate-pcb-overlap-errors"
 export { checkPcbBusLengthSkew } from "./lib/check-pcb-bus-length-skew"
+export { checkTraceToHoleClearance } from "./lib/check-trace-to-hole-clearance"

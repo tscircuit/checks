@@ -13,9 +13,9 @@ test("keyboard1", () => {
     ...checkViaTraceClearance(keyboard1),
   ]
 
-  expect(overlapErrors).toHaveLength(25)
+  expect(overlapErrors).toHaveLength(31)
   expect(clearanceErrors).toHaveLength(15)
-  expect(overlapErrors.length + clearanceErrors.length).toBe(40)
+  expect(overlapErrors.length + clearanceErrors.length).toBe(46)
   expect(
     clearanceErrors.some((error) => {
       const obstacleId =

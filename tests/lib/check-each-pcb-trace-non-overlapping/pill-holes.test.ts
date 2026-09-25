@@ -23,6 +23,7 @@ test("pill hole: straight edge overlap", () => {
   }
   const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
     minClearance: 0.1,
+    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(1)
 })
@@ -38,6 +39,7 @@ test("pill hole: straight edge clearance", () => {
   }
   const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
     minClearance: 0.1,
+    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(1)
 })
@@ -53,6 +55,7 @@ test("pill hole: clear straight edge", () => {
   }
   const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
     minClearance: 0.1,
+    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(0)
 })
@@ -68,6 +71,7 @@ test("pill hole: exact required clearance", () => {
   }
   const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
     minClearance: 0.1,
+    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(0)
 })
@@ -85,6 +89,7 @@ test("pill hole: equal dimensions form a circle", () => {
     [trace, { ...horizontalSlot, hole_width: 2 }],
     {
       minClearance: 0.1,
+      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(0)
@@ -112,6 +117,7 @@ test("pill hole: translated rotated slot overlap", () => {
     ],
     {
       minClearance: 0.1,
+      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(1)
@@ -128,6 +134,7 @@ test("pill hole: rounded end overlap", () => {
   }
   const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
     minClearance: 0.1,
+    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(1)
 })
@@ -143,6 +150,7 @@ test("pill hole: clear rounded corner inside bounds", () => {
   }
   const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
     minClearance: 0.1,
+    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(0)
 })
@@ -160,6 +168,7 @@ test("pill hole: vertical slot overlap", () => {
     [trace, { ...horizontalSlot, hole_width: 2, hole_height: 4 }],
     {
       minClearance: 0.1,
+      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(1)
@@ -181,6 +190,7 @@ test("pill hole: rotated slot overlap", () => {
     ],
     {
       minClearance: 0.1,
+      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(1)
@@ -202,6 +212,7 @@ test("pill hole: clear rotated slot bounding box", () => {
     ],
     {
       minClearance: 0.1,
+      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(0)
