@@ -104,7 +104,7 @@ export function checkTraceToHoleClearance(
           error: {
             type: "pcb_trace_error",
             error_type: "pcb_trace_error",
-            pcb_trace_error_id: `hole_clearance_${pairId}`,
+            pcb_trace_error_id: `overlap_${pairId}`,
             pcb_trace_id: trace.pcb_trace_id,
             source_trace_id: trace.source_trace_id ?? "",
             pcb_component_ids: hole.pcb_component_id
