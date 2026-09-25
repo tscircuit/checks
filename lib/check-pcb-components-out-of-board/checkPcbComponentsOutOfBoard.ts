@@ -9,6 +9,7 @@ import { getReadableNameForComponent } from "lib/util/get-readable-names"
 import type { Point } from "@tscircuit/math-utils"
 import * as Flatten from "@flatten-js/core"
 import { rotateDEG, applyToPoint } from "transformation-matrix"
+import { getCircularPlatedHoleComponentOutline } from "./getCircularPlatedHoleComponentOutline"
 
 /**
  * Create a rectangle polygon centered at (cx,cy) with given width/height and rotation (degrees).
@@ -301,11 +302,19 @@ export function checkPcbComponentsOutOfBoard(
 
     // c.width and c.height store the world-coordinate AABB dimensions (post-rotation),
     // so we must NOT re-apply rotation here.
-    const compPoly = rectanglePolygon({
+    let compPoly = rectanglePolygon({
       center: c.center,
       size: { width: c.width, height: c.height },
       rotationDeg: 0,
     })
+
+    const circularOutline = getCircularPlatedHoleComponentOutline({
+      circuitJson,
+      component: c,
+    })
+    if (circularOutline) {
+      compPoly = new Flatten.Polygon(circularOutline)
+    }
 
     if (compPoly.area() === 0) continue
 
@@ -315,14 +324,23 @@ export function checkPcbComponentsOutOfBoard(
     if (isInside) continue
 
     // Component is at least partially outside. Compute overlapDistance:
-    const overlapDistance = computeOverlapDistance(
-      compPoly,
-      boardPoly,
-      c.center,
-      c.width,
-      c.height,
-      0,
-    )
+    let overlapDistance: number
+    if (circularOutline) {
+      const [distanceToBoundary] = boardPoly.distanceTo(circularOutline.pc)
+      overlapDistance = circularOutline.r - distanceToBoundary
+      if (!boardPoly.contains(circularOutline.pc)) {
+        overlapDistance = circularOutline.r + distanceToBoundary
+      }
+    } else {
+      overlapDistance = computeOverlapDistance(
+        compPoly,
+        boardPoly,
+        c.center,
+        c.width,
+        c.height,
+        0,
+      )
+    }
 
     const compName = getComponentName({ circuitJson, component: c })
     const overlapDistanceMm = Math.round(overlapDistance * 100) / 100
