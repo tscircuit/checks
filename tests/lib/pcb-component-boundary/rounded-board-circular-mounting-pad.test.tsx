@@ -31,6 +31,7 @@ test("repro: circular mounting copper fits but its bounds cross the rounded boar
   expect(errors[0].message).toContain("0.21mm")
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+      shouldDrawErrors: true,
       viewport: { minX: 18, minY: 18, maxX: 26, maxY: 26 },
     }),
   ).toMatchSvgSnapshot(import.meta.path)
