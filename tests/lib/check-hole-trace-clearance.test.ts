@@ -137,6 +137,13 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
     }),
   ).toHaveLength(0)
   expect(() => checkHoleTraceClearance([], { minClearance: -0.2 })).toThrow()
+  // NPTH geometry does not depend on the board's electrical layer stack.
+  const multilayerBoard = { ...board, num_layers: 12 }
+  expect(checkHoleTraceClearance([multilayerBoard, trace])).toEqual([])
+  expect(checkEachPcbTraceNonOverlapping([multilayerBoard, trace])).toEqual([])
+  expect(
+    checkHoleTraceClearance([multilayerBoard, shapes[0]!, trace]),
+  ).toHaveLength(1)
 
   for (const reversed of [false, true]) {
     const mixedTrace: PcbTrace = {
