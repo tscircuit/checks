@@ -27,18 +27,22 @@ export const addStartAndEndPortIdsIfMissing = (
     point: {
       x: number
       y: number
+      layer: PcbPort["layers"][number]
     },
     options: { isFirstOrLastPoint?: boolean; traceWidth?: number } = {},
   ): string | null {
     const traceWidth = options.traceWidth || 0
     const directPort = pcbPorts.find(
-      (port) => distance(port.x, port.y, point.x, point.y) < 0.01,
+      (port) =>
+        port.layers.includes(point.layer) &&
+        distance(port.x, port.y, point.x, point.y) < 0.01,
     )
     if (directPort) return directPort.pcb_port_id
 
-    // If it starts or ends inside an smtpad, we'll connect it to the por
+    // If it starts or ends inside an smtpad, we'll connect it to the port
     if (options.isFirstOrLastPoint) {
       const smtPad = pcbSmtPads.find((pad) => {
+        if (pad.layer !== point.layer) return false
         if (pad.shape === "rect") {
           return (
             Math.abs(point.x - pad.x) < pad.width / 2 + traceWidth / 2 &&

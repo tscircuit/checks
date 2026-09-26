@@ -521,3 +521,61 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
     expect(startPoint.start_pcb_port_id).toBe("port1")
   })
 })
+
+test("inferred trace endpoints only connect to ports and pads on their layer", () => {
+  const makeTrace = (x: number): PcbTrace => ({
+    type: "pcb_trace",
+    pcb_trace_id: `trace_${x}`,
+    route: [
+      { route_type: "wire", x, y: 0, width: 0.1, layer: "top" },
+      { route_type: "wire", x, y: 4, width: 0.1, layer: "top" },
+    ],
+  })
+  const traces = [makeTrace(0), makeTrace(0.5), makeTrace(3)]
+  const explicit = makeTrace(0)
+  if (explicit.route[0].route_type === "wire") {
+    explicit.route[0].start_pcb_port_id = "explicit_port"
+  }
+  const bottomPort: AnyCircuitElement = {
+    type: "pcb_port",
+    pcb_port_id: "bottom_port",
+    source_port_id: "source_bottom",
+    pcb_component_id: "component",
+    x: 0,
+    y: 0,
+    layers: ["bottom"],
+  }
+  const bottomPad: AnyCircuitElement = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "bottom_pad",
+    pcb_component_id: "component",
+    pcb_port_id: "bottom_port",
+    shape: "rect",
+    x: 0,
+    y: 0,
+    width: 2,
+    height: 2,
+    layer: "bottom",
+  }
+  const throughPort: AnyCircuitElement = {
+    ...bottomPort,
+    pcb_port_id: "through_port",
+    x: 3,
+    layers: ["top", "bottom"],
+  }
+  addStartAndEndPortIdsIfMissing([
+    bottomPort,
+    bottomPad,
+    throughPort,
+    ...traces,
+    explicit,
+  ])
+  expect(traces[0].route[0]).not.toHaveProperty("start_pcb_port_id")
+  expect(traces[1].route[0]).not.toHaveProperty("start_pcb_port_id")
+  expect(traces[2].route[0]).toHaveProperty("start_pcb_port_id", "through_port")
+  expect(explicit.route[0]).toHaveProperty("start_pcb_port_id", "explicit_port")
+
+  bottomPad.layer = "top"
+  addStartAndEndPortIdsIfMissing([bottomPad, traces[1]])
+  expect(traces[1].route[0]).toHaveProperty("start_pcb_port_id", "bottom_port")
+})
