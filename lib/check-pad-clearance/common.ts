@@ -61,6 +61,10 @@ export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
     }
   }
 
+  if (isHoleWithPolygonPad(pad)) {
+    return getHoleWithPolygonPadBounds(pad)
+  }
+
   return getBoundsOfPcbElements([pad])
 }
 
@@ -91,6 +95,41 @@ const isPillPad = (
     (pad.shape === "pill" || pad.shape === "rotated_pill")) ||
   (pad.type === "pcb_plated_hole" &&
     (pad.shape === "oval" || pad.shape === "pill"))
+
+const isHoleWithPolygonPad = (
+  pad: CopperClearanceElement,
+): pad is Extract<PcbPlatedHole, { shape: "hole_with_polygon_pad" }> =>
+  pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad"
+
+/**
+ * Polygon copper points for a hole_with_polygon_pad plated hole, translated
+ * to the hole position and rotated by ccw_rotation - the same convention
+ * check-copper-to-board-edge-clearance uses for this shape.
+ */
+export const getHoleWithPolygonPadPoints = (
+  pad: Extract<PcbPlatedHole, { shape: "hole_with_polygon_pad" }>,
+): { x: number; y: number }[] => {
+  const ccwRotation = pad.ccw_rotation ?? 0
+  const radians = (ccwRotation * Math.PI) / 180
+  const cos = Math.cos(radians)
+  const sin = Math.sin(radians)
+  return pad.pad_outline.map((point) => ({
+    x: pad.x + point.x * cos - point.y * sin,
+    y: pad.y + point.x * sin + point.y * cos,
+  }))
+}
+
+const getHoleWithPolygonPadBounds = (
+  pad: Extract<PcbPlatedHole, { shape: "hole_with_polygon_pad" }>,
+): Bounds => {
+  const points = getHoleWithPolygonPadPoints(pad)
+  return {
+    minX: Math.min(...points.map((p) => p.x)),
+    minY: Math.min(...points.map((p) => p.y)),
+    maxX: Math.max(...points.map((p) => p.x)),
+    maxY: Math.max(...points.map((p) => p.y)),
+  }
+}
 
 const getCircleShape = (pad: CopperClearanceElement) => {
   const center = getPadCenter(pad)
@@ -145,6 +184,13 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
     return {
       kind: "polygon" as const,
       points: getPolygonPointsForPad(pad),
+    }
+  }
+
+  if (isHoleWithPolygonPad(pad)) {
+    return {
+      kind: "polygon" as const,
+      points: getHoleWithPolygonPadPoints(pad),
     }
   }
 
