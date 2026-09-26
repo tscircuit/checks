@@ -17,6 +17,7 @@ import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-over
 import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
 import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkPadPadClearance } from "./check-pad-pad-clearance"
+import { checkHoleTraceClearance } from "./check-hole-trace-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
 import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
 import { checkPcbComponentsMissingCourtyard } from "./check-pcb-components-missing-courtyard"
@@ -106,6 +107,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkEachPcbTraceNonOverlapping(circuitJson, connectivity),
     ...checkCopperPourShorts(circuitJson, connectivity),
     ...checkPadTraceClearance(circuitJson, connectivity),
+    ...checkHoleTraceClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson, connectivity),
     ...checkViaPadClearance(circuitJson, connectivity),
     ...checkSameNetViaSpacing(circuitJson, connectivity),

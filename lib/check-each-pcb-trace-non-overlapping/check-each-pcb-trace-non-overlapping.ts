@@ -1,11 +1,11 @@
-import { checkHoleTraceClearance } from "../check-hole-trace-clearance"
+import {
+  getHoleGeometries,
+  getTraceHoleClearance,
+} from "../check-hole-clearance/common"
 import { checkPcbTraceSelfShorts } from "../check-pcb-trace-self-shorts"
 import { cju, getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
-import {
-  segmentToBoundsMinDistance,
-  segmentToCircleMinDistance,
-} from "@tscircuit/math-utils"
+import { segmentToBoundsMinDistance } from "@tscircuit/math-utils"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
@@ -44,8 +44,6 @@ import {
   getCollidableBounds,
 } from "./getCollidableBounds"
 import { getPcbPortIdsConnectedToTraces } from "./getPcbPortIdsConnectedToTraces"
-import { getRadiusOfCircuitJsonElement } from "./getRadiusOfCircuitJsonElement"
-import { getSegmentToPillClearance } from "./segment-to-polygon-clearance"
 
 type PcbComponentConnectionElement = PcbPort | PcbSmtPad | PcbPlatedHole
 
@@ -62,11 +60,9 @@ export function checkEachPcbTraceNonOverlapping(
   {
     connMap,
     minClearance,
-    minHoleClearance,
   }: {
     connMap?: ConnectivityMap
     minClearance?: number
-    minHoleClearance?: number
   } = {},
 ): (PcbTraceError | PcbKeepoutOverlapWarning)[] {
   const errors: (PcbTraceError | PcbKeepoutOverlapWarning)[] =
@@ -84,20 +80,28 @@ export function checkEachPcbTraceNonOverlapping(
     for (let i = 0; i < pcbTrace.route.length - 1; i++) {
       const p1 = pcbTrace.route[i]
       const p2 = pcbTrace.route[i + 1]
-      if (p1.route_type !== "wire") continue
-      if (p2.route_type !== "wire") continue
-      if (p1.layer !== p2.layer) continue
+      if (
+        (p1.route_type !== "wire" && p1.route_type !== "via") ||
+        (p2.route_type !== "wire" && p2.route_type !== "via")
+      )
+        continue
+      const wire = p1.route_type === "wire" ? p1 : p2
+      if (wire.route_type !== "wire") continue
+      if (
+        p1.route_type === "wire" &&
+        p2.route_type === "wire" &&
+        p1.layer !== p2.layer
+      )
+        continue
       segments.push({
         type: "pcb_trace_segment",
         pcb_trace_id: pcbTrace.pcb_trace_id,
         _pcbTrace: pcbTrace,
-        thickness:
-          "width" in p1
-            ? p1.width
-            : "width" in p2
-              ? p2.width
-              : DEFAULT_TRACE_THICKNESS,
-        layer: p1.layer,
+        thickness: Math.max(
+          p1.route_type === "wire" ? (p1.width ?? DEFAULT_TRACE_THICKNESS) : 0,
+          p2.route_type === "wire" ? (p2.width ?? DEFAULT_TRACE_THICKNESS) : 0,
+        ),
+        layer: wire.layer,
         x1: p1.x,
         y1: p1.y,
         x2: p2.x,
@@ -110,6 +114,12 @@ export function checkEachPcbTraceNonOverlapping(
   const pcbPlatedHoles = cju(circuitJson).pcb_plated_hole.list()
   const pcbPorts = cju(circuitJson).pcb_port.list()
   const pcbHoles = cju(circuitJson).pcb_hole.list()
+  const holeGeometryById = new Map(
+    getHoleGeometries(circuitJson).map((geometry) => [
+      geometry.elementId,
+      geometry,
+    ]),
+  )
   const pcbVias = cju(circuitJson).pcb_via.list()
   const pcbKeepouts = cju(circuitJson)
     .pcb_keepout.list()
@@ -288,8 +298,32 @@ export function checkEachPcbTraceNonOverlapping(
         continue
       }
 
-      // Hole clearance is checked below using its own board rule.
-      if (obj.type === "pcb_hole") continue
+      if (obj.type === "pcb_hole") {
+        const { gap, center } = getTraceHoleClearance(
+          segmentA,
+          holeGeometryById.get(obj.pcb_hole_id)!,
+        )
+        if (!isTraceObstacleOverlap(gap)) continue
+        const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
+        if (errorIds.has(pcb_trace_error_id)) continue
+        errorIds.add(pcb_trace_error_id)
+        errors.push({
+          type: "pcb_trace_error",
+          error_type: "pcb_trace_error",
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            `${obj.type} "${getReadableName(primaryObjId)}"`,
+            gap,
+          ),
+          pcb_trace_id: segmentA.pcb_trace_id,
+          source_trace_id: segmentA._pcbTrace.source_trace_id ?? "",
+          pcb_trace_error_id,
+          pcb_component_ids: obj.pcb_component_id ? [obj.pcb_component_id] : [],
+          pcb_port_ids: getPcbPortIdsConnectedToTraces([segmentA._pcbTrace]),
+          center,
+        })
+        continue
+      }
 
       // Handle generic case of hitting the bounds of any collidable obstacle
       // using the bounds of the collidable obstacle
@@ -347,10 +381,5 @@ export function checkEachPcbTraceNonOverlapping(
       }
     }
   }
-  return [
-    ...errors,
-    ...checkHoleTraceClearance(circuitJson, {
-      minClearance: minHoleClearance,
-    }),
-  ]
+  return errors
 }

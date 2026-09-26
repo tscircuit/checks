@@ -1,10 +1,9 @@
-import { convertCircuitJsonToFlattenJs } from "@tscircuit/circuit-json-to-flattenjs"
-import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import {
-  pointToSegmentClosestPoint,
-  pointToSegmentDistance,
-} from "@tscircuit/math-utils"
-import { Point, Segment } from "@flatten-js/core"
+  getHoleGeometries,
+  getTraceHoleClearance,
+} from "./check-hole-clearance/common"
+import { isTraceObstacleOverlap } from "./check-pad-clearance/common"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "./drc-defaults"
 import { SpatialObjectIndex } from "./data-structures/SpatialIndex"
@@ -24,11 +23,7 @@ export function checkHoleTraceClearance(
   if (!Number.isFinite(required) || required < 0) {
     throw new Error("Trace-to-hole clearance must be finite and non-negative")
   }
-  const holes = convertCircuitJsonToFlattenJs(circuitJson, {
-    elementTypes: ["pcb_hole"],
-    strict: true,
-    curveTolerance: 1e-6,
-  }).elements
+  const holes = getHoleGeometries(circuitJson)
   if (holes.length === 0) return []
   const index = new SpatialObjectIndex({
     objects: holes,
@@ -41,6 +36,7 @@ export function checkHoleTraceClearance(
     }),
   })
   const errors = new Map<string, { gap: number; error: PcbTraceError }>()
+  const overlappingPairIds = new Set<string>()
   for (const trace of circuitJson) {
     if (trace.type !== "pcb_trace") continue
     for (let i = 1; i < trace.route.length; i++) {
@@ -63,9 +59,6 @@ export function checkHoleTraceClearance(
           a.route_type === "wire" ? a.width : 0,
           b.route_type === "wire" ? b.width : 0,
         ) / 2
-      const start = new Point(a.x, a.y)
-      const end = new Point(b.x, b.y)
-      const segment = new Segment(start, end)
       const candidates = index.getObjectsInBounds(
         {
           minX: Math.min(a.x, b.x),
@@ -78,26 +71,18 @@ export function checkHoleTraceClearance(
       for (const geometry of candidates) {
         const hole = geometry.sourceElement
         if (hole.type !== "pcb_hole") continue
-        let distance = Infinity
-        let center = pointToSegmentClosestPoint(hole, a, b)
-        if (hole.hole_shape === "circle") {
-          distance = pointToSegmentDistance(hole, a, b) - hole.hole_diameter / 2
-        } else {
-          for (const shape of geometry.shapes) {
-            const [boundaryDistance, shortest] = shape.distanceTo(segment)
-            const shapeDistance =
-              shape.contains(start) || shape.contains(end)
-                ? 0
-                : boundaryDistance
-            if (shapeDistance < distance) {
-              distance = shapeDistance
-              center = shortest.end
-            }
-          }
-        }
-        const gap = distance - halfWidth
-        if (gap + 1e-6 >= required) continue
+        const { gap, center } = getTraceHoleClearance(
+          { x1: a.x, y1: a.y, x2: b.x, y2: b.y, thickness: halfWidth * 2 },
+          geometry,
+        )
         const pairId = `${trace.pcb_trace_id}_${hole.pcb_hole_id}`
+        if (isTraceObstacleOverlap(gap)) {
+          errors.delete(pairId)
+          overlappingPairIds.add(pairId)
+          continue
+        }
+        if (overlappingPairIds.has(pairId)) continue
+        if (gap + 1e-6 >= required) continue
         if ((errors.get(pairId)?.gap ?? Infinity) <= gap) continue
         errors.set(pairId, {
           gap,

@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import type { PcbHole, PcbTrace } from "circuit-json"
+import { checkHoleTraceClearance } from "../../../lib/check-hole-trace-clearance"
 import { checkEachPcbTraceNonOverlapping } from "../../../lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 
 const horizontalSlot: PcbHole = {
@@ -23,7 +24,6 @@ test("pill hole: straight edge overlap", () => {
   }
   const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
     minClearance: 0.1,
-    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(1)
 })
@@ -37,9 +37,8 @@ test("pill hole: straight edge clearance", () => {
       { route_type: "wire", x: 0.1, y: 1.15, width: 0.2, layer: "bottom" },
     ],
   }
-  const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
+  const errors = checkHoleTraceClearance([trace, horizontalSlot], {
     minClearance: 0.1,
-    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(1)
 })
@@ -53,9 +52,8 @@ test("pill hole: clear straight edge", () => {
       { route_type: "wire", x: 0.1, y: 1.3, width: 0.2, layer: "bottom" },
     ],
   }
-  const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
+  const errors = checkHoleTraceClearance([trace, horizontalSlot], {
     minClearance: 0.1,
-    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(0)
 })
@@ -69,9 +67,8 @@ test("pill hole: exact required clearance", () => {
       { route_type: "wire", x: 0.1, y: 1.2, width: 0.2, layer: "bottom" },
     ],
   }
-  const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
+  const errors = checkHoleTraceClearance([trace, horizontalSlot], {
     minClearance: 0.1,
-    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(0)
 })
@@ -85,11 +82,10 @@ test("pill hole: equal dimensions form a circle", () => {
       { route_type: "wire", x: 1, y: 0.9, width: 0.2, layer: "bottom" },
     ],
   }
-  const errors = checkEachPcbTraceNonOverlapping(
+  const errors = checkHoleTraceClearance(
     [trace, { ...horizontalSlot, hole_width: 2 }],
     {
       minClearance: 0.1,
-      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(0)
@@ -117,7 +113,6 @@ test("pill hole: translated rotated slot overlap", () => {
     ],
     {
       minClearance: 0.1,
-      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(1)
@@ -134,7 +129,6 @@ test("pill hole: rounded end overlap", () => {
   }
   const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
     minClearance: 0.1,
-    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(1)
 })
@@ -148,9 +142,8 @@ test("pill hole: clear rounded corner inside bounds", () => {
       { route_type: "wire", x: 2, y: 0.9, width: 0.2, layer: "bottom" },
     ],
   }
-  const errors = checkEachPcbTraceNonOverlapping([trace, horizontalSlot], {
+  const errors = checkHoleTraceClearance([trace, horizontalSlot], {
     minClearance: 0.1,
-    minHoleClearance: 0.1,
   })
   expect(errors).toHaveLength(0)
 })
@@ -168,7 +161,6 @@ test("pill hole: vertical slot overlap", () => {
     [trace, { ...horizontalSlot, hole_width: 2, hole_height: 4 }],
     {
       minClearance: 0.1,
-      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(1)
@@ -190,7 +182,6 @@ test("pill hole: rotated slot overlap", () => {
     ],
     {
       minClearance: 0.1,
-      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(1)
@@ -205,14 +196,13 @@ test("pill hole: clear rotated slot bounding box", () => {
       { route_type: "wire", x: -1.4, y: 1.5, width: 0.2, layer: "bottom" },
     ],
   }
-  const errors = checkEachPcbTraceNonOverlapping(
+  const errors = checkHoleTraceClearance(
     [
       trace,
       { ...horizontalSlot, hole_shape: "rotated_pill", ccw_rotation: 45 },
     ],
     {
       minClearance: 0.1,
-      minHoleClearance: 0.1,
     },
   )
   expect(errors).toHaveLength(0)

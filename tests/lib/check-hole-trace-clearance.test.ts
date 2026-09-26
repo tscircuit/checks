@@ -2,9 +2,12 @@ import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import type { AnyCircuitElement, PcbHole, PcbTrace } from "circuit-json"
 import { checkHoleTraceClearance } from "../../index"
-import { checkEachPcbTraceNonOverlapping } from "../../index"
+import {
+  checkEachPcbTraceNonOverlapping,
+  runAllRoutingChecks,
+} from "../../index"
 
-test("trace-to-hole clearance uses the drill edge and copper width on every layer", () => {
+test("trace-to-hole clearance uses the drill edge and copper width on every layer", async () => {
   const shapes: PcbHole[] = [
     {
       type: "pcb_hole",
@@ -78,7 +81,7 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
           point.y = 1.299
       }
       expect(checkHoleTraceClearance(circuit)).toHaveLength(1)
-      expect(checkEachPcbTraceNonOverlapping(circuit)).toHaveLength(1)
+      expect(checkEachPcbTraceNonOverlapping(circuit)).toHaveLength(0)
       expect(
         checkHoleTraceClearance(circuit, { minClearance: 0.1 }),
       ).toHaveLength(0)
@@ -94,8 +97,15 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
         if (point.route_type === "wire" || point.route_type === "via")
           point.y = 0
       }
+      expect(checkHoleTraceClearance(circuit)).toHaveLength(0)
+      expect(checkEachPcbTraceNonOverlapping(circuit)).toHaveLength(1)
+      const routingErrors = await runAllRoutingChecks(circuit)
       expect(
-        checkHoleTraceClearance(circuit, { minClearance: 0 }),
+        routingErrors.filter(
+          (error) =>
+            error.type === "pcb_trace_error" &&
+            error.pcb_trace_error_id === "overlap_trace_hole",
+        ),
       ).toHaveLength(1)
     }
   }
@@ -127,6 +137,21 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
     }),
   ).toHaveLength(0)
   expect(() => checkHoleTraceClearance([], { minClearance: -0.2 })).toThrow()
+
+  for (const reversed of [false, true]) {
+    const mixedTrace: PcbTrace = {
+      ...trace,
+      route: [
+        { route_type: "wire", x: -2, y: 1.25, width: 0.2, layer: "top" },
+        { route_type: "wire", x: 2, y: 1.25, width: 0.2, layer: "top" },
+        { route_type: "wire", x: 0, y: 0, width: 0.2, layer: "top" },
+      ],
+    }
+    if (reversed) mixedTrace.route.reverse()
+    const mixedCircuit = [shapes[0]!, mixedTrace]
+    expect(checkHoleTraceClearance(mixedCircuit)).toEqual([])
+    expect(checkEachPcbTraceNonOverlapping(mixedCircuit)).toHaveLength(1)
+  }
 
   const snapshotCircuit: AnyCircuitElement[] = [
     {
@@ -164,8 +189,16 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
     )
   }
   // The 0.15 mm gap passes the pad rule but violates the independent hole rule.
-  const snapshotErrors = checkEachPcbTraceNonOverlapping(snapshotCircuit)
-  expect(snapshotErrors).toEqual(checkHoleTraceClearance(snapshotCircuit))
+  const snapshotErrors = checkHoleTraceClearance(snapshotCircuit)
+  expect(checkEachPcbTraceNonOverlapping(snapshotCircuit)).toEqual([])
+  const routingErrors = await runAllRoutingChecks(snapshotCircuit)
+  expect(
+    routingErrors.filter(
+      (error) =>
+        error.type === "pcb_trace_error" &&
+        error.pcb_trace_error_id === "overlap_too_close_hole",
+    ),
+  ).toEqual(snapshotErrors)
   expect(snapshotErrors).toHaveLength(1)
   expect(snapshotErrors[0]).toMatchObject({ pcb_trace_id: "too_close" })
   expect(
