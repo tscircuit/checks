@@ -288,6 +288,7 @@ export function checkEachPcbTraceNonOverlapping(
         continue
       }
 
+      // Hole clearance is checked below using its own board rule.
       if (obj.type === "pcb_hole") continue
 
       // Handle generic case of hitting the bounds of any collidable obstacle

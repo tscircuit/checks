@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import type { AnyCircuitElement, PcbHole, PcbTrace } from "circuit-json"
 import { checkHoleTraceClearance } from "../../index"
 import { checkEachPcbTraceNonOverlapping } from "../../index"
@@ -126,4 +127,50 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
     }),
   ).toHaveLength(0)
   expect(() => checkHoleTraceClearance([], { minClearance: -0.2 })).toThrow()
+
+  const snapshotCircuit: AnyCircuitElement[] = [
+    {
+      ...board,
+      width: 8,
+      height: 5,
+      min_trace_to_hole_edge_clearance: 0.2,
+    },
+    shapes[0]!,
+  ]
+  for (const { id, y, gap } of [
+    { id: "too_close", y: 1.25, gap: "0.15" },
+    { id: "at_minimum", y: -1.3, gap: "0.20" },
+  ]) {
+    snapshotCircuit.push(
+      {
+        type: "pcb_trace",
+        pcb_trace_id: id,
+        route: [
+          { route_type: "wire", x: -2, y, width: 0.2, layer: "top" },
+          { route_type: "wire", x: 2, y, width: 0.2, layer: "top" },
+        ],
+      },
+      {
+        type: "pcb_silkscreen_text",
+        pcb_silkscreen_text_id: `label_${id}`,
+        pcb_component_id: "",
+        anchor_position: { x: 2.2, y },
+        anchor_alignment: "center_left",
+        font: "tscircuit2024",
+        font_size: 0.2,
+        layer: "top",
+        text: `${gap} mm gap`,
+      },
+    )
+  }
+  // The 0.15 mm gap passes the pad rule but violates the independent hole rule.
+  const snapshotErrors = checkEachPcbTraceNonOverlapping(snapshotCircuit)
+  expect(snapshotErrors).toEqual(checkHoleTraceClearance(snapshotCircuit))
+  expect(snapshotErrors).toHaveLength(1)
+  expect(snapshotErrors[0]).toMatchObject({ pcb_trace_id: "too_close" })
+  expect(
+    convertCircuitJsonToPcbSvg([...snapshotCircuit, ...snapshotErrors], {
+      shouldDrawErrors: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
