@@ -13,11 +13,14 @@ import type { PcbTraceSegment } from "../check-each-pcb-trace-non-overlapping/ge
 export const getHoleGeometries = (
   circuitJson: AnyCircuitElement[],
 ): FlattenElement[] =>
-  convertCircuitJsonToFlattenJs(circuitJson, {
-    elementTypes: ["pcb_hole"],
-    strict: true,
-    curveTolerance: 1e-6,
-  }).elements
+  convertCircuitJsonToFlattenJs(
+    circuitJson.filter((e) => e.type === "pcb_hole"),
+    {
+      elementTypes: ["pcb_hole"],
+      strict: true,
+      curveTolerance: 1e-6,
+    },
+  ).elements
 
 /** Uses the same physical hole boundary for overlap and clearance checks. */
 export const getTraceHoleClearance = (
