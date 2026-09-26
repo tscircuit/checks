@@ -12,7 +12,6 @@
   ],
   "scripts": {
     "build": "tsup-node",
-    "prepublishOnly": "bun run build",
     "test": "bun test",
     "format:check": "biome format .",
     "format": "biome format . --write"
