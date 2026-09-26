@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement, PcbHole, PcbTrace } from "circuit-json"
-import { checkTraceToHoleClearance } from "../../index"
+import { checkHoleTraceClearance } from "../../index"
 import { checkEachPcbTraceNonOverlapping } from "../../index"
 
 test("trace-to-hole clearance uses the drill edge and copper width on every layer", () => {
@@ -71,15 +71,15 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
         ],
       }
       const circuit: AnyCircuitElement[] = [hole, trace]
-      expect(checkTraceToHoleClearance(circuit)).toHaveLength(0)
+      expect(checkHoleTraceClearance(circuit)).toHaveLength(0)
       for (const point of trace.route) {
         if (point.route_type === "wire" || point.route_type === "via")
           point.y = 1.299
       }
-      expect(checkTraceToHoleClearance(circuit)).toHaveLength(1)
+      expect(checkHoleTraceClearance(circuit)).toHaveLength(1)
       expect(checkEachPcbTraceNonOverlapping(circuit)).toHaveLength(1)
       expect(
-        checkTraceToHoleClearance(circuit, { minClearance: 0.1 }),
+        checkHoleTraceClearance(circuit, { minClearance: 0.1 }),
       ).toHaveLength(0)
       trace.route[1] = {
         route_type: "via",
@@ -88,13 +88,13 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
         from_layer: layer,
         to_layer: "bottom",
       }
-      expect(checkTraceToHoleClearance(circuit)).toHaveLength(1)
+      expect(checkHoleTraceClearance(circuit)).toHaveLength(1)
       for (const point of trace.route) {
         if (point.route_type === "wire" || point.route_type === "via")
           point.y = 0
       }
       expect(
-        checkTraceToHoleClearance(circuit, { minClearance: 0 }),
+        checkHoleTraceClearance(circuit, { minClearance: 0 }),
       ).toHaveLength(1)
     }
   }
@@ -119,11 +119,11 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
       { route_type: "wire", x: 3, y: 1.4, width: 0.2, layer: "top" },
     ],
   }
-  expect(checkTraceToHoleClearance([board, shapes[0]!, trace])).toHaveLength(1)
+  expect(checkHoleTraceClearance([board, shapes[0]!, trace])).toHaveLength(1)
   expect(
-    checkTraceToHoleClearance([board, shapes[0]!, trace], {
+    checkHoleTraceClearance([board, shapes[0]!, trace], {
       minClearance: 0.2,
     }),
   ).toHaveLength(0)
-  expect(() => checkTraceToHoleClearance([], { minClearance: -0.2 })).toThrow()
+  expect(() => checkHoleTraceClearance([], { minClearance: -0.2 })).toThrow()
 })

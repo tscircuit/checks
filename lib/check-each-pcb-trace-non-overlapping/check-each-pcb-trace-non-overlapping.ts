@@ -1,4 +1,4 @@
-import { checkTraceToHoleClearance } from "../check-trace-to-hole-clearance"
+import { checkHoleTraceClearance } from "../check-hole-trace-clearance"
 import { checkPcbTraceSelfShorts } from "../check-pcb-trace-self-shorts"
 import { cju, getReadableNameForElement } from "@tscircuit/circuit-json-util"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
@@ -348,7 +348,7 @@ export function checkEachPcbTraceNonOverlapping(
   }
   return [
     ...errors,
-    ...checkTraceToHoleClearance(circuitJson, {
+    ...checkHoleTraceClearance(circuitJson, {
       minClearance: minHoleClearance,
     }),
   ]

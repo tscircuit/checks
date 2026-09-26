@@ -10,7 +10,7 @@ import { getBoardDrcValue, getPcbBoard } from "./drc-defaults"
 import { SpatialObjectIndex } from "./data-structures/SpatialIndex"
 
 /** Checks trace copper against physical non-plated holes on every copper layer. */
-export function checkTraceToHoleClearance(
+export function checkHoleTraceClearance(
   circuitJson: AnyCircuitElement[],
   { minClearance }: { minClearance?: number } = {},
 ): PcbTraceError[] {
