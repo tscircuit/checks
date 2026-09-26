@@ -1,9 +1,9 @@
 import type { Polygon } from "@flatten-js/core"
 import { all_layers, type AnyCircuitElement, type PcbVia } from "circuit-json"
 import {
+  circlePolygon,
   getPourPolygon,
   getTraceSegmentPolygon,
-  getViaPolygon,
 } from "@tscircuit/circuit-json-util"
 import Flatbush from "flatbush"
 import { createCopperPolygonContactTester } from "../copper-pour-connectivity/create-copper-polygon-contact-tester"
@@ -66,7 +66,7 @@ export function getViaAndPourConnections(
       add(
         copper.pcb_via_id,
         copper.layers,
-        getViaPolygon(copper, copper.outer_diameter, 0),
+        circlePolygon(copper, copper.outer_diameter / 2),
         true,
       )
       if (copper.pcb_trace_id)
@@ -119,7 +119,7 @@ export function getViaAndPourConnections(
           add(
             copper.pcb_trace_id,
             via.layers,
-            getViaPolygon(via, via.outer_diameter, 0),
+            circlePolygon(via, via.outer_diameter / 2),
             true,
           )
         }
