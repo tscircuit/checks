@@ -8,11 +8,11 @@ import type {
   PcbPadPadClearanceError,
   PcbVia,
 } from "circuit-json"
-import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
+import { formatMm } from "format-si-unit"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
@@ -40,7 +40,7 @@ export function checkViaPadClearance(
   const board = getPcbBoard(circuitJson)
   const requiredClearance =
     minClearance ??
-    getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
+    getBoardDrcValue(board, "min_via_edge_to_pad_edge_clearance") ??
     jlcMinTolerances.min_pad_edge_to_pad_edge_clearance!
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
 
