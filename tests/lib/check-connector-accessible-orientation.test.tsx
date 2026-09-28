@@ -259,3 +259,58 @@ test("connector orientation check skips from_above insertion direction", () => {
   const warnings = checkConnectorAccessibleOrientation(circuitJson)
   expect(warnings).toHaveLength(0)
 })
+
+test("pin headers ignore inferred side entry but retain explicit right-angle warnings", () => {
+  const board: AnyCircuitElement = {
+    type: "pcb_board",
+    pcb_board_id: "board",
+    center: { x: 0, y: 0 },
+    width: 30,
+    height: 20,
+    thickness: 1.6,
+    num_layers: 2,
+    material: "fr4",
+  }
+  const header: AnyCircuitElement = {
+    type: "source_component",
+    source_component_id: "header",
+    name: "J1",
+    ftype: "simple_pin_header",
+    pin_count: 2,
+    gender: "male",
+  }
+  const pcbHeader: Extract<AnyCircuitElement, { type: "pcb_component" }> = {
+    type: "pcb_component",
+    pcb_component_id: "pcb_header",
+    source_component_id: "header",
+    center: { x: -14, y: 0 },
+    cable_insertion_center: { x: -12, y: 0 },
+    width: 4,
+    height: 4,
+    layer: "top",
+    rotation: 0,
+    obstructs_within_bounds: true,
+  }
+  expect(
+    checkConnectorAccessibleOrientation([board, header, pcbHeader]),
+  ).toHaveLength(0)
+  for (const insertion_direction of [
+    "from_above",
+    "from_below",
+    "from_left",
+  ] as const) {
+    expect(
+      checkConnectorAccessibleOrientation([
+        board,
+        header,
+        { ...pcbHeader, insertion_direction },
+      ]),
+    ).toHaveLength(0)
+  }
+  const warnings = checkConnectorAccessibleOrientation([
+    board,
+    header,
+    { ...pcbHeader, insertion_direction: "from_right" },
+  ])
+  expect(warnings).toHaveLength(1)
+})
