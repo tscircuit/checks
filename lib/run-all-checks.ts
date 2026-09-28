@@ -1,3 +1,4 @@
+import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
@@ -101,6 +102,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson, connectivity),
     ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
+    ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
     ...checkPcbBusLengthSkew(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),

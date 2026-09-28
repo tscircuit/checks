@@ -1,3 +1,4 @@
+import { getTraceEndpointNeckdownLengths } from "lib/util/get-trace-endpoint-neckdown-lengths"
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
@@ -11,7 +12,21 @@ import { getReadableNameForSourceTrace } from "lib/util/get-readable-names"
 
 export function checkSourceTracesMatchPcbTraceThickness(
   circuitJson: AnyCircuitElement[],
+  {
+    maxPadNeckdownLength,
+  }: {
+    /** Maximum routed escape length beyond an endpoint pad, in mm. Defaults
+     * to the requested trace width. This is a nominal-width warning heuristic,
+     * not an electrical current-capacity or thermal exemption. */
+    maxPadNeckdownLength?: number
+  } = {},
 ): PcbTraceWarning[] {
+  if (
+    maxPadNeckdownLength !== undefined &&
+    (!Number.isFinite(maxPadNeckdownLength) || maxPadNeckdownLength < 0)
+  ) {
+    throw new Error("maxPadNeckdownLength must be finite and nonnegative")
+  }
   const warnings: PcbTraceWarning[] = []
   const db = cju(circuitJson)
 
@@ -40,41 +55,77 @@ export function checkSourceTracesMatchPcbTraceThickness(
     )
     if (relatedPcbTraces.length === 0) continue
 
-    const actualWireWidths = relatedPcbTraces.flatMap((pcbTrace) =>
-      pcbTrace.route
-        .filter((point) => point.route_type === "wire")
-        .map((point) => point.width),
-    )
-    if (actualWireWidths.length === 0) continue
-
-    const actualThickness = Math.min(...actualWireWidths)
-    if (actualThickness >= requestedThickness) continue
-
     let undersizedSegment:
-      | { pcb_trace_id: string; center: { x: number; y: number } }
+      | {
+          pcb_trace_id: string
+          center: { x: number; y: number }
+          width: number
+        }
       | undefined
 
     for (const relatedPcbTrace of relatedPcbTraces) {
+      const neckdowns = getTraceEndpointNeckdownLengths(
+        relatedPcbTrace,
+        circuitJson,
+        maxPadNeckdownLength ?? requestedThickness,
+      )
       for (let i = 0; i < relatedPcbTrace.route.length - 1; i++) {
         const point = relatedPcbTrace.route[i]
         const nextPoint = relatedPcbTrace.route[i + 1]
-        if (!point || !nextPoint) continue
         if (point.route_type !== "wire" || nextPoint.route_type !== "wire") {
           continue
         }
-        if (point.width !== actualThickness) continue
+        if (point.layer !== nextPoint.layer) continue
+        if (point.x === nextPoint.x && point.y === nextPoint.y) continue
 
+        // Constant-width copper uses the starting point's width. The final
+        // route point does not define another segment. Interpolated copper
+        // varies linearly between the two endpoint widths.
+        const interpolated =
+          relatedPcbTrace.route_thickness_mode === "interpolated"
+        if (
+          Math.min(point.width, interpolated ? nextPoint.width : point.width) >=
+          requestedThickness
+        )
+          continue
+
+        // Place the marker inside the deficient portion of a taper, rather
+        // than at a midpoint that may already be wide enough.
+        let startFraction = 0
+        let endFraction = 1
+        if (interpolated && point.width !== nextPoint.width) {
+          const crossing =
+            (requestedThickness - point.width) / (nextPoint.width - point.width)
+          if (point.width >= requestedThickness) startFraction = crossing
+          if (nextPoint.width >= requestedThickness) endFraction = crossing
+        }
+        const length = Math.hypot(nextPoint.x - point.x, nextPoint.y - point.y)
+        startFraction = Math.max(
+          startFraction,
+          (neckdowns.fromStart.get(i) ?? 0) / length,
+        )
+        endFraction = Math.min(
+          endFraction,
+          1 - (neckdowns.fromEnd.get(i) ?? 0) / length,
+        )
+        if (endFraction - startFraction < 1e-9) continue
+        const width = interpolated
+          ? Math.min(
+              point.width + (nextPoint.width - point.width) * startFraction,
+              point.width + (nextPoint.width - point.width) * endFraction,
+            )
+          : point.width
+        if (undersizedSegment && width >= undersizedSegment.width) continue
+        const fraction = (startFraction + endFraction) / 2
         undersizedSegment = {
           pcb_trace_id: relatedPcbTrace.pcb_trace_id,
           center: {
-            x: (point.x + nextPoint.x) / 2,
-            y: (point.y + nextPoint.y) / 2,
+            x: point.x + (nextPoint.x - point.x) * fraction,
+            y: point.y + (nextPoint.y - point.y) * fraction,
           },
+          width,
         }
-        break
       }
-
-      if (undersizedSegment) break
     }
 
     if (!undersizedSegment) continue
@@ -83,7 +134,7 @@ export function checkSourceTracesMatchPcbTraceThickness(
       type: "pcb_trace_warning",
       pcb_trace_warning_id: `pcb_trace_warning_${sourceTrace.source_trace_id}`,
       warning_type: "pcb_trace_warning",
-      message: `Trace [${getReadableNameForSourceTrace(circuitJson, sourceTrace)}] is routed thinner than requested (requested: ${requestedThickness}mm, actual: ${actualThickness}mm).`,
+      message: `Trace [${getReadableNameForSourceTrace(circuitJson, sourceTrace)}] is routed thinner than requested (requested: ${requestedThickness}mm, actual: ${undersizedSegment.width}mm).`,
       center: undersizedSegment.center,
       source_trace_id: sourceTrace.source_trace_id,
       pcb_trace_id: undersizedSegment.pcb_trace_id,
