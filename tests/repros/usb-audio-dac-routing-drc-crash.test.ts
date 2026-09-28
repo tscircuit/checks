@@ -14,23 +14,24 @@ const missedClearanceError = expect.objectContaining({
   message: expect.stringContaining("gap: 0.090mm"),
 })
 
-test("USB audio DAC full board exposes the clearance error when checked independently", async () => {
+test("USB audio DAC full board exposes the clearance error when checked independently", () => {
   const errors = checkEachPcbTraceNonOverlapping(circuitJson)
   expect(errors).toContainEqual(missedClearanceError)
+})
 
+test("USB audio DAC routing checks retain the clearance error and report failed copper conversion", async () => {
+  const errors = await runAllRoutingChecks(circuitJson)
+  expect(errors).toContainEqual(missedClearanceError)
+  expect(errors).toContainEqual(
+    expect.objectContaining({
+      type: "pcb_placement_error",
+      is_fatal: true,
+      message: expect.stringContaining("Cannot check copper pour shorts"),
+    }),
+  )
   await expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
 })
-
-test.failing(
-  "USB audio DAC routing checks should return the clearance error without throwing",
-  async () => {
-    // Currently throws in checkCopperPourShorts:
-    // source_net_9_mst2_0: Unresolved boundary conflict in boolean operation
-    const errors = await runAllRoutingChecks(circuitJson)
-    expect(errors).toContainEqual(missedClearanceError)
-  },
-)
