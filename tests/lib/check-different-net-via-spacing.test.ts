@@ -62,7 +62,7 @@ describe("checkDifferentNetViaSpacing", () => {
     expect(errors).toHaveLength(0)
   })
 
-  test("no error for duplicate vias at the same location on different nets", () => {
+  test("reports vias at the same location on different nets", () => {
     const circuitJson: AnyCircuitElement[] = [
       { type: "pcb_trace", pcb_trace_id: "trace1", route: [] },
       { type: "pcb_trace", pcb_trace_id: "trace2", route: [] },
@@ -89,7 +89,8 @@ describe("checkDifferentNetViaSpacing", () => {
     ]
 
     const errors = checkDifferentNetViaSpacing(circuitJson)
-    expect(errors).toHaveLength(0)
+    expect(errors).toHaveLength(1)
+    expect(errors[0].actual_clearance).toBeCloseTo(-0.3)
   })
 
   test("no error when same-net vias are close", () => {

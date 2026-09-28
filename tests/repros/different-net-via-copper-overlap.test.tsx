@@ -5,7 +5,7 @@ import { checkDifferentNetViaSpacing } from "lib/check-different-net-via-spacing
 import { distance } from "lib/util/distance"
 import { Circuit } from "tscircuit"
 
-test("repro: different-net via copper overlap passes the drill-spacing check", async () => {
+test("reports different-net via copper overlap even when drill spacing passes", async () => {
   const circuit = new Circuit({
     platform: { placementDrcChecksDisabled: true },
   })
@@ -59,13 +59,24 @@ test("repro: different-net via copper overlap passes the drill-spacing check", a
   expect(copperGap).toBeCloseTo(-0.0018726437, 10)
 
   const errors = checkDifferentNetViaSpacing(circuitJson)
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(1)
+  expect(errors[0].pcb_via_ids).toEqual([viaA.pcb_via_id, viaB.pcb_via_id])
+  expect(errors[0].actual_clearance).toBeCloseTo(copperGap, 10)
+  expect(errors[0].minimum_clearance).toBe(0.1)
+  const errorCountNote = circuit.db.pcb_note_text.insert({
+    text: `Via clearance errors: ${errors.length}`,
+    anchor_position: { x: 0, y: -0.5 },
+    anchor_alignment: "center",
+    font: "tscircuit2024",
+    font_size: 0.065,
+    layer: "top",
+    color: "red",
+  })
   await expect(
-    convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+    convertCircuitJsonToPcbSvg([...circuitJson, errorCountNote, ...errors], {
       width: 1000,
       height: 750,
       shouldDrawErrors: true,
-      showErrorsInTextOverlay: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
 })
