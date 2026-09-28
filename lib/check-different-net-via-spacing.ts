@@ -41,12 +41,10 @@ export function checkDifferentNetViaSpacing(
       const centerDistance = distance(viaA, viaB)
       let gap = centerDistance - viaA.hole_diameter / 2 - viaB.hole_diameter / 2
       let minimumClearance = minClearance!
-      let gapLabel = "gap"
       if (gap + EPSILON >= minimumClearance) {
         if (!viaA.layers.some((layer) => viaB.layers.includes(layer))) continue
         gap = centerDistance - viaA.outer_diameter / 2 - viaB.outer_diameter / 2
         minimumClearance = minCopperClearance
-        gapLabel = "copper gap"
         // A negative copper gap is a short, even within the clearance tolerance.
         if (gap >= 0 && gap + EPSILON >= minimumClearance) continue
       }
@@ -62,7 +60,7 @@ export function checkDifferentNetViaSpacing(
         )} and ${getReadableNameForElement(
           circuitJson,
           viaB.pcb_via_id,
-        )} from different nets are too close together (${gapLabel}: ${gap.toFixed(
+        )} from different nets are too close together (gap: ${gap.toFixed(
           3,
         )}mm)`,
         error_type: "pcb_via_clearance_error",
