@@ -6,6 +6,7 @@ import {
   type FlattenElement,
 } from "@tscircuit/circuit-json-to-flattenjs"
 import type { AnyCircuitElement, PcbPlacementError } from "circuit-json"
+import { pcb_placement_error } from "circuit-json"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
@@ -34,16 +35,29 @@ export function checkCopperPourShorts(
 ): PcbPlacementError[] {
   if (!circuitJson.some((e) => e.type === "pcb_copper_pour")) return []
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
-  const { elements: copper } = convertCircuitJsonToFlattenJs(circuitJson, {
-    elementTypes: [
-      "pcb_smtpad",
-      "pcb_plated_hole",
-      "pcb_via",
-      "pcb_trace",
-      "pcb_copper_pour",
-    ],
-    strict: true,
-  })
+  const { elements: copper, warnings } = convertCircuitJsonToFlattenJs(
+    circuitJson,
+    {
+      elementTypes: [
+        "pcb_smtpad",
+        "pcb_plated_hole",
+        "pcb_via",
+        "pcb_trace",
+        "pcb_copper_pour",
+      ],
+      strict: false,
+    },
+  )
+  // Incomplete copper geometry cannot establish that the board is free of shorts.
+  if (warnings.length > 0) {
+    return warnings.map((warning) =>
+      pcb_placement_error.parse({
+        type: "pcb_placement_error",
+        is_fatal: true,
+        message: `Cannot check copper pour shorts: ${warning.elementId}: ${warning.message}`,
+      }),
+    )
+  }
   // Index individual shapes, not whole trace bounds, separately on each layer.
   // A long routed trace can have a large bounding box but few nearby segments.
   const layers = new Map<
