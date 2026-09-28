@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="850" viewBox="0 0 1100 850">
+    <rect width="1100" height="850" fill="#101923"/>
+    <g font-family="Arial, sans-serif">
+      <text x="50" y="42" font-size="27" fill="white">Trace-width DRC: required width = 1 mm</text>
+      <text x="50" y="73" font-size="16" fill="#c8d2df">Actual PCB copper at a shared scale. Yellow crosshair = warning.center from runAllRoutingChecks.</text>
+      <g transform="translate(50 115)">
+      <text x="0" y="0" font-size="22" fill="white">A. Narrow segment: warning was previously missed</text>
+      <text x="0" y="28" font-size="15" fill="#c8d2df">1.0 mm for 10 mm, then 0.5 mm for 10 mm; terminal width metadata = 0.1 mm</text>
+      <g transform="translate(0 42)"><g transform="translate(83.33333333333333 60) scale(41.666666666666664)"><rect x="-2" y="-1.44" width="24" height="2.88" fill="#000000"/><g transform="scale(1,-1)"><g data-element-id="pcb_trace_0" data-layer="top"><path fill="#c83232" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M0,-0.5 L10,-0.5 A0.5,0.5 0 0,1 10,0.5 L0,0.5 A0.5,0.5 0 0,1 0,-0.5 Z"/><path fill="#c83232" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M10,-0.25 L20,-0.25 A0.25,0.25 0 0,1 20,0.25 L10,0.25 A0.25,0.25 0 0,1 10,-0.25 Z"/></g></g></g><g transform="translate(708.3333333333334 60)" stroke="#ffd166" fill="none" stroke-width="2"><circle r="14"/><path d="M-21 0H21M0-21V21"/></g></g>
+      <text x="0" y="188" font-size="15" fill="#ffd166">Trace [Power rail] is routed thinner than requested (requested: 1mm, actual: 0.5mm).</text>
+    </g><g transform="translate(50 360)">
+      <text x="0" y="0" font-size="22" fill="white">B. Widened route: no width warning</text>
+      <text x="0" y="28" font-size="15" fill="#c8d2df">1.0 mm along the entire route; terminal width metadata = 0.1 mm (no outgoing copper)</text>
+      <g transform="translate(0 42)"><g transform="translate(83.33333333333333 60) scale(41.666666666666664)"><rect x="-2" y="-1.44" width="24" height="2.88" fill="#000000"/><g transform="scale(1,-1)"><g data-element-id="pcb_trace_0" data-layer="top"><path fill="#c83232" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M0,-0.5 L10,-0.5 A0.5,0.5 0 0,1 10,0.5 L0,0.5 A0.5,0.5 0 0,1 0,-0.5 Z"/><path fill="#c83232" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M10,-0.5 L20,-0.5 A0.5,0.5 0 0,1 20,0.5 L10,0.5 A0.5,0.5 0 0,1 10,-0.5 Z"/></g></g></g></g>
+      <text x="0" y="188" font-size="15" fill="#86efac">No width warning: all nonzero wire segments meet the 1 mm requirement.</text>
+    </g><g transform="translate(50 605)">
+      <text x="0" y="0" font-size="22" fill="white">C. Interpolated taper: marker inside the undersized portion</text>
+      <text x="0" y="28" font-size="15" fill="#c8d2df">1.5 mm to 0.5 mm over 10 mm; last 5 mm is below the 1.0 mm requirement</text>
+      <g transform="translate(0 42)"><g transform="translate(83.33333333333333 60) scale(41.666666666666664)"><rect x="-2" y="-1.44" width="24" height="2.88" fill="#000000"/><g transform="scale(1,-1)"><g data-element-id="pcb_trace_0" data-layer="top"><path fill="#c83232" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M0,0.75 L10,0.25 L10,-0.25 L0,-0.75 L0,0.75 Z"/></g></g></g><g transform="translate(395.8333333333333 60)" stroke="#ffd166" fill="none" stroke-width="2"><circle r="14"/><path d="M-21 0H21M0-21V21"/></g></g>
+      <text x="0" y="188" font-size="15" fill="#ffd166">Trace [Power rail] is routed thinner than requested (requested: 1mm, actual: 0.5mm).</text>
+    </g>
+      <text x="50" y="826" font-size="15" fill="#c8d2df">Explicit width checks only; current-capacity estimation and net-width checks are separate follow-up work.</text>
+    </g>
+  </svg>
