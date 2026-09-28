@@ -1,3 +1,4 @@
+import { getTraceEndpointNeckdownLengths } from "lib/util/get-trace-endpoint-neckdown-lengths"
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
@@ -11,7 +12,21 @@ import { getReadableNameForSourceTrace } from "lib/util/get-readable-names"
 
 export function checkSourceTracesMatchPcbTraceThickness(
   circuitJson: AnyCircuitElement[],
+  {
+    maxPadNeckdownLength,
+  }: {
+    /** Maximum routed escape length beyond an endpoint pad, in mm. Defaults
+     * to the requested trace width. This is a nominal-width warning heuristic,
+     * not an electrical current-capacity or thermal exemption. */
+    maxPadNeckdownLength?: number
+  } = {},
 ): PcbTraceWarning[] {
+  if (
+    maxPadNeckdownLength !== undefined &&
+    (!Number.isFinite(maxPadNeckdownLength) || maxPadNeckdownLength < 0)
+  ) {
+    throw new Error("maxPadNeckdownLength must be finite and nonnegative")
+  }
   const warnings: PcbTraceWarning[] = []
   const db = cju(circuitJson)
 
@@ -49,6 +64,11 @@ export function checkSourceTracesMatchPcbTraceThickness(
       | undefined
 
     for (const relatedPcbTrace of relatedPcbTraces) {
+      const neckdowns = getTraceEndpointNeckdownLengths(
+        relatedPcbTrace,
+        circuitJson,
+        maxPadNeckdownLength ?? requestedThickness,
+      )
       for (let i = 0; i < relatedPcbTrace.route.length - 1; i++) {
         const point = relatedPcbTrace.route[i]
         const nextPoint = relatedPcbTrace.route[i + 1]
@@ -63,11 +83,11 @@ export function checkSourceTracesMatchPcbTraceThickness(
         // varies linearly between the two endpoint widths.
         const interpolated =
           relatedPcbTrace.route_thickness_mode === "interpolated"
-        const width = interpolated
-          ? Math.min(point.width, nextPoint.width)
-          : point.width
-        if (width >= requestedThickness) continue
-        if (undersizedSegment && width >= undersizedSegment.width) continue
+        if (
+          Math.min(point.width, interpolated ? nextPoint.width : point.width) >=
+          requestedThickness
+        )
+          continue
 
         // Place the marker inside the deficient portion of a taper, rather
         // than at a midpoint that may already be wide enough.
@@ -79,6 +99,23 @@ export function checkSourceTracesMatchPcbTraceThickness(
           if (point.width >= requestedThickness) startFraction = crossing
           if (nextPoint.width >= requestedThickness) endFraction = crossing
         }
+        const length = Math.hypot(nextPoint.x - point.x, nextPoint.y - point.y)
+        startFraction = Math.max(
+          startFraction,
+          (neckdowns.fromStart.get(i) ?? 0) / length,
+        )
+        endFraction = Math.min(
+          endFraction,
+          1 - (neckdowns.fromEnd.get(i) ?? 0) / length,
+        )
+        if (endFraction - startFraction < 1e-9) continue
+        const width = interpolated
+          ? Math.min(
+              point.width + (nextPoint.width - point.width) * startFraction,
+              point.width + (nextPoint.width - point.width) * endFraction,
+            )
+          : point.width
+        if (undersizedSegment && width >= undersizedSegment.width) continue
         const fraction = (startFraction + endFraction) / 2
         undersizedSegment = {
           pcb_trace_id: relatedPcbTrace.pcb_trace_id,
