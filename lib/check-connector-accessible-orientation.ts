@@ -88,7 +88,23 @@ export function checkConnectorAccessibleOrientation(
     (el): el is PcbComponent => el.type === "pcb_component",
   )
 
+  const pinHeaderSourceIds = new Set(
+    circuitJson
+      .filter(
+        (el) =>
+          el.type === "source_component" && el.ftype === "simple_pin_header",
+      )
+      .map((el) => el.source_component_id),
+  )
+
   for (const component of components) {
+    // A pin header is normally accessed perpendicular to the PCB. Only an
+    // explicit insertion direction can establish that it is a right-angle part.
+    if (
+      !component.insertion_direction &&
+      pinHeaderSourceIds.has(component.source_component_id)
+    )
+      continue
     const facingDirection = getFacingDirection(component)
     const recommendedFacingDirection = getRecommendedFacingDirection(
       component,
