@@ -4,6 +4,7 @@ import { checkViasInPads } from "lib/check-vias-in-pads"
 import {
   issueCornerPad,
   issueCornerVia,
+  makeBoard,
   makeKnownNetCircuit,
   rectPad,
   viaInRectPad,
@@ -12,16 +13,19 @@ import {
 test.each([
   {
     overlap: "center overlap",
+    expectedErrorCount: 1,
     pad: rectPad,
     via: viaInRectPad,
   },
   {
-    overlap: "corner-only overlap",
+    overlap: "copper-only corner overlap",
+    expectedErrorCount: 0,
     pad: issueCornerPad,
     via: issueCornerVia,
   },
   {
     overlap: "plated-hole center overlap",
+    expectedErrorCount: 1,
     pad: {
       type: "pcb_plated_hole",
       pcb_plated_hole_id: "pcb_plated_hole_same_net",
@@ -34,13 +38,22 @@ test.each([
     } as PcbPlatedHole,
     via: viaInRectPad,
   },
-])("allows a same-net $overlap", ({ pad, via }) => {
-  const circuitJson = makeKnownNetCircuit({
-    pad,
-    via,
-    padNetId: "source_net_gnd",
-    viaNetId: "source_net_gnd",
-  })
+])(
+  "respects the board allowance for a same-net $overlap",
+  ({ pad, via, expectedErrorCount }) => {
+    const circuitJson = makeKnownNetCircuit({
+      pad,
+      via,
+      padNetId: "source_net_gnd",
+      viaNetId: "source_net_gnd",
+    })
 
-  expect(checkViasInPads(circuitJson)).toEqual([])
-})
+    expect(checkViasInPads(circuitJson)).toHaveLength(expectedErrorCount)
+
+    circuitJson[0] = makeBoard(false)
+    expect(checkViasInPads(circuitJson)).toHaveLength(expectedErrorCount)
+
+    circuitJson[0] = makeBoard(true)
+    expect(checkViasInPads(circuitJson)).toEqual([])
+  },
+)

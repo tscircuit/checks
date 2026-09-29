@@ -50,7 +50,7 @@ export default function SameNetViaInPadDisallowedRepro() {
   )
 }
 
-test("repro: same-net via inside a pad reports no error when via-in-pad is disallowed", async () => {
+test("reports a same-net via inside a pad when via-in-pad is disallowed", async () => {
   const circuit = new Circuit()
   circuit.add(<SameNetViaInPadDisallowedRepro />)
   await circuit.renderUntilSettled()
@@ -75,19 +75,40 @@ test("repro: same-net via inside a pad reports no error when via-in-pad is disal
   const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
   expect(connMap.areIdsConnected(via.pcb_via_id, pad.pcb_smtpad_id)).toBe(true)
 
-  // Bug reproduction: this overlap should be rejected because the board
-  // explicitly disallows via-in-pad, but same-net pairs are currently skipped.
+  // Same-net connectivity must not override the board's via-in-pad policy.
   const viaInPadErrors = checkViasInPads(circuitJson)
   const placementErrors = await runAllPlacementChecks(circuitJson)
   const routingErrors = await runAllRoutingChecks(circuitJson)
-  expect(viaInPadErrors).toMatchInlineSnapshot(`[]`)
-  expect(placementErrors).toMatchInlineSnapshot(`[]`)
+  expect(viaInPadErrors).toHaveLength(1)
+  expect(placementErrors).toHaveLength(1)
+  expect(viaInPadErrors).toMatchInlineSnapshot(`
+    [
+      {
+        "error_type": "pcb_placement_error",
+        "message": "Via hole at (-2.00mm, 0.00mm) overlaps SMD pad U1.SIG at (-2.00mm, 0.00mm)",
+        "pcb_placement_error_id": "via_in_pad_pcb_via_0_pcb_smtpad_0",
+        "subcircuit_id": "subcircuit_source_group_0",
+        "type": "pcb_placement_error",
+      },
+    ]
+  `)
+  expect(placementErrors).toMatchInlineSnapshot(`
+    [
+      {
+        "error_type": "pcb_placement_error",
+        "message": "Via hole at (-2.00mm, 0.00mm) overlaps SMD pad U1.SIG at (-2.00mm, 0.00mm)",
+        "pcb_placement_error_id": "via_in_pad_pcb_via_0_pcb_smtpad_0",
+        "subcircuit_id": "subcircuit_source_group_0",
+        "type": "pcb_placement_error",
+      },
+    ]
+  `)
   expect(routingErrors).toMatchInlineSnapshot(`[]`)
 
   await expect(
     convertCircuitJsonToPcbSvg(
       [...circuitJson, ...placementErrors, ...routingErrors],
-      { shouldDrawErrors: true },
+      { shouldDrawErrors: true, showErrorsInTextOverlay: true },
     ),
   ).toMatchSvgSnapshot(import.meta.path)
 })
