@@ -49,7 +49,12 @@ export function checkViasInPads(
       const viaLayers = getLayersOfPcbElement(via)
       const padLayers = getLayersOfPcbElement(pad)
       if (!viaLayers.some((layer) => padLayers.includes(layer))) continue
-      if (connMap.areIdsConnected(via.pcb_via_id, padId)) continue
+      // Same-net copper may touch a pad, but its drill must stay outside.
+      if (
+        connMap.areIdsConnected(via.pcb_via_id, padId) &&
+        getPadToPadGap({ ...via, outer_diameter: via.hole_diameter }, pad) > 0
+      )
+        continue
       if (getPadToPadGap(via, pad) > 0) continue
 
       const padOrdinal = padOrdinals.get(padId) ?? 0
