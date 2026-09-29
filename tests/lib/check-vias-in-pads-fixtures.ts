@@ -22,7 +22,7 @@ export const makeBoard = (
     : { is_via_in_pad_allowed: isViaInPadAllowed }),
 })
 
-export const rectPad: PcbSmtPad = {
+export const rectPad: Extract<PcbSmtPad, { shape: "rect" }> = {
   type: "pcb_smtpad",
   pcb_smtpad_id: "pcb_smtpad_1",
   shape: "rect",

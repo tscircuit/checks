@@ -18,5 +18,6 @@ test("reports a via whose center overlaps an SMD pad when its net is unresolved"
   })
   expect(errors[0].message).toContain("overlaps SMD pad")
   expect(containsCircuitJsonId(errors[0].message)).toBe(false)
+  expect(errors[0]).not.toHaveProperty("center")
   expect(await runAllPlacementChecks(circuitJson)).toContainEqual(errors[0])
 })

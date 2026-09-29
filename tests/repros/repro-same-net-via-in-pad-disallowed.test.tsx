@@ -85,7 +85,7 @@ test("reports a same-net via inside a pad when via-in-pad is disallowed", async 
     [
       {
         "error_type": "pcb_placement_error",
-        "message": "Via copper at (-2.00mm, 0.00mm) overlaps SMD pad U1.SIG at (-2.00mm, 0.00mm)",
+        "message": "Via hole at (-2.00mm, 0.00mm) overlaps SMD pad U1.SIG at (-2.00mm, 0.00mm)",
         "pcb_placement_error_id": "via_in_pad_pcb_via_0_pcb_smtpad_0",
         "subcircuit_id": "subcircuit_source_group_0",
         "type": "pcb_placement_error",
@@ -96,7 +96,7 @@ test("reports a same-net via inside a pad when via-in-pad is disallowed", async 
     [
       {
         "error_type": "pcb_placement_error",
-        "message": "Via copper at (-2.00mm, 0.00mm) overlaps SMD pad U1.SIG at (-2.00mm, 0.00mm)",
+        "message": "Via hole at (-2.00mm, 0.00mm) overlaps SMD pad U1.SIG at (-2.00mm, 0.00mm)",
         "pcb_placement_error_id": "via_in_pad_pcb_via_0_pcb_smtpad_0",
         "subcircuit_id": "subcircuit_source_group_0",
         "type": "pcb_placement_error",

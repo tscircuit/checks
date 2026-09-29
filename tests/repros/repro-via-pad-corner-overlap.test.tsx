@@ -1,7 +1,11 @@
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
-import { runAllPlacementChecks } from "../../lib/run-all-checks"
+import { checkViaPadClearance } from "../../lib/check-via-pad-clearance"
+import {
+  runAllRoutingChecks,
+  runAllPlacementChecks,
+} from "../../lib/run-all-checks"
 
 const ManualViaPadCornerOverlap = ({
   overlapErrorCount,
@@ -43,7 +47,7 @@ const ManualViaPadCornerOverlap = ({
     />
     {overlapErrorCount !== undefined && (
       <pcbnotetext
-        text={`placement via/pad overlap errors: ${overlapErrorCount}`}
+        text={`via/pad clearance errors: ${overlapErrorCount}`}
         fontSize="0.2mm"
         pcbX={0}
         pcbY={-3.9}
@@ -52,7 +56,7 @@ const ManualViaPadCornerOverlap = ({
   </board>
 )
 
-test("issue #241: placement reports GND via copper overlapping the R1.pin1 SMD pad corner", async () => {
+test("issue #241: routing reports GND via copper overlapping the R1.pin1 SMD pad corner", async () => {
   const circuit = new Circuit({
     platform: {
       placementDrcChecksDisabled: true,
@@ -63,11 +67,11 @@ test("issue #241: placement reports GND via copper overlapping the R1.pin1 SMD p
 
   const circuitJson = circuit.getCircuitJson()
   const placementErrors = await runAllPlacementChecks(circuitJson)
-  const viaPadOverlapErrors = placementErrors.filter(
-    (error) =>
-      error.type === "pcb_placement_error" &&
-      error.message.includes("Via") &&
-      error.message.includes("R1.pin1"),
+  const viaPadOverlapErrors = checkViaPadClearance(circuitJson)
+  // Copper contact is still a short even when the drill is outside the pad.
+  expect(placementErrors).toEqual([])
+  expect(await runAllRoutingChecks(circuitJson)).toEqual(
+    expect.arrayContaining(viaPadOverlapErrors),
   )
 
   const annotatedCircuit = new Circuit({
@@ -84,7 +88,7 @@ test("issue #241: placement reports GND via copper overlapping the R1.pin1 SMD p
 
   expect(
     convertCircuitJsonToPcbSvg(
-      [...annotatedCircuit.getCircuitJson(), ...placementErrors],
+      [...annotatedCircuit.getCircuitJson(), ...viaPadOverlapErrors],
       {
         shouldDrawErrors: true,
         showErrorsInTextOverlay: true,
