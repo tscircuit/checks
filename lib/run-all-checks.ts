@@ -24,6 +24,7 @@ import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
 import { checkPcbComponentsMissingCourtyard } from "./check-pcb-components-missing-courtyard"
 import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
+import { checkPcbCourtyardOverKeepout } from "./check-pcb-courtyard-over-keepout"
 import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
@@ -52,6 +53,7 @@ export async function runAllPlacementChecks(
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverCutout(circuitJson),
     ...checkPcbCopperOverKeepout(circuitJson),
+    ...checkPcbCourtyardOverKeepout(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPcbComponentsMissingCourtyard(circuitJson),
     ...checkPadPadClearance(circuitJson),
