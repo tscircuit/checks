@@ -7,7 +7,7 @@ import { checkViaPadClearance } from "../../lib/check-via-pad-clearance"
 // Preserve the chip and C3 geometry from the MPU-6050 board. The via position
 // was measured from a fresh routed board; manual placement isolates this DRC case.
 const Mpu6050Board = () => (
-  <board width="7mm" height="11mm" routingDisabled>
+  <board width="11mm" height="12mm" routingDisabled>
     <chip
       name="U1"
       manufacturerPartNumber="MPU-6050"
