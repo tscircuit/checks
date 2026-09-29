@@ -6,14 +6,14 @@ import mpu6050CircuitJson from "../assets/mpu6050-mini-fresh.circuit.json"
 
 // Exported from the complete MPU-6050 board with tscircuit@0.0.2565.
 // The router placed pcb_via_8 beside C3 pin 2, but reported zero DRC errors.
-const circuitJson = mpu6050CircuitJson as AnyCircuitElement[]
+const completeBoardCircuitJson = mpu6050CircuitJson as AnyCircuitElement[]
 const minClearance = 0.1
 
 function findCircuitElement<Type extends AnyCircuitElement["type"]>(
   type: Type,
   predicate: (element: Extract<AnyCircuitElement, { type: Type }>) => boolean,
 ) {
-  return circuitJson
+  return completeBoardCircuitJson
     .filter(
       (element): element is Extract<AnyCircuitElement, { type: Type }> =>
         element.type === type,
@@ -54,15 +54,30 @@ function getViaAndC3GndPad() {
     (element) => element.name === "V3V3",
   )
 
-  if (!board || !c3Pin2 || !c3GndPad || !via || !gnd || !v3v3) {
+  if (
+    !board ||
+    !c3 ||
+    !c3Pin2 ||
+    !c3PcbPort ||
+    !c3GndPad ||
+    !via ||
+    !gnd ||
+    !v3v3
+  ) {
     throw new Error("The MPU-6050 Circuit JSON fixture is incomplete")
   }
   if (c3GndPad.shape !== "rect") {
     throw new Error("Expected C3 pin 2 to be a rectangular pad")
   }
 
-  return { board, c3Pin2, c3GndPad, via, gnd, v3v3 }
+  return { board, c3, c3Pin2, c3PcbPort, c3GndPad, via, gnd, v3v3 }
 }
+
+// Pass only unmodified records for the relevant via, pad, ports, and nets to
+// the checker. The snapshot below still renders the complete exported board.
+const focusedCircuitJson: AnyCircuitElement[] = Object.values(
+  getViaAndC3GndPad(),
+)
 
 test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
   const { board, c3Pin2, c3GndPad, via, gnd, v3v3 } = getViaAndC3GndPad()
@@ -72,6 +87,9 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
     gnd.subcircuit_connectivity_map_key,
   )
   expect(via.subcircuit_connectivity_map_key).toBe(
+    v3v3.subcircuit_connectivity_map_key,
+  )
+  expect(gnd.subcircuit_connectivity_map_key).not.toBe(
     v3v3.subcircuit_connectivity_map_key,
   )
   expect(via.layers).toContain(c3GndPad.layer)
@@ -86,13 +104,13 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
 
   // A normal test checks that the checker runs and that the board snapshot
   // renders. A render failure cannot satisfy the expected-failure test below.
-  const errors = checkViaPadClearance(circuitJson, { minClearance })
+  const errors = checkViaPadClearance(focusedCircuitJson, { minClearance })
   expect(errors.length).toBeLessThanOrEqual(1)
   for (const error of errors) {
     expect(error.pcb_pad_ids).toEqual([via.pcb_via_id, c3GndPad.pcb_smtpad_id])
   }
   const annotatedCircuitJson: AnyCircuitElement[] = [
-    ...circuitJson,
+    ...completeBoardCircuitJson,
     {
       type: "pcb_note_text",
       pcb_note_text_id: "mpu6050_clearance_note",
@@ -112,7 +130,7 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
 
 test.failing("MPU-6050 via-to-pad clearance should be reported", () => {
   const { via, c3GndPad } = getViaAndC3GndPad()
-  const errors = checkViaPadClearance(circuitJson, { minClearance })
+  const errors = checkViaPadClearance(focusedCircuitJson, { minClearance })
   expect(errors).toHaveLength(1)
   expect(errors[0]?.pcb_pad_ids).toEqual([
     via.pcb_via_id,
