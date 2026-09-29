@@ -4,25 +4,10 @@ import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
 import { checkViaPadClearance } from "../../lib/check-via-pad-clearance"
 
-// Render the original board source so the router creates the via under test.
-/** Compact 3.3 V MPU-6050 breakout. J1: 3V3, GND, SDA, SCL, INT, AD0. */
+// Preserve the chip and C3 geometry from the MPU-6050 board. The via position
+// was measured from a fresh routed board; manual placement isolates this DRC case.
 const Mpu6050Board = () => (
-  <board
-    width="11mm"
-    height="12mm"
-    thickness="1.6mm"
-    minTraceWidth="0.15mm"
-    nominalTraceWidth="0.15mm"
-    minViaHoleDiameter="0.3mm"
-    minViaPadDiameter="0.6mm"
-  >
-    <copperpour
-      name="GND_PLANE"
-      layer="bottom"
-      connectsTo="net.GND"
-      clearance="0.2mm"
-      boardEdgeMargin="0.25mm"
-    />
+  <board width="7mm" height="11mm" routingDisabled>
     <chip
       name="U1"
       manufacturerPartNumber="MPU-6050"
@@ -279,50 +264,6 @@ const Mpu6050Board = () => (
         SDA: "net.SDA",
       }}
     />
-
-    <pinheader
-      name="J1"
-      pinCount={6}
-      pitch="1.27mm"
-      holeDiameter="0.7mm"
-      platedDiameter="1.1mm"
-      gender="unpopulated"
-      pcbX={0}
-      pcbY={4.3}
-      pinLabels={{
-        pin1: "VCC",
-        pin2: "GND",
-        pin3: "SDA",
-        pin4: "SCL",
-        pin5: "INT",
-        pin6: "AD0",
-      }}
-      connections={{
-        VCC: "net.V3V3",
-        GND: "net.GND",
-        SDA: "net.SDA",
-        SCL: "net.SCL",
-        INT: "net.INT",
-        AD0: "net.AD0",
-      }}
-    />
-
-    <capacitor
-      name="C1"
-      capacitance="100nF"
-      footprint="0402"
-      pcbX={3.6}
-      pcbY={-1.2}
-      connections={{ pin1: "net.V3V3", pin2: "net.GND" }}
-    />
-    <capacitor
-      name="C2"
-      capacitance="10nF"
-      footprint="0402"
-      pcbX={-3.6}
-      pcbY={-1.2}
-      connections={{ pin1: "net.V3V3", pin2: "net.GND" }}
-    />
     <capacitor
       name="C3"
       capacitance="100nF"
@@ -331,38 +272,15 @@ const Mpu6050Board = () => (
       pcbY={-3.7}
       connections={{ pin1: "net.REGOUT", pin2: "net.GND" }}
     />
-    <capacitor
-      name="C4"
-      capacitance="2.2nF"
-      footprint="0402"
-      pcbX={2.1}
-      pcbY={-3.7}
-      connections={{ pin1: "net.CPOUT", pin2: "net.GND" }}
-    />
-
-    <resistor
-      name="R1"
-      resistance="4.7k"
-      footprint="0402"
-      pcbX={-4}
-      pcbY={1.7}
-      connections={{ pin1: "net.V3V3", pin2: "net.SDA" }}
-    />
-    <resistor
-      name="R2"
-      resistance="4.7k"
-      footprint="0402"
-      pcbX={4}
-      pcbY={1.7}
-      connections={{ pin1: "net.V3V3", pin2: "net.SCL" }}
-    />
-    <resistor
-      name="R3"
-      resistance="10k"
-      footprint="0402"
-      pcbX={0}
-      pcbY={-4.2}
-      connections={{ pin1: "net.AD0", pin2: "net.GND" }}
+    <via
+      name="V3V3_VIA_NEAR_C3"
+      pcbX={-0.9876172027115762}
+      pcbY={-3.162426168020875}
+      fromLayer="top"
+      toLayer="bottom"
+      outerDiameter="0.6mm"
+      holeDiameter="0.3mm"
+      connectsTo="net.V3V3"
     />
   </board>
 )
@@ -409,10 +327,7 @@ function getViaAndC3GndPad() {
     "pcb_smtpad",
     (element) => element.pcb_port_id === c3PcbPort?.pcb_port_id,
   )
-  const via = findCircuitElement(
-    "pcb_via",
-    (element) => element.pcb_via_id === "pcb_via_8",
-  )
+  const via = findCircuitElement("pcb_via", () => true)
   const gnd = findCircuitElement(
     "source_net",
     (element) => element.name === "GND",
@@ -466,7 +381,6 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
   const dx = Math.max(Math.abs(via.x - c3GndPad.x) - c3GndPad.width / 2, 0)
   const dy = Math.max(Math.abs(via.y - c3GndPad.y) - c3GndPad.height / 2, 0)
   const gap = Math.hypot(dx, dy) - via.outer_diameter / 2
-  // The autorouter's final coordinate differs slightly across platforms.
   expect(gap).toBeCloseTo(0.0973, 4)
   expect(gap).toBeLessThan(minClearance)
 
@@ -482,35 +396,13 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
       minClearance: minClearance + 0.005,
     }).map((error) => error.pcb_pad_ids),
   ).toEqual([[via.pcb_via_id, c3GndPad.pcb_smtpad_id]])
-  // Keep the placement snapshot stable across autorouter coordinate changes.
-  // The clearance assertions above use the unmodified routed Circuit JSON.
-  const placementCircuitJson: AnyCircuitElement[] = circuitJson
-    .filter(
-      (element) =>
-        element.type === "pcb_board" ||
-        element.type === "pcb_component" ||
-        element.type === "pcb_smtpad" ||
-        element.type === "pcb_plated_hole" ||
-        element.type === "pcb_silkscreen_text" ||
-        element.type === "pcb_silkscreen_path" ||
-        (element.type === "pcb_via" && element.pcb_via_id === via.pcb_via_id),
-    )
-    .map((element) =>
-      element.type === "pcb_via"
-        ? {
-            ...element,
-            x: Math.round(element.x * 1000) / 1000,
-            y: Math.round(element.y * 1000) / 1000,
-          }
-        : element,
-    )
   const annotatedCircuitJson: AnyCircuitElement[] = [
-    ...placementCircuitJson,
+    ...circuitJson,
     {
       type: "pcb_note_text",
       pcb_note_text_id: "mpu6050_clearance_note",
       text: `V3V3 via to C3 pin 2: ${gap.toFixed(4)}mm < ${minClearance}mm`,
-      anchor_position: { x: 0, y: -5.5 },
+      anchor_position: { x: 0, y: -5.2 },
       anchor_alignment: "center",
       font: "tscircuit2024",
       font_size: 0.18,
