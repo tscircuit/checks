@@ -2,18 +2,18 @@ import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkViaPadClearance } from "../../lib/check-via-pad-clearance"
-import mpu6050CircuitJson from "../assets/mpu6050-mini-fresh.circuit.json"
+import mpu6050CircuitJson from "../assets/mpu6050-via-c3.circuit.json"
 
-// Exported from the complete MPU-6050 board with tscircuit@0.0.2565.
-// The router placed pcb_via_8 beside C3 pin 2, but reported zero DRC errors.
-const completeBoardCircuitJson = mpu6050CircuitJson as AnyCircuitElement[]
+// Unmodified records for U1, C3, and the offending via, extracted from the
+// complete board's Circuit JSON rendered with tscircuit@0.0.2565.
+const circuitJson = mpu6050CircuitJson as AnyCircuitElement[]
 const minClearance = 0.1
 
 function findCircuitElement<Type extends AnyCircuitElement["type"]>(
   type: Type,
   predicate: (element: Extract<AnyCircuitElement, { type: Type }>) => boolean,
 ) {
-  return completeBoardCircuitJson
+  return circuitJson
     .filter(
       (element): element is Extract<AnyCircuitElement, { type: Type }> =>
         element.type === type,
@@ -73,8 +73,8 @@ function getViaAndC3GndPad() {
   return { board, c3, c3Pin2, c3PcbPort, c3GndPad, via, gnd, v3v3 }
 }
 
-// Pass only unmodified records for the relevant via, pad, ports, and nets to
-// the checker. The snapshot below still renders the complete exported board.
+// The chip pads remain in the visual snapshot. The clearance assertion uses
+// only the C3 pair so another nearby chip pad cannot satisfy its expectation.
 const focusedCircuitJson: AnyCircuitElement[] = Object.values(
   getViaAndC3GndPad(),
 )
@@ -102,15 +102,20 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
   expect(gap).toBeCloseTo(0.0972614961, 6)
   expect(gap).toBeLessThan(minClearance)
 
-  // A normal test checks that the checker runs and that the board snapshot
+  // A normal test checks that the checker runs and that the geometry snapshot
   // renders. A render failure cannot satisfy the expected-failure test below.
   const errors = checkViaPadClearance(focusedCircuitJson, { minClearance })
   expect(errors.length).toBeLessThanOrEqual(1)
   for (const error of errors) {
     expect(error.pcb_pad_ids).toEqual([via.pcb_via_id, c3GndPad.pcb_smtpad_id])
   }
+  expect(
+    checkViaPadClearance(focusedCircuitJson, {
+      minClearance: minClearance + 0.005,
+    }).map((error) => error.pcb_pad_ids),
+  ).toEqual([[via.pcb_via_id, c3GndPad.pcb_smtpad_id]])
   const annotatedCircuitJson: AnyCircuitElement[] = [
-    ...completeBoardCircuitJson,
+    ...circuitJson,
     {
       type: "pcb_note_text",
       pcb_note_text_id: "mpu6050_clearance_note",
