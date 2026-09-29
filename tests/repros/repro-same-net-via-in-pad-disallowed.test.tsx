@@ -5,13 +5,17 @@ import { checkViasInPads } from "lib/check-vias-in-pads"
 import { runAllPlacementChecks, runAllRoutingChecks } from "lib/run-all-checks"
 import { Circuit } from "tscircuit"
 
-export default function SameNetViaInPadDisallowedRepro() {
+export default function SameNetViaInPadRepro({
+  isViaInPadAllowed = false,
+}: {
+  isViaInPadAllowed?: boolean
+}) {
   return (
     <board
       width={10}
       height={6}
-      isViaInPadAllowed={false}
-      autorouter={{ allowViaInPad: false }}
+      isViaInPadAllowed={isViaInPadAllowed}
+      autorouter={{ allowViaInPad: isViaInPadAllowed }}
     >
       {[-2, 2].map((pcbX, index) => (
         <chip
@@ -45,14 +49,20 @@ export default function SameNetViaInPadDisallowedRepro() {
         pcbY={2.3}
         fontSize={0.3}
       />
-      <pcbnotetext text="Via-in-pad disallowed" pcbY={-2.3} fontSize={0.3} />
+      <pcbnotetext
+        text={
+          isViaInPadAllowed ? "Via-in-pad allowed" : "Via-in-pad disallowed"
+        }
+        pcbY={-2.3}
+        fontSize={0.3}
+      />
     </board>
   )
 }
 
 test("reports a same-net via inside a pad when via-in-pad is disallowed", async () => {
   const circuit = new Circuit()
-  circuit.add(<SameNetViaInPadDisallowedRepro />)
+  circuit.add(<SameNetViaInPadRepro isViaInPadAllowed={false} />)
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
 
@@ -111,4 +121,44 @@ test("reports a same-net via inside a pad when via-in-pad is disallowed", async 
       { shouldDrawErrors: true, showErrorsInTextOverlay: true },
     ),
   ).toMatchSvgSnapshot(import.meta.path)
+})
+
+test("allows a same-net via inside a pad when via-in-pad is enabled", async () => {
+  const circuit = new Circuit()
+  circuit.add(<SameNetViaInPadRepro isViaInPadAllowed={true} />)
+  await circuit.renderUntilSettled()
+  const circuitJson = circuit.getCircuitJson()
+
+  const board = circuit.db.pcb_board.list()[0]
+  const vias = circuit.db.pcb_via.list()
+  const pads = circuit.db.pcb_smtpad.list()
+  expect(board.is_via_in_pad_allowed).toBe(true)
+  expect(vias).toHaveLength(1)
+  expect(pads).toHaveLength(2)
+  const via = vias[0]
+  const pad = pads[0]
+  expect(pad.shape).toBe("rect")
+  if (pad.shape !== "rect") throw new Error("Expected a rectangular SMT pad")
+  expect(via.x).toBe(pad.x)
+  expect(via.y).toBe(pad.y)
+  expect(via.outer_diameter).toBeLessThan(pad.width)
+  expect(via.outer_diameter).toBeLessThan(pad.height)
+  expect(via.layers).toContain(pad.layer)
+
+  const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+  expect(connMap.areIdsConnected(via.pcb_via_id, pad.pcb_smtpad_id)).toBe(true)
+
+  const viaInPadErrors = checkViasInPads(circuitJson)
+  const placementErrors = await runAllPlacementChecks(circuitJson)
+  const routingErrors = await runAllRoutingChecks(circuitJson)
+  expect(viaInPadErrors).toMatchInlineSnapshot(`[]`)
+  expect(placementErrors).toMatchInlineSnapshot(`[]`)
+  expect(routingErrors).toMatchInlineSnapshot(`[]`)
+
+  await expect(
+    convertCircuitJsonToPcbSvg(
+      [...circuitJson, ...placementErrors, ...routingErrors],
+      { shouldDrawErrors: true, showErrorsInTextOverlay: true },
+    ),
+  ).toMatchSvgSnapshot(import.meta.path, "same-net-via-in-pad-allowed")
 })
