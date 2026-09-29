@@ -466,7 +466,8 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
   const dx = Math.max(Math.abs(via.x - c3GndPad.x) - c3GndPad.width / 2, 0)
   const dy = Math.max(Math.abs(via.y - c3GndPad.y) - c3GndPad.height / 2, 0)
   const gap = Math.hypot(dx, dy) - via.outer_diameter / 2
-  expect(gap).toBeCloseTo(0.0972614961, 6)
+  // The autorouter's final coordinate differs slightly across platforms.
+  expect(gap).toBeCloseTo(0.0973, 4)
   expect(gap).toBeLessThan(minClearance)
 
   // A normal test checks that the checker runs and that the geometry snapshot
