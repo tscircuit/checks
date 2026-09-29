@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import type { AnyCircuitElement, PCBKeepout } from "circuit-json"
 import { checkPcbCourtyardOverKeepout } from "../../index"
 import { checkPcbCopperOverKeepout } from "lib/check-pcb-copper-over-keepout"
@@ -22,6 +23,19 @@ test("BT1 courtyard violates mounting-hole keepout while copper stays clear", as
   })
   expect(errors[0].message).toContain("BT1")
   expect(await runAllPlacementChecks(circuit)).toContainEqual(errors[0])
+  expect(
+    convertCircuitJsonToPcbSvg([...circuit, ...errors], {
+      width: 1000,
+      height: 800,
+      viewport: { minX: -31, minY: 37, maxX: -17, maxY: 50 },
+      showCourtyards: true,
+      shouldDrawErrors: true,
+      showErrorsInTextOverlay: true,
+    }),
+  ).toMatchSvgSnapshot(
+    import.meta.path,
+    "bt1-courtyard-over-mounting-hole-keepout",
+  )
 })
 
 test.each([
