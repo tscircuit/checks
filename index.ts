@@ -8,6 +8,7 @@ export { checkViasOffBoard } from "./lib/check-pcb-components-out-of-board/check
 export { checkCopperToBoardEdgeClearance } from "./lib/check-copper-to-board-edge-clearance"
 export { checkPcbComponentsOutOfBoard } from "./lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 export { checkPcbComponentOverCutout } from "./lib/check-pcb-component-over-cutout"
+export { checkPcbCourtyardOverKeepout } from "./lib/check-pcb-courtyard-over-keepout"
 export { checkPcbCopperOverKeepout } from "./lib/check-pcb-copper-over-keepout"
 export { checkSameNetViaSpacing } from "./lib/check-same-net-via-spacing"
 export { checkDifferentNetViaSpacing } from "./lib/check-different-net-via-spacing"
