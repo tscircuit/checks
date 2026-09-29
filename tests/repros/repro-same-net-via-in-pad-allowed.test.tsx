@@ -5,13 +5,13 @@ import { checkViasInPads } from "lib/check-vias-in-pads"
 import { runAllPlacementChecks, runAllRoutingChecks } from "lib/run-all-checks"
 import { Circuit } from "tscircuit"
 
-export default function SameNetViaInPadDisallowedRepro() {
+export default function SameNetViaInPadAllowedRepro() {
   return (
     <board
       width={10}
       height={6}
-      isViaInPadAllowed={false}
-      autorouter={{ allowViaInPad: false }}
+      isViaInPadAllowed={true}
+      autorouter={{ allowViaInPad: true }}
     >
       {[-2, 2].map((pcbX, index) => (
         <chip
@@ -45,21 +45,21 @@ export default function SameNetViaInPadDisallowedRepro() {
         pcbY={2.3}
         fontSize={0.3}
       />
-      <pcbnotetext text="Via-in-pad disallowed" pcbY={-2.3} fontSize={0.3} />
+      <pcbnotetext text="Via-in-pad allowed" pcbY={-2.3} fontSize={0.3} />
     </board>
   )
 }
 
-test("reports a same-net via inside a pad when via-in-pad is disallowed", async () => {
+test("allows a same-net via inside a pad when via-in-pad is enabled", async () => {
   const circuit = new Circuit()
-  circuit.add(<SameNetViaInPadDisallowedRepro />)
+  circuit.add(<SameNetViaInPadAllowedRepro />)
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
 
   const board = circuit.db.pcb_board.list()[0]
   const vias = circuit.db.pcb_via.list()
   const pads = circuit.db.pcb_smtpad.list()
-  expect(board.is_via_in_pad_allowed).toBe(false)
+  expect(board.is_via_in_pad_allowed).toBe(true)
   expect(vias).toHaveLength(1)
   expect(pads).toHaveLength(2)
   const via = vias[0]
@@ -75,34 +75,11 @@ test("reports a same-net via inside a pad when via-in-pad is disallowed", async 
   const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
   expect(connMap.areIdsConnected(via.pcb_via_id, pad.pcb_smtpad_id)).toBe(true)
 
-  // Same-net connectivity must not override the board's via-in-pad policy.
   const viaInPadErrors = checkViasInPads(circuitJson)
   const placementErrors = await runAllPlacementChecks(circuitJson)
   const routingErrors = await runAllRoutingChecks(circuitJson)
-  expect(viaInPadErrors).toHaveLength(1)
-  expect(placementErrors).toHaveLength(1)
-  expect(viaInPadErrors).toMatchInlineSnapshot(`
-    [
-      {
-        "error_type": "pcb_placement_error",
-        "message": "Via copper at (-2.00mm, 0.00mm) overlaps SMD pad U1.SIG at (-2.00mm, 0.00mm)",
-        "pcb_placement_error_id": "via_in_pad_pcb_via_0_pcb_smtpad_0",
-        "subcircuit_id": "subcircuit_source_group_0",
-        "type": "pcb_placement_error",
-      },
-    ]
-  `)
-  expect(placementErrors).toMatchInlineSnapshot(`
-    [
-      {
-        "error_type": "pcb_placement_error",
-        "message": "Via copper at (-2.00mm, 0.00mm) overlaps SMD pad U1.SIG at (-2.00mm, 0.00mm)",
-        "pcb_placement_error_id": "via_in_pad_pcb_via_0_pcb_smtpad_0",
-        "subcircuit_id": "subcircuit_source_group_0",
-        "type": "pcb_placement_error",
-      },
-    ]
-  `)
+  expect(viaInPadErrors).toMatchInlineSnapshot(`[]`)
+  expect(placementErrors).toMatchInlineSnapshot(`[]`)
   expect(routingErrors).toMatchInlineSnapshot(`[]`)
 
   await expect(
