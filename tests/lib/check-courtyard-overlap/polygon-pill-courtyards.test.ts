@@ -107,7 +107,10 @@ describe("checkCourtyardOverlap with polygon and pill courtyards", () => {
       component("pc1"),
       component("pc2"),
       polygonCourtyard("cy1", "pc1", 0),
-      { ...rectCourtyard("cy2", "pc2", 0), layer: "bottom" } as AnyCircuitElement,
+      {
+        ...rectCourtyard("cy2", "pc2", 0),
+        layer: "bottom",
+      } as AnyCircuitElement,
     ]
 
     const errors = checkCourtyardOverlap(circuitJson as never)

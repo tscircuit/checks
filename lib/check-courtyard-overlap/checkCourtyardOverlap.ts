@@ -124,14 +124,15 @@ export function checkCourtyardOverlap(
     ),
   )
 
-  const courtyards = circuitJson.filter(
-    (el): el is CourtyardElement =>
-      el.type === "pcb_courtyard_rect" ||
-      el.type === "pcb_courtyard_circle" ||
-      el.type === "pcb_courtyard_outline" ||
-      el.type === "pcb_courtyard_polygon" ||
-      el.type === "pcb_courtyard_pill",
-  )
+  const courtyards = circuitJson
+    .filter(
+      (el): el is CourtyardElement =>
+        el.type === "pcb_courtyard_rect" ||
+        el.type === "pcb_courtyard_circle" ||
+        el.type === "pcb_courtyard_outline" ||
+        el.type === "pcb_courtyard_polygon" ||
+        el.type === "pcb_courtyard_pill",
+    )
     .filter((el) => !doNotPlaceComponentIds.has(el.pcb_component_id))
 
   // Group by component
