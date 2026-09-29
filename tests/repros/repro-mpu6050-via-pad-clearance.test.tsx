@@ -482,8 +482,30 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
       minClearance: minClearance + 0.005,
     }).map((error) => error.pcb_pad_ids),
   ).toEqual([[via.pcb_via_id, c3GndPad.pcb_smtpad_id]])
+  // Keep the placement snapshot stable across autorouter coordinate changes.
+  // The clearance assertions above use the unmodified routed Circuit JSON.
+  const placementCircuitJson: AnyCircuitElement[] = circuitJson
+    .filter(
+      (element) =>
+        element.type === "pcb_board" ||
+        element.type === "pcb_component" ||
+        element.type === "pcb_smtpad" ||
+        element.type === "pcb_plated_hole" ||
+        element.type === "pcb_silkscreen_text" ||
+        element.type === "pcb_silkscreen_path" ||
+        (element.type === "pcb_via" && element.pcb_via_id === via.pcb_via_id),
+    )
+    .map((element) =>
+      element.type === "pcb_via"
+        ? {
+            ...element,
+            x: Math.round(element.x * 1000) / 1000,
+            y: Math.round(element.y * 1000) / 1000,
+          }
+        : element,
+    )
   const annotatedCircuitJson: AnyCircuitElement[] = [
-    ...circuitJson,
+    ...placementCircuitJson,
     {
       type: "pcb_note_text",
       pcb_note_text_id: "mpu6050_clearance_note",
