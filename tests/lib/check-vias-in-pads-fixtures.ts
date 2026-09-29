@@ -3,6 +3,7 @@ import type {
   PcbBoard,
   PcbPlatedHole,
   PcbSmtPad,
+  PcbSmtPadRect,
   PcbVia,
 } from "circuit-json"
 
@@ -22,7 +23,7 @@ export const makeBoard = (
     : { is_via_in_pad_allowed: isViaInPadAllowed }),
 })
 
-export const rectPad: Extract<PcbSmtPad, { shape: "rect" }> = {
+export const rectPad: PcbSmtPadRect = {
   type: "pcb_smtpad",
   pcb_smtpad_id: "pcb_smtpad_1",
   shape: "rect",
