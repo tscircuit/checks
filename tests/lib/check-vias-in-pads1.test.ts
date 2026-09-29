@@ -4,6 +4,7 @@ import { checkViasInPads } from "lib/check-vias-in-pads"
 import {
   issueCornerPad,
   issueCornerVia,
+  makeBoard,
   makeKnownNetCircuit,
   rectPad,
   viaInRectPad,
@@ -34,7 +35,7 @@ test.each([
     } as PcbPlatedHole,
     via: viaInRectPad,
   },
-])("allows a same-net $overlap", ({ pad, via }) => {
+])("respects the board allowance for a same-net $overlap", ({ pad, via }) => {
   const circuitJson = makeKnownNetCircuit({
     pad,
     via,
@@ -42,5 +43,11 @@ test.each([
     viaNetId: "source_net_gnd",
   })
 
+  expect(checkViasInPads(circuitJson)).toHaveLength(1)
+
+  circuitJson[0] = makeBoard(false)
+  expect(checkViasInPads(circuitJson)).toHaveLength(1)
+
+  circuitJson[0] = makeBoard(true)
   expect(checkViasInPads(circuitJson)).toEqual([])
 })

@@ -1,6 +1,5 @@
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, PcbPlacementError, PcbVia } from "circuit-json"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import {
   type PadElement,
   getPadBounds,
@@ -29,7 +28,6 @@ export function checkViasInPads(
   )
   const pads = getPads(circuitJson)
   if (vias.length === 0 || pads.length === 0) return []
-  const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
 
   const padOrdinals = new Map(
     pads.map((pad, index) => [getPrimaryId(pad), index]),
@@ -49,7 +47,6 @@ export function checkViasInPads(
       const viaLayers = getLayersOfPcbElement(via)
       const padLayers = getLayersOfPcbElement(pad)
       if (!viaLayers.some((layer) => padLayers.includes(layer))) continue
-      if (connMap.areIdsConnected(via.pcb_via_id, padId)) continue
       if (getPadToPadGap(via, pad) > 0) continue
 
       const padOrdinal = padOrdinals.get(padId) ?? 0

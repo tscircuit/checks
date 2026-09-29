@@ -47,11 +47,26 @@ test("Game Boy Advance: place all 11 clearance markers at the offending copper",
 
 test("Game Boy Advance: via-in-pad placement error has no marker position", () => {
   const errors = checkViasInPads(circuit)
-  expect(errors).toHaveLength(1)
-  expect(errors[0]).toMatchObject({
+  // Four same-net overlaps are also violations without a board allowance.
+  expect(
+    errors.map((error) => error.pcb_placement_error_id),
+  ).toMatchInlineSnapshot(`
+      [
+        "via_in_pad_pcb_via_0_pcb_smtpad_94",
+        "via_in_pad_pcb_via_94_pcb_smtpad_47",
+        "via_in_pad_pcb_via_168_pcb_smtpad_136",
+        "via_in_pad_pcb_via_192_pcb_smtpad_0",
+        "via_in_pad_pcb_via_194_pcb_smtpad_10",
+      ]
+    `)
+  const groundPadError = errors.find(
+    (error) =>
+      error.pcb_placement_error_id === "via_in_pad_pcb_via_192_pcb_smtpad_0",
+  )
+  expect(groundPadError).toMatchObject({
     pcb_placement_error_id: "via_in_pad_pcb_via_192_pcb_smtpad_0",
     message:
       "Via copper at (0.56mm, 15.10mm) overlaps SMD pad U1.GND at (0.00mm, 17.00mm)",
   })
-  expect(errors[0]).not.toHaveProperty("center")
+  expect(groundPadError).not.toHaveProperty("center")
 })
