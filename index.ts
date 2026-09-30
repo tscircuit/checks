@@ -35,9 +35,9 @@ export { checkSchematicComponentExcessiveVerticalPadding } from "./lib/check-sch
 export { checkSchematicComponentMissingReferenceDesignatorText } from "./lib/check-schematic-component-missing-reference-designator-text"
 export { checkSchematicComponentPortsOutsideBody } from "./lib/check-schematic-component-ports-outside-body"
 export { checkSchematicPlacement } from "./lib/check-schematic-placement"
-export * from "./lib/assembly-geometry"
-export * from "./lib/check-enclosure-aperture-intersections"
-export { runAllAssemblyChecks } from "./lib/run-all-checks"
+export * from "./lib/assembly/assembly-geometry"
+export * from "./lib/assembly/check-enclosure-aperture-intersections"
+export { runAllAssemblyChecks } from "./lib/assembly/run-all-assembly-checks"
 export {
   runAllChecks,
   runAllNetlistChecks,
