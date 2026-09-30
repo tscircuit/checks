@@ -36,6 +36,60 @@ describe("checkPcbComponentsMissingCourtyard", () => {
     expect(any_circuit_element.safeParse(warnings[0]).success).toBe(true)
   })
 
+  test("does not warn for manually placed vias (tscircuit/core#3902)", () => {
+    const circuitJson = [
+      {
+        type: "source_manually_placed_via",
+        source_manually_placed_via_id: "source_manually_placed_via_0",
+        source_group_id: "source_group_0",
+        source_net_id: "source_net_0",
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_component_0",
+        source_component_id: "source_manually_placed_via_0",
+        center: { x: 0, y: 0 },
+      },
+    ] as unknown as AnyCircuitElement[]
+
+    expect(checkPcbComponentsMissingCourtyard(circuitJson)).toHaveLength(0)
+  })
+
+  test("still warns for assembled components alongside a manually placed via", () => {
+    const circuitJson = [
+      {
+        type: "source_manually_placed_via",
+        source_manually_placed_via_id: "source_manually_placed_via_0",
+        source_group_id: "source_group_0",
+        source_net_id: "source_net_0",
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_component_via",
+        source_component_id: "source_manually_placed_via_0",
+        center: { x: 0, y: 0 },
+      },
+      {
+        type: "source_component",
+        source_component_id: "source_component_1",
+        ftype: "simple_resistor",
+        name: "R1",
+        resistance: 1000,
+        supplier_part_numbers: {},
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_component_1",
+        source_component_id: "source_component_1",
+        center: { x: 2, y: 0 },
+      },
+    ] as unknown as AnyCircuitElement[]
+
+    const warnings = checkPcbComponentsMissingCourtyard(circuitJson)
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]!.pcb_component_id).toBe("pcb_component_1")
+  })
+
   test("does not warn when a component has a courtyard", () => {
     const circuitJson = [
       {
