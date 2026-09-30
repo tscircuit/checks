@@ -29,17 +29,18 @@ solid. Every CAD ID is loaded at most once in a pass.
 
 The base and lid are unioned, then intersected with each aperture-bearing part.
 The intersection is projected orthographically along the resolved aperture face
-normal. The warning measures the union silhouette area in mm². It does not use
-volume (mm³), total mesh surface area, a bounding box, or a guessed wall thickness.
-Touching without penetration and areas at or below the threshold do not warn.
+normal. The `cad_collision_error` measures the union silhouette area in mm². It
+does not use volume (mm³), total mesh surface area, a bounding box, or a guessed
+wall thickness. Touching without penetration and areas at or below the threshold
+do not emit a collision error.
 
 Only explicit enclosure/aperture associations are checked. Unrelated components
 and unrelated assemblies are excluded. The enclosure meshes must represent the
 finished parts after cutouts. The six supported faces are `x_pos`, `x_neg`,
 `y_pos`, `y_neg`, `z_pos`, and `z_neg` in world coordinates.
 
-Warnings can indicate aperture misplacement, size/direction problems, or body
-clearance problems. This is a static collision heuristic: a connector completely
+Collision errors can indicate aperture misplacement, size/direction problems, or
+body clearance problems. This is a static collision heuristic: a connector completely
 inside the cavity can have a poorly aligned external opening without its solid
 intersecting the wall. Cable insertion space and moving lever travel require
 separate authored access envelopes.

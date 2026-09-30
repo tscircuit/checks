@@ -88,7 +88,8 @@ test("projected area is independent of wall thickness on all six faces", async (
       })
       expect(result).toHaveLength(1)
       expect(result[0]).toMatchObject({
-        type: "cad_enclosure_aperture_intersection_warning",
+        type: "cad_collision_error",
+        error_type: "cad_collision_error",
         face,
         intersection_area_mm2: 3,
         threshold_area_mm2: 2,
@@ -132,7 +133,7 @@ test("strict threshold excludes equality, slivers, disjoint solids and touching 
   ).toHaveLength(1)
 })
 
-test("a correctly cut aperture clears its real solid; a misplaced aperture warns", async () => {
+test("a correctly cut aperture clears its real solid; a misplaced aperture reports a collision", async () => {
   for (const cutX of [0, 5]) {
     const wall = kernel.Manifold.cube([12, 2, 12], true)
     const tool = kernel.Manifold.cube([4, 4, 4], true).translate([cutX, 0, 0])
@@ -196,11 +197,7 @@ test("failed or non-manifold parts are reported while other parts are still chec
     [...records, cad("invalid"), cad("failed")],
     { assemblyGeometry: geometry },
   )
-  expect(
-    result.filter(
-      (r) => r.type === "cad_enclosure_aperture_intersection_warning",
-    ),
-  ).toHaveLength(1)
+  expect(result.filter((r) => r.type === "cad_collision_error")).toHaveLength(1)
   expect(result.filter((r) => r.type === "source_runtime_error")).toHaveLength(
     2,
   )

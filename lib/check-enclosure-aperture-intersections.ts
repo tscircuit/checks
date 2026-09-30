@@ -2,7 +2,7 @@ import type { Manifold, ManifoldToplevel } from "@tscircuit/manifold-2d"
 import type {
   AnyCircuitElement,
   CadComponent,
-  CadEnclosureApertureIntersectionWarning,
+  CadCollisionError,
   SourceRuntimeError,
 } from "circuit-json"
 import type {
@@ -82,7 +82,7 @@ function projectedIntersectionArea(
 export async function checkEnclosureApertureIntersections(
   circuitJson: AnyCircuitElement[],
   options: AssemblyCheckOptions = {},
-): Promise<(CadEnclosureApertureIntersectionWarning | SourceRuntimeError)[]> {
+): Promise<(CadCollisionError | SourceRuntimeError)[]> {
   const geometry = options.assemblyGeometry
   if (
     !geometry ||
@@ -108,10 +108,7 @@ export async function checkEnclosureApertureIntersections(
   )
   const solids = new Map<CadComponentId, Promise<Manifold | null>>()
   const allocatedSolids: Manifold[] = []
-  const diagnostics: (
-    | CadEnclosureApertureIntersectionWarning
-    | SourceRuntimeError
-  )[] = []
+  const diagnostics: (CadCollisionError | SourceRuntimeError)[] = []
   const sourceNames = new Map(
     circuitJson
       .filter((element) => element.type === "source_component")
@@ -191,9 +188,9 @@ export async function checkEnclosureApertureIntersections(
               const name =
                 sourceNames.get(cad.source_component_id) ?? cad.cad_component_id
               diagnostics.push({
-                type: "cad_enclosure_aperture_intersection_warning",
-                warning_type: "cad_enclosure_aperture_intersection_warning",
-                cad_enclosure_aperture_intersection_warning_id: `cad_enclosure_aperture_intersection_warning_${enclosure.cadComponentIds.join("_")}_${cad.cad_component_id}_${aperture.face}`,
+                type: "cad_collision_error",
+                error_type: "cad_collision_error",
+                cad_collision_error_id: `cad_collision_error_${enclosure.cadComponentIds.join("_")}_${cad.cad_component_id}_${aperture.face}`,
                 cad_component_id: cad.cad_component_id,
                 enclosure_cad_component_ids: enclosure.cadComponentIds,
                 pcb_component_id: cad.pcb_component_id,

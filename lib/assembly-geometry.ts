@@ -1,13 +1,12 @@
 import type {
   CadComponent,
-  CadEnclosureApertureIntersectionWarning,
+  CadCollisionError,
   PcbComponent,
 } from "circuit-json"
 
 export type CadComponentId = CadComponent["cad_component_id"]
 export type PcbComponentId = PcbComponent["pcb_component_id"]
-export type EnclosureApertureFace =
-  CadEnclosureApertureIntersectionWarning["face"]
+export type EnclosureApertureFace = CadCollisionError["face"]
 
 /** Indexed triangles in the right-handed Circuit JSON world frame: +X right,
  * +Y top, +Z above, millimetres. Positions are XYZ points, including translation.
@@ -39,6 +38,6 @@ export interface AssemblyGeometry {
 export interface AssemblyCheckOptions {
   /** Omitted on ordinary PCB checks. No models or kernel are loaded then. */
   assemblyGeometry?: AssemblyGeometry
-  /** Warn strictly above this projected intersection area (mm²), default 2. */
+  /** Emit a collision error strictly above this projected intersection area (mm²), default 2. */
   intersectionAreaThresholdMm2?: number
 }
