@@ -1,58 +1,62 @@
-# Assembly geometry checks
+# Assembly collision checks
 
-`runAllAssemblyChecks(circuitJson, options)` is async. `runAllChecks` accepts the
-same optional geometry context. With no context, empty enclosures, or no authored
-apertures, the assembly check returns immediately without loading models or
-initializing the Manifold kernel.
+The async checks discover enclosure associations in Circuit JSON and load the
+actual CAD geometry themselves. No geometry provider or reconstructed TSX tree
+is required:
 
 ```ts
-const diagnostics = await runAllAssemblyChecks(circuitJson, {
-  assemblyGeometry: {
-    enclosures: [{
-      cadComponentIds: [baseCadId, lidCadId],
-      apertures: [{ pcbComponentId: usbPcbId, face: "y_pos" }],
-    }],
-    getCadComponentMesh: async (cadComponent) =>
-      loadCadComponentMesh(cadComponent, { pcbComponent, projectBaseUrl }),
-  },
-  intersectionAreaThresholdMm2: 2,
-})
+const diagnostics = await runAllAssemblyChecks(circuitJson)
+// Or include electrical/PCB checks as well:
+const allDiagnostics = await runAllChecks(circuitJson)
 ```
 
-The loader is supplied by the host; checks does not fetch URLs or depend on a
-renderer. Each returned `CadMesh` contains flattened XYZ `positions` and indexed
-triangle `indices`, as number arrays or typed arrays. Positions are points in
-the right-handed Circuit JSON world frame: +X right, +Y top, +Z above, in mm.
-Origins, scale, rotation, translation, and mounting-layer orientation must
-already be applied. Triangle winding must describe an outward-oriented closed
-solid. Every CAD ID is loaded at most once in a pass.
+Core exports `cad_enclosure` records containing the finished base/lid CAD IDs,
+the aperture-owner PCB IDs, their resolved world-axis faces, and whether the
+enclosure is in an assembly. These associations survive JSON serialization.
+Ordinary PCB JSON, nonassembly enclosures, and enclosures without apertures return
+without loading models or initializing Manifold. Association discovery never
+uses component names or guesses that an arbitrary CAD model is an enclosure.
 
-The base and lid are unioned, then intersected with each aperture-bearing part.
-The intersection is projected orthographically along the resolved aperture face
-normal. The `cad_collision_error` measures the union silhouette area in mm². It
-does not use volume (mm³), total mesh surface area, a bounding box, or a guessed
-wall thickness. Touching without penetration and areas at or below the threshold
-do not emit a collision error.
+For platform services, pass the existing platform config as an optional input:
 
-Collision errors contain `cad_component_ids` for the part and enclosure solids,
-optional `pcb_component_ids`, and required `source_component_ids`. References are
-deduplicated across base/lid records. The resolved face is an internal projection
-input and is not a property of the emitted error.
+```ts
+await runAllAssemblyChecks(circuitJson, { platformConfig })
+```
 
-Only explicit enclosure/aperture associations are checked. Unrelated components
-and unrelated assemblies are excluded. The enclosure meshes must represent the
-finished parts after cutouts. The six supported faces are `x_pos`, `x_neg`,
-`y_pos`, `y_neg`, `z_pos`, and `z_neg` in world coordinates.
+`platformConfig.localCacheEngine` supplies the platform's localStorage-compatible
+sync or async cache. Posed indexed triangles are stored under
+`tscircuit:cad_mesh:v1:<sha256>`. The key includes the full CAD pose/model,
+associated PCB record, and `projectBaseUrl`; a placement/model/project change
+cannot reuse stale geometry. Concurrent requests share pending loads per cache
+engine. Missing/corrupt/unavailable cache entries fall back to real model loading;
+cache write failures do not affect the result. Kernel objects and failed loads
+are never persisted.
 
-Collision errors can indicate aperture misplacement, size/direction problems, or
-body clearance problems. This is a static collision heuristic: a connector completely
-inside the cavity can have a poorly aligned external opening without its solid
-intersecting the wall. Cable insertion space and moving lever travel require
-separate authored access envelopes.
+`platformConfig.projectBaseUrl` resolves relative model URLs. Absolute URLs,
+data URLs, and authored JSCAD models work with the one-argument API. The shared
+`circuit-json-to-gltf` loader applies the renderer's origin, scale, rotation, and
+mounting-layer conventions, producing outward-wound triangles in right-handed
+Circuit JSON world coordinates (+X right, +Y top, +Z above), in millimetres.
+Generated JSCAD T-junctions are subdivided at existing surface vertices; open
+models are not repaired by adding caps or substituting convex hulls.
 
-A failed/missing model, invalid mesh, or missing CAD reference emits a
-`source_runtime_error` in `AssemblyDesignRuleChecks`. Other valid parts continue
-to be checked. If an enclosure part is unavailable, its whole enclosure check is
-incomplete. Open meshes are not silently repaired with a convex hull or replaced
-by a bounding box. The same lazy `@tscircuit/manifold-2d` runtime as copper pours
-provides the 3D boolean and projection kernel; all per-pass solids are disposed.
+The check unions the finished enclosure parts, intersects each aperture-bearing
+part, and projects the intersection along the internally resolved aperture face
+normal. It emits `cad_collision_error` strictly above 2 mm² by default
+(`intersectionAreaThresholdMm2` can override the threshold; 1e-6 mm² numerical
+tolerance). The metric is union silhouette area, not volume, mesh surface area,
+a bounding box, or volume divided by a guessed wall thickness. Touching without
+penetration does not produce a collision. Unioning base/lid avoids double counting.
+
+Errors contain required `cad_component_ids` and `source_component_ids`, plus
+optional `pcb_component_ids`, with deduplicated references to the part and shell
+solids. The error has no `face`, singular component references, or separate
+enclosure ID property.
+
+Missing/failed/non-manifold models emit `source_runtime_error` diagnostics in
+`AssemblyDesignRuleChecks`. Other valid parts continue to be checked. If an
+enclosure mesh is unavailable, that enclosure check is incomplete. A static
+collision cannot detect an opening misplaced above a recessed connector that
+never touches the wall. Cable insertion space and lever travel require separate
+authored access/motion envelopes. The visual TSX fixtures cover this limitation
+as well as actual side/lid obstruction and placement on both PCB layers.

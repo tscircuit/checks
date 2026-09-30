@@ -1,45 +1,17 @@
-import type { CadComponent, PcbComponent } from "circuit-json"
-
+import type { PlatformConfig } from "@tscircuit/props"
+import type { CadComponent, CadEnclosure, PcbComponent } from "circuit-json"
 export type CadComponentId = CadComponent["cad_component_id"]
 export type PcbComponentId = PcbComponent["pcb_component_id"]
-export type EnclosureApertureFace =
-  | "x_pos"
-  | "x_neg"
-  | "y_pos"
-  | "y_neg"
-  | "z_pos"
-  | "z_neg"
-
-/** Indexed triangles in the right-handed Circuit JSON world frame: +X right,
- * +Y top, +Z above, millimetres. Positions are XYZ points, including translation.
- * Each consecutive triple of indices winds CCW as viewed from outside a solid.
- * Model origins, scale, rotation and layer flips must already be baked in.
- * Consumers need no Three.js/JSCAD/Manifold objects or model URL conventions.
+export type EnclosureApertureFace = CadEnclosure["apertures"][number]["face"]
+/** Indexed outward CCW triangles in the right-handed world frame: +X right,
+ * +Y top, +Z above, mm. Translation, origin, scale and layer pose are baked in.
  */
 export interface CadMesh {
   positions: readonly number[] | Float32Array | Float64Array
   indices: readonly number[] | Uint32Array
 }
-
-/** The generated enclosure parts belong to one physical assembly, and only
- * parts with an authored aperture participate. Faces refer to world XYZ axes.
- */
-export interface AssemblyEnclosureGeometry {
-  cadComponentIds: CadComponentId[]
-  apertures: { pcbComponentId: PcbComponentId; face: EnclosureApertureFace }[]
-}
-
-export interface AssemblyGeometry {
-  enclosures: AssemblyEnclosureGeometry[]
-  /** Called at most once per CAD ID in a check pass. A rejection/missing/invalid
-   * mesh produces an explicit incomplete-check diagnostic, never a clear result.
-   */
-  getCadComponentMesh: (cadComponent: CadComponent) => Promise<CadMesh>
-}
-
-export interface AssemblyCheckOptions {
-  /** Omitted on ordinary PCB checks. No models or kernel are loaded then. */
-  assemblyGeometry?: AssemblyGeometry
-  /** Emit a collision error strictly above this projected intersection area (mm²), default 2. */
+/** Optional platform services. Geometry and associations come from Circuit JSON. */
+export interface CheckOptions {
+  platformConfig?: Pick<PlatformConfig, "localCacheEngine" | "projectBaseUrl">
   intersectionAreaThresholdMm2?: number
 }

@@ -1,12 +1,14 @@
+import { loadCadMesh } from "./load-cad-mesh"
 import type { Manifold, ManifoldToplevel } from "@tscircuit/manifold-2d"
 import type {
   AnyCircuitElement,
   CadComponent,
+  CadEnclosure,
   CadCollisionError,
   SourceRuntimeError,
 } from "circuit-json"
 import type {
-  AssemblyCheckOptions,
+  CheckOptions,
   CadComponentId,
   CadMesh,
   EnclosureApertureFace,
@@ -74,24 +76,22 @@ function projectedIntersectionArea(
   }
 }
 
-/** Async mechanical DRC for an explicit assembly geometry context. It compares
+/** Async mechanical DRC for serialized assembly enclosure records. It compares
  * real aperture-bearing CAD against the union of finished enclosure parts, in
  * world mm. Intersection can indicate a misplaced aperture or inadequate body
  * clearance. Static meshes cannot establish cable/lever motion clearance.
  */
 export async function checkEnclosureApertureIntersections(
   circuitJson: AnyCircuitElement[],
-  options: AssemblyCheckOptions = {},
+  options: CheckOptions = {},
 ): Promise<(CadCollisionError | SourceRuntimeError)[]> {
-  const geometry = options.assemblyGeometry
-  if (
-    !geometry ||
-    !geometry.enclosures.some(
-      (enclosure) =>
-        enclosure.apertures.length > 0 && enclosure.cadComponentIds.length > 0,
-    )
+  const enclosures = circuitJson.filter(
+    (element): element is CadEnclosure =>
+      element.type === "cad_enclosure" &&
+      element.is_in_assembly &&
+      element.apertures.length > 0,
   )
-    return []
+  if (!enclosures.length) return []
   const threshold =
     options.intersectionAreaThresholdMm2 ??
     DEFAULT_ENCLOSURE_INTERSECTION_AREA_THRESHOLD_MM2
@@ -134,7 +134,7 @@ export async function checkEnclosureApertureIntersections(
           if (!cad) throw new Error("CAD reference not found")
           const solid = meshToManifold(
             kernel,
-            await geometry.getCadComponentMesh(cad),
+            await loadCadMesh(cad, circuitJson, options),
           )
           allocatedSolids.push(solid)
           return solid
@@ -148,11 +148,11 @@ export async function checkEnclosureApertureIntersections(
     return pending
   }
   try {
-    for (const enclosure of geometry.enclosures) {
-      if (!enclosure.apertures.length || !enclosure.cadComponentIds.length)
+    for (const enclosure of enclosures) {
+      if (!enclosure.apertures.length || !enclosure.cad_component_ids.length)
         continue
       const enclosureParts = await Promise.all(
-        enclosure.cadComponentIds.map(getSolid),
+        enclosure.cad_component_ids.map(getSolid),
       )
       // An incomplete shell must not produce a misleading partial clear result.
       if (enclosureParts.some((solid) => solid === null)) continue
@@ -162,12 +162,12 @@ export async function checkEnclosureApertureIntersections(
         for (const aperture of enclosure.apertures) {
           const candidates = cadComponents.filter(
             (cad) =>
-              cad.pcb_component_id === aperture.pcbComponentId &&
-              !enclosure.cadComponentIds.includes(cad.cad_component_id),
+              cad.pcb_component_id === aperture.pcb_component_id &&
+              !enclosure.cad_component_ids.includes(cad.cad_component_id),
           )
           if (!candidates.length)
             reportIncomplete(
-              aperture.pcbComponentId,
+              aperture.pcb_component_id,
               "Aperture owner has no CAD model",
             )
           for (const cad of candidates) {
@@ -190,7 +190,7 @@ export async function checkEnclosureApertureIntersections(
               const collisionCadComponents = [
                 cad,
                 ...cadComponents.filter((enclosureCad) =>
-                  enclosure.cadComponentIds.includes(
+                  enclosure.cad_component_ids.includes(
                     enclosureCad.cad_component_id,
                   ),
                 ),
@@ -207,7 +207,7 @@ export async function checkEnclosureApertureIntersections(
               diagnostics.push({
                 type: "cad_collision_error",
                 error_type: "cad_collision_error",
-                cad_collision_error_id: `cad_collision_error_${enclosure.cadComponentIds.join("_")}_${cad.cad_component_id}_${aperture.face}`,
+                cad_collision_error_id: `cad_collision_error_${enclosure.cad_component_ids.join("_")}_${cad.cad_component_id}_${aperture.face}`,
                 cad_component_ids: [
                   ...new Set(
                     collisionCadComponents.map(

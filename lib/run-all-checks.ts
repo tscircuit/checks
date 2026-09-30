@@ -7,7 +7,7 @@ import { checkPcbBusLengthSkew } from "./check-pcb-bus-length-skew"
 import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
 import type { AnyCircuitElement } from "circuit-json"
-import type { AssemblyCheckOptions } from "./assembly-geometry"
+import type { CheckOptions } from "./assembly-geometry"
 import { checkEnclosureApertureIntersections } from "./check-enclosure-aperture-intersections"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
@@ -126,14 +126,14 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
 
 export async function runAllAssemblyChecks(
   circuitJson: AnyCircuitElement[],
-  options: AssemblyCheckOptions = {},
+  options: CheckOptions = {},
 ) {
   return checkEnclosureApertureIntersections(circuitJson, options)
 }
 
 export async function runAllChecks(
   circuitJson: AnyCircuitElement[],
-  options: AssemblyCheckOptions = {},
+  options: CheckOptions = {},
 ) {
   return [
     ...(await runAllPlacementChecks(circuitJson)),
