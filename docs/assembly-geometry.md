@@ -34,6 +34,11 @@ does not use volume (mm³), total mesh surface area, a bounding box, or a guesse
 wall thickness. Touching without penetration and areas at or below the threshold
 do not emit a collision error.
 
+Collision errors contain `cad_component_ids` for the part and enclosure solids,
+optional `pcb_component_ids`, and required `source_component_ids`. References are
+deduplicated across base/lid records. The resolved face is an internal projection
+input and is not a property of the emitted error.
+
 Only explicit enclosure/aperture associations are checked. Unrelated components
 and unrelated assemblies are excluded. The enclosure meshes must represent the
 finished parts after cutouts. The six supported faces are `x_pos`, `x_neg`,

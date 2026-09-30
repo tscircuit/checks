@@ -90,7 +90,9 @@ test("projected area is independent of wall thickness on all six faces", async (
       expect(result[0]).toMatchObject({
         type: "cad_collision_error",
         error_type: "cad_collision_error",
-        face,
+        cad_component_ids: ["part", "base"],
+        pcb_component_ids: ["part", "base"],
+        source_component_ids: ["source_part", "source_base"],
         intersection_area_mm2: 3,
         threshold_area_mm2: 2,
       })
@@ -178,7 +180,9 @@ test("base/lid are unioned before measuring and duplicate aperture references do
   expect(result).toHaveLength(1)
   expect(result[0]).toMatchObject({
     intersection_area_mm2: 3,
-    enclosure_cad_component_ids: ["base", "lid"],
+    cad_component_ids: ["part", "base", "lid"],
+    pcb_component_ids: ["part", "base", "lid"],
+    source_component_ids: ["source_part", "source_base", "source_lid"],
   })
   expect(loads.sort()).toEqual(["base", "lid", "part"])
 })

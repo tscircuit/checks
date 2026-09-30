@@ -187,15 +187,44 @@ export async function checkEnclosureApertureIntersections(
               if (area <= threshold + 1e-6) continue
               const name =
                 sourceNames.get(cad.source_component_id) ?? cad.cad_component_id
+              const collisionCadComponents = [
+                cad,
+                ...cadComponents.filter((enclosureCad) =>
+                  enclosure.cadComponentIds.includes(
+                    enclosureCad.cad_component_id,
+                  ),
+                ),
+              ]
+              const pcbComponentIds = [
+                ...new Set(
+                  collisionCadComponents.flatMap((collisionCad) =>
+                    collisionCad.pcb_component_id
+                      ? [collisionCad.pcb_component_id]
+                      : [],
+                  ),
+                ),
+              ]
               diagnostics.push({
                 type: "cad_collision_error",
                 error_type: "cad_collision_error",
                 cad_collision_error_id: `cad_collision_error_${enclosure.cadComponentIds.join("_")}_${cad.cad_component_id}_${aperture.face}`,
-                cad_component_id: cad.cad_component_id,
-                enclosure_cad_component_ids: enclosure.cadComponentIds,
-                pcb_component_id: cad.pcb_component_id,
-                source_component_id: cad.source_component_id,
-                face: aperture.face,
+                cad_component_ids: [
+                  ...new Set(
+                    collisionCadComponents.map(
+                      (collisionCad) => collisionCad.cad_component_id,
+                    ),
+                  ),
+                ],
+                ...(pcbComponentIds.length
+                  ? { pcb_component_ids: pcbComponentIds }
+                  : {}),
+                source_component_ids: [
+                  ...new Set(
+                    collisionCadComponents.map(
+                      (collisionCad) => collisionCad.source_component_id,
+                    ),
+                  ),
+                ],
                 intersection_area_mm2: area,
                 threshold_area_mm2: threshold,
                 message: `${name} intersects the enclosure by ${area.toFixed(2)} mm² projected along ${aperture.face} (threshold ${threshold} mm²). Check the aperture position, size, direction and body clearance.`,

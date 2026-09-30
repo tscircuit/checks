@@ -1,12 +1,14 @@
-import type {
-  CadComponent,
-  CadCollisionError,
-  PcbComponent,
-} from "circuit-json"
+import type { CadComponent, PcbComponent } from "circuit-json"
 
 export type CadComponentId = CadComponent["cad_component_id"]
 export type PcbComponentId = PcbComponent["pcb_component_id"]
-export type EnclosureApertureFace = CadCollisionError["face"]
+export type EnclosureApertureFace =
+  | "x_pos"
+  | "x_neg"
+  | "y_pos"
+  | "y_neg"
+  | "z_pos"
+  | "z_neg"
 
 /** Indexed triangles in the right-handed Circuit JSON world frame: +X right,
  * +Y top, +Z above, millimetres. Positions are XYZ points, including translation.
