@@ -6,7 +6,10 @@ import type {
 } from "circuit-json"
 
 // Enable reviewed placement findings individually as schematic warnings.
-const enabledIssueTypes = ["TwoPinComponentHasInvertedRails"] as const
+const enabledIssueTypes = [
+  "TwoPinComponentHasInvertedRails",
+  "PullResistorOnWrongSide",
+] as const
 
 export function checkSchematicPlacement(
   circuitJson: AnyCircuitElement[],
@@ -18,23 +21,39 @@ export function checkSchematicPlacement(
   return analysis
     .getIssues()
     .flatMap((issue): SchematicComponentStylingWarning[] => {
-      if (issue.lineItemType !== "TwoPinComponentHasInvertedRails") return []
-      const schematicComponentId = issue.schematicBox.schematicComponentId
+      let schematicComponentId: string | undefined
+      let stylingIssueType: string
+      let message: string
+      switch (issue.lineItemType) {
+        case "TwoPinComponentHasInvertedRails": {
+          schematicComponentId = issue.schematicBox.schematicComponentId
+          const componentName =
+            issue.schematicBox.sourceComponentName ?? schematicComponentId
+          stylingIssueType = "inverted_rails"
+          message = `${componentName} has its positive-supply connection below its ground connection. Rotate ${componentName} by 180°, preserving pin connections, and reroute attached traces.`
+          break
+        }
+        case "PullResistorOnWrongSide":
+          schematicComponentId = issue.resistorSchematicBox.schematicComponentId
+          stylingIssueType = "pull_resistor_on_wrong_side"
+          message = issue.message
+          break
+        default:
+          return []
+      }
       if (!schematicComponentId) return []
       const component = db.schematic_component.get(schematicComponentId)
       if (!component) return []
       const group = component.schematic_group_id
         ? db.schematic_group.get(component.schematic_group_id)
         : undefined
-      const componentName =
-        issue.schematicBox.sourceComponentName ?? schematicComponentId
       return [
         {
           type: "schematic_component_styling_warning",
-          schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponentId}_inverted_rails`,
+          schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponentId}_${stylingIssueType}`,
           warning_type: "schematic_component_styling_warning",
-          styling_issue_type: "inverted_rails",
-          message: `${componentName} has its positive-supply connection below its ground connection. Rotate ${componentName} by 180°, preserving pin connections, and reroute attached traces.`,
+          styling_issue_type: stylingIssueType,
+          message,
           schematic_component_id: schematicComponentId,
           source_component_id: component.source_component_id,
           schematic_sheet_id: component.schematic_sheet_id,
