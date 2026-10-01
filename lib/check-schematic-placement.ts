@@ -33,12 +33,22 @@ export function checkSchematicPlacement(
           message = `${componentName} has its positive-supply connection below its ground connection. Rotate ${componentName} by 180°, preserving pin connections, and reroute attached traces.`
           break
         }
-        case "RegulatorCapacitorsOnWrongSides":
+        case "RegulatorCapacitorsOnWrongSides": {
           schematicComponentId =
             issue.regulatorSchematicBox.schematicComponentId
+          const regulatorName =
+            issue.regulatorSchematicBox.sourceComponentName ??
+            schematicComponentId
+          const inputCapacitorName =
+            issue.inputCapacitorSchematicBox.sourceComponentName ??
+            "the input capacitor"
+          const outputCapacitorName =
+            issue.outputCapacitorSchematicBox.sourceComponentName ??
+            "the output capacitor"
           stylingIssueType = "regulator_capacitors_on_wrong_sides"
-          message = issue.message
+          message = `${inputCapacitorName} and ${outputCapacitorName} are on the wrong sides of ${regulatorName}. Move them beside their connected regulator pins, preserving connections and rerouting traces.`
           break
+        }
         default:
           return []
       }

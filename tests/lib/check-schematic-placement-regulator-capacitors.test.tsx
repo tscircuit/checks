@@ -86,7 +86,7 @@ test("reports one regulator warning through both check entry points with stable 
       .map((e) => e.schematic_port_id),
   })
   expect(warnings[0]!.message).toBe(
-    "Place CIN near U1.IN on the left side and COUT near U1.OUT on the right side. Preserve all connections and leave room for labels; exact alignment is not required.",
+    "CIN and COUT are on the wrong sides of U1. Move them beside their connected regulator pins, preserving connections and rerouting traces.",
   )
   expect(schematic_component_styling_warning.parse(warnings[0])).toEqual(
     warnings[0],
