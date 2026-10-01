@@ -7,6 +7,8 @@ import { checkPcbBusLengthSkew } from "./check-pcb-bus-length-skew"
 import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
 import type { AnyCircuitElement } from "circuit-json"
+import type { CheckOptions } from "./assembly/assembly-geometry"
+import { runAllAssemblyChecks } from "./assembly/run-all-assembly-checks"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkCopperToBoardEdgeClearance } from "./check-copper-to-board-edge-clearance"
@@ -42,6 +44,8 @@ import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-termi
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
+
+export { runAllAssemblyChecks } from "./assembly/run-all-assembly-checks"
 
 export async function runAllPlacementChecks(
   circuitJson: AnyCircuitElement[],
@@ -122,12 +126,16 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   ]
 }
 
-export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllChecks(
+  circuitJson: AnyCircuitElement[],
+  options: CheckOptions = {},
+) {
   return [
     ...(await runAllPlacementChecks(circuitJson)),
     ...(await runAllSchematicChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
     ...(await runAllRoutingChecks(circuitJson)),
+    ...(await runAllAssemblyChecks(circuitJson, options)),
   ]
 }
