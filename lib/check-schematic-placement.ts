@@ -9,6 +9,7 @@ import type {
 const enabledIssueTypes = [
   "TwoPinComponentHasInvertedRails",
   "RegulatorCapacitorsOnWrongSides",
+  "PullResistorOnWrongSide",
 ] as const
 
 export function checkSchematicPlacement(
@@ -49,6 +50,11 @@ export function checkSchematicPlacement(
           message = `${inputCapacitorName} and ${outputCapacitorName} are on the wrong sides of ${regulatorName}. Move them beside their connected regulator pins, preserving connections and rerouting traces.`
           break
         }
+        case "PullResistorOnWrongSide":
+          schematicComponentId = issue.resistorSchematicBox.schematicComponentId
+          stylingIssueType = "pull_resistor_on_wrong_side"
+          message = issue.message
+          break
         default:
           return []
       }
