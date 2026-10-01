@@ -26,6 +26,10 @@ import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-boar
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkPcbCourtyardOverKeepout } from "./check-pcb-courtyard-over-keepout"
 import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
+import {
+  checkPcbBendZonePlacement,
+  checkPcbBendZoneTraces,
+} from "./check-pcb-bend-zones"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
@@ -53,6 +57,7 @@ export async function runAllPlacementChecks(
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverCutout(circuitJson),
     ...checkPcbCopperOverKeepout(circuitJson),
+    ...checkPcbBendZonePlacement(circuitJson),
     ...checkPcbCourtyardOverKeepout(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPcbComponentsMissingCourtyard(circuitJson),
@@ -105,6 +110,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson, connectivity),
     ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
     ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
+    ...checkPcbBendZoneTraces(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
     ...checkPcbBusLengthSkew(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),
