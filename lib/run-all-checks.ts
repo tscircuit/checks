@@ -26,6 +26,7 @@ import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-boar
 import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
 import { checkPcbCourtyardOverKeepout } from "./check-pcb-courtyard-over-keepout"
 import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
+import { checkPcbTraceUncoupledLength } from "./check-pcb-trace-uncoupled-length"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
@@ -106,6 +107,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
     ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
+    ...checkPcbTraceUncoupledLength(circuitJson),
     ...checkPcbBusLengthSkew(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson, connectivity),
