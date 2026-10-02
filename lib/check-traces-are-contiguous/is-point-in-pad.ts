@@ -131,6 +131,10 @@ export function isPointInPad(
       )
     }
 
+    if (pad.shape === "hole_with_polygon_pad") {
+      return isPointInPolygon(point, getPolygonPointsForPad(pad))
+    }
+
     if ("rect_pad_width" in pad && "rect_pad_height" in pad) {
       return isPointInPolygon(point, getPolygonPointsForPad(pad))
     }
