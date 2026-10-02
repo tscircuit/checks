@@ -16,10 +16,10 @@ describe("testing checkTracesAreContiguous(", () => {
   test("should error as a trace is not fully contiguous", () => {
     const errors = checkTracesAreContiguous(corruptedCircuitJson as any)
     expect(errors[0].message).toMatchInlineSnapshot(
-      `"Via in trace [trace[source_trace_0_0]] is misaligned at position {x: -1.875, y: 1.875}."`,
+      `"Via in trace [.R1 > .pin1 to .C1 > .pin1] is misaligned at position {x: -1.875, y: 1.875}."`,
     )
     expect(errors[1].message).toMatchInlineSnapshot(
-      `"Trace [trace[source_trace_0_0]] is missing a connection to smtpad[.C1 > .anode]"`,
+      `"Trace [.R1 > .pin1 to .C1 > .pin1] is missing a connection to SMD pad C1.pin1"`,
     )
   })
 })
@@ -431,7 +431,7 @@ test("still reports a source-trace branch that does not reach a required port", 
   expect(checkTracesAreContiguous(circuitJson)).toContainEqual(
     expect.objectContaining({
       message:
-        "Trace [trace[port[pcb_port_a]]] is missing a connection to smtpad[#pcb_port_b]",
+        "Trace [unnamed trace] is missing a connection to SMD pad unnamed port",
       pcb_port_ids: ["pcb_port_b"],
     }),
   )

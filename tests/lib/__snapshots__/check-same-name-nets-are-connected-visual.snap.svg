@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="490" viewBox="0 0 800 490">
     <rect width="800" height="490" fill="white" />
-    <svg xmlns="http://www.w3.org/2000/svg" class="tscircuit-schematic" width="800" height="360" style="background-color: rgb(245, 241, 237)" data-real-to-screen-transform="matrix(63.1830201484,0,0,-63.1830201484,191.4960335104,167.4350033932)" data-software-used-string="@tscircuit/core@0.0.1658"><style>
+    <svg xmlns="http://www.w3.org/2000/svg" class="tscircuit-schematic" width="800" height="360" style="background-color: rgb(245, 241, 237)" data-real-to-screen-transform="matrix(63.1830201484,0,0,-63.1830201484,191.4960335104,167.4350033932)" data-software-used-string="@tscircuit/core@0.0.1929"><style>
               .boundary { fill: rgb(245, 241, 237); }
               .schematic-boundary { fill: none; stroke: #fff; }
               .component { fill: none; stroke: rgb(132, 0, 0); }

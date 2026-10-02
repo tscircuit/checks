@@ -1,3 +1,4 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import type {
   AnyCircuitElement,
   PCBKeepout,
@@ -23,13 +24,7 @@ export function checkPcbCourtyardOverKeepout(
       el.type === "pcb_component" ? [[el.pcb_component_id, el] as const] : [],
     ),
   )
-  const sourceNames = new Map(
-    circuitJson.flatMap((el) =>
-      el.type === "source_component"
-        ? [[el.source_component_id, el.name] as const]
-        : [],
-    ),
-  )
+
   const courtyards = circuitJson.filter(
     (el): el is CourtyardElement =>
       el.type === "pcb_courtyard_rect" ||
@@ -49,10 +44,11 @@ export function checkPcbCourtyardOverKeepout(
       const id = `courtyard_over_keepout_${componentId}_${keepout.pcb_keepout_id}`
       if (errors.has(id)) continue
       if (getPadToPadGap(geometry, keepout) > EPSILON) continue
-      const name =
-        (component && sourceNames.get(component.source_component_id)) ||
-        componentId
-      const description = keepout.description ?? keepout.pcb_keepout_id
+      const name = getReadableNameForElementId(circuitJson, componentId)
+      const description = getReadableNameForElementId(
+        circuitJson,
+        keepout.pcb_keepout_id,
+      )
       const subcircuit_id = component?.subcircuit_id ?? keepout.subcircuit_id
       if (keepout.warning_only) {
         errors.set(id, {

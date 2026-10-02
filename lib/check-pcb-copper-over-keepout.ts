@@ -1,3 +1,4 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { cju, getPrimaryId } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
@@ -47,8 +48,8 @@ const getReadableCopperName = (
   }
 
   return copper.type === "pcb_via"
-    ? `via ${copper.pcb_via_id}`
-    : `${copper.type} ${getPrimaryId(copper)}`
+    ? `via ${getReadableNameForElementId(circuitJson, copper.pcb_via_id)}`
+    : getReadableNameForElementId(circuitJson, getPrimaryId(copper))
 }
 
 export function checkPcbCopperOverKeepout(
@@ -109,7 +110,7 @@ export function checkPcbCopperOverKeepout(
             warning_type: "pcb_keepout_overlap_warning",
             pcb_keepout_overlap_warning_id: `pcb_keepout_overlap_warning_${errorId}`,
             pcb_keepout_id: keepout.pcb_keepout_id,
-            message: `Copper for ${getReadableCopperName(circuitJson, copperElement)} overlaps advisory PCB keepout "${keepout.description ?? keepout.pcb_keepout_id}"`,
+            message: `Copper for ${getReadableCopperName(circuitJson, copperElement)} overlaps advisory PCB keepout "${getReadableNameForElementId(circuitJson, keepout.pcb_keepout_id)}"`,
             ...(copperComponentId
               ? { pcb_component_ids: [copperComponentId] }
               : {}),

@@ -1,11 +1,10 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import type {
   AnyCircuitElement,
   SchematicComponent,
   SchematicComponentStylingWarning,
   SchematicPort,
 } from "circuit-json"
-
-type SourceComponent = Extract<AnyCircuitElement, { type: "source_component" }>
 
 const FLOATING_POINT_TOLERANCE = 1e-9
 
@@ -27,17 +26,7 @@ export function checkSchematicComponentPortsOutsideBody(
   const schematicPorts = circuitJson.filter(
     (element): element is SchematicPort => element.type === "schematic_port",
   )
-  const sourceComponents = circuitJson.filter(
-    (element): element is SourceComponent =>
-      element.type === "source_component",
-  )
 
-  const sourceComponentById = new Map(
-    sourceComponents.map((component) => [
-      component.source_component_id,
-      component,
-    ]),
-  )
   const portsByComponentId = new Map<string, SchematicPort[]>()
 
   for (const port of schematicPorts) {
@@ -142,11 +131,10 @@ export function checkSchematicComponentPortsOutsideBody(
       )
     }
 
-    const sourceComponent = component.source_component_id
-      ? sourceComponentById.get(component.source_component_id)
-      : undefined
-    const componentName =
-      sourceComponent?.name ?? component.schematic_component_id
+    const componentName = getReadableNameForElementId(
+      circuitJson,
+      component.schematic_component_id,
+    )
     const portLabels = portsOutsideBody.map(getPortLabel).join(", ")
 
     warnings.push({

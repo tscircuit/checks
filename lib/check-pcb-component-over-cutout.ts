@@ -1,3 +1,4 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
@@ -162,7 +163,7 @@ export function checkPcbComponentOverCutout(
         type: "pcb_placement_error",
         pcb_placement_error_id: `component_over_cutout_${component.pcb_component_id}_${cutoutId}`,
         error_type: "pcb_placement_error",
-        message: `Component ${componentName} overlaps with pcb_cutout [${cutoutId}]`,
+        message: `Component ${componentName} overlaps with cutout [${getReadableNameForElementId(circuitJson, cutoutId)}]`,
         subcircuit_id: component.subcircuit_id,
       })
     }

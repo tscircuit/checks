@@ -1,3 +1,4 @@
+import { getReadableNameForTrace as getReadableNameForPcbTrace } from "lib/util/get-readable-names"
 import type {
   AnyCircuitElement,
   PcbPort,
@@ -6,7 +7,7 @@ import type {
   SourceTrace,
 } from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
-import { getReadableNameForPcbTrace } from "@tscircuit/circuit-json-util"
+
 import { routePointTouchesPad } from "../util/route-point-touches-pad"
 import {
   createEndpointContactContext,

@@ -1,3 +1,4 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,
@@ -112,7 +113,7 @@ export function checkCopperToBoardEdgeClearance(
       type: "pcb_placement_error",
       pcb_placement_error_id: `copper_too_close_to_board_edge_${id}`,
       error_type: "pcb_placement_error",
-      message: `${label} ${id} violates copper-to-board-edge clearance (measured ${clearance.toFixed(3)}mm, required ${requiredClearance.toFixed(3)}mm)`,
+      message: `${label} ${getReadableNameForElementId(circuitJson, id)} violates copper-to-board-edge clearance (measured ${clearance.toFixed(3)}mm, required ${requiredClearance.toFixed(3)}mm)`,
     })
   }
 

@@ -1,3 +1,4 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { analyzeSchematicPlacement } from "@tscircuit/circuit-json-schematic-placement-analysis/analysis"
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
@@ -28,8 +29,10 @@ export function checkSchematicPlacement(
       switch (issue.lineItemType) {
         case "TwoPinComponentHasInvertedRails": {
           schematicComponentId = issue.schematicBox.schematicComponentId
-          const componentName =
-            issue.schematicBox.sourceComponentName ?? schematicComponentId
+          const componentName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
           stylingIssueType = "inverted_rails"
           message = `${componentName} has its positive-supply connection below its ground connection. Rotate ${componentName} by 180°, preserving pin connections, and reroute attached traces.`
           break
@@ -37,9 +40,10 @@ export function checkSchematicPlacement(
         case "RegulatorCapacitorsOnWrongSides": {
           schematicComponentId =
             issue.regulatorSchematicBox.schematicComponentId
-          const regulatorName =
-            issue.regulatorSchematicBox.sourceComponentName ??
-            schematicComponentId
+          const regulatorName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
           const inputCapacitorName =
             issue.inputCapacitorSchematicBox.sourceComponentName ??
             "the input capacitor"

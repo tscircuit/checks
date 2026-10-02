@@ -389,7 +389,7 @@ describe("checkEachPcbPortConnectedToPcbTraces", () => {
       [
         {
           "error_type": "pcb_port_not_connected_error",
-          "message": "Ports [port, port] are not connected together through the same net.",
+          "message": "Ports [unnamed port, unnamed port] are not connected together through the same net.",
           "pcb_component_ids": [
             "comp1",
             "comp2",

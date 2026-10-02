@@ -1,6 +1,7 @@
+import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
 import Flatbush from "flatbush"
 import * as Flatten from "@flatten-js/core"
-import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
+
 import {
   convertCircuitJsonToFlattenJs,
   type FlattenElement,
@@ -66,11 +67,7 @@ export function checkCopperPourShorts(
       return [layer, { index, entries }] as const
     }),
   )
-  const netNames = new Map(
-    circuitJson
-      .filter((e) => e.type === "source_net")
-      .map((e) => [e.source_net_id, e.name]),
-  )
+
   const errors = new Map<string, PcbPlacementError>()
   for (const pour of copper) {
     const element = pour.sourceElement
@@ -107,7 +104,7 @@ export function checkCopperPourShorts(
         type: "pcb_placement_error",
         pcb_placement_error_id: id,
         error_type: "pcb_placement_error",
-        message: `Copper pour ${pour.elementId} (${netNames.get(netId!) ?? netId ?? "unassigned net"}) shorts to ${getReadableNameForElement(circuitJson, other.elementId)} (${other.elementId}) on ${pour.layer} (accidental copper contact)`,
+        message: `Copper pour ${getReadableNameForElement(circuitJson, pour.elementId)} (${netId ? getReadableNameForElement(circuitJson, netId) : "unassigned net"}) shorts to ${getReadableNameForElement(circuitJson, other.elementId)} on ${pour.layer} (accidental copper contact)`,
         subcircuit_id: element.subcircuit_id,
       })
     }

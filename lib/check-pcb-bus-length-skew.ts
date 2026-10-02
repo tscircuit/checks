@@ -1,3 +1,4 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import type {
   AnyCircuitElement,
   PcbBusLengthSkewError,
@@ -42,7 +43,7 @@ export const checkPcbBusLengthSkew = (
       type: "pcb_bus_length_skew_error",
       pcb_bus_length_skew_error_id: `pcb_bus_length_skew_error_${bus.source_bus_id}`,
       error_type: "pcb_bus_length_skew_error",
-      message: `PCB bus ${bus.name ?? bus.source_bus_id} has ${skew.toFixed(2)}mm length skew, exceeding the ${bus.max_length_skew}mm maximum`,
+      message: `PCB bus ${getReadableNameForElementId(circuitJson, bus.source_bus_id)} has ${skew.toFixed(2)}mm length skew, exceeding the ${bus.max_length_skew}mm maximum`,
       source_bus_id: bus.source_bus_id,
       source_trace_ids: members.map((m) => m.id),
       pcb_trace_ids: members.flatMap((m) =>

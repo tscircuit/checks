@@ -1,4 +1,5 @@
-import { getReadableNameForElement } from "@tscircuit/circuit-json-util"
+import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
+
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,

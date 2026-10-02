@@ -1,9 +1,10 @@
+import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
 import {
   getHoleGeometries,
   getTraceHoleClearance,
 } from "../check-hole-clearance/common"
 import { checkPcbTraceSelfShorts } from "../check-pcb-trace-self-shorts"
-import { cju, getReadableNameForElement } from "@tscircuit/circuit-json-util"
+import { cju } from "@tscircuit/circuit-json-util"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { segmentToBoundsMinDistance } from "@tscircuit/math-utils"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
@@ -345,7 +346,7 @@ export function checkEachPcbTraceNonOverlapping(
             pcb_keepout_overlap_warning_id: `pcb_keepout_overlap_warning_${pcb_trace_error_id}`,
             pcb_keepout_id: obj.pcb_keepout_id,
             pcb_trace_ids: [segmentA.pcb_trace_id],
-            message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} violates advisory PCB keepout "${obj.description ?? obj.pcb_keepout_id}"`,
+            message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} violates advisory PCB keepout "${getReadableNameForElement(circuitJson, obj.pcb_keepout_id)}"`,
             center: getClosestPointBetweenSegmentAndBounds(
               segmentA,
               getCollidableBounds(obj),

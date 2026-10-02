@@ -29,7 +29,7 @@ export const getTraceHoleClearance = (
 ): { gap: number; center: { x: number; y: number } } => {
   const hole = geometry.sourceElement
   if (hole.type !== "pcb_hole") {
-    throw new Error(`Expected hole geometry for ${geometry.elementId}`)
+    throw new Error(`Expected hole geometry`)
   }
   const a = new Point(trace.x1, trace.y1)
   const b = new Point(trace.x2, trace.y2)

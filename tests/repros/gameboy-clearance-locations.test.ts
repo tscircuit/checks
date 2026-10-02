@@ -27,9 +27,13 @@ test("Game Boy Advance: place all 11 clearance markers at the offending copper",
     const {
       [`${error.type}_id`]: _id,
       center: _oldCenter,
+      message: _oldMessage,
       ...expected
     } = supplied[index] as any
     expect(error).toMatchObject(expected)
+    expect(error.message).not.toMatch(
+      /\b(?:pcb|source|schematic)_[a-z0-9_]+\b/i,
+    )
   }
   expect(errors.map(({ center }) => center)).toMatchSnapshot()
   expect(

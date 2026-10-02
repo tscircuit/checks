@@ -89,7 +89,7 @@ test("via partially outside board (crossing boundary), should return an error", 
   const errors = checkViasOffBoard(soup)
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain(
-    "Via pcb_via[#via_partially_out] is outside or crossing the board boundary",
+    "Via unnamed via is outside or crossing the board boundary",
   )
   expect(errors[0].pcb_placement_error_id).toBe(
     "out_of_board_via_partially_out",
@@ -122,7 +122,7 @@ test("via completely outside board, should return an error", () => {
   const errors = checkViasOffBoard(soup)
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain(
-    "Via pcb_via[#via_completely_out] is outside or crossing the board boundary",
+    "Via unnamed via is outside or crossing the board boundary",
   )
   expect(errors[0].pcb_placement_error_id).toBe(
     "out_of_board_via_completely_out",
@@ -177,9 +177,9 @@ test("multiple vias, some in, some out", () => {
   expect(errors).toHaveLength(2)
   const errorMessages = errors.map((e) => e.message)
   expect(errorMessages).toContain(
-    "Via pcb_via[#via_part_out_top] is outside or crossing the board boundary",
+    "Via unnamed via is outside or crossing the board boundary",
   )
   expect(errorMessages).toContain(
-    "Via pcb_via[#via_comp_out_bl] is outside or crossing the board boundary",
+    "Via unnamed via is outside or crossing the board boundary",
   )
 })
