@@ -7,6 +7,8 @@ import type {
   PcbCourtyardCircle,
   PcbCourtyardOutline,
   PcbCourtyardOverlapError,
+  PcbCourtyardPill,
+  PcbCourtyardPolygon,
   PcbCourtyardRect,
 } from "circuit-json"
 
@@ -14,6 +16,8 @@ type CourtyardElement =
   | PcbCourtyardRect
   | PcbCourtyardCircle
   | PcbCourtyardOutline
+  | PcbCourtyardPolygon
+  | PcbCourtyardPill
 
 function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
   if (el.type === "pcb_courtyard_rect") {
@@ -42,6 +46,26 @@ function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
         y: el.center.y + el.radius * Math.sin(a),
       }
     })
+  }
+  if (el.type === "pcb_courtyard_pill") {
+    // A pill is a rectangle capped by two half-circles. Approximate it as a
+    // polygon: rounded ends sampled on each cap plus the straight-edge corners.
+    const hw = (el.width - 2 * el.radius) / 2
+    const hh = el.height / 2
+    const N = 12
+    const cap: { x: number; y: number }[] = Array.from(
+      { length: N },
+      (_, i) => {
+        const a = -Math.PI / 2 + (Math.PI * i) / (N - 1)
+        return { x: hw + el.radius * Math.cos(a), y: el.radius * Math.sin(a) }
+      },
+    )
+    const capReversed = [...cap].reverse().map(({ x, y }) => ({ x: -x, y }))
+    const local = [...cap, ...capReversed]
+    return local.map(({ x, y }) => ({ x: el.center.x + x, y: el.center.y + y }))
+  }
+  if (el.type === "pcb_courtyard_polygon") {
+    return el.points
   }
   return el.outline
 }
@@ -105,7 +129,9 @@ export function checkCourtyardOverlap(
       (el): el is CourtyardElement =>
         el.type === "pcb_courtyard_rect" ||
         el.type === "pcb_courtyard_circle" ||
-        el.type === "pcb_courtyard_outline",
+        el.type === "pcb_courtyard_outline" ||
+        el.type === "pcb_courtyard_polygon" ||
+        el.type === "pcb_courtyard_pill",
     )
     .filter((el) => !doNotPlaceComponentIds.has(el.pcb_component_id))
 
