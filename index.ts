@@ -30,6 +30,10 @@ export { checkPinMustBeConnected } from "./lib/check-pin-must-be-connected"
 export { checkTwoTerminalSwitchContactsOnDifferentNets } from "./lib/check-two-terminal-switch-contacts-on-different-nets"
 export { checkAllPinsInComponentAreUnderspecified } from "./lib/check-all-pins-in-component-are-underspecified"
 export { checkNoPowerPinDefined } from "./lib/check-no-power-pin-defined"
+export {
+  checkTiSysConfigPinmux,
+  type TiPinmuxIssue,
+} from "./lib/check-ti-sysconfig-pinmux"
 export { checkNoGroundPinDefined } from "./lib/check-no-ground-pin-defined"
 export { checkSchematicComponentExcessiveVerticalPadding } from "./lib/check-schematic-component-excessive-vertical-padding"
 export { checkSchematicComponentMissingReferenceDesignatorText } from "./lib/check-schematic-component-missing-reference-designator-text"
