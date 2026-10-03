@@ -9,9 +9,7 @@ import { getSourcePortConnectivityMapFromCircuitJson } from "circuit-json-to-con
 import { getReadableNameForSourcePort } from "./util/get-readable-names"
 
 /** Only compare documented scalar voltages; legacy ranges/prose are not scalars. */
-const parseScalarVoltage = (
-  value: SourcePort["requires_voltage"],
-): number | undefined => {
+const parseScalarVoltage = (value: unknown): number | undefined => {
   if (value === undefined) return undefined
   if (
     typeof value === "string" &&

@@ -59,3 +59,5 @@ export {
 } from "./lib/consolidate-pcb-overlap-errors"
 export { checkPcbBusLengthSkew } from "./lib/check-pcb-bus-length-skew"
 export { checkHoleTraceClearance } from "./lib/check-hole-trace-clearance"
+
+export { checkPcbDdrRouting } from "./lib/check-pcb-ddr-routing"
