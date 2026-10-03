@@ -378,3 +378,61 @@ test("bus references are scoped and cannot silently choose a duplicate name", ()
     checkPcbRoutingConstraints(circuit).some((e) => e.rule === "bus_reference"),
   ).toBe(true)
 })
+
+test("reduced-spacing budget is shared across different neighbouring groups", () => {
+  const { circuit, dq0 } = fixture()
+  const first = dq0.source_trace_ids[0]!
+  const split = (name: string, ids: string[]): SourceBus => ({
+    type: "source_bus",
+    source_bus_id: name,
+    name,
+    source_trace_ids: ids,
+  })
+  const victim = split("Victim", [first])
+  const left = split("Left", [dq0.source_trace_ids[1]!])
+  const right = split("Right", [dq0.source_trace_ids[2]!])
+  circuit.push(victim, left, right)
+  // Each neighbour is close for ten mm; their intervals do not overlap.
+  for (const [bus, x0, x1] of [
+    [left, 0, 10],
+    [right, 10, 20],
+  ] as const) {
+    const id = bus.source_trace_ids[0]!
+    const trace = circuit.find(
+      (e): e is PcbTrace => e.type === "pcb_trace" && e.source_trace_id === id,
+    )!
+    const source = circuit.find(
+      (e) => e.type === "source_trace" && e.source_trace_id === id,
+    )!
+    if (source.type !== "source_trace") throw Error("missing source")
+    for (const e of circuit)
+      if (e.type === "pcb_port") {
+        if (e.source_port_id === source.connected_source_port_ids[0]) {
+          e.x = x0
+          e.y = 0.2
+        }
+        if (e.source_port_id === source.connected_source_port_ids[1]) {
+          e.x = x1
+          e.y = 0.2
+        }
+      }
+    trace.route = [
+      { route_type: "wire", x: x0, y: 0.2, layer: "inner1", width: 0.1 },
+      { route_type: "wire", x: x1, y: 0.2, layer: "inner1", width: 0.1 },
+    ]
+  }
+  victim.routing_constraints = {
+    spacing: [left, right].map((bus) => ({
+      other_bus: bus.name!,
+      centerline_width_multiplier: 3,
+      reduced_centerline_width_multiplier: 1,
+    })),
+    max_reduced_spacing_length: 15,
+  }
+  const error = findings(circuit).find(
+    (e) =>
+      e.rule === "reduced_spacing_length" &&
+      e.source_bus_ids.includes(victim.source_bus_id),
+  )!
+  expect(error.actual_value).toBeCloseTo(20)
+})
