@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import {
   type SourcePort,
@@ -35,7 +36,7 @@ test("F1C100S AVCC rejects a 1.8 V regulator and accepts the correct 2.8 V suppl
       </board>,
     )
     await circuit.renderUntilSettled()
-    const circuitJson = circuit.getCircuitJson()
+    const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
     const errors = await runAllNetlistChecks(circuitJson)
     if (outputVoltage === 2.8) {
       expect(errors).toEqual([])

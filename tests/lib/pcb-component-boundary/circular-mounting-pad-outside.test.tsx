@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { Circuit } from "tscircuit"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
@@ -20,9 +21,9 @@ test("a circular mounting pad crossing the board still reports its real overhang
     </board>,
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit
-    .getCircuitJson()
-    .filter((element) => element.type !== "pcb_component_outside_board_error")
+  const circuitJson = normalizeFixtureSourcePorts(
+    circuit.getCircuitJson(),
+  ).filter((element) => element.type !== "pcb_component_outside_board_error")
   const errors = checkPcbComponentsOutOfBoard(circuitJson)
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain("0.13mm")

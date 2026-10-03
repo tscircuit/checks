@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
@@ -72,7 +73,7 @@ test("courtyard outlines overlap but pads do not – no pad overlap error", asyn
 
   await circuit.renderUntilSettled()
 
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
 
   // Verify courtyard elements were emitted
   const courtyardOutlines = circuitJson.filter(

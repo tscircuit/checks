@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
@@ -90,7 +91,7 @@ test("same-net vias at the pad edge distinguish the drill from the copper ring",
   const circuit = new Circuit()
   circuit.add(<SameNetViaAtPadEdgeRepro />)
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const vias = circuit.db.pcb_via.list()
   const pads = circuit.db.pcb_smtpad.list()
   expect(circuit.db.pcb_board.list()[0].is_via_in_pad_allowed).toBe(false)

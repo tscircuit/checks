@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { checkSchematicComponentMissingReferenceDesignatorText } from "lib/check-schematic-component-missing-reference-designator-text"
 import { Circuit } from "tscircuit"
@@ -27,7 +28,7 @@ test.each(["U1_Clock_reset_and_debug", "Clock_reset_and_debug", undefined])(
       </board>,
     )
     await circuit.renderUntilSettled()
-    const circuitJson = circuit.getCircuitJson()
+    const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
     const sectionText = circuitJson.find(
       (element) =>
         element.type === "schematic_text" && element.text === (name ?? ".U1"),

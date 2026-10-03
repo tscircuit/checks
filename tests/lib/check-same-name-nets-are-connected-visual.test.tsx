@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToSchematicSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
@@ -18,7 +19,7 @@ test("disconnected GND nets show the schematic and naming warning", async () => 
     </board>,
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const warnings = checkSameNameNetsAreConnected(circuitJson)
   expect(warnings).toHaveLength(1)
   expect(warnings[0]!.net_name).toBe("GND")

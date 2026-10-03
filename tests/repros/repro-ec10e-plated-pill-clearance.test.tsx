@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import type { ChipProps } from "@tscircuit/props"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
@@ -316,7 +317,7 @@ test("does not report false EC10E1220505 plated-pill clearance errors", async ()
   )
   await circuit.renderUntilSettled()
 
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const errors = checkPadPadClearance(circuitJson)
 
   expect(errors).toEqual([])

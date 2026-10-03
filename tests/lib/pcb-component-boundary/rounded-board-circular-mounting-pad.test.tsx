@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
@@ -21,9 +22,9 @@ test("circular mounting copper fits even when its bounds cross the rounded board
     </board>,
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit
-    .getCircuitJson()
-    .filter((element) => element.type !== "pcb_component_outside_board_error")
+  const circuitJson = normalizeFixtureSourcePorts(
+    circuit.getCircuitJson(),
+  ).filter((element) => element.type !== "pcb_component_outside_board_error")
   const errors = checkPcbComponentsOutOfBoard(circuitJson)
 
   expect(checkCopperToBoardEdgeClearance(circuitJson)).toHaveLength(0)

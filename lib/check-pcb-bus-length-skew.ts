@@ -1,3 +1,4 @@
+import { hasSourceBusRoutingConstraints } from "./check-pcb-routing-constraints"
 import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import type {
   AnyCircuitElement,
@@ -19,7 +20,11 @@ export const checkPcbBusLengthSkew = (
   const tracesBySource = getPcbTracesBySourceTraceId(circuitJson)
   const errors: PcbBusLengthSkewError[] = []
   for (const bus of buses) {
-    if (bus.max_length_skew === undefined) continue
+    if (
+      bus.max_length_skew === undefined ||
+      hasSourceBusRoutingConstraints(bus)
+    )
+      continue
     const members = [...new Set(bus.source_trace_ids)].flatMap((id) => {
       const traces = tracesBySource
         .get(id)

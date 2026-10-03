@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "./normalize-fixture-source-ports"
 import type { AnyCircuitElement, PcbPort, PcbTrace } from "circuit-json"
 import { Fragment } from "react"
 import { Circuit } from "tscircuit"
@@ -126,7 +127,7 @@ export async function getViaInPadSensorRegion(): Promise<AnyCircuitElement[]> {
   })
   circuit.add(<SensorRegion />)
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
 
   function port(componentName: string, pin: string): PcbPort {
     const component = circuitJson.find(

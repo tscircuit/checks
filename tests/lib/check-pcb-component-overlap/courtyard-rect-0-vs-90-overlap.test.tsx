@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
@@ -50,7 +51,7 @@ test("courtyard overlap: 0° vs 90° rotation", async () => {
     </board>,
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
 
   const errors = checkCourtyardOverlap(circuitJson)
   expect(errors).toHaveLength(1)

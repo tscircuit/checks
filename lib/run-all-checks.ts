@@ -1,3 +1,4 @@
+import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
 import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
@@ -115,6 +116,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPcbBendZoneTraces(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
     ...checkPcbBusLengthSkew(circuitJson),
+    ...checkPcbRoutingConstraints(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson, connectivity),
     ...checkCopperPourShorts(circuitJson, connectivity),

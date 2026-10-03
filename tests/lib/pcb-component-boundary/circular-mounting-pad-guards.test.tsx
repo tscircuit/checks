@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { Circuit } from "tscircuit"
 import { checkPcbComponentsOutOfBoard } from "lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
@@ -20,7 +21,11 @@ test("a circular pad does not exempt an explicit square courtyard", async () => 
     </board>,
   )
   await circuit.renderUntilSettled()
-  expect(checkPcbComponentsOutOfBoard(circuit.getCircuitJson())).toHaveLength(1)
+  expect(
+    checkPcbComponentsOutOfBoard(
+      normalizeFixtureSourcePorts(circuit.getCircuitJson()),
+    ),
+  ).toHaveLength(1)
 })
 
 test("a circular pad does not exempt another pad crossing the board", async () => {
@@ -47,7 +52,11 @@ test("a circular pad does not exempt another pad crossing the board", async () =
     </board>,
   )
   await circuit.renderUntilSettled()
-  expect(checkPcbComponentsOutOfBoard(circuit.getCircuitJson())).toHaveLength(1)
+  expect(
+    checkPcbComponentsOutOfBoard(
+      normalizeFixtureSourcePorts(circuit.getCircuitJson()),
+    ),
+  ).toHaveLength(1)
 })
 
 test("a circular pad does not replace larger component bounds", async () => {
@@ -67,7 +76,7 @@ test("a circular pad does not replace larger component bounds", async () => {
     </board>,
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const component = circuitJson.find(
     (element) => element.type === "pcb_component",
   )!
@@ -91,7 +100,9 @@ test("a circular mounting pad with its center outside the board is rejected", as
     </board>,
   )
   await circuit.renderUntilSettled()
-  const errors = checkPcbComponentsOutOfBoard(circuit.getCircuitJson())
+  const errors = checkPcbComponentsOutOfBoard(
+    normalizeFixtureSourcePorts(circuit.getCircuitJson()),
+  )
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain("2.5mm")
 })
