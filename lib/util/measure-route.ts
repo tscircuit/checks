@@ -6,27 +6,27 @@ import type {
 } from "circuit-json"
 
 type Point = { x: number; y: number }
-export interface DdrSegment {
+export interface RouteSegment {
   a: Point
   b: Point
   layer: string
   width: number
 }
-export interface DdrRouteMeasurement {
+export interface RouteMeasurement {
   length: number
   manhattan: number
-  segments: DdrSegment[]
+  segments: RouteSegment[]
 }
 
 /** Board-world XY millimetres; +X right, +Y up. Measures planar copper from
  * pad centres, including escapes. Cached trace_length and guessed via depths
  * are deliberately excluded. Unsupported/branched/disconnected geometry is
  * unverified rather than a zero-length route or a successful timing check. */
-export function measureDdrRoute(
+export function measureRoute(
   source: SourceTrace,
   traces: PcbTrace[],
   circuit: AnyCircuitElement[],
-): DdrRouteMeasurement | undefined {
+): RouteMeasurement | undefined {
   if (source.connected_source_port_ids.length !== 2 || !traces.length) return
   const ports = source.connected_source_port_ids.map((id) =>
     circuit.filter(
@@ -39,7 +39,7 @@ export function measureDdrRoute(
     { point: Point; layer: string; edges: Set<string> }
   >()
   const edges = new Set<string>()
-  const segments: DdrSegment[] = []
+  const segments: RouteSegment[] = []
   const key = (p: Point, layer: string) =>
     `${p.x.toFixed(6)},${p.y.toFixed(6)},${layer}`
   let valid = true
