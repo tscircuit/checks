@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
@@ -64,7 +65,7 @@ test("courtyard outline (hexagon) – U1 and U2 overlap, U3 is clear (3 componen
   )
 
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
 
   expect(
     circuitJson.filter((el) => el.type === "pcb_courtyard_outline"),

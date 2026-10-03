@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
@@ -54,7 +55,7 @@ test("reports a same-net via inside a pad when via-in-pad is disallowed", async 
   const circuit = new Circuit()
   circuit.add(<SameNetViaInPadDisallowedRepro />)
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
 
   const board = circuit.db.pcb_board.list()[0]
   const vias = circuit.db.pcb_via.list()

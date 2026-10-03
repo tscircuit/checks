@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import type { ChipProps } from "@tscircuit/props"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
@@ -950,7 +951,7 @@ test("type-c footprint mounting holes inside own courtyard do not cause placemen
 
   await circuit.renderUntilSettled()
 
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const errors = await runAllChecks(circuitJson)
 
   const pcb_trace_errors = errors.filter(

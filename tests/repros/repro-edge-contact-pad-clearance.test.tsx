@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkCopperToBoardEdgeClearance } from "lib/check-copper-to-board-edge-clearance"
@@ -42,7 +43,7 @@ test(
 
     await circuit.renderUntilSettled()
 
-    const circuitJson = circuit.getCircuitJson()
+    const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
     const errors = checkCopperToBoardEdgeClearance(circuitJson)
 
     expect(

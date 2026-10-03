@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
@@ -42,7 +43,7 @@ test("reports different-net via copper overlap even when drill spacing passes", 
     </board>,
   )
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const vias = circuitJson.filter((element) => element.type === "pcb_via")
   expect(vias).toHaveLength(2)
   const [viaA, viaB] = vias
