@@ -7,7 +7,6 @@ import type {
 import {
   getReadableNameForElement,
   getBoundsOfPcbElements,
-  getReadableNameForPcbTrace,
   getPrimaryId,
 } from "@tscircuit/circuit-json-util"
 
@@ -258,11 +257,24 @@ export const getReadableNameForTrace = (
     if (sourceTrace?.type === "source_trace")
       return getReadableNameForSourceTrace(circuitJson, sourceTrace)
   }
-  return sanitizeReadableName(
-    getReadableNameForPcbTrace(circuitJson, pcbTraceId),
-    pcbTraceId,
-    "unnamed trace",
-  )
+  if (trace?.type !== "pcb_trace") return "unnamed trace"
+  const portIds = [
+    ...new Set(
+      trace.route
+        .flatMap((point) =>
+          point.route_type === "wire"
+            ? [point.start_pcb_port_id, point.end_pcb_port_id]
+            : [],
+        )
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  const portNames = portIds
+    .map((id) => getReadableNameForPort(circuitJson, id))
+    .filter((name) => name !== "unnamed port")
+  if (portNames.length >= 2) return `${portNames[0]} to ${portNames[1]}`
+  if (portNames.length === 1) return `trace connected to ${portNames[0]}`
+  return "unnamed trace"
 }
 
 export const getReadableNameForGroup = (

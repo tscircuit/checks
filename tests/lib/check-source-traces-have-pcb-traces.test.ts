@@ -16,7 +16,8 @@ describe("checkSourceTracesHavePcbTraces", () => {
 
     const errors = checkSourceTracesHavePcbTraces(circuitJson as any)
     expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("trace1")
+    expect(errors[0].message).toContain("unnamed trace")
+    expect(errors[0].message).not.toContain("trace1")
   })
 
   test("returns error with correct PCB component and port IDs", () => {
@@ -50,7 +51,8 @@ describe("checkSourceTracesHavePcbTraces", () => {
 
     const errors = checkSourceTracesHavePcbTraces(circuitJson as any)
     expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("trace1")
+    expect(errors[0].message).toContain("unnamed trace")
+    expect(errors[0].message).not.toContain("trace1")
     expect(errors[0].pcb_component_ids).toEqual([
       "pcb_component_1",
       "pcb_component_2",

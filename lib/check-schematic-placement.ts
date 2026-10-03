@@ -44,12 +44,14 @@ export function checkSchematicPlacement(
             circuitJson,
             schematicComponentId ?? "",
           )
-          const inputCapacitorName =
-            issue.inputCapacitorSchematicBox.sourceComponentName ??
-            "the input capacitor"
-          const outputCapacitorName =
-            issue.outputCapacitorSchematicBox.sourceComponentName ??
-            "the output capacitor"
+          const inputCapacitorName = getReadableNameForElementId(
+            circuitJson,
+            issue.inputCapacitorSchematicBox.schematicComponentId ?? "",
+          )
+          const outputCapacitorName = getReadableNameForElementId(
+            circuitJson,
+            issue.outputCapacitorSchematicBox.schematicComponentId ?? "",
+          )
           stylingIssueType = "regulator_capacitors_on_wrong_sides"
           message = `${inputCapacitorName} and ${outputCapacitorName} are on the wrong sides of ${regulatorName}. Move them beside their connected regulator pins, preserving connections and rerouting traces.`
           break
@@ -57,7 +59,7 @@ export function checkSchematicPlacement(
         case "PullResistorOnWrongSide":
           schematicComponentId = issue.resistorSchematicBox.schematicComponentId
           stylingIssueType = "pull_resistor_on_wrong_side"
-          message = issue.message
+          message = `consider placing ${getReadableNameForElementId(circuitJson, schematicComponentId ?? "")} ${issue.preferredSide} ${getReadableNameForElementId(circuitJson, issue.hostSchematicBox.schematicComponentId ?? "")}.${getReadableNameForElementId(circuitJson, issue.signalSourcePortId)} so the pull-${issue.pullDirection} branch reads toward ${issue.pullDirection === "up" ? "power" : "ground"}`
           break
         default:
           return []
