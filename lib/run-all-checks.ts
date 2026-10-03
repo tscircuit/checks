@@ -33,6 +33,7 @@ import {
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
+import { checkSourcePinVoltageCompatibility } from "./check-source-pin-voltage-compatibility"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSchematicComponentMissingReferenceDesignatorText } from "./check-schematic-component-missing-reference-designator-text"
@@ -74,6 +75,7 @@ export async function runAllPlacementChecks(
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...checkPinMustBeConnected(circuitJson),
+    ...checkSourcePinVoltageCompatibility(circuitJson),
     ...checkSameNameNetsAreConnected(circuitJson),
     ...checkTwoTerminalSwitchContactsOnDifferentNets(circuitJson),
   ]

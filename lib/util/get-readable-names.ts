@@ -3,6 +3,7 @@ import type {
   PcbPlatedHole,
   PcbSmtPad,
   SourceTrace,
+  SourcePort,
 } from "circuit-json"
 import {
   getReadableNameForElement,
@@ -44,6 +45,33 @@ export const getReadableNameForComponent = (
   circuitJson: AnyCircuitElement[],
   pcbComponentId: string,
 ): string => getReadableNameForElementId(circuitJson, pcbComponentId)
+
+export const getReadableNameForSourcePort = (
+  circuitJson: AnyCircuitElement[],
+  sourcePort: SourcePort,
+): string => {
+  const sourceComponent = circuitJson.find(
+    (element) =>
+      element.type === "source_component" &&
+      element.source_component_id === sourcePort.source_component_id,
+  )
+  const componentName =
+    sourceComponent?.type === "source_component"
+      ? firstReadableName(
+          [sourceComponent.name],
+          sourceComponent.source_component_id,
+        )
+      : ""
+  const pinName = firstReadableName(
+    [
+      sourcePort.name,
+      sourcePort.pin_number?.toString(),
+      sourcePort.port_hints?.[0],
+    ],
+    sourcePort.source_port_id,
+  )
+  return `${componentName || "unnamed component"}.${pinName || "unnamed pin"}`
+}
 
 export const getReadableNameForPort = (
   circuitJson: AnyCircuitElement[],
