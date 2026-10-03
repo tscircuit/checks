@@ -2,7 +2,10 @@ import { expect, test } from "bun:test"
 import type { AnyCircuitElement, SourceBus, PcbTrace } from "circuit-json"
 import { checkPcbRoutingConstraints } from "../../lib/check-pcb-routing-constraints"
 import { checkPcbBusLengthSkew } from "../../lib/check-pcb-bus-length-skew"
-import { capsuleIntervals } from "../../lib/util/check-route-spacing"
+import {
+  capsuleIntervals,
+  segmentSeparation,
+} from "../../lib/util/check-route-spacing"
 import { measureRoute } from "../../lib/util/measure-route"
 
 function fixture() {
@@ -91,7 +94,7 @@ test("matching adds strobe lengths without altering bus electrical membership", 
   expect(checkPcbBusLengthSkew(circuit)).toEqual([]) // No duplicate legacy diagnostic.
 })
 test("absolute and relative lengths use copper geometry instead of cached lengths", () => {
-  const { circuit, bus, a } = fixture()
+  const { circuit, bus } = fixture()
   expect(violations(circuit)).toEqual([])
   bus.max_length = 19
   expect(
@@ -99,8 +102,8 @@ test("absolute and relative lengths use copper geometry instead of cached length
   ).toHaveLength(2)
   bus.max_length = { reference: "longest_manhattan", offset: -1 }
   expect(
-    violations(circuit).find((e) => e.source_trace_ids.includes(a.id))
-      ?.expected_max,
+    violations(circuit).find((e) => e.routing_rule === "max_length")
+      ?.maximum_trace_length,
   ).toBe(19)
 })
 test("explicit Manhattan references and target tolerance apply independently of skew", () => {
@@ -123,8 +126,8 @@ test("explicit Manhattan references and target tolerance apply independently of 
     (e) => e.routing_rule === "target_length",
   )
   expect(errors).toHaveLength(2)
-  expect(errors[0]!.expected_min).toBe(26)
-  expect(errors[0]!.expected_max).toBe(28)
+  expect(errors[0]!.target_trace_length).toBe(27)
+  expect(errors[0]!.length_tolerance).toBe(1)
 })
 test("missing or disconnected geometry is unverified, never zero length", () => {
   const { circuit, a, bus } = fixture()
@@ -246,7 +249,7 @@ test("impedance bounds check intent while physical impedance remains unverified"
   bus.target_impedance = 80
   expect(
     violations(circuit).find((e) => e.routing_rule === "impedance_target")
-      ?.actual_value,
+      ?.target_impedance,
   ).toBe(80)
 })
 test("named and unnamed diagnostics never expose reference IDs", () => {
@@ -289,4 +292,36 @@ test("branched routes cannot be used as trustworthy timing measurements", () => 
     ],
   }
   expect(measureRoute(source, [a.trace, branch], circuit)).toBeUndefined()
+})
+
+test("reported centerline distances handle crossings, endpoints and disjoint collinear segments", () => {
+  const segment = (x1: number, y1: number, x2: number, y2: number) => ({
+    a: { x: x1, y: y1 },
+    b: { x: x2, y: y2 },
+    layer: "inner1",
+    width: 0.1,
+  })
+  const horizontal = segment(0, 0, 2, 0)
+  expect(segmentSeparation(horizontal, segment(1, -1, 1, 1))).toBe(0)
+  expect(segmentSeparation(horizontal, segment(3, 1, 4, 1))).toBeCloseTo(
+    Math.SQRT2,
+    12,
+  )
+  expect(segmentSeparation(horizontal, segment(4, 0, 5, 0))).toBe(2)
+  expect(segmentSeparation(horizontal, segment(1, 0.2, 3, 0.2))).toBeCloseTo(
+    0.2,
+    12,
+  )
+  const { circuit, bus, add } = fixture()
+  const other = add("OTHER", 0.25)
+  bus.pcb_spacing_to_other_signals = 0.4
+  const error = violations(circuit).find(
+    (e) => e.routing_rule === "pcb_spacing_to_other_signals",
+  )!
+  if (error.routing_rule !== "pcb_spacing_to_other_signals")
+    throw new Error("Expected spacing rule")
+  expect(error.actual_centerline_spacing).toBeCloseTo(0.25, 12)
+  expect(error.minimum_centerline_spacing).toBe(0.4)
+  expect(error.other_pcb_trace_id).toBe(other.trace.pcb_trace_id)
+  expect(error.other_source_trace_id).toBe(other.id)
 })

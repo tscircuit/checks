@@ -6,6 +6,7 @@ import {
 import type {
   AnyCircuitElement,
   PcbBusRoutingConstraintError,
+  PcbBusRoutingConstraintViolation,
   PcbBusRoutingConstraintWarning,
   SourceBus,
   SourceBusRouteLength,
@@ -19,7 +20,7 @@ import {
   type RouteMeasurement,
   type RouteSegment,
 } from "./util/measure-route"
-import { capsuleIntervals } from "./util/check-route-spacing"
+import { capsuleIntervals, segmentSeparation } from "./util/check-route-spacing"
 
 const EPS = 1e-8
 export const hasSourceBusRoutingConstraints = (bus: SourceBus) =>
@@ -127,57 +128,51 @@ export function checkPcbRoutingConstraints(
     const matchMembers = [
       ...new Set([...members, ...(bus.length_match_source_trace_ids ?? [])]),
     ]
-    const report = (
-      warning: boolean,
-      rule: Finding["routing_rule"],
+    const context = (ids: string[], warning: boolean, message: string) => ({
+      message: `${warning ? "Unverified " : ""}bus ${getReadableNameForElementId(circuit, bus.source_bus_id)}: ${message}`,
+      source_bus_id: bus.source_bus_id,
+      source_trace_ids: ids,
+      pcb_trace_ids: ids.flatMap((id) =>
+        (tracesBySource.get(id) ?? []).map((trace) => trace.pcb_trace_id),
+      ),
+      subcircuit_id: bus.subcircuit_id,
+    })
+    const reportWarning = (
+      rule: PcbBusRoutingConstraintWarning["routing_rule"],
       message: string,
       id = members[0]!,
-      values: Partial<
-        Pick<
-          PcbBusRoutingConstraintError,
-          "actual_value" | "expected_min" | "expected_max" | "units"
-        >
-      > = {},
     ) => {
-      const ids = rule === "length_skew" ? matchMembers : [id]
-      const common = {
-        message: `${warning ? "Unverified " : ""}bus ${getReadableNameForElementId(circuit, bus.source_bus_id)}: ${message}`,
-        source_bus_id: bus.source_bus_id,
-        source_trace_ids: ids,
-        pcb_trace_ids: ids.flatMap((id) =>
-          (tracesBySource.get(id) ?? []).map((trace) => trace.pcb_trace_id),
-        ),
-        routing_rule: rule,
-        subcircuit_id: bus.subcircuit_id,
-      }
-      if (warning)
-        findings.push(
-          pcb_bus_routing_constraint_warning.parse({
-            type: "pcb_bus_routing_constraint_warning",
-            pcb_bus_routing_constraint_warning_id: `pcb_bus_routing_constraint_warning_${bus.source_bus_id}_${findings.length}`,
-            ...common,
-          }),
-        )
-      else
-        findings.push(
-          pcb_bus_routing_constraint_error.parse({
-            type: "pcb_bus_routing_constraint_error",
-            pcb_bus_routing_constraint_error_id: `pcb_bus_routing_constraint_error_${bus.source_bus_id}_${findings.length}`,
-            ...common,
-            ...values,
-            units: values.units ?? "mm",
-          }),
-        )
+      findings.push(
+        pcb_bus_routing_constraint_warning.parse({
+          type: "pcb_bus_routing_constraint_warning",
+          pcb_bus_routing_constraint_warning_id: `pcb_bus_routing_constraint_warning_${bus.source_bus_id}_${findings.length}`,
+          ...context([id], true, message),
+          routing_rule: rule,
+        }),
+      )
     }
-
+    const reportError = (
+      violation: PcbBusRoutingConstraintViolation,
+      message: string,
+      id = members[0]!,
+    ) => {
+      const ids = violation.routing_rule === "length_skew" ? matchMembers : [id]
+      findings.push(
+        pcb_bus_routing_constraint_error.parse({
+          type: "pcb_bus_routing_constraint_error",
+          pcb_bus_routing_constraint_error_id: `pcb_bus_routing_constraint_error_${bus.source_bus_id}_${findings.length}`,
+          ...context(ids, false, message),
+          ...violation,
+        }),
+      )
+    }
     const complete = (
       ids: string[],
       rule: PcbBusRoutingConstraintWarning["routing_rule"],
     ) => {
       const missing = ids.find((id) => !measure(id))
       if (missing)
-        report(
-          true,
+        reportWarning(
           rule,
           "a signal lacks complete, unbranched pad-to-pad geometry",
           missing,
@@ -191,18 +186,17 @@ export function checkPcbRoutingConstraints(
       const lengths = matchMembers.map((id) => measure(id)!.length)
       const skew = Math.max(...lengths) - Math.min(...lengths)
       if (skew > bus.max_length_skew + EPS)
-        report(
-          false,
-          "length_skew",
+        reportError(
+          {
+            routing_rule: "length_skew",
+            actual_length_skew: skew,
+            maximum_length_skew: bus.max_length_skew,
+          },
           `planar length skew is ${skew.toFixed(3)} mm`,
           matchMembers[lengths.indexOf(Math.max(...lengths))]!,
-          {
-            actual_value: skew,
-            expected_max: bus.max_length_skew,
-            units: "mm",
-          },
         )
     }
+
     const resolveLength = (length: SourceBusRouteLength | undefined) => {
       if (length === undefined || typeof length === "number") return length
       const ids = length.source_trace_ids ?? matchMembers
@@ -216,8 +210,7 @@ export function checkPcbRoutingConstraints(
       max = resolveLength(bus.max_length),
       target = resolveLength(bus.target_length)
     if (bus.target_length !== undefined && bus.length_tolerance === undefined)
-      report(
-        true,
+      reportWarning(
         "target_length",
         "a target length requires an explicit length tolerance",
       )
@@ -225,8 +218,7 @@ export function checkPcbRoutingConstraints(
       bus.length_tolerance !== undefined &&
       bus.target_length === undefined
     )
-      report(
-        true,
+      reportWarning(
         "target_length",
         "a length tolerance requires an explicit target length",
       )
@@ -239,40 +231,43 @@ export function checkPcbRoutingConstraints(
       for (const id of members) {
         const length = measure(id)!.length
         if (min !== undefined && length < min - EPS)
-          report(
-            false,
-            "min_length",
+          reportError(
+            {
+              routing_rule: "min_length",
+              actual_trace_length: length,
+              minimum_trace_length: min,
+            },
             "planar length is below the declared minimum",
             id,
-            { actual_value: length, expected_min: min, units: "mm" },
           )
         if (max !== undefined && length > max + EPS)
-          report(
-            false,
-            "max_length",
+          reportError(
+            {
+              routing_rule: "max_length",
+              actual_trace_length: length,
+              maximum_trace_length: max,
+            },
             "planar length exceeds the declared maximum",
             id,
-            { actual_value: length, expected_max: max, units: "mm" },
           )
         if (
           target !== undefined &&
           bus.length_tolerance !== undefined &&
           Math.abs(length - target) > bus.length_tolerance + EPS
         )
-          report(
-            false,
-            "target_length",
+          reportError(
+            {
+              routing_rule: "target_length",
+              actual_trace_length: length,
+              target_trace_length: target,
+              length_tolerance: bus.length_tolerance,
+            },
             "planar length is outside the target tolerance",
             id,
-            {
-              actual_value: length,
-              expected_min: target - bus.length_tolerance,
-              expected_max: target + bus.length_tolerance,
-              units: "mm",
-            },
           )
       }
     }
+
     for (const id of members) {
       if (
         bus.pcb_trace_spacing === undefined &&
@@ -281,8 +276,7 @@ export function checkPcbRoutingConstraints(
         break
       const measured = measure(id)
       if (!measured) {
-        report(
-          true,
+        reportWarning(
           "spacing_geometry",
           "spacing requires supported route geometry",
           id,
@@ -331,12 +325,16 @@ export function checkPcbRoutingConstraints(
               ? "pcb_trace_spacing"
               : "pcb_spacing_to_other_signals"
             if (!failed.has(rule))
-              report(
-                false,
-                rule,
+              reportError(
+                {
+                  routing_rule: rule,
+                  other_pcb_trace_id: trace.pcb_trace_id,
+                  other_source_trace_id: otherId,
+                  actual_centerline_spacing: segmentSeparation(a, b),
+                  minimum_centerline_spacing: required,
+                },
                 `${getReadableNameForElementId(circuit, id)} falls below declared centreline spacing`,
                 id,
-                { expected_min: required, units: "mm" },
               )
             failed.add(rule)
           }
@@ -361,20 +359,16 @@ export function checkPcbRoutingConstraints(
         ((min !== undefined && target < min - EPS) ||
           (max !== undefined && target > max + EPS))
       )
-        report(
-          false,
-          "impedance_target",
-          "declared impedance target is outside its bounds",
-          members[0],
+        reportError(
           {
-            actual_value: target,
-            expected_min: min,
-            expected_max: max,
-            units: "ohm",
+            routing_rule: "impedance_target",
+            target_impedance: target,
+            minimum_impedance: min,
+            maximum_impedance: max,
           },
+          "declared impedance target is outside its bounds",
         )
-      report(
-        true,
+      reportWarning(
         "physical_impedance",
         "actual impedance requires physical stackup analysis; declared targets are not measured impedance",
       )

@@ -61,3 +61,41 @@ export const unionLength = (intervals: Interval[]) => {
   }
   return total
 }
+
+/** Minimum Euclidean centerline separation in board-world XY mm. */
+export function segmentSeparation(a: RouteSegment, b: RouteSegment): number {
+  const cross = (p: Point, q: Point, r: Point) =>
+    (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x)
+  const overlap = (p: number, q: number, r: number, s: number) =>
+    Math.max(Math.min(p, q), Math.min(r, s)) <=
+    Math.min(Math.max(p, q), Math.max(r, s))
+  if (
+    overlap(a.a.x, a.b.x, b.a.x, b.b.x) &&
+    overlap(a.a.y, a.b.y, b.a.y, b.b.y) &&
+    cross(a.a, a.b, b.a) * cross(a.a, a.b, b.b) <= 0 &&
+    cross(b.a, b.b, a.a) * cross(b.a, b.b, a.b) <= 0
+  )
+    return 0
+  const pointDistance = (p: Point, segment: RouteSegment) => {
+    const dx = segment.b.x - segment.a.x,
+      dy = segment.b.y - segment.a.y
+    const lengthSquared = dx * dx + dy * dy
+    const t = lengthSquared
+      ? Math.max(
+          0,
+          Math.min(
+            1,
+            ((p.x - segment.a.x) * dx + (p.y - segment.a.y) * dy) /
+              lengthSquared,
+          ),
+        )
+      : 0
+    return Math.hypot(p.x - segment.a.x - t * dx, p.y - segment.a.y - t * dy)
+  }
+  return Math.min(
+    pointDistance(a.a, b),
+    pointDistance(a.b, b),
+    pointDistance(b.a, a),
+    pointDistance(b.b, a),
+  )
+}
