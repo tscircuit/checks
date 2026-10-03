@@ -105,6 +105,8 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
       ) ||
       customSymbolTexts.some(
         (schematicText) =>
+          schematicText.schematic_sheet_id ===
+            schematicComponent.schematic_sheet_id &&
           referenceDesignators.has(schematicText.text.trim()) &&
           isTextWithinComponentBounds(schematicText, schematicComponent),
       )
