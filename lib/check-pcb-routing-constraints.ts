@@ -1,141 +1,189 @@
 import Flatbush from "flatbush"
 import type {
   AnyCircuitElement,
-  PcbRoutingConstraintError,
+  PcbTraceError,
+  PcbTraceWarning,
   SourceBus,
+  SourceBusRouteLength,
+  SourceBusTraceSpacing,
   SourceTrace,
   PcbTrace,
 } from "circuit-json"
 import { getReadableNameForElementId } from "./util/get-readable-names"
-import { measureRoute, type RouteMeasurement } from "./util/measure-route"
-import { capsuleIntervals, unionLength } from "./util/check-route-spacing"
+import {
+  measureRoute,
+  type RouteMeasurement,
+  type RouteSegment,
+} from "./util/measure-route"
+import { capsuleIntervals } from "./util/check-route-spacing"
 
 const EPS = 1e-8
-/** Checks only explicitly declared constraints, scoped to each subcircuit.
- * Route lengths and pad endpoints use board-world XY (+X right, +Y up), mm.
- * Via barrel depth and electrical delay are not inferred from planar geometry. */
+export const hasSourceBusRoutingConstraints = (bus: SourceBus) =>
+  [
+    bus.length_match_source_trace_ids,
+    bus.min_length,
+    bus.max_length,
+    bus.target_length,
+    bus.length_tolerance,
+    bus.pcb_trace_spacing,
+    bus.pcb_spacing_to_other_signals,
+    bus.target_impedance_min,
+    bus.target_impedance_max,
+    bus.target_differential_impedance_min,
+    bus.target_differential_impedance_max,
+  ].some((v) => v !== undefined)
+
+type Finding = PcbTraceError | PcbTraceWarning
+/** Explicit constraints only. Board-world XY mm, +X right/+Y up.
+ * Measures complete planar routes, never cached lengths or guessed via depths.
+ * Missing physical inputs yield warnings rather than an electrical pass. */
 export function checkPcbRoutingConstraints(
   circuit: AnyCircuitElement[],
-): PcbRoutingConstraintError[] {
-  const errors: PcbRoutingConstraintError[] = []
+): Finding[] {
+  const findings: Finding[] = []
   const buses = circuit.filter((e): e is SourceBus => e.type === "source_bus")
   const sources = new Map(
     circuit
       .filter((e): e is SourceTrace => e.type === "source_trace")
       .map((e) => [e.source_trace_id, e]),
   )
-  const measures = new Map<
-    SourceTrace["source_trace_id"],
-    RouteMeasurement | undefined
-  >()
-  const measure = (bus: SourceBus) => {
-    for (const id of bus.source_trace_ids) {
-      if (measures.has(id)) continue
+  const traces = circuit.filter((e): e is PcbTrace => e.type === "pcb_trace")
+  const tracesBySource = new Map<string, PcbTrace[]>()
+  for (const trace of traces) {
+    if (!trace.source_trace_id) continue
+    const list = tracesBySource.get(trace.source_trace_id) ?? []
+    list.push(trace)
+    tracesBySource.set(trace.source_trace_id, list)
+  }
+  const measures = new Map<string, RouteMeasurement | undefined>()
+  const measure = (id: string) => {
+    if (!measures.has(id)) {
       const source = sources.get(id)
       measures.set(
         id,
-        source &&
-          measureRoute(
-            source,
-            circuit.filter(
-              (e): e is PcbTrace =>
-                e.type === "pcb_trace" && e.source_trace_id === id,
-            ),
-            circuit,
-          ),
+        source && measureRoute(source, tracesBySource.get(id) ?? [], circuit),
       )
     }
-    return bus.source_trace_ids.every((id) => measures.get(id) !== undefined)
+    return measures.get(id)
   }
+  // Include partial and unrelated copper as spacing obstacles. It need not have
+  // a complete pad-to-pad route, or belong to another declared bus.
+  const copper: Array<{ trace: PcbTrace; segment: RouteSegment }> = []
+  for (const trace of traces) {
+    for (let i = 0; i < trace.route.length - 1; i++) {
+      const p = trace.route[i]!,
+        q = trace.route[i + 1]!
+      if (p.route_type === "through_pad" || q.route_type === "through_pad")
+        continue
+      const pl = p.route_type === "wire" ? p.layer : p.to_layer
+      const ql = q.route_type === "wire" ? q.layer : q.from_layer
+      const width = Math.max(
+        p.route_type === "wire" ? Math.max(p.width, p.end_width ?? p.width) : 0,
+        q.route_type === "wire" ? Math.max(q.width, q.end_width ?? q.width) : 0,
+      )
+      if (
+        pl !== ql ||
+        width <= 0 ||
+        ![p.x, p.y, q.x, q.y, width].every(Number.isFinite)
+      )
+        continue
+      copper.push({ trace, segment: { a: p, b: q, layer: pl, width } })
+    }
+  }
+  const index = copper.length ? new Flatbush(copper.length) : undefined
+  let maxWidth = 0
+  for (const { segment: s } of copper) {
+    maxWidth = Math.max(maxWidth, s.width)
+    index!.add(
+      Math.min(s.a.x, s.b.x),
+      Math.min(s.a.y, s.b.y),
+      Math.max(s.a.x, s.b.x),
+      Math.max(s.a.y, s.b.y),
+    )
+  }
+  index?.finish()
+  const separation = (spacing: SourceBusTraceSpacing, width: number) =>
+    typeof spacing === "number" ? spacing : spacing.width_multiplier * width
+  const pairPartners = new Set(
+    buses
+      .filter((b) => b.differential_pair)
+      .map((b) =>
+        [
+          b.differential_pair!.positive_source_trace_id,
+          b.differential_pair!.negative_source_trace_id,
+        ]
+          .sort()
+          .join("|"),
+      ),
+  )
+
   for (const bus of buses) {
-    const constraints = bus.routing_constraints
-    if (!constraints) continue
+    if (!hasSourceBusRoutingConstraints(bus)) continue
+    const members = [...new Set(bus.source_trace_ids)]
+    const matchMembers = [
+      ...new Set([...members, ...(bus.length_match_source_trace_ids ?? [])]),
+    ]
     const report = (
-      status: PcbRoutingConstraintError["status"],
+      warning: boolean,
       rule: string,
       message: string,
-      values: Partial<
-        Pick<
-          PcbRoutingConstraintError,
-          "actual_value" | "expected_min" | "expected_max" | "units"
-        >
+      id = members[0]!,
+      values: Pick<
+        PcbTraceWarning,
+        "actual_value" | "expected_min" | "expected_max" | "units"
       > = {},
-      related: SourceBus[] = [bus],
     ) => {
-      const ids = [...new Set(related.flatMap((b) => b.source_trace_ids))]
-      errors.push({
-        type: "pcb_routing_constraint_error",
-        error_type: "pcb_routing_constraint_error",
-        pcb_routing_constraint_error_id: `pcb_routing_constraint_error_${bus.source_bus_id}_${errors.length}`,
-        status,
-        rule,
-        message: `Bus ${getReadableNameForElementId(circuit, bus.source_bus_id)}: ${message}`,
-        source_bus_ids: related.map((b) => b.source_bus_id),
-        source_trace_ids: ids,
-        pcb_trace_ids: circuit
-          .filter(
-            (e) =>
-              e.type === "pcb_trace" &&
-              e.source_trace_id &&
-              ids.includes(e.source_trace_id),
-          )
-          .map((e) => (e.type === "pcb_trace" ? e.pcb_trace_id : "")),
+      const pcbId = tracesBySource.get(id)?.[0]?.pcb_trace_id
+      const common = {
+        message: `${warning ? "Unverified " : ""}bus ${getReadableNameForElementId(circuit, bus.source_bus_id)}: ${message}`,
+        source_bus_id: bus.source_bus_id,
+        source_trace_id: id,
+        routing_rule: rule,
+        pcb_component_ids: [],
+        pcb_port_ids: [],
         subcircuit_id: bus.subcircuit_id,
         ...values,
-      })
-    }
-    const resolveBus = (name: string) => {
-      const matches = buses.filter(
-        (other) =>
-          other.name === name && other.subcircuit_id === bus.subcircuit_id,
-      )
-      if (matches.length !== 1) {
-        report(
-          "unverified",
-          "bus_reference",
-          `requires one bus named ${name} in the same subcircuit`,
-        )
-        return
       }
-      return matches[0]!
+      if (warning || !pcbId)
+        findings.push({
+          type: "pcb_trace_warning",
+          pcb_trace_warning_id: `pcb_trace_warning_${bus.source_bus_id}_${findings.length}`,
+          warning_type: "pcb_trace_warning",
+          pcb_trace_id: pcbId,
+          ...common,
+        })
+      else
+        findings.push({
+          type: "pcb_trace_error",
+          pcb_trace_error_id: `pcb_trace_error_${bus.source_bus_id}_${findings.length}`,
+          error_type: "pcb_trace_error",
+          pcb_trace_id: pcbId,
+          ...common,
+        })
     }
-    const uniqueMembers = new Set(bus.source_trace_ids)
+    const complete = (ids: string[], rule: string) => {
+      const missing = ids.find((id) => !measure(id))
+      if (missing)
+        report(
+          true,
+          rule,
+          "a signal lacks complete, unbranched pad-to-pad geometry",
+          missing,
+        )
+      return !missing
+    }
     if (
-      uniqueMembers.size !== bus.source_trace_ids.length ||
-      (constraints?.expected_trace_count !== undefined &&
-        uniqueMembers.size !== constraints.expected_trace_count)
-    )
-      report(
-        "violation",
-        "member_count",
-        "distinct member count does not match the declared constraint",
-        {
-          actual_value: uniqueMembers.size,
-          expected_min: constraints?.expected_trace_count,
-          expected_max: constraints?.expected_trace_count,
-          units: "count",
-        },
-      )
-    const needsRoute =
-      bus.max_length_skew !== undefined ||
-      constraints?.length_bounds ||
-      constraints?.spacing
-    if (needsRoute && !measure(bus)) {
-      report(
-        "unverified",
-        "route_geometry",
-        "a member lacks a complete, unbranched pad-to-pad route with supported geometry",
-      )
-      continue
-    }
-    if (bus.max_length_skew !== undefined) {
-      const lengths = bus.source_trace_ids.map((id) => measures.get(id)!.length)
+      bus.max_length_skew !== undefined &&
+      complete(matchMembers, "route_geometry")
+    ) {
+      const lengths = matchMembers.map((id) => measure(id)!.length)
       const skew = Math.max(...lengths) - Math.min(...lengths)
       if (skew > bus.max_length_skew + EPS)
         report(
-          "violation",
+          false,
           "length_skew",
           `planar length skew is ${skew.toFixed(3)} mm`,
+          matchMembers[lengths.indexOf(Math.max(...lengths))]!,
           {
             actual_value: skew,
             expected_max: bus.max_length_skew,
@@ -143,205 +191,182 @@ export function checkPcbRoutingConstraints(
           },
         )
     }
-    const checkLengthBounds = () => {
-      const bounds = constraints?.length_bounds
-      if (bounds) {
-        let reference = 0
-        let referenceBus: SourceBus | undefined
-        if (bounds.reference_bus) {
-          referenceBus = resolveBus(bounds.reference_bus)
-          if (!referenceBus) return
-          if (!measure(referenceBus)) {
-            report(
-              "unverified",
-              "reference_geometry",
-              "length reference lacks complete pad-to-pad geometry",
-              {},
-              [bus, referenceBus],
-            )
-            return
-          }
-          reference = Math.max(
-            ...referenceBus.source_trace_ids.map(
-              (id) => measures.get(id)!.manhattan,
-            ),
+    const resolveLength = (length: SourceBusRouteLength | undefined) => {
+      if (length === undefined || typeof length === "number") return length
+      const ids = length.source_trace_ids ?? matchMembers
+      if (!ids.length || !complete(ids, "reference_geometry")) return
+      return (
+        Math.max(...ids.map((id) => measure(id)!.manhattan)) +
+        (length.offset ?? 0)
+      )
+    }
+    const min = resolveLength(bus.min_length),
+      max = resolveLength(bus.max_length),
+      target = resolveLength(bus.target_length)
+    if (bus.target_length !== undefined && bus.length_tolerance === undefined)
+      report(
+        true,
+        "target_length",
+        "a target length requires an explicit length tolerance",
+      )
+    else if (
+      bus.length_tolerance !== undefined &&
+      bus.target_length === undefined
+    )
+      report(
+        true,
+        "target_length",
+        "a length tolerance requires an explicit target length",
+      )
+    if (
+      [bus.min_length, bus.max_length, bus.target_length].some(
+        (v) => v !== undefined,
+      ) &&
+      complete(members, "route_geometry")
+    ) {
+      for (const id of members) {
+        const length = measure(id)!.length
+        if (min !== undefined && length < min - EPS)
+          report(
+            false,
+            "min_length",
+            "planar length is below the declared minimum",
+            id,
+            { actual_value: length, expected_min: min, units: "mm" },
           )
-        }
-        const min =
-          bounds.min === undefined ? undefined : reference + bounds.min
-        const max =
-          bounds.max === undefined ? undefined : reference + bounds.max
-        for (const id of bus.source_trace_ids) {
-          const length = measures.get(id)!.length
+        if (max !== undefined && length > max + EPS)
+          report(
+            false,
+            "max_length",
+            "planar length exceeds the declared maximum",
+            id,
+            { actual_value: length, expected_max: max, units: "mm" },
+          )
+        if (
+          target !== undefined &&
+          bus.length_tolerance !== undefined &&
+          Math.abs(length - target) > bus.length_tolerance + EPS
+        )
+          report(
+            false,
+            "target_length",
+            "planar length is outside the target tolerance",
+            id,
+            {
+              actual_value: length,
+              expected_min: target - bus.length_tolerance,
+              expected_max: target + bus.length_tolerance,
+              units: "mm",
+            },
+          )
+      }
+    }
+    for (const id of members) {
+      if (
+        bus.pcb_trace_spacing === undefined &&
+        bus.pcb_spacing_to_other_signals === undefined
+      )
+        break
+      const measured = measure(id)
+      if (!measured) {
+        report(
+          true,
+          "spacing_geometry",
+          "spacing requires supported route geometry",
+          id,
+        )
+        continue
+      }
+      const failed = new Set<string>()
+      for (const a of measured.segments) {
+        const margin = Math.max(
+          ...[bus.pcb_trace_spacing, bus.pcb_spacing_to_other_signals]
+            .filter((v) => v !== undefined)
+            .map((v) => separation(v!, Math.max(a.width, maxWidth))),
+        )
+        for (const k of index?.search(
+          Math.min(a.a.x, a.b.x) - margin,
+          Math.min(a.a.y, a.b.y) - margin,
+          Math.max(a.a.x, a.b.x) + margin,
+          Math.max(a.a.y, a.b.y) + margin,
+        ) ?? []) {
+          const { trace, segment: b } = copper[k]!,
+            otherId = trace.source_trace_id
           if (
-            (min !== undefined && length < min - EPS) ||
-            (max !== undefined && length > max + EPS)
+            id === otherId ||
+            a.layer !== b.layer ||
+            (otherId && pairPartners.has([id, otherId].sort().join("|")))
           )
-            report(
-              "violation",
-              "length_bounds",
-              `${getReadableNameForElementId(circuit, id)} planar length is ${length.toFixed(3)} mm, outside declared bounds`,
-              {
-                actual_value: length,
-                expected_min: min,
-                expected_max: max,
-                units: "mm",
-              },
-              referenceBus && referenceBus !== bus
-                ? [bus, referenceBus]
-                : [bus],
-            )
+            continue
+          // Different source traces on the same net are the same electrical signal.
+          if (
+            otherId &&
+            sources
+              .get(id)
+              ?.connected_source_net_ids.some((net) =>
+                sources.get(otherId)?.connected_source_net_ids.includes(net),
+              )
+          )
+            continue
+          const internal = otherId !== undefined && members.includes(otherId)
+          const spacing = internal
+            ? bus.pcb_trace_spacing
+            : bus.pcb_spacing_to_other_signals
+          if (spacing === undefined) continue
+          const required = separation(spacing, Math.max(a.width, b.width))
+          if (capsuleIntervals(a, b, required - EPS).length) {
+            const rule = internal
+              ? "pcb_trace_spacing"
+              : "pcb_spacing_to_other_signals"
+            if (!failed.has(rule))
+              report(
+                false,
+                rule,
+                `${getReadableNameForElementId(circuit, id)} falls below declared centreline spacing`,
+                id,
+                { expected_min: required, units: "mm" },
+              )
+            failed.add(rule)
+          }
         }
       }
     }
-    checkLengthBounds()
-    const spacingRules = (constraints?.spacing ?? []).flatMap((rule) => {
-      const otherBus = resolveBus(rule.other_bus)
-      if (!otherBus) return []
-      if (!measure(otherBus)) {
-        report(
-          "unverified",
-          "spacing_geometry",
-          "spacing comparison lacks complete route geometry",
-          {},
-          [bus, otherBus],
-        )
-        return []
-      }
-      const segments = otherBus.source_trace_ids.flatMap((id) =>
-        measures.get(id)!.segments.map((segment) => ({ id, segment })),
-      )
-      const index = new Flatbush(segments.length)
-      let maxWidth = 0
-      for (const { segment } of segments) {
-        maxWidth = Math.max(maxWidth, segment.width)
-        index.add(
-          Math.min(segment.a.x, segment.b.x),
-          Math.min(segment.a.y, segment.b.y),
-          Math.max(segment.a.x, segment.b.x),
-          Math.max(segment.a.y, segment.b.y),
-        )
-      }
-      index.finish()
-      return [{ rule, otherBus, segments, index, maxWidth }]
-    })
-    // Pair-internal spacing is independent of bus-to-bus separation.
-    const pairs = buses
-      .filter(
-        (b) => b.subcircuit_id === bus.subcircuit_id && b.differential_pair,
-      )
-      .map((b) => b.differential_pair!)
-    if (spacingRules.length)
-      for (const id of bus.source_trace_ids) {
-        let reducedLength = 0
-        let belowMinimum = false
-        for (const a of measures.get(id)!.segments) {
-          const intervals: [number, number][] = []
-          for (const { rule, segments, index, maxWidth } of spacingRules) {
-            const margin =
-              rule.centerline_width_multiplier * Math.max(a.width, maxWidth)
-            const candidates = index.search(
-              Math.min(a.a.x, a.b.x) - margin,
-              Math.min(a.a.y, a.b.y) - margin,
-              Math.max(a.a.x, a.b.x) + margin,
-              Math.max(a.a.y, a.b.y) + margin,
-            )
-            for (const k of candidates) {
-              const { id: otherId, segment: b } = segments[k]!
-              if (
-                id === otherId ||
-                a.layer !== b.layer ||
-                pairs.some(
-                  (p) =>
-                    (p.positive_source_trace_id === id &&
-                      p.negative_source_trace_id === otherId) ||
-                    (p.negative_source_trace_id === id &&
-                      p.positive_source_trace_id === otherId),
-                )
-              )
-                continue
-              const width = Math.max(a.width, b.width)
-              const normal = capsuleIntervals(
-                a,
-                b,
-                rule.centerline_width_multiplier * width - EPS,
-              )
-              if (rule.reduced_centerline_width_multiplier !== undefined)
-                intervals.push(...normal)
-              belowMinimum ||=
-                capsuleIntervals(
-                  a,
-                  b,
-                  (rule.reduced_centerline_width_multiplier ??
-                    rule.centerline_width_multiplier) *
-                    width -
-                    EPS,
-                ).length > 0
-            }
-          }
-          // Union across all neighbours AND rules, not a separate budget per bus.
-          reducedLength +=
-            unionLength(intervals) * Math.hypot(a.b.x - a.a.x, a.b.y - a.a.y)
-        }
-        const related = [
-          ...new Set([bus, ...spacingRules.map((r) => r.otherBus)]),
-        ]
-        if (belowMinimum)
-          report(
-            "violation",
-            "minimum_spacing",
-            `${getReadableNameForElementId(circuit, id)} falls below declared centreline spacing`,
-            {},
-            related,
-          )
-        if (
-          constraints!.max_reduced_spacing_length !== undefined &&
-          reducedLength > constraints!.max_reduced_spacing_length + EPS
-        )
-          report(
-            "violation",
-            "reduced_spacing_length",
-            `${getReadableNameForElementId(circuit, id)} has ${reducedLength.toFixed(3)} mm of reduced spacing`,
-            {
-              actual_value: reducedLength,
-              expected_max: constraints!.max_reduced_spacing_length,
-              units: "mm",
-            },
-            related,
-          )
-      }
-    const impedance = constraints?.impedance_bounds
-    if (impedance) {
-      const target = bus.differential_pair
-        ? bus.target_differential_impedance
-        : bus.target_impedance
-      if (target === undefined)
-        report(
-          "unverified",
-          "impedance_target",
-          "no impedance target is declared",
-        )
-      else if (
-        (impedance.min !== undefined && target < impedance.min - EPS) ||
-        (impedance.max !== undefined && target > impedance.max + EPS)
+    for (const [target, min, max] of [
+      [
+        bus.target_impedance,
+        bus.target_impedance_min,
+        bus.target_impedance_max,
+      ],
+      [
+        bus.target_differential_impedance,
+        bus.target_differential_impedance_min,
+        bus.target_differential_impedance_max,
+      ],
+    ]) {
+      if ([target, min, max].every((v) => v === undefined)) continue
+      if (
+        target !== undefined &&
+        ((min !== undefined && target < min - EPS) ||
+          (max !== undefined && target > max + EPS))
       )
         report(
-          "violation",
+          false,
           "impedance_target",
           "declared impedance target is outside its bounds",
+          members[0],
           {
             actual_value: target,
-            expected_min: impedance.min,
-            expected_max: impedance.max,
+            expected_min: min,
+            expected_max: max,
             units: "ohm",
           },
         )
       report(
-        "unverified",
+        true,
         "physical_impedance",
-        "actual impedance requires physical stackup analysis; this check evaluates declared targets only",
+        "actual impedance requires physical stackup analysis; declared targets are not measured impedance",
       )
     }
   }
-  return errors
+  return findings
 }

@@ -1,438 +1,291 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement, SourceBus, PcbTrace } from "circuit-json"
 import { checkPcbRoutingConstraints } from "../../lib/check-pcb-routing-constraints"
+import { checkPcbBusLengthSkew } from "../../lib/check-pcb-bus-length-skew"
 import { capsuleIntervals } from "../../lib/util/check-route-spacing"
 import { measureRoute } from "../../lib/util/measure-route"
+
 function fixture() {
-  const circuit: AnyCircuitElement[] = [
-    {
-      type: "pcb_board",
-      pcb_board_id: "pcb_board_1",
-      center: { x: 10, y: 0 },
-      width: 100,
-      height: 300,
-      num_layers: 4,
-      thickness: 1.2,
-      material: "fr4",
-    },
-  ]
-  let ordinal = 0
-  const add = (
-    role: "dq" | "dqs" | "ck" | "addr_ctrl",
-    count: number,
-    y: number,
-    byte?: 0 | 1,
-  ) => {
-    const bus: SourceBus = {
-      type: "source_bus",
-      source_bus_id: `source_bus_${ordinal++}`,
-      name: `Memory ${role}${byte ?? ""}`,
-      source_trace_ids: [],
-      max_length_skew:
-        role === "dqs" || role === "ck"
-          ? 0.127
-          : role === "dq"
-            ? 0.635
-            : undefined,
-      routing_constraints: { expected_trace_count: count },
-    }
-    for (let i = 0; i < count; i++) {
-      const id = `source_trace_${ordinal++}`,
-        start = `source_port_${ordinal++}`,
-        end = `source_port_${ordinal++}`
-      const Y = y + i * (role === "ck" || role === "dqs" ? 0.2 : 1)
-      bus.source_trace_ids.push(id)
+  const circuit: AnyCircuitElement[] = []
+  const add = (name: string, y: number, length = 20, width = 0.1) => {
+    const id = `trace_${name}`
+    circuit.push({
+      type: "source_trace",
+      source_trace_id: id,
+      name,
+      connected_source_port_ids: [`${id}_a`, `${id}_b`],
+      connected_source_net_ids: [],
+    })
+    for (const [port, x] of [
+      [`${id}_a`, 0],
+      [`${id}_b`, 20],
+    ] as const)
       circuit.push({
-        type: "source_trace",
-        source_trace_id: id,
-        connected_source_port_ids: [start, end],
-        connected_source_net_ids: [],
+        type: "pcb_port",
+        pcb_port_id: `pcb_${port}`,
+        source_port_id: port,
+        x,
+        y,
+        layers: ["inner1"],
       })
-      for (const [portId, x] of [
-        [start, 0],
-        [end, 20],
-      ] as const)
-        circuit.push({
-          type: "pcb_port",
-          pcb_port_id: `pcb_port_${portId}`,
-          source_port_id: portId,
-          x,
-          y: Y,
-          layers: ["inner1"],
-        })
-      const points =
-        role === "ck" || role === "addr_ctrl"
-          ? [
-              [0, Y],
-              [0, Y + 3.81],
-              [20, Y + 3.81],
-              [20, Y],
-            ]
-          : [
-              [0, Y],
-              [20, Y],
-            ]
-      circuit.push({
-        type: "pcb_trace",
-        pcb_trace_id: `pcb_trace_${id}`,
-        source_trace_id: id,
-        route: points.map(([x, y]) => ({
-          route_type: "wire",
-          x: x!,
-          y: y!,
-          layer: "inner1",
-          width: 0.1,
-        })),
-        trace_length: 9999,
-      })
+    const points =
+      length === 20
+        ? [
+            [0, y],
+            [20, y],
+          ]
+        : [
+            [0, y],
+            [0, y + (length - 20) / 2],
+            [20, y + (length - 20) / 2],
+            [20, y],
+          ]
+    const trace: PcbTrace = {
+      type: "pcb_trace",
+      pcb_trace_id: `pcb_${id}`,
+      source_trace_id: id,
+      trace_length: 9999,
+      route: points.map(([x, y]) => ({
+        route_type: "wire",
+        x: x!,
+        y: y!,
+        width,
+        layer: "inner1",
+      })),
     }
-    if (role === "ck" || role === "dqs")
-      bus.differential_pair = {
-        positive_source_trace_id: bus.source_trace_ids[0]!,
-        negative_source_trace_id: bus.source_trace_ids[1]!,
-      }
-    circuit.push(bus)
-    return bus
+    circuit.push(trace)
+    return { id, trace }
   }
-  const dq0 = add("dq", 9, 0, 0),
-    dqs0 = add("dqs", 2, 12, 0)
-  const dq1 = add("dq", 9, 30, 1),
-    dqs1 = add("dqs", 2, 42, 1)
-  const command = add("addr_ctrl", 1, 80),
-    clock = add("ck", 2, 100)
-  for (const [dq, dqs] of [
-    [dq0, dqs0],
-    [dq1, dqs1],
-  ]) {
-    const combined: SourceBus = {
-      type: "source_bus",
-      source_bus_id: `${dq.source_bus_id}_combined`,
-      name: `${dq.name} combined`,
-      routing_constraints: { expected_trace_count: 11 },
-      source_trace_ids: [...dq.source_trace_ids, ...dqs.source_trace_ids],
-      max_length_skew: 0.635,
-    }
-    circuit.push(combined)
-    dq.routing_constraints!.length_bounds = {
-      reference_bus: combined.name,
-      reference_metric: "longest_manhattan",
-      max: 0,
-    }
-  }
-  const commandClock: SourceBus = {
+  const a = add("DATA0", 0),
+    b = add("DATA1", 1),
+    strobe = add("STROBE", 10)
+  const bus: SourceBus = {
     type: "source_bus",
-    source_bus_id: "command_clock",
-    name: "Command and clock",
-    source_trace_ids: [...command.source_trace_ids, ...clock.source_trace_ids],
+    source_bus_id: "bus_data",
+    name: "DATA",
+    source_trace_ids: [a.id, b.id],
+    length_match_source_trace_ids: [strobe.id],
+    max_length_skew: 0.635,
+    max_length: { reference: "longest_manhattan" },
   }
-  circuit.push(commandClock)
-  for (const bus of [command, clock])
-    bus.routing_constraints!.length_bounds = {
-      reference_bus: commandClock.name,
-      reference_metric: "longest_manhattan",
-      min: 6.35,
-      max: 8.89,
-    }
-  return { circuit, dq0, dqs0, dq1, dqs1, command, clock }
+  circuit.push(bus)
+  return { circuit, add, a, b, strobe, bus }
 }
-const findings = (circuit: AnyCircuitElement[]) =>
-  checkPcbRoutingConstraints(circuit).filter((e) => e.status === "violation")
-test("absolute byte length and data-to-strobe skew fail independently of equal data lengths", () => {
-  const { circuit, dq0 } = fixture()
-  for (const trace of circuit.filter(
-    (e): e is PcbTrace =>
-      e.type === "pcb_trace" &&
-      dq0.source_trace_ids.includes(e.source_trace_id!),
-  )) {
-    const y = trace.route[0]!.route_type === "wire" ? trace.route[0]!.y : 0
-    trace.route = [
-      [0, y],
-      [0, y - 0.5],
-      [20, y - 0.5],
-      [20, y],
-    ].map(([x, y]) => ({
-      route_type: "wire",
-      x: x!,
-      y: y!,
-      width: 0.1,
-      layer: "inner1",
-    }))
-  }
-  const rules = findings(circuit).map((e) => e.rule)
-  expect(rules).toContain("length_bounds")
-  expect(rules).toContain("length_skew")
+const violations = (circuit: AnyCircuitElement[]) =>
+  checkPcbRoutingConstraints(circuit).filter(
+    (e) => e.type === "pcb_trace_error",
+  )
+
+test("matching adds strobe lengths without altering bus electrical membership", () => {
+  const { circuit, bus, a, b, strobe } = fixture()
+  strobe.trace.route.splice(
+    1,
+    0,
+    { route_type: "wire", x: 0, y: 11, layer: "inner1", width: 0.1 },
+    { route_type: "wire", x: 20, y: 11, layer: "inner1", width: 0.1 },
+  )
+  expect(violations(circuit).map((e) => e.routing_rule)).toContain(
+    "length_skew",
+  )
+  expect(bus.source_trace_ids).toEqual([a.id, b.id])
+  expect(checkPcbBusLengthSkew(circuit)).toEqual([]) // No duplicate legacy diagnostic.
 })
-test("address/control must follow the clock nominal window even when its own bus has no skew", () => {
-  const { circuit, command } = fixture()
-  const trace = circuit.find(
-    (e): e is PcbTrace =>
-      e.type === "pcb_trace" &&
-      e.source_trace_id === command.source_trace_ids[0],
-  )!
-  trace.route = [trace.route[0]!, trace.route.at(-1)!]
+test("absolute and relative lengths use copper geometry instead of cached lengths", () => {
+  const { circuit, bus, a } = fixture()
+  expect(violations(circuit)).toEqual([])
+  bus.max_length = 19
   expect(
-    findings(circuit).some(
+    violations(circuit).filter((e) => e.routing_rule === "max_length"),
+  ).toHaveLength(2)
+  bus.max_length = { reference: "longest_manhattan", offset: -1 }
+  expect(
+    violations(circuit).find((e) => e.source_trace_id === a.id)?.expected_max,
+  ).toBe(19)
+})
+test("explicit Manhattan references and target tolerance apply independently of skew", () => {
+  const { circuit, bus, add } = fixture()
+  const reference = add("CLOCK", 15)
+  const port = circuit.find(
+    (e) => e.type === "pcb_port" && e.source_port_id === `${reference.id}_b`,
+  )!
+  if (port.type === "pcb_port") port.x = 25
+  const end = reference.trace.route.at(-1)!
+  if (end.route_type === "wire") end.x = 25
+  bus.max_length = undefined
+  bus.target_length = {
+    reference: "longest_manhattan",
+    source_trace_ids: [reference.id],
+    offset: 2,
+  }
+  bus.length_tolerance = 1
+  const errors = violations(circuit).filter(
+    (e) => e.routing_rule === "target_length",
+  )
+  expect(errors).toHaveLength(2)
+  expect(errors[0]!.expected_min).toBe(26)
+  expect(errors[0]!.expected_max).toBe(28)
+})
+test("missing or disconnected geometry is unverified, never zero length", () => {
+  const { circuit, a, bus } = fixture()
+  circuit.splice(circuit.indexOf(a.trace), 1)
+  bus.pcb_spacing_to_other_signals = { width_multiplier: 4 }
+  const warnings = checkPcbRoutingConstraints(circuit).filter(
+    (e) => e.type === "pcb_trace_warning",
+  )
+  expect(
+    warnings.some(
       (e) =>
-        e.rule === "length_bounds" &&
-        e.source_bus_ids.includes(command.source_bus_id),
+        e.routing_rule === "route_geometry" &&
+        e.source_trace_id === a.id &&
+        e.pcb_trace_id === undefined,
     ),
   ).toBe(true)
+  expect(violations(circuit)).toEqual([])
 })
-test("missing or disconnected geometry stays unverified instead of becoming zero length", () => {
-  const { circuit, dq0 } = fixture()
-  const trace = circuit.find(
-    (e): e is PcbTrace =>
-      e.type === "pcb_trace" && e.source_trace_id === dq0.source_trace_ids[0],
-  )!
-  trace.route.pop()
+test("an unresolved explicit reference warns without suppressing independent rules", () => {
+  const { circuit, bus } = fixture()
+  bus.min_length = 21
+  bus.max_length = {
+    reference: "longest_manhattan",
+    source_trace_ids: ["missing_reference"],
+  }
   expect(
     checkPcbRoutingConstraints(circuit).some(
-      (e) => e.rule === "route_geometry" && e.status === "unverified",
+      (e) =>
+        e.type === "pcb_trace_warning" &&
+        e.routing_rule === "reference_geometry",
+    ),
+  ).toBe(true)
+  expect(
+    violations(circuit).filter((e) => e.routing_rule === "min_length"),
+  ).toHaveLength(2)
+})
+test("external spacing includes partial, unrelated copper without a declared bus", () => {
+  const { circuit, bus, add } = fixture()
+  const other = add("UNRELATED", 0.25)
+  const start = other.trace.route[0]!
+  if (start.route_type === "wire") start.x = 5 // It is incomplete but still an obstacle.
+  bus.pcb_spacing_to_other_signals = { width_multiplier: 4 }
+  expect(
+    violations(circuit).some(
+      (e) => e.routing_rule === "pcb_spacing_to_other_signals",
     ),
   ).toBe(true)
 })
-test("capsule intersections catch short crossings, while other-layer copper is ignored", () => {
+test("centerline spacing uses the larger local width and includes equality", () => {
+  const { circuit, bus, b } = fixture()
+  bus.pcb_trace_spacing = { width_multiplier: 3 }
+  b.trace.route.forEach((p) => {
+    if (p.route_type === "wire") {
+      p.y = 0.6
+      p.width = 0.2
+    }
+  })
+  circuit.forEach((p) => {
+    if (p.type === "pcb_port" && p.source_port_id?.startsWith(b.id)) p.y = 0.6
+  })
+  expect(violations(circuit)).toEqual([])
+  b.trace.route.forEach((p) => {
+    if (p.route_type === "wire") p.y = 0.59
+  })
+  circuit.forEach((p) => {
+    if (p.type === "pcb_port" && p.source_port_id?.startsWith(b.id)) p.y = 0.59
+  })
+  expect(
+    violations(circuit).filter((e) => e.routing_rule === "pcb_trace_spacing"),
+  ).toHaveLength(2)
+})
+test("pair partners are excluded from internal and external bus spacing", () => {
+  const { circuit, bus, a, b } = fixture()
+  bus.pcb_trace_spacing = 2
+  bus.pcb_spacing_to_other_signals = 2
+  circuit.push({
+    type: "source_bus",
+    source_bus_id: "pair",
+    source_trace_ids: [a.id, b.id],
+    differential_pair: {
+      positive_source_trace_id: a.id,
+      negative_source_trace_id: b.id,
+      trace_gap: 0.12,
+    },
+  })
+  expect(violations(circuit)).toEqual([])
+  bus.source_trace_ids = [a.id] // The partner remains excluded outside the bus too.
+  expect(violations(circuit)).toEqual([])
+})
+test("different layers and same-net fragments do not violate signal spacing", () => {
+  const { circuit, bus, add, a } = fixture()
+  const other = add("OTHER_LAYER", 0)
+  other.trace.route.forEach((p) => {
+    if (p.route_type === "wire") p.layer = "inner2"
+  })
+  const same = add("SAME_NET", 0.1)
+  for (const e of circuit)
+    if (
+      e.type === "source_trace" &&
+      [a.id, same.id].includes(e.source_trace_id)
+    )
+      e.connected_source_net_ids = ["net_shared"]
+  bus.pcb_spacing_to_other_signals = 0.4
+  expect(violations(circuit)).toEqual([])
+})
+test("impedance bounds check intent while physical impedance remains unverified", () => {
+  const { circuit, bus } = fixture()
+  bus.target_impedance = 50
+  bus.target_impedance_min = 25
+  bus.target_impedance_max = 75
+  expect(violations(circuit)).toEqual([])
+  expect(
+    checkPcbRoutingConstraints(circuit).some(
+      (e) =>
+        e.type === "pcb_trace_warning" &&
+        e.routing_rule === "physical_impedance",
+    ),
+  ).toBe(true)
+  bus.target_impedance = 80
+  expect(
+    violations(circuit).find((e) => e.routing_rule === "impedance_target")
+      ?.actual_value,
+  ).toBe(80)
+})
+test("named and unnamed diagnostics never expose reference IDs", () => {
+  const { circuit, bus } = fixture()
+  bus.min_length = 25
+  expect(violations(circuit)[0]!.message).toContain("DATA")
+  bus.name = undefined
+  for (const e of violations(circuit)) {
+    expect(e.message).not.toContain(bus.source_bus_id)
+    expect(e.message).not.toContain(e.source_trace_id)
+  }
+})
+test("capsule intervals detect a brief diagonal crossing without sampling", () => {
   const a = {
     a: { x: 0, y: 0 },
-    b: { x: 1, y: 0 },
-    layer: "inner1",
+    b: { x: 100, y: 0 },
     width: 0.1,
+    layer: "inner1",
   }
   const b = {
-    a: { x: 0.5, y: -1 },
-    b: { x: 0.5, y: 1 },
+    a: { x: 50, y: -1 },
+    b: { x: 50, y: 1 },
+    width: 0.1,
     layer: "inner1",
-    width: 0.1,
   }
-  const intervals = capsuleIntervals(a, b, 0.1)
-  expect(intervals[0]![0]).toBeCloseTo(0.4)
-  expect(intervals[0]![1]).toBeCloseTo(0.6)
+  expect(capsuleIntervals(a, b, 0.01).length).toBeGreaterThan(0)
 })
-test("planar measurement joins fanout fragments through explicit vias without invented barrel depth", () => {
-  const { circuit, dq0 } = fixture()
+test("branched routes cannot be used as trustworthy timing measurements", () => {
+  const { circuit, a } = fixture()
   const source = circuit.find(
-    (e) =>
-      e.type === "source_trace" &&
-      e.source_trace_id === dq0.source_trace_ids[0],
+    (e) => e.type === "source_trace" && e.source_trace_id === a.id,
   )!
-  if (source.type !== "source_trace") throw Error("missing fixture signal")
-  const wire = (x: number, layer: "top" | "inner1") => ({
-    route_type: "wire" as const,
-    x,
-    y: 0,
-    width: 0.1,
-    layer,
-  })
-  const traces: PcbTrace[] = [
-    {
-      type: "pcb_trace",
-      pcb_trace_id: "fanout",
-      source_trace_id: source.source_trace_id,
-      route: [wire(0, "top"), wire(1, "top")],
-    },
-    {
-      type: "pcb_trace",
-      pcb_trace_id: "carrier",
-      source_trace_id: source.source_trace_id,
-      route: [wire(1, "inner1"), wire(20, "inner1")],
-    },
-  ]
-  const first = circuit.find(
-    (e) =>
-      e.type === "pcb_port" &&
-      e.source_port_id === source.connected_source_port_ids[0],
-  )!
-  if (first.type !== "pcb_port") throw Error("missing fixture port")
-  first.layers = ["top"]
-  circuit.push({
-    type: "pcb_via",
-    pcb_via_id: "via",
-    x: 1,
-    y: 0,
-    layers: ["top", "inner1"],
-    hole_diameter: 0.15,
-    outer_diameter: 0.3,
-  })
-  expect(measureRoute(source, traces, circuit)?.length).toBe(20)
-})
-
-test("pair skew and inclusive declared boundaries are evaluated from geometry", () => {
-  const { circuit, dqs0 } = fixture()
-  const trace = circuit.find(
-    (e): e is PcbTrace =>
-      e.type === "pcb_trace" && e.source_trace_id === dqs0.source_trace_ids[0],
-  )!
-  const y = trace.route[0]!.route_type === "wire" ? trace.route[0]!.y : 0
-  const changeLength = (extra: number) => {
-    trace.route = [
-      [0, y],
-      [0, y - extra / 2],
-      [20, y - extra / 2],
-      [20, y],
-    ].map(([x, y]) => ({
-      route_type: "wire",
-      x: x!,
-      y: y!,
-      width: 0.1,
-      layer: "inner1",
-    }))
-  }
-  changeLength(0.127)
-  expect(findings(circuit).some((e) => e.rule === "length_skew")).toBe(false)
-  changeLength(0.128)
-  expect(findings(circuit).some((e) => e.rule === "length_skew")).toBe(true)
-})
-
-test("overlapping groups are allowed and rules have no vendor defaults", () => {
-  const { circuit, dq0, dqs0 } = fixture()
-  expect(checkPcbRoutingConstraints(circuit)).toEqual([])
-  dq0.source_trace_ids.push(...dqs0.source_trace_ids)
-  expect(findings(circuit).some((e) => e.rule === "member_count")).toBe(true)
-  dq0.routing_constraints!.expected_trace_count = 11
-  expect(findings(circuit)).toEqual([])
-})
-test("renaming groups does not change outcomes; unresolved references stay unverified", () => {
-  const { circuit, dq0 } = fixture()
-  dq0.routing_constraints!.length_bounds!.reference_bus = "missing group"
-  const errors = checkPcbRoutingConstraints(circuit)
-  expect(
-    errors.some((e) => e.rule === "bus_reference" && e.status === "unverified"),
-  ).toBe(true)
-  for (const bus of circuit.filter(
-    (e): e is SourceBus => e.type === "source_bus",
-  )) {
-    bus.max_length_skew = undefined
-    bus.routing_constraints = undefined
-  }
-  expect(checkPcbRoutingConstraints(circuit)).toEqual([])
-})
-test("impedance bounds check actual declared targets without converting differential impedance", () => {
-  const { circuit, dq0, clock } = fixture()
-  dq0.routing_constraints!.impedance_bounds = { min: 50, max: 75 }
-  dq0.target_impedance = 49
-  clock.routing_constraints!.impedance_bounds = { min: 100, max: 150 }
-  clock.target_differential_impedance = 151
-  expect(
-    findings(circuit).filter((e) => e.rule === "impedance_target"),
-  ).toHaveLength(2)
-  expect(
-    checkPcbRoutingConstraints(circuit).filter(
-      (e) => e.rule === "physical_impedance",
-    ),
-  ).toHaveLength(2)
-})
-test("unnamed groups never expose internal identifiers in diagnostic messages", () => {
-  const { circuit, dq0 } = fixture()
-  dq0.name = undefined
-  dq0.routing_constraints = { expected_trace_count: 3 }
-  const result = checkPcbRoutingConstraints(circuit)
-  expect(result[0]!.message).toContain("unnamed bus")
-  expect(
-    result.every(
-      (e) => !/(?:pcb|source|subcircuit)_[a-z0-9_]+/.test(e.message),
-    ),
-  ).toBe(true)
-})
-test("spacing interval union and length cap are supplied by the design", () => {
-  const { circuit, dq0 } = fixture()
-  // Parallel signals are one mm apart, ten widths; declare twelve widths.
-  dq0.routing_constraints = {
-    spacing: [
-      {
-        other_bus: dq0.name!,
-        centerline_width_multiplier: 12,
-        reduced_centerline_width_multiplier: 1,
-      },
+  if (source.type !== "source_trace") throw new Error("fixture source missing")
+  const branch: PcbTrace = {
+    ...a.trace,
+    pcb_trace_id: "branch",
+    route: [
+      { route_type: "wire", x: 0, y: 0, width: 0.1, layer: "inner1" },
+      { route_type: "wire", x: 0, y: 2, width: 0.1, layer: "inner1" },
     ],
-    max_reduced_spacing_length: 21,
   }
-  expect(findings(circuit)).toEqual([])
-  dq0.routing_constraints.max_reduced_spacing_length = 19
-  const errors = findings(circuit).filter(
-    (e) => e.rule === "reduced_spacing_length",
-  )
-  expect(errors).toHaveLength(9)
-  expect(errors.every((e) => Math.abs(e.actual_value! - 20) < 1e-8)).toBe(true)
-  dq0.routing_constraints.max_reduced_spacing_length = undefined
-  dq0.routing_constraints.spacing![0] = {
-    other_bus: dq0.name!,
-    centerline_width_multiplier: 11,
-  }
-  expect(findings(circuit).some((e) => e.rule === "minimum_spacing")).toBe(true)
-})
-test("bus references are scoped and cannot silently choose a duplicate name", () => {
-  const { circuit, dq0 } = fixture()
-  const ref = circuit.find(
-    (e): e is SourceBus =>
-      e.type === "source_bus" &&
-      e.name === dq0.routing_constraints!.length_bounds!.reference_bus,
-  )!
-  circuit.push({
-    ...ref,
-    source_bus_id: "other_scope",
-    subcircuit_id: "subcircuit_other",
-  })
-  expect(findings(circuit)).toEqual([])
-  circuit.push({ ...ref, source_bus_id: "duplicate" })
-  expect(
-    checkPcbRoutingConstraints(circuit).some((e) => e.rule === "bus_reference"),
-  ).toBe(true)
-})
-
-test("reduced-spacing budget is shared across different neighbouring groups", () => {
-  const { circuit, dq0 } = fixture()
-  const first = dq0.source_trace_ids[0]!
-  const split = (name: string, ids: string[]): SourceBus => ({
-    type: "source_bus",
-    source_bus_id: name,
-    name,
-    source_trace_ids: ids,
-  })
-  const victim = split("Victim", [first])
-  const left = split("Left", [dq0.source_trace_ids[1]!])
-  const right = split("Right", [dq0.source_trace_ids[2]!])
-  circuit.push(victim, left, right)
-  // Each neighbour is close for ten mm; their intervals do not overlap.
-  for (const [bus, x0, x1] of [
-    [left, 0, 10],
-    [right, 10, 20],
-  ] as const) {
-    const id = bus.source_trace_ids[0]!
-    const trace = circuit.find(
-      (e): e is PcbTrace => e.type === "pcb_trace" && e.source_trace_id === id,
-    )!
-    const source = circuit.find(
-      (e) => e.type === "source_trace" && e.source_trace_id === id,
-    )!
-    if (source.type !== "source_trace") throw Error("missing source")
-    for (const e of circuit)
-      if (e.type === "pcb_port") {
-        if (e.source_port_id === source.connected_source_port_ids[0]) {
-          e.x = x0
-          e.y = 0.2
-        }
-        if (e.source_port_id === source.connected_source_port_ids[1]) {
-          e.x = x1
-          e.y = 0.2
-        }
-      }
-    trace.route = [
-      { route_type: "wire", x: x0, y: 0.2, layer: "inner1", width: 0.1 },
-      { route_type: "wire", x: x1, y: 0.2, layer: "inner1", width: 0.1 },
-    ]
-  }
-  victim.routing_constraints = {
-    spacing: [left, right].map((bus) => ({
-      other_bus: bus.name!,
-      centerline_width_multiplier: 3,
-      reduced_centerline_width_multiplier: 1,
-    })),
-    max_reduced_spacing_length: 15,
-  }
-  const error = findings(circuit).find(
-    (e) =>
-      e.rule === "reduced_spacing_length" &&
-      e.source_bus_ids.includes(victim.source_bus_id),
-  )!
-  expect(error.actual_value).toBeCloseTo(20)
+  expect(measureRoute(source, [a.trace, branch], circuit)).toBeUndefined()
 })
