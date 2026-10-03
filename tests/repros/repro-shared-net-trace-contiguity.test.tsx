@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
@@ -54,9 +55,9 @@ test("same-net routed branch should satisfy the required PCB port", async () => 
 
   await circuit.renderUntilSettled()
 
-  const circuitJson = circuit
-    .getCircuitJson()
-    .filter((element) => element.type !== "pcb_trace_error")
+  const circuitJson = normalizeFixtureSourcePorts(
+    circuit.getCircuitJson(),
+  ).filter((element) => element.type !== "pcb_trace_error")
   const errors = checkTracesAreContiguous(circuitJson)
 
   expect(

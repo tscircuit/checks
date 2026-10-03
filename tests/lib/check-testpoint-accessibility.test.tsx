@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
@@ -44,7 +45,7 @@ test("reports a test point inside another component's courtyard", async () => {
   )
 
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const errors = checkTestPointAccessibility(circuitJson)
 
   expect(errors).toHaveLength(1)
@@ -87,7 +88,11 @@ test("allows a test point outside component courtyards", async () => {
 
   await circuit.renderUntilSettled()
 
-  expect(checkTestPointAccessibility(circuit.getCircuitJson())).toHaveLength(0)
+  expect(
+    checkTestPointAccessibility(
+      normalizeFixtureSourcePorts(circuit.getCircuitJson()),
+    ),
+  ).toHaveLength(0)
 })
 
 test("allows a test point on the opposite PCB side", async () => {
@@ -110,5 +115,9 @@ test("allows a test point on the opposite PCB side", async () => {
 
   await circuit.renderUntilSettled()
 
-  expect(checkTestPointAccessibility(circuit.getCircuitJson())).toHaveLength(0)
+  expect(
+    checkTestPointAccessibility(
+      normalizeFixtureSourcePorts(circuit.getCircuitJson()),
+    ),
+  ).toHaveLength(0)
 })

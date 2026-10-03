@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { beforeAll, expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
@@ -290,7 +291,7 @@ beforeAll(async () => {
   const circuit = new Circuit()
   circuit.add(Mpu6050Board())
   await circuit.renderUntilSettled()
-  circuitJson = circuit.getCircuitJson()
+  circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
 }, 30_000)
 
 const minClearance = 0.1

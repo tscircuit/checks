@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import type { ChipProps } from "@tscircuit/props"
 import { runAllNetlistChecks } from "lib/run-all-checks"
@@ -90,7 +91,7 @@ test("test.tsx builds and has no netlist errors", async () => {
 
   await circuit.renderUntilSettled()
 
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
 
   const netlistIssues = await runAllNetlistChecks(circuitJson)
   const netlistErrors = netlistIssues.filter((issue) => "error_type" in issue)

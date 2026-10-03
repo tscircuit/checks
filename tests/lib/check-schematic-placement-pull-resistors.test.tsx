@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { cju } from "@tscircuit/circuit-json-util"
 import { schematic_component_styling_warning } from "circuit-json"
@@ -47,7 +48,7 @@ async function createPullResistorCircuit(corrected = false) {
     </board>,
   )
   await circuit.renderUntilSettled()
-  return circuit.getCircuitJson()
+  return normalizeFixtureSourcePorts(circuit.getCircuitJson())
 }
 
 test("reports pull-up and pull-down placement warnings on their resistors through both check entry points", async () => {

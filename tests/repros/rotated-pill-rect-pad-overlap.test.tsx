@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
@@ -73,7 +74,9 @@ test("rotated pill overlapping a rectangular pad is missed", async () => {
   circuit.add(<RotatedPillPadShort />)
   await circuit.renderUntilSettled()
 
-  const drcErrors = await runAllPlacementChecks(circuit.getCircuitJson())
+  const drcErrors = await runAllPlacementChecks(
+    normalizeFixtureSourcePorts(circuit.getCircuitJson()),
+  )
   const errorMessages = drcErrors.map((error) => error.message).join(" | ")
   const pcbNoteText = `DRC error count: ${drcErrors.length}; DRC errors: ${errorMessages || "none"}`
 
@@ -86,6 +89,8 @@ test("rotated pill overlapping a rectangular pad is missed", async () => {
   await annotatedCircuit.renderUntilSettled()
 
   expect(
-    convertCircuitJsonToPcbSvg(annotatedCircuit.getCircuitJson()),
+    convertCircuitJsonToPcbSvg(
+      normalizeFixtureSourcePorts(annotatedCircuit.getCircuitJson()),
+    ),
   ).toMatchSvgSnapshot(import.meta.path)
 })

@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Circuit } from "tscircuit"
@@ -65,7 +66,7 @@ test("issue #241: routing reports GND via copper overlapping the R1.pin1 SMD pad
   circuit.add(<ManualViaPadCornerOverlap />)
   await circuit.renderUntilSettled()
 
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const placementErrors = await runAllPlacementChecks(circuitJson)
   const viaPadOverlapErrors = checkViaPadClearance(circuitJson)
   // Copper contact is still a short even when the drill is outside the pad.
@@ -88,7 +89,10 @@ test("issue #241: routing reports GND via copper overlapping the R1.pin1 SMD pad
 
   expect(
     convertCircuitJsonToPcbSvg(
-      [...annotatedCircuit.getCircuitJson(), ...viaPadOverlapErrors],
+      [
+        ...normalizeFixtureSourcePorts(annotatedCircuit.getCircuitJson()),
+        ...viaPadOverlapErrors,
+      ],
       {
         shouldDrawErrors: true,
         showErrorsInTextOverlay: true,

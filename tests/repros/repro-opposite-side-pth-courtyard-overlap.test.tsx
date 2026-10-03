@@ -1,3 +1,4 @@
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { expect, test } from "bun:test"
 import { isPointInsidePolygon } from "@tscircuit/math-utils"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
@@ -164,7 +165,7 @@ test("repro: bottom-side holder covering through-hole display pins reports place
   )
 
   await circuit.renderUntilSettled()
-  const circuitJson = circuit.getCircuitJson()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const placementIssues = await runAllPlacementChecks(circuitJson)
 
   const displayPlatedHoles = circuitJson.filter(
