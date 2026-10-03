@@ -2,7 +2,6 @@
 import {
   getReadableNameForElement,
   getBoundsOfPcbElements,
-  getReadableNameForPcbTrace,
   getPrimaryId
 } from "@tscircuit/circuit-json-util";
 var CIRCUIT_JSON_ID_PATTERN = /\b(?:pcb|source|schematic|subcircuit)_[a-z0-9_]+\b/i;
@@ -158,13 +157,19 @@ var getReadableNameForTrace = (circuitJson, pcbTraceId) => {
     if (sourceTrace?.type === "source_trace")
       return getReadableNameForSourceTrace(circuitJson, sourceTrace);
   }
-  return sanitizeReadableName(
-    getReadableNameForPcbTrace(circuitJson, pcbTraceId),
-    pcbTraceId,
-    "unnamed trace"
-  );
+  if (trace?.type !== "pcb_trace") return "unnamed trace";
+  const portIds = [
+    ...new Set(
+      trace.route.flatMap(
+        (point2) => point2.route_type === "wire" ? [point2.start_pcb_port_id, point2.end_pcb_port_id] : []
+      ).filter((id) => Boolean(id))
+    )
+  ];
+  const portNames = portIds.map((id) => getReadableNameForPort(circuitJson, id)).filter((name) => name !== "unnamed port");
+  if (portNames.length >= 2) return `${portNames[0]} to ${portNames[1]}`;
+  if (portNames.length === 1) return `trace connected to ${portNames[0]}`;
+  return "unnamed trace";
 };
-var containsCircuitJsonId = (message) => CIRCUIT_JSON_ID_PATTERN.test(message);
 function getReadableNameForFootprintPad(circuitJson, pad, ordinal) {
   const padKind = pad.type === "pcb_smtpad" ? "SMD pad" : "through-hole pad";
   const portRef = pad.pcb_port_id ? getReadableNameForPort(circuitJson, pad.pcb_port_id) : null;
@@ -4962,7 +4967,7 @@ function checkSourceTracesHavePcbTraces(circuitJson, { connMap } = {}) {
         type: "pcb_trace_missing_error",
         pcb_trace_missing_error_id: `pcb_trace_missing_${sourceTrace.source_trace_id}`,
         error_type: "pcb_trace_missing_error",
-        message: `Trace [${sourceTrace.display_name && !containsCircuitJsonId(sourceTrace.display_name) ? sourceTrace.display_name : "trace"}] is not connected (it has no PCB trace)`,
+        message: `Trace [${getReadableNameForSourceTrace(circuitJson, sourceTrace)}] is not connected (it has no PCB trace)`,
         source_trace_id: sourceTrace.source_trace_id,
         pcb_component_ids: connectedPcbComponentIds,
         pcb_port_ids: connectedPcbPorts.map((port) => port.pcb_port_id)
@@ -13187,8 +13192,14 @@ function checkSchematicPlacement(circuitJson) {
           circuitJson,
           schematicComponentId ?? ""
         );
-        const inputCapacitorName = issue.inputCapacitorSchematicBox.sourceComponentName ?? "the input capacitor";
-        const outputCapacitorName = issue.outputCapacitorSchematicBox.sourceComponentName ?? "the output capacitor";
+        const inputCapacitorName = getReadableNameForElementId(
+          circuitJson,
+          issue.inputCapacitorSchematicBox.schematicComponentId ?? ""
+        );
+        const outputCapacitorName = getReadableNameForElementId(
+          circuitJson,
+          issue.outputCapacitorSchematicBox.schematicComponentId ?? ""
+        );
         stylingIssueType = "regulator_capacitors_on_wrong_sides";
         message = `${inputCapacitorName} and ${outputCapacitorName} are on the wrong sides of ${regulatorName}. Move them beside their connected regulator pins, preserving connections and rerouting traces.`;
         break;
@@ -13196,7 +13207,7 @@ function checkSchematicPlacement(circuitJson) {
       case "PullResistorOnWrongSide":
         schematicComponentId = issue.resistorSchematicBox.schematicComponentId;
         stylingIssueType = "pull_resistor_on_wrong_side";
-        message = issue.message;
+        message = `consider placing ${getReadableNameForElementId(circuitJson, schematicComponentId ?? "")} ${issue.preferredSide} ${getReadableNameForElementId(circuitJson, issue.hostSchematicBox.schematicComponentId ?? "")}.${getReadableNameForElementId(circuitJson, issue.signalSourcePortId)} so the pull-${issue.pullDirection} branch reads toward ${issue.pullDirection === "up" ? "power" : "ground"}`;
         break;
       default:
         return [];
