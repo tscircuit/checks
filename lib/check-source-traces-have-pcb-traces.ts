@@ -9,7 +9,7 @@ import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
-import { containsCircuitJsonId } from "lib/util/get-readable-names"
+import { getReadableNameForSourceTrace } from "lib/util/get-readable-names"
 import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
 
 /**
@@ -82,7 +82,7 @@ function checkSourceTracesHavePcbTraces(
         type: "pcb_trace_missing_error",
         pcb_trace_missing_error_id: `pcb_trace_missing_${sourceTrace.source_trace_id}`,
         error_type: "pcb_trace_missing_error",
-        message: `Trace [${sourceTrace.display_name && !containsCircuitJsonId(sourceTrace.display_name) ? sourceTrace.display_name : "trace"}] is not connected (it has no PCB trace)`,
+        message: `Trace [${getReadableNameForSourceTrace(circuitJson, sourceTrace)}] is not connected (it has no PCB trace)`,
         source_trace_id: sourceTrace.source_trace_id,
         pcb_component_ids: connectedPcbComponentIds,
         pcb_port_ids: connectedPcbPorts.map((port) => port.pcb_port_id),

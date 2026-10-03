@@ -12,6 +12,7 @@ import {
 import {
   getReadableNameForElementId,
   getReadableNameForSourceTrace,
+  getReadableNameForTrace,
 } from "lib/util/get-readable-names"
 
 test("check messages use names or unnamed labels while keeping diagnostic IDs", async () => {
@@ -76,6 +77,15 @@ test("check messages use names or unnamed labels while keeping diagnostic IDs", 
   expect(
     getReadableNameForElementId([customPad], customPad.pcb_smtpad_id),
   ).toBe("unnamed SMD pad")
+  const danglingTrace = trace("private-trace-token", [
+    [0, 0],
+    [1, 0],
+  ])
+  if (danglingTrace.route[0].route_type === "wire")
+    danglingTrace.route[0].start_pcb_port_id = "private-missing-port-token"
+  expect(
+    getReadableNameForTrace([danglingTrace], danglingTrace.pcb_trace_id),
+  ).toBe("unnamed trace")
   const sourceTrace = {
     type: "source_trace",
     source_trace_id: "source_trace_private_97",
