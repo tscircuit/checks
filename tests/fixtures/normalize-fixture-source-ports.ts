@@ -13,13 +13,21 @@ type LegacySourcePort = Omit<
 }
 type FixtureElement = Exclude<AnyCircuitElement, SourcePort> | LegacySourcePort
 
+function normalizeSourcePorts(
+  elements: FixtureElement[],
+): asserts elements is AnyCircuitElement[] {
+  for (const element of elements) {
+    if (element.type === "source_port")
+      Object.assign(element, source_port.parse(element))
+  }
+}
+
 /** Pinned visual fixture generators predate normalized source-port voltage
  * output. Parse those records at the current JSON boundary, preserving all
- * geometry and the existing routing/snapshot versions. */
+ * geometry and the live array used when fixtures insert later annotations. */
 export function normalizeFixtureSourcePorts(
-  elements: readonly FixtureElement[],
+  elements: FixtureElement[],
 ): AnyCircuitElement[] {
-  return elements.map((element) =>
-    element.type === "source_port" ? source_port.parse(element) : element,
-  )
+  normalizeSourcePorts(elements)
+  return elements
 }
