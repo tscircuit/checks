@@ -1,3 +1,4 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { analyzeSchematicPlacement } from "@tscircuit/circuit-json-schematic-placement-analysis/analysis"
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
@@ -28,8 +29,10 @@ export function checkSchematicPlacement(
       switch (issue.lineItemType) {
         case "TwoPinComponentHasInvertedRails": {
           schematicComponentId = issue.schematicBox.schematicComponentId
-          const componentName =
-            issue.schematicBox.sourceComponentName ?? schematicComponentId
+          const componentName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
           stylingIssueType = "inverted_rails"
           message = `${componentName} has its positive-supply connection below its ground connection. Rotate ${componentName} by 180°, preserving pin connections, and reroute attached traces.`
           break
@@ -37,15 +40,18 @@ export function checkSchematicPlacement(
         case "RegulatorCapacitorsOnWrongSides": {
           schematicComponentId =
             issue.regulatorSchematicBox.schematicComponentId
-          const regulatorName =
-            issue.regulatorSchematicBox.sourceComponentName ??
-            schematicComponentId
-          const inputCapacitorName =
-            issue.inputCapacitorSchematicBox.sourceComponentName ??
-            "the input capacitor"
-          const outputCapacitorName =
-            issue.outputCapacitorSchematicBox.sourceComponentName ??
-            "the output capacitor"
+          const regulatorName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          const inputCapacitorName = getReadableNameForElementId(
+            circuitJson,
+            issue.inputCapacitorSchematicBox.schematicComponentId ?? "",
+          )
+          const outputCapacitorName = getReadableNameForElementId(
+            circuitJson,
+            issue.outputCapacitorSchematicBox.schematicComponentId ?? "",
+          )
           stylingIssueType = "regulator_capacitors_on_wrong_sides"
           message = `${inputCapacitorName} and ${outputCapacitorName} are on the wrong sides of ${regulatorName}. Move them beside their connected regulator pins, preserving connections and rerouting traces.`
           break
@@ -53,7 +59,7 @@ export function checkSchematicPlacement(
         case "PullResistorOnWrongSide":
           schematicComponentId = issue.resistorSchematicBox.schematicComponentId
           stylingIssueType = "pull_resistor_on_wrong_side"
-          message = issue.message
+          message = `consider placing ${getReadableNameForElementId(circuitJson, schematicComponentId ?? "")} ${issue.preferredSide} ${getReadableNameForElementId(circuitJson, issue.hostSchematicBox.schematicComponentId ?? "")}.${getReadableNameForElementId(circuitJson, issue.signalSourcePortId)} so the pull-${issue.pullDirection} branch reads toward ${issue.pullDirection === "up" ? "power" : "ground"}`
           break
         default:
           return []

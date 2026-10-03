@@ -25,7 +25,7 @@ describe("copper-to-board-edge regression fixtures", () => {
     const errors = checkCopperToBoardEdgeClearance(viaOutsideChamferedCorner)
 
     expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("via_outside_chamfer")
+    expect(errors[0].pcb_placement_error_id).toContain("via_outside_chamfer")
     expect(errors[0].message).toContain("measured 0.000mm")
     expect(errors[0].message).toContain("required 0.200mm")
     expect(checkViasOffBoard(viaOutsideChamferedCorner)).toHaveLength(1)
@@ -37,7 +37,9 @@ describe("copper-to-board-edge regression fixtures", () => {
     )
 
     expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("plated_pill_crossing_angle")
+    expect(errors[0].pcb_placement_error_id).toContain(
+      "plated_pill_crossing_angle",
+    )
     expect(errors[0].message).toContain("measured 0.000mm")
   })
 
@@ -47,7 +49,7 @@ describe("copper-to-board-edge regression fixtures", () => {
     )
 
     expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("pad_below_clearance")
+    expect(errors[0].pcb_placement_error_id).toContain("pad_below_clearance")
     expect(errors[0].message).toContain("measured 0.300mm")
     expect(errors[0].message).toContain("required 0.500mm")
   })
@@ -64,7 +66,9 @@ describe("copper-to-board-edge regression fixtures", () => {
     const sharpCornerErrors =
       checkCopperToBoardEdgeClearance(sharpRectNearChamfer)
     expect(sharpCornerErrors).toHaveLength(1)
-    expect(sharpCornerErrors[0].message).toContain("sharp_rect_near_chamfer")
+    expect(sharpCornerErrors[0].pcb_placement_error_id).toContain(
+      "sharp_rect_near_chamfer",
+    )
   })
 
   test("is registered in runAllPlacementChecks", async () => {
@@ -88,15 +92,19 @@ describe("copper-to-board-edge regression fixtures", () => {
       expect.arrayContaining([
         expect.objectContaining({
           type: "pcb_placement_error",
-          message: expect.stringContaining("via_outside_board"),
+          pcb_placement_error_id: expect.stringContaining("via_outside_board"),
         }),
         expect.objectContaining({
           type: "pcb_placement_error",
-          message: expect.stringContaining("plated_hole_outside_board"),
+          pcb_placement_error_id: expect.stringContaining(
+            "plated_hole_outside_board",
+          ),
         }),
         expect.objectContaining({
           type: "pcb_placement_error",
-          message: expect.stringContaining("smtpad_outside_board"),
+          pcb_placement_error_id: expect.stringContaining(
+            "smtpad_outside_board",
+          ),
         }),
       ]),
     )
@@ -192,7 +200,7 @@ test.each(violatingSmtPads)("supports $shape SMT copper geometry", (pad) => {
   const errors = checkCopperToBoardEdgeClearance([rectangularBoard, pad])
 
   expect(errors).toHaveLength(1)
-  expect(errors[0].message).toContain(pad.pcb_smtpad_id)
+  expect(errors[0].pcb_placement_error_id).toContain(pad.pcb_smtpad_id)
 })
 
 const violatingCopperPours: PcbCopperPour[] = [
@@ -245,7 +253,7 @@ test.each(violatingCopperPours)(
     const errors = checkCopperToBoardEdgeClearance([rectangularBoard, pour])
 
     expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain(pour.pcb_copper_pour_id)
+    expect(errors[0].pcb_placement_error_id).toContain(pour.pcb_copper_pour_id)
     expect(errors[0].message).toContain("measured 0.000mm")
   },
 )
@@ -274,7 +282,9 @@ test("detects a curved BRep copper edge outside the board", () => {
   const errors = checkCopperToBoardEdgeClearance([rectangularBoard, curvedPour])
 
   expect(errors).toHaveLength(1)
-  expect(errors[0].message).toContain(curvedPour.pcb_copper_pour_id)
+  expect(errors[0].pcb_placement_error_id).toContain(
+    curvedPour.pcb_copper_pour_id,
+  )
   expect(errors[0].message).toContain("measured 0.000mm")
 })
 
@@ -328,7 +338,7 @@ test("supports rotated oval plated-hole copper geometry", () => {
   ])
 
   expect(errors).toHaveLength(1)
-  expect(errors[0].message).toContain("rotated_oval")
+  expect(errors[0].pcb_placement_error_id).toContain("rotated_oval")
 })
 
 test("supports rotated rounded rectangles and rounded plated-hole pads", () => {

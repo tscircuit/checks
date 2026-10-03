@@ -1,3 +1,7 @@
+import {
+  getReadableNameForPort as getReadableNameForPcbPort,
+  getReadableNameForTrace as getReadableNameForPcbTrace,
+} from "lib/util/get-readable-names"
 import { getTracePortLayerMismatches } from "../util/trace-port-layer-connectivity"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import type {
@@ -13,10 +17,7 @@ import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import { isPointInPad } from "./is-point-in-pad"
 import { distance } from "../util/distance"
 import { getPcbPortIdsConnectedToRoutePoint } from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
-import {
-  getReadableNameForPcbPort,
-  getReadableNameForPcbTrace,
-} from "@tscircuit/circuit-json-util"
+
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
@@ -526,8 +527,9 @@ function checkTracesAreContiguous(
         const portName = getReadableNameForPcbPort(
           circuitJson,
           port.pcb_port_id,
-        ).replace("pcb_port", "")
-        const padType = pads[0].type.replace(/pcb_/, "")
+        )
+        const padType =
+          pads[0].type === "pcb_smtpad" ? "SMD pad" : "through-hole pad"
         const errorCenter = getMissingConnectionErrorCenter({
           firstPoint,
           lastPoint,
@@ -537,7 +539,7 @@ function checkTracesAreContiguous(
         })
         errors.push({
           type: "pcb_trace_error",
-          message: `Trace [${traceName}] is missing a connection to ${padType}${portName}`,
+          message: `Trace [${traceName}] is missing a connection to ${padType} ${portName}`,
           source_trace_id:
             sourceTrace?.source_trace_id ||
             trace.source_trace_id ||

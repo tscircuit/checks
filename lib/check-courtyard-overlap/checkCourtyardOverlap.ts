@@ -1,3 +1,4 @@
+import { getReadableNameForComponent } from "lib/util/get-readable-names"
 import {
   doSegmentsIntersect,
   isPointInsidePolygon,
@@ -50,20 +51,7 @@ function getComponentName(
   circuitJson: AnyCircuitElement[],
   pcbComponentId: string,
 ): string {
-  const pcbComponent = circuitJson.find(
-    (el) =>
-      el.type === "pcb_component" && el.pcb_component_id === pcbComponentId,
-  )
-  if (pcbComponent?.type !== "pcb_component") return pcbComponentId
-  const sourceComponent = circuitJson.find(
-    (el) =>
-      el.type === "source_component" &&
-      el.source_component_id === pcbComponent.source_component_id,
-  )
-  if (sourceComponent?.type === "source_component" && sourceComponent.name) {
-    return sourceComponent.name
-  }
-  return pcbComponentId
+  return getReadableNameForComponent(circuitJson, pcbComponentId)
 }
 
 type Point = { x: number; y: number }

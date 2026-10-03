@@ -1,11 +1,10 @@
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import type {
   AnyCircuitElement,
   SchematicComponent,
   SchematicComponentStylingWarning,
   SchematicPort,
 } from "circuit-json"
-
-type SourceComponent = Extract<AnyCircuitElement, { type: "source_component" }>
 
 const DEFAULT_PIN_SPACING = 0.2
 const MAX_VERTICAL_PADDING_IN_PIN_SPACINGS = 3
@@ -28,17 +27,7 @@ export function checkSchematicComponentExcessiveVerticalPadding(
   const schematicPorts = circuitJson.filter(
     (element): element is SchematicPort => element.type === "schematic_port",
   )
-  const sourceComponents = circuitJson.filter(
-    (element): element is SourceComponent =>
-      element.type === "source_component",
-  )
 
-  const sourceComponentById = new Map(
-    sourceComponents.map((component) => [
-      component.source_component_id,
-      component,
-    ]),
-  )
   const portsByComponentId = new Map<string, SchematicPort[]>()
 
   for (const port of schematicPorts) {
@@ -76,11 +65,10 @@ export function checkSchematicComponentExcessiveVerticalPadding(
       bottom: lowestPinY - componentBottomY,
     }
 
-    const sourceComponent = component.source_component_id
-      ? sourceComponentById.get(component.source_component_id)
-      : undefined
-    const componentName =
-      sourceComponent?.name ?? component.schematic_component_id
+    const componentName = getReadableNameForElementId(
+      circuitJson,
+      component.schematic_component_id,
+    )
 
     for (const side of ["top", "bottom"] as const) {
       const padding = paddingBySide[side]

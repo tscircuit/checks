@@ -1,7 +1,5 @@
-import {
-  getPrimaryId,
-  getReadableNameForElement,
-} from "@tscircuit/circuit-json-util"
+import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
+import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { AnyCircuitElement, PcbPadTraceClearanceError } from "circuit-json"
 import { formatMm } from "format-si-unit"

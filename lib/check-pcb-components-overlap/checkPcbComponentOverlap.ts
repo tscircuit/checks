@@ -60,7 +60,7 @@ const formatOverlapElementDescription = (
 
   const id = getPrimaryId(element)
   const readableName = getReadableNameForElementId(circuitJson, id)
-  return readableName === "element" ? `[${id}]` : readableName
+  return readableName
 }
 
 /**

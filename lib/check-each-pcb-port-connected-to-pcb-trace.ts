@@ -1,3 +1,4 @@
+import { getReadableNameForTrace } from "lib/util/get-readable-names"
 import { getTracePortLayerMismatches } from "./util/trace-port-layer-connectivity"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import type {
@@ -47,7 +48,7 @@ function checkEachPcbPortConnectedToPcbTraces(
     pcb_port_ids: [port.pcb_port_id],
     pcb_component_ids: port.pcb_component_id ? [port.pcb_component_id] : [],
     center: { x: point.x, y: point.y },
-    message: `Port [${getReadableNameForPort(circuitJson, port.pcb_port_id)}] on ${padLayers.join(", ")} is not connected to trace [${trace.pcb_trace_id}] on ${point.layer}: missing via connection.`,
+    message: `Port [${getReadableNameForPort(circuitJson, port.pcb_port_id)}] on ${padLayers.join(", ")} is not connected to trace [${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)}] on ${point.layer}: missing via connection.`,
   }))
 
   // Generate the connectivity map from the circuit
