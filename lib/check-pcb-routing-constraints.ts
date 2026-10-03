@@ -1,8 +1,12 @@
 import Flatbush from "flatbush"
+import {
+  pcb_bus_routing_constraint_error,
+  pcb_bus_routing_constraint_warning,
+} from "circuit-json"
 import type {
   AnyCircuitElement,
-  PcbTraceError,
-  PcbTraceWarning,
+  PcbBusRoutingConstraintError,
+  PcbBusRoutingConstraintWarning,
   SourceBus,
   SourceBusRouteLength,
   SourceBusTraceSpacing,
@@ -33,7 +37,7 @@ export const hasSourceBusRoutingConstraints = (bus: SourceBus) =>
     bus.target_differential_impedance_max,
   ].some((v) => v !== undefined)
 
-type Finding = PcbTraceError | PcbTraceWarning
+type Finding = PcbBusRoutingConstraintError | PcbBusRoutingConstraintWarning
 /** Explicit constraints only. Board-world XY mm, +X right/+Y up.
  * Measures complete planar routes, never cached lengths or guessed via depths.
  * Missing physical inputs yield warnings rather than an electrical pass. */
@@ -125,43 +129,51 @@ export function checkPcbRoutingConstraints(
     ]
     const report = (
       warning: boolean,
-      rule: string,
+      rule: Finding["routing_rule"],
       message: string,
       id = members[0]!,
-      values: Pick<
-        PcbTraceWarning,
-        "actual_value" | "expected_min" | "expected_max" | "units"
+      values: Partial<
+        Pick<
+          PcbBusRoutingConstraintError,
+          "actual_value" | "expected_min" | "expected_max" | "units"
+        >
       > = {},
     ) => {
-      const pcbId = tracesBySource.get(id)?.[0]?.pcb_trace_id
+      const ids = rule === "length_skew" ? matchMembers : [id]
       const common = {
         message: `${warning ? "Unverified " : ""}bus ${getReadableNameForElementId(circuit, bus.source_bus_id)}: ${message}`,
         source_bus_id: bus.source_bus_id,
-        source_trace_id: id,
+        source_trace_ids: ids,
+        pcb_trace_ids: ids.flatMap((id) =>
+          (tracesBySource.get(id) ?? []).map((trace) => trace.pcb_trace_id),
+        ),
         routing_rule: rule,
-        pcb_component_ids: [],
-        pcb_port_ids: [],
         subcircuit_id: bus.subcircuit_id,
-        ...values,
       }
-      if (warning || !pcbId)
-        findings.push({
-          type: "pcb_trace_warning",
-          pcb_trace_warning_id: `pcb_trace_warning_${bus.source_bus_id}_${findings.length}`,
-          warning_type: "pcb_trace_warning",
-          pcb_trace_id: pcbId,
-          ...common,
-        })
+      if (warning)
+        findings.push(
+          pcb_bus_routing_constraint_warning.parse({
+            type: "pcb_bus_routing_constraint_warning",
+            pcb_bus_routing_constraint_warning_id: `pcb_bus_routing_constraint_warning_${bus.source_bus_id}_${findings.length}`,
+            ...common,
+          }),
+        )
       else
-        findings.push({
-          type: "pcb_trace_error",
-          pcb_trace_error_id: `pcb_trace_error_${bus.source_bus_id}_${findings.length}`,
-          error_type: "pcb_trace_error",
-          pcb_trace_id: pcbId,
-          ...common,
-        })
+        findings.push(
+          pcb_bus_routing_constraint_error.parse({
+            type: "pcb_bus_routing_constraint_error",
+            pcb_bus_routing_constraint_error_id: `pcb_bus_routing_constraint_error_${bus.source_bus_id}_${findings.length}`,
+            ...common,
+            ...values,
+            units: values.units ?? "mm",
+          }),
+        )
     }
-    const complete = (ids: string[], rule: string) => {
+
+    const complete = (
+      ids: string[],
+      rule: PcbBusRoutingConstraintWarning["routing_rule"],
+    ) => {
       const missing = ids.find((id) => !measure(id))
       if (missing)
         report(

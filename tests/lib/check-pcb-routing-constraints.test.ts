@@ -73,7 +73,7 @@ function fixture() {
 }
 const violations = (circuit: AnyCircuitElement[]) =>
   checkPcbRoutingConstraints(circuit).filter(
-    (e) => e.type === "pcb_trace_error",
+    (e) => e.type === "pcb_bus_routing_constraint_error",
   )
 
 test("matching adds strobe lengths without altering bus electrical membership", () => {
@@ -99,7 +99,8 @@ test("absolute and relative lengths use copper geometry instead of cached length
   ).toHaveLength(2)
   bus.max_length = { reference: "longest_manhattan", offset: -1 }
   expect(
-    violations(circuit).find((e) => e.source_trace_id === a.id)?.expected_max,
+    violations(circuit).find((e) => e.source_trace_ids.includes(a.id))
+      ?.expected_max,
   ).toBe(19)
 })
 test("explicit Manhattan references and target tolerance apply independently of skew", () => {
@@ -130,14 +131,14 @@ test("missing or disconnected geometry is unverified, never zero length", () => 
   circuit.splice(circuit.indexOf(a.trace), 1)
   bus.pcb_spacing_to_other_signals = { width_multiplier: 4 }
   const warnings = checkPcbRoutingConstraints(circuit).filter(
-    (e) => e.type === "pcb_trace_warning",
+    (e) => e.type === "pcb_bus_routing_constraint_warning",
   )
   expect(
     warnings.some(
       (e) =>
         e.routing_rule === "route_geometry" &&
-        e.source_trace_id === a.id &&
-        e.pcb_trace_id === undefined,
+        e.source_trace_ids.includes(a.id) &&
+        e.pcb_trace_ids.length === 0,
     ),
   ).toBe(true)
   expect(violations(circuit)).toEqual([])
@@ -152,7 +153,7 @@ test("an unresolved explicit reference warns without suppressing independent rul
   expect(
     checkPcbRoutingConstraints(circuit).some(
       (e) =>
-        e.type === "pcb_trace_warning" &&
+        e.type === "pcb_bus_routing_constraint_warning" &&
         e.routing_rule === "reference_geometry",
     ),
   ).toBe(true)
@@ -238,7 +239,7 @@ test("impedance bounds check intent while physical impedance remains unverified"
   expect(
     checkPcbRoutingConstraints(circuit).some(
       (e) =>
-        e.type === "pcb_trace_warning" &&
+        e.type === "pcb_bus_routing_constraint_warning" &&
         e.routing_rule === "physical_impedance",
     ),
   ).toBe(true)
@@ -255,7 +256,7 @@ test("named and unnamed diagnostics never expose reference IDs", () => {
   bus.name = undefined
   for (const e of violations(circuit)) {
     expect(e.message).not.toContain(bus.source_bus_id)
-    expect(e.message).not.toContain(e.source_trace_id)
+    expect(e.message).not.toContain(e.source_trace_ids[0]!)
   }
 })
 test("capsule intervals detect a brief diagonal crossing without sampling", () => {
