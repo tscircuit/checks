@@ -67,7 +67,9 @@ export function getCopperPolygonGeometryKey(
     ) {
       return undefined
     }
-    values.push(Object.is(descriptor.value, -0) ? "-0" : String(descriptor.value))
+    values.push(
+      Object.is(descriptor.value, -0) ? "-0" : String(descriptor.value),
+    )
   }
   return values.join(":")
 }

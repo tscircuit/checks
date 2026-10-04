@@ -16,8 +16,13 @@ function createGetterReplay(): GetterReplay {
     },
   })
   const via = {
-    type: "pcb_via", pcb_via_id: "via", x: 0, y: 0,
-    outer_diameter: 0.3, hole_diameter: 0.1, layers: ["top", "bottom"],
+    type: "pcb_via",
+    pcb_via_id: "via",
+    x: 0,
+    y: 0,
+    outer_diameter: 0.3,
+    hole_diameter: 0.1,
+    layers: ["top", "bottom"],
   }
   Object.defineProperty(via, "outer_diameter", {
     enumerable: true,
@@ -28,7 +33,11 @@ function createGetterReplay(): GetterReplay {
   })
   const circuit = [
     via,
-    { type: "pcb_trace", pcb_trace_id: "trace", route: [point, { ...point, x: 1 }] },
+    {
+      type: "pcb_trace",
+      pcb_trace_id: "trace",
+      route: [point, { ...point, x: 1 }],
+    },
   ] as AnyCircuitElement[]
   reads.length = 0
   return { circuit, reads }

@@ -321,7 +321,10 @@ function checkTracesAreContiguous(
   ) as PcbPlatedHole[]
 
   const padMap = new Map<PcbPortId, PcbPad[]>()
-  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson, connectivityGeometryCache)
+  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(
+    circuitJson,
+    connectivityGeometryCache,
+  )
   let fullConnectivityMap: ConnectivityMap | undefined = connMap
   let traceWireSegmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer | undefined
   const getFullConnectivityMap = () => {

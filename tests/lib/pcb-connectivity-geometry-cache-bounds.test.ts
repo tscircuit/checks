@@ -12,7 +12,9 @@ test("geometry keys preserve signed zero and cache storage remains bounded", () 
   const negativeZero = getCopperPolygonGeometryKey("via", [[{ x: -0 }, "x"]])!
   expect(positiveZero).not.toBe(negativeZero)
   for (const value of [NaN, Infinity, -Infinity]) {
-    expect(getCopperPolygonGeometryKey("via", [[{ x: value }, "x"]])).toBeUndefined()
+    expect(
+      getCopperPolygonGeometryKey("via", [[{ x: value }, "x"]]),
+    ).toBeUndefined()
   }
   let constructions = 0
   const createPolygon = (): Polygon => {

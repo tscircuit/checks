@@ -53,7 +53,12 @@ export function getViaAndPourConnections(
   ) => {
     const hasCachedGeometry = geometryCache && geometryKey !== undefined
     const polygon = hasCachedGeometry
-      ? getCachedScaledCopperPolygon(geometryCache, geometryKey, scale, createPolygon)
+      ? getCachedScaledCopperPolygon(
+          geometryCache,
+          geometryKey,
+          scale,
+          createPolygon,
+        )
       : createPolygon()
     if (!polygon.isEmpty())
       conductors.push({
@@ -81,7 +86,9 @@ export function getViaAndPourConnections(
         true,
         geometryCache
           ? getCopperPolygonGeometryKey("via", [
-              [copper, "x"], [copper, "y"], [copper, "outer_diameter"],
+              [copper, "x"],
+              [copper, "y"],
+              [copper, "outer_diameter"],
             ])
           : undefined,
       )
@@ -112,7 +119,11 @@ export function getViaAndPourConnections(
             false,
             geometryCache
               ? getCopperPolygonGeometryKey("wire", [
-                  [a, "x"], [a, "y"], [b, "x"], [b, "y"], [a, "width"],
+                  [a, "x"],
+                  [a, "y"],
+                  [b, "x"],
+                  [b, "y"],
+                  [a, "width"],
                 ])
               : undefined,
           )
@@ -145,7 +156,9 @@ export function getViaAndPourConnections(
             true,
             geometryCache
               ? getCopperPolygonGeometryKey("via", [
-                  [via, "x"], [via, "y"], [via, "outer_diameter"],
+                  [via, "x"],
+                  [via, "y"],
+                  [via, "outer_diameter"],
                 ])
               : undefined,
           )
