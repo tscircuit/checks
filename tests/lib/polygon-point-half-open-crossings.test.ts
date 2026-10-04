@@ -2,10 +2,7 @@ import { expect, test } from "bun:test"
 import * as Flatten from "@flatten-js/core"
 import { createPolygonPointTester } from "../../lib/util/create-polygon-point-tester"
 
-function addRing(
-  polygon: Flatten.Polygon,
-  vertices: [number, number][],
-): void {
+function addRing(polygon: Flatten.Polygon, vertices: [number, number][]): void {
   polygon.addFace(
     vertices.map(
       (start, index): Flatten.Segment =>
@@ -82,9 +79,9 @@ test("half-open crossings preserve holes, winding, boundaries and analytic curve
   const originalJog = joggedHole.toJSON()
   for (const angle of [Math.PI / 4, -Math.PI / 2, 0.3]) {
     const rotated = joggedHole.rotate(angle)
-    expect(contains(rotated, new Flatten.Point(-0.4, 33.07).rotate(angle))).toBe(
-      false,
-    )
+    expect(
+      contains(rotated, new Flatten.Point(-0.4, 33.07).rotate(angle)),
+    ).toBe(false)
     expect(contains(rotated, new Flatten.Point(4, 33.07).rotate(angle))).toBe(
       true,
     )
@@ -111,7 +108,9 @@ test("half-open crossings preserve holes, winding, boundaries and analytic curve
   expect(contains(curvedHole, new Flatten.Point(1.5, 1.5))).toBe(true)
   expect(contains(curvedHole, new Flatten.Point(2, 0))).toBe(true)
 
-  const disk = new Flatten.Polygon(new Flatten.Circle(new Flatten.Point(0, 0), 2))
+  const disk = new Flatten.Polygon(
+    new Flatten.Circle(new Flatten.Point(0, 0), 2),
+  )
   for (const x of [-3, -1, 0, 1, 3]) {
     for (const y of [-3, -1, 0, 1, 3]) {
       expect(contains(disk, new Flatten.Point(x, y))).toBe(x * x + y * y <= 4)

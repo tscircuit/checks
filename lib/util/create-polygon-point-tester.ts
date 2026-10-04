@@ -56,10 +56,9 @@ export function createPolygonPointTester(): (
       const { start, end } = edge.shape
       // Half-open y intervals count a shared vertex once and ignore horizontal
       // edges. Subdividing an edge cannot introduce extra ray crossings.
-      if ((start.y > point.y) === (end.y > point.y)) continue
+      if (start.y > point.y === end.y > point.y) continue
       const x =
-        start.x +
-        ((point.y - start.y) * (end.x - start.x)) / (end.y - start.y)
+        start.x + ((point.y - start.y) * (end.x - start.x)) / (end.y - start.y)
       if (x > point.x) inside = !inside
     }
     // Even/odd fill includes holes and separate faces regardless of winding.
