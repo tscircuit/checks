@@ -54,8 +54,8 @@ test("collinear hole does not short an isolated pad", async (): Promise<void> =>
   expect(errors[2]).toHaveLength(1)
   expect(errors[2][0].message).toContain("J_USB.SIGNAL")
 
-  // Snapshot actual returned findings before the intentionally failing
-  // regression assertion. No error is fabricated, filtered or suppressed.
+  // Snapshot actual returned findings. No error is fabricated, filtered or
+  // suppressed; the real-short control must keep its diagnostic overlay.
   for (const [index, scenario] of cases.entries()) {
     await expect(
       convertCircuitJsonToPcbSvg([...scenario.circuit, ...errors[index]], {
@@ -71,7 +71,6 @@ test("collinear hole does not short an isolated pad", async (): Promise<void> =>
     ).toMatchSvgSnapshot(import.meta.path, scenario.name)
   }
 
-  // This fails on the current checker: it returns one false short. Keep the
-  // expected physically correct result; this PR is a repro, not a checker fix.
+  // A collinear subdivision must not change the physically correct result.
   expect(errors[1]).toEqual([])
 })

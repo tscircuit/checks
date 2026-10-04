@@ -1,6 +1,7 @@
 import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
 import Flatbush from "flatbush"
 import * as Flatten from "@flatten-js/core"
+import { createPolygonPointTester } from "./util/create-polygon-point-tester"
 
 import {
   convertCircuitJsonToFlattenJs,
@@ -16,6 +17,7 @@ import {
 function touchesPour(
   pour: Flatten.Polygon,
   geometry: Flatten.Polygon,
+  containsPoint: ReturnType<typeof createPolygonPointTester>,
 ): boolean {
   if (!pour.box.intersect(geometry.box)) return false
   // distanceTo can report zero between tiny BRep segments and distant arcs.
@@ -23,8 +25,8 @@ function touchesPour(
   // are disjoint, one point per face suffices; walking every pour vertex is costly.
   return (
     pour.intersect(geometry).length > 0 ||
-    [...geometry.faces].some((face) => pour.contains(face.first.start)) ||
-    [...pour.faces].some((face) => geometry.contains(face.first.start))
+    [...geometry.faces].some((face) => containsPoint(pour, face.first.start)) ||
+    [...pour.faces].some((face) => containsPoint(geometry, face.first.start))
   )
 }
 
@@ -69,6 +71,7 @@ export function checkCopperPourShorts(
   )
 
   const errors = new Map<string, PcbPlacementError>()
+  const containsPoint = createPolygonPointTester()
   for (const pour of copper) {
     const element = pour.sourceElement
     if (element.type !== "pcb_copper_pour") continue
@@ -97,7 +100,9 @@ export function checkCopperPourShorts(
       const id = `copper_pour_short_${[pour.elementId, other.elementId].sort().join("_")}`
       if (
         errors.has(id) ||
-        !pour.shapes.some((shape) => touchesPour(shape, otherShape))
+        !pour.shapes.some((shape) =>
+          touchesPour(shape, otherShape, containsPoint),
+        )
       )
         continue
       errors.set(id, {
