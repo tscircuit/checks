@@ -43,7 +43,7 @@
     "circuit-json": "*",
     "circuit-json-to-connectivity-map": "*",
     "typescript": "^5.5.3",
-    "@tscircuit/circuit-json-util": "^0.0.119"
+    "@tscircuit/circuit-json-util": "*"
   },
   "dependencies": {
     "flatbush": "^4.6.2"
