@@ -59,5 +59,9 @@ export {
 } from "./lib/consolidate-pcb-overlap-errors"
 export { checkPcbBusLengthSkew } from "./lib/check-pcb-bus-length-skew"
 export { checkHoleTraceClearance } from "./lib/check-hole-trace-clearance"
+export {
+  PcbConnectivityGeometryCache,
+  type PcbConnectivityGeometryCacheStats,
+} from "./lib/util/pcb-connectivity-geometry-cache"
 
 export { checkPcbRoutingConstraints } from "./lib/check-pcb-routing-constraints"
