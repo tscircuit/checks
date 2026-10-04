@@ -27,6 +27,8 @@ try {
       dependencies: {
         "@tscircuit/checks": `file:${join(tempDir, archive)}`,
         "@tscircuit/core": "0.0.2079",
+        // The consuming application selects compatible versions for wildcard peers.
+        "@tscircuit/circuit-json-util": "0.0.119",
         tscircuit: "0.0.2744",
         "circuit-json-to-pnp-csv": "0.0.18",
       },
