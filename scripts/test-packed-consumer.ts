@@ -13,7 +13,10 @@ async function run(cmd: string[], cwd: string) {
 }
 
 try {
-  await run(["npm", "pack", "--ignore-scripts", "--pack-destination", tempDir], projectDir)
+  await run(
+    ["npm", "pack", "--ignore-scripts", "--pack-destination", tempDir],
+    projectDir,
+  )
   const archive = (await readdir(tempDir)).find((name) => name.endsWith(".tgz"))
   if (!archive) throw new Error("No packed checks archive found")
   await writeFile(
@@ -24,7 +27,7 @@ try {
       dependencies: {
         "@tscircuit/checks": `file:${join(tempDir, archive)}`,
         "@tscircuit/core": "0.0.2079",
-        "tscircuit": "0.0.2744",
+        tscircuit: "0.0.2744",
         "circuit-json-to-pnp-csv": "0.0.18",
       },
     }),
