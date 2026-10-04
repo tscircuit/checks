@@ -1,5 +1,6 @@
 import { getTracePortLayerMismatches } from "../util/trace-port-layer-connectivity"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
+import type { PcbConnectivityGeometryCache } from "lib/util/pcb-connectivity-geometry-cache"
 import type {
   AnyCircuitElement,
   PcbTraceError,
@@ -281,9 +282,11 @@ function checkTracesAreContiguous(
   {
     connMap,
     pcbConnectivityMap,
+    connectivityGeometryCache,
   }: {
     connMap?: ConnectivityMap
     pcbConnectivityMap?: PcbConnectivityMap
+    connectivityGeometryCache?: PcbConnectivityGeometryCache
   } = {},
 ): PcbTraceError[] {
   const errors: PcbTraceError[] = getTracePortLayerMismatches(circuitJson).map(
@@ -317,7 +320,7 @@ function checkTracesAreContiguous(
   ) as PcbPlatedHole[]
 
   const padMap = new Map<PcbPortId, PcbPad[]>()
-  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
+  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson, connectivityGeometryCache)
   let fullConnectivityMap: ConnectivityMap | undefined = connMap
   let traceWireSegmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer | undefined
   const getFullConnectivityMap = () => {

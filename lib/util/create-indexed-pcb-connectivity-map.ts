@@ -7,6 +7,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import Flatbush from "flatbush"
 import { getViaAndPourConnections } from "./get-via-and-pour-connections"
+import type { PcbConnectivityGeometryCache } from "./pcb-connectivity-geometry-cache"
 
 type TraceBounds = {
   traceIndex: number
@@ -19,6 +20,7 @@ type TraceBounds = {
 /** Physical trace connectivity, including plated via barrels and copper pours. */
 export function createIndexedPcbConnectivityMap(
   circuitJson: AnyCircuitElement[],
+  geometryCache?: PcbConnectivityGeometryCache,
 ): PcbConnectivityMap {
   // Construct empty to avoid the dependency's all-pairs scan. Keep its exact
   // intersection predicate and query methods, including cross-net contacts.
@@ -112,7 +114,7 @@ export function createIndexedPcbConnectivityMap(
     for (const connection of connectionsByPort.get(portId) ?? [])
       connections.push(connection)
   }
-  connections.push(...getViaAndPourConnections(circuitJson))
+  connections.push(...getViaAndPourConnections(circuitJson, geometryCache))
   map.connMap = new ConnectivityMap(findConnectedNetworks(connections))
   return map
 }
