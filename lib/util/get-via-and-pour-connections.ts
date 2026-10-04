@@ -7,6 +7,11 @@ import {
 } from "@tscircuit/circuit-json-util"
 import Flatbush from "flatbush"
 import { createCopperPolygonContactTester } from "../copper-pour-connectivity/create-copper-polygon-contact-tester"
+import {
+  getCachedScaledCopperPolygon,
+  getCopperPolygonGeometryKey,
+  type PcbConnectivityGeometryCache,
+} from "./pcb-connectivity-geometry-cache"
 
 type Conductor = {
   id: string
@@ -23,6 +28,7 @@ type Conductor = {
  */
 export function getViaAndPourConnections(
   circuit: AnyCircuitElement[],
+  geometryCache?: PcbConnectivityGeometryCache,
 ): string[][] {
   if (
     !circuit.some(
@@ -41,14 +47,24 @@ export function getViaAndPourConnections(
   const add = (
     id: string,
     layers: string[],
-    polygon: Polygon,
+    createPolygon: () => Polygon,
     bridges = false,
+    geometryKey?: string,
   ) => {
+    const hasCachedGeometry = geometryCache && geometryKey !== undefined
+    const polygon = hasCachedGeometry
+      ? getCachedScaledCopperPolygon(
+          geometryCache,
+          geometryKey,
+          scale,
+          createPolygon,
+        )
+      : createPolygon()
     if (!polygon.isEmpty())
       conductors.push({
         id,
         layers,
-        polygon: polygon.scale(scale, scale),
+        polygon: hasCachedGeometry ? polygon : polygon.scale(scale, scale),
         bridges,
       })
   }
@@ -66,8 +82,15 @@ export function getViaAndPourConnections(
       add(
         copper.pcb_via_id,
         copper.layers,
-        circlePolygon(copper, copper.outer_diameter / 2),
+        () => circlePolygon(copper, copper.outer_diameter / 2),
         true,
+        geometryCache
+          ? getCopperPolygonGeometryKey("via", [
+              [copper, "x"],
+              [copper, "y"],
+              [copper, "outer_diameter"],
+            ])
+          : undefined,
       )
       if (copper.pcb_trace_id)
         connections.push([copper.pcb_via_id, copper.pcb_trace_id])
@@ -75,7 +98,7 @@ export function getViaAndPourConnections(
       add(
         copper.pcb_copper_pour_id,
         [copper.layer],
-        getPourPolygon(copper),
+        () => getPourPolygon(copper),
         true,
       )
     } else if (copper.type === "pcb_trace") {
@@ -92,7 +115,17 @@ export function getViaAndPourConnections(
           add(
             copper.pcb_trace_id,
             [a.layer],
-            getTraceSegmentPolygon(a, b, a.width),
+            () => getTraceSegmentPolygon(a, b, a.width),
+            false,
+            geometryCache
+              ? getCopperPolygonGeometryKey("wire", [
+                  [a, "x"],
+                  [a, "y"],
+                  [b, "x"],
+                  [b, "y"],
+                  [a, "width"],
+                ])
+              : undefined,
           )
         } else if (a.route_type === "via") {
           // A materialized via is authoritative (especially for blind/buried spans).
@@ -119,8 +152,15 @@ export function getViaAndPourConnections(
           add(
             copper.pcb_trace_id,
             via.layers,
-            circlePolygon(via, via.outer_diameter / 2),
+            () => circlePolygon(via, via.outer_diameter / 2),
             true,
+            geometryCache
+              ? getCopperPolygonGeometryKey("via", [
+                  [via, "x"],
+                  [via, "y"],
+                  [via, "outer_diameter"],
+                ])
+              : undefined,
           )
         }
       }
