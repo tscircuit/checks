@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import * as Flatten from "@flatten-js/core"
-import { createPolygonPointTester } from "../../lib/util/create-polygon-point-tester"
+import { polygonContainsPoint } from "../../lib/util/polygon-contains-point"
 
 function addRing(polygon: Flatten.Polygon, vertices: [number, number][]): void {
   polygon.addFace(
@@ -15,7 +15,7 @@ function addRing(polygon: Flatten.Polygon, vertices: [number, number][]): void {
 }
 
 test("half-open crossings preserve holes, winding, boundaries and analytic curves", (): void => {
-  const contains = createPolygonPointTester()
+  const contains = polygonContainsPoint
   // Deliberately construct segments without dropping tolerance-sized edges.
   for (const gap of [0.25e-6, 1e-6, 2e-6, 4e-6]) {
     for (const reverse of [false, true]) {
