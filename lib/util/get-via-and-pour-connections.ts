@@ -2,6 +2,7 @@ import type { Polygon } from "@flatten-js/core"
 import { all_layers, type AnyCircuitElement, type PcbVia } from "circuit-json"
 import {
   circlePolygon,
+  getPlatedHolePolygon,
   getPourPolygon,
   getTraceSegmentPolygon,
 } from "@tscircuit/circuit-json-util"
@@ -13,13 +14,15 @@ type Conductor = {
   layers: string[]
   polygon: Polygon
   bridges: boolean
+  platedPort: boolean
 }
 
 /** Add physical barrel/pour edges in board-world mm. Logical net membership
  * never joins copper; holes in pours and the emitted via layer span are retained.
  * Wire/wire intersections remain handled by the existing trace index.
- * Pads stay in the dedicated port/pour checks: adding their IDs here would
- * let a partial pour connection satisfy a named-net port prematurely.
+ * Plated ports attach only through direct trace/annulus contact, bridging their
+ * declared layers. Pour-only pad connections stay in the dedicated checks so
+ * an isolated pour and its trace stub cannot satisfy a named-net port.
  */
 export function getViaAndPourConnections(
   circuit: AnyCircuitElement[],
@@ -28,6 +31,7 @@ export function getViaAndPourConnections(
     !circuit.some(
       (e) =>
         e.type === "pcb_via" ||
+        e.type === "pcb_plated_hole" ||
         e.type === "pcb_copper_pour" ||
         (e.type === "pcb_trace" && e.route.some((p) => p.route_type === "via")),
     )
@@ -43,6 +47,7 @@ export function getViaAndPourConnections(
     layers: string[],
     polygon: Polygon,
     bridges = false,
+    platedPort = false,
   ) => {
     if (!polygon.isEmpty())
       conductors.push({
@@ -50,9 +55,15 @@ export function getViaAndPourConnections(
         layers,
         polygon: polygon.scale(scale, scale),
         bridges,
+        platedPort,
       })
   }
   const vias = circuit.filter((e) => e.type === "pcb_via")
+  const components = new Map(
+    circuit
+      .filter((e) => e.type === "pcb_component")
+      .map((e) => [e.pcb_component_id, e]),
+  )
   const board = circuit.find((e) => e.type === "pcb_board")
   const stack = [
     "top",
@@ -71,6 +82,22 @@ export function getViaAndPourConnections(
       )
       if (copper.pcb_trace_id)
         connections.push([copper.pcb_via_id, copper.pcb_trace_id])
+    } else if (copper.type === "pcb_plated_hole") {
+      if (!copper.pcb_port_id) continue
+      // Historical circular-hole/rect-pad records omit centered offsets.
+      const pad = { hole_offset_x: 0, hole_offset_y: 0, ...copper }
+      add(
+        copper.pcb_port_id,
+        copper.layers,
+        getPlatedHolePolygon(
+          pad,
+          copper.pcb_component_id
+            ? components.get(copper.pcb_component_id)?.rotation
+            : 0,
+        ),
+        true,
+        true,
+      )
     } else if (copper.type === "pcb_copper_pour") {
       add(
         copper.pcb_copper_pour_id,
@@ -144,6 +171,8 @@ export function getViaAndPourConnections(
     )) {
       const b = conductors[j]
       if (
+        (a.platedPort && b.bridges) ||
+        (b.platedPort && a.bridges) ||
         i === j ||
         a.id === b.id ||
         (b.bridges && j < i) ||

@@ -45,7 +45,7 @@ function annotatedFixture(): AnyCircuitElement[] {
       "#80ed99",
     ],
     [
-      "Same copper; this reproduction retains the previous checker result",
+      "FIXED: same copper; direct trace contact now reaches the plated port",
       -3.8,
       0.18,
       "#ffffff",
@@ -67,12 +67,10 @@ function annotatedFixture(): AnyCircuitElement[] {
   ]
 }
 
-test("reproduce false disconnected-port error despite plated-pad copper contact", async () => {
+test("plated-pad contact is connected; snapshot explains the previous false positive", async () => {
   const circuit = annotatedFixture()
   const errors = checkEachPcbPortConnectedToPcbTraces(circuit)
-  expect(errors).toHaveLength(1)
-  expect(errors[0].message).toContain("C_USB_BULK.pin1")
-  expect(errors[0].message).toContain("USB_VBUS")
+  expect(errors).toEqual([])
   await expect(
     convertCircuitJsonToPcbSvg(circuit, { width: 1200, height: 950 }),
   ).toMatchSvgSnapshot(import.meta.path)
