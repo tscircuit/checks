@@ -385,20 +385,15 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
   expect(gap).toBeCloseTo(0.0973, 4)
   expect(gap).toBeLessThan(minClearance)
 
-  // A normal test checks that the checker runs and that the geometry snapshot
-  // renders. A render failure cannot satisfy the expected-failure test below.
+  // Render the detected violation on the board so the snapshot shows the
+  // change in DRC output as well as the original copper geometry.
   const errors = checkViaPadClearance(getFocusedCircuitJson(), { minClearance })
-  expect(errors.length).toBeLessThanOrEqual(1)
-  for (const error of errors) {
-    expect(error.pcb_pad_ids).toEqual([via.pcb_via_id, c3GndPad.pcb_smtpad_id])
-  }
-  expect(
-    checkViaPadClearance(getFocusedCircuitJson(), {
-      minClearance: minClearance + 0.005,
-    }).map((error) => error.pcb_pad_ids),
-  ).toEqual([[via.pcb_via_id, c3GndPad.pcb_smtpad_id]])
+  expect(errors.map((error) => error.pcb_pad_ids)).toEqual([
+    [via.pcb_via_id, c3GndPad.pcb_smtpad_id],
+  ])
   const annotatedCircuitJson: AnyCircuitElement[] = [
     ...circuitJson,
+    ...errors,
     {
       type: "pcb_note_text",
       pcb_note_text_id: "mpu6050_clearance_note",
@@ -411,9 +406,12 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
       color: "#fbbf24",
     },
   ]
-  expect(convertCircuitJsonToPcbSvg(annotatedCircuitJson)).toMatchSvgSnapshot(
-    import.meta.path,
-  )
+  expect(
+    convertCircuitJsonToPcbSvg(annotatedCircuitJson, {
+      shouldDrawErrors: true,
+      showErrorsInTextOverlay: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
 
 test("MPU-6050 via-to-pad clearance should be reported", () => {
