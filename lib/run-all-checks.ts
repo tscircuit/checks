@@ -34,7 +34,10 @@ import {
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
-import { checkSourcePinVoltageCompatibility } from "./check-source-pin-voltage-compatibility"
+import {
+  checkSourcePinVoltageCompatibility,
+  type SourcePinVoltageCompatibilityOptions,
+} from "./check-source-pin-voltage-compatibility"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSchematicComponentMissingReferenceDesignatorText } from "./check-schematic-component-missing-reference-designator-text"
@@ -73,10 +76,13 @@ export async function runAllPlacementChecks(
     : errors
 }
 
-export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllNetlistChecks(
+  circuitJson: AnyCircuitElement[],
+  options: SourcePinVoltageCompatibilityOptions = {},
+) {
   return [
     ...checkPinMustBeConnected(circuitJson),
-    ...checkSourcePinVoltageCompatibility(circuitJson),
+    ...checkSourcePinVoltageCompatibility(circuitJson, options),
     ...checkSameNameNetsAreConnected(circuitJson),
     ...checkTwoTerminalSwitchContactsOnDifferentNets(circuitJson),
   ]
@@ -132,11 +138,14 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   ]
 }
 
-export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllChecks(
+  circuitJson: AnyCircuitElement[],
+  options: SourcePinVoltageCompatibilityOptions = {},
+) {
   return [
     ...(await runAllPlacementChecks(circuitJson)),
     ...(await runAllSchematicChecks(circuitJson)),
-    ...(await runAllNetlistChecks(circuitJson)),
+    ...(await runAllNetlistChecks(circuitJson, options)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
     ...(await runAllRoutingChecks(circuitJson)),
   ]
