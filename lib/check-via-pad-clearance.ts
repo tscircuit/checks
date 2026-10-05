@@ -23,7 +23,7 @@ import {
 } from "./check-pad-clearance/common"
 
 // Ignore only floating-point rounding, not a measurable clearance shortfall.
-const VIA_PAD_CLEARANCE_ROUNDING_EPSILON_MM = 1e-9
+const viaPadClearanceRoundingEpsilonMm = 1e-9
 
 export function checkViaPadClearance(
   circuitJson: AnyCircuitElement[],
@@ -70,8 +70,7 @@ export function checkViaPadClearance(
       if (connMap.areIdsConnected(via.pcb_via_id, padId)) continue
 
       const gap = getPadToPadGap(via, pad)
-      if (gap + VIA_PAD_CLEARANCE_ROUNDING_EPSILON_MM >= requiredClearance)
-        continue
+      if (gap + viaPadClearanceRoundingEpsilonMm >= requiredClearance) continue
 
       errors.push({
         type: "pcb_pad_pad_clearance_error",
