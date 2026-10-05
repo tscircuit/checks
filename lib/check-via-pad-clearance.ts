@@ -1,4 +1,3 @@
-import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
@@ -6,21 +5,25 @@ import type {
   PcbPadPadClearanceError,
   PcbVia,
 } from "circuit-json"
-import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
+import { formatMm } from "format-si-unit"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
-import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   type PadElement,
   getPadBounds,
-  getViaPadClearanceCenter,
   getPadToPadGap,
   getPads,
+  getViaPadClearanceCenter,
 } from "./check-pad-clearance/common"
+
+// Ignore only floating-point rounding, not a measurable clearance shortfall.
+const VIA_PAD_CLEARANCE_ROUNDING_EPSILON_MM = 1e-9
 
 export function checkViaPadClearance(
   circuitJson: AnyCircuitElement[],
@@ -67,7 +70,8 @@ export function checkViaPadClearance(
       if (connMap.areIdsConnected(via.pcb_via_id, padId)) continue
 
       const gap = getPadToPadGap(via, pad)
-      if (gap + EPSILON >= requiredClearance) continue
+      if (gap + VIA_PAD_CLEARANCE_ROUNDING_EPSILON_MM >= requiredClearance)
+        continue
 
       errors.push({
         type: "pcb_pad_pad_clearance_error",

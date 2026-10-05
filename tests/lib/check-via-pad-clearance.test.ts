@@ -89,3 +89,41 @@ test("checkViaPadClearance reports an escape via too close to an unrelated fine-
 
   expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
+
+test("checkViaPadClearance enforces the full 0.1mm via-to-pad clearance", () => {
+  for (const { gapMm, expectedErrors } of [
+    { gapMm: 0.0973, expectedErrors: 1 },
+    { gapMm: 0.099999, expectedErrors: 1 },
+    { gapMm: 0.1, expectedErrors: 0 },
+    { gapMm: 0.100001, expectedErrors: 0 },
+  ]) {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "pcb_via",
+        pcb_via_id: "via",
+        x: 0,
+        y: 0,
+        hole_diameter: 0.15,
+        outer_diameter: 0.3,
+        layers: ["top", "bottom"],
+      },
+      {
+        type: "pcb_smtpad",
+        pcb_smtpad_id: "pad",
+        shape: "rect",
+        x: 0.25 + gapMm,
+        y: 0,
+        width: 0.2,
+        height: 0.2,
+        layer: "top",
+      },
+    ]
+
+    const errors = checkViaPadClearance(circuitJson, { minClearance: 0.1 })
+    expect(errors).toHaveLength(expectedErrors)
+    if (expectedErrors === 1) {
+      expect(errors[0].pcb_pad_ids).toEqual(["via", "pad"])
+      expect(errors[0].actual_clearance).toBeCloseTo(gapMm, 8)
+    }
+  }
+})
