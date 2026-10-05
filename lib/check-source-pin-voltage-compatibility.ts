@@ -61,10 +61,12 @@ export function checkSourcePinVoltageCompatibility(
     for (const supply of suppliesByNet.get(net) ?? []) {
       if (supply.sourcePort.source_port_id === consumerPort.source_port_id)
         continue
-      // Allow numeric roundoff, not an undocumented electrical tolerance.
+      const relativeTolerance = consumerPort.required_voltage_tolerance ?? 0
+      // Preserve roundoff allowance at inclusive tolerance boundaries.
       if (
         Math.abs(supply.volts - requiredVolts) <=
-        1e-9 * Math.max(1, Math.abs(supply.volts), Math.abs(requiredVolts))
+        Math.abs(requiredVolts) * relativeTolerance +
+          1e-9 * Math.max(1, Math.abs(supply.volts), Math.abs(requiredVolts))
       )
         continue
       errors.push(

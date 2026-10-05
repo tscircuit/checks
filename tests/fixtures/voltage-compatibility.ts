@@ -3,9 +3,11 @@ import type { AnyCircuitElement } from "circuit-json"
 export const voltageCompatibilityFixture = ({
   providedVoltage = 1.8,
   requiredVoltage = 2.8,
+  requiredVoltageTolerance,
 }: {
   providedVoltage?: number | string
   requiredVoltage?: number | string
+  requiredVoltageTolerance?: number
 } = {}): AnyCircuitElement[] => {
   const elements: AnyCircuitElement[] = [
     {
@@ -31,6 +33,7 @@ export const voltageCompatibilityFixture = ({
       source_port_id: "source_port_consumer",
       source_component_id: "source_component_consumer",
       name: "AVCC",
+      required_voltage_tolerance: requiredVoltageTolerance,
     },
     {
       type: "source_trace",
