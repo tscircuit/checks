@@ -3,11 +3,6 @@ import { checkSourcePinVoltageCompatibility, runAllNetlistChecks } from "../.."
 import { voltageCompatibilityFixture } from "../fixtures/voltage-compatibility"
 
 test("explicit pin voltage tolerance accepts inclusive bounds without weakening other pins", async () => {
-  const options = {
-    requiredVoltageToleranceBySourcePortId: new Map([
-      ["source_port_consumer", 0.05],
-    ]),
-  }
   for (const [providedVoltage, requiredVoltage, errorCount] of [
     [3.3, 3.3, 0],
     [3.135, 3.3, 0],
@@ -24,27 +19,30 @@ test("explicit pin voltage tolerance accepts inclusive bounds without weakening 
     const circuitJson = voltageCompatibilityFixture({
       providedVoltage,
       requiredVoltage,
+      requiredVoltageTolerance: 0.05,
     })
-    expect(
-      checkSourcePinVoltageCompatibility(circuitJson, options),
-    ).toHaveLength(errorCount)
-    expect(await runAllNetlistChecks(circuitJson, options)).toHaveLength(
+    expect(checkSourcePinVoltageCompatibility(circuitJson)).toHaveLength(
       errorCount,
     )
+    expect(await runAllNetlistChecks(circuitJson)).toHaveLength(errorCount)
   }
 
+  for (const tolerance of [undefined, 0]) {
+    expect(
+      checkSourcePinVoltageCompatibility(
+        voltageCompatibilityFixture({
+          providedVoltage: 3.4,
+          requiredVoltage: 3.3,
+          requiredVoltageTolerance: tolerance,
+        }),
+      ),
+    ).toHaveLength(1)
+  }
   const circuitJson = voltageCompatibilityFixture({
     providedVoltage: 3.4,
     requiredVoltage: 3.3,
+    requiredVoltageTolerance: 0.05,
   })
-  expect(checkSourcePinVoltageCompatibility(circuitJson)).toHaveLength(1)
-  expect(
-    checkSourcePinVoltageCompatibility(circuitJson, {
-      requiredVoltageToleranceBySourcePortId: new Map([
-        ["source_port_consumer", 0],
-      ]),
-    }),
-  ).toHaveLength(1)
   circuitJson.push(
     {
       type: "source_port",
@@ -73,7 +71,9 @@ test("explicit pin voltage tolerance accepts inclusive bounds without weakening 
       connected_source_net_ids: ["source_net_avcc"],
     },
   )
-  const errors = await runAllNetlistChecks(circuitJson, options)
+  const errors = await runAllNetlistChecks(
+    JSON.parse(JSON.stringify(circuitJson)),
+  )
   expect(errors).toHaveLength(3)
   expect(
     errors.map((error) => "source_port_ids" in error && error.source_port_ids),

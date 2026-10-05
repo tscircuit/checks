@@ -8,13 +8,6 @@ import {
 import { getSourcePortConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { getReadableNameForSourcePort } from "./util/get-readable-names"
 
-type SourcePortId = SourcePort["source_port_id"]
-
-export interface SourcePinVoltageCompatibilityOptions {
-  /** Explicit relative tolerances (0.05 means ±5%), keyed by consumer pin. */
-  requiredVoltageToleranceBySourcePortId?: ReadonlyMap<SourcePortId, number>
-}
-
 /** Only compare documented scalar voltages; legacy ranges/prose are not scalars. */
 const parseScalarVoltage = (value: unknown): number | undefined => {
   if (value === undefined) return undefined
@@ -40,9 +33,6 @@ const parseScalarVoltage = (value: unknown): number | undefined => {
  */
 export function checkSourcePinVoltageCompatibility(
   circuitJson: AnyCircuitElement[],
-  {
-    requiredVoltageToleranceBySourcePortId,
-  }: SourcePinVoltageCompatibilityOptions = {},
 ): SourceComponentMisconfiguredError[] {
   const connectivity = getSourcePortConnectivityMapFromCircuitJson(circuitJson)
   const sourcePorts = circuitJson.filter(
@@ -71,10 +61,7 @@ export function checkSourcePinVoltageCompatibility(
     for (const supply of suppliesByNet.get(net) ?? []) {
       if (supply.sourcePort.source_port_id === consumerPort.source_port_id)
         continue
-      const relativeTolerance =
-        requiredVoltageToleranceBySourcePortId?.get(
-          consumerPort.source_port_id,
-        ) ?? 0
+      const relativeTolerance = consumerPort.required_voltage_tolerance ?? 0
       // Preserve roundoff allowance at inclusive tolerance boundaries.
       if (
         Math.abs(supply.volts - requiredVolts) <=
