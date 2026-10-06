@@ -1,6 +1,7 @@
 import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
 import Flatbush from "flatbush"
 import * as Flatten from "@flatten-js/core"
+import { polygonContainsPoint } from "./util/polygon-contains-point"
 
 import {
   convertCircuitJsonToFlattenJs,
@@ -23,8 +24,12 @@ function touchesPour(
   // are disjoint, one point per face suffices; walking every pour vertex is costly.
   return (
     pour.intersect(geometry).length > 0 ||
-    [...geometry.faces].some((face) => pour.contains(face.first.start)) ||
-    [...pour.faces].some((face) => geometry.contains(face.first.start))
+    [...geometry.faces].some((face) =>
+      polygonContainsPoint(pour, face.first.start),
+    ) ||
+    [...pour.faces].some((face) =>
+      polygonContainsPoint(geometry, face.first.start),
+    )
   )
 }
 
