@@ -35,7 +35,7 @@
     "@tscircuit/circuit-json-to-flattenjs": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-to-flattenjs/0.0.3.tgz",
     "@tscircuit/core": "^0.0.1930",
     "tscircuit-for-length-tests": "npm:tscircuit@0.0.2568",
-    "@tscircuit/circuit-json-util": "^0.0.119"
+    "@tscircuit/circuit-json-util": "^0.0.120"
   },
   "peerDependencies": {
     "@flatten-js/core": "*",
