@@ -19,17 +19,41 @@ function touchesPour(
   geometry: Flatten.Polygon,
 ): boolean {
   if (!pour.box.intersect(geometry.box)) return false
-  // distanceTo can report zero between tiny BRep segments and distant arcs.
-  // Test actual boundary intersections and containment instead. Once boundaries
+  const boundariesIntersect = pour
+    .intersect(geometry)
+    .some(
+      (intersection) =>
+        hasBoundaryAtPoint(pour, intersection) &&
+        hasBoundaryAtPoint(geometry, intersection),
+    )
+  // Flatten can return intersections on the infinite line of a tiny segment.
+  // Accept only points within both polygons' actual edge bounds. Once boundaries
   // are disjoint, one point per face suffices; walking every pour vertex is costly.
   return (
-    pour.intersect(geometry).length > 0 ||
+    boundariesIntersect ||
     [...geometry.faces].some((face) =>
       polygonContainsPoint(pour, face.first.start),
     ) ||
     [...pour.faces].some((face) =>
       polygonContainsPoint(geometry, face.first.start),
     )
+  )
+}
+
+function hasBoundaryAtPoint(
+  polygon: Flatten.Polygon,
+  point: Flatten.Point,
+): boolean {
+  const tolerance = Flatten.Utils.getTolerance()
+  return (
+    polygon.edges.search(
+      new Flatten.Box(
+        point.x - tolerance,
+        point.y - tolerance,
+        point.x + tolerance,
+        point.y + tolerance,
+      ),
+    ).length > 0
   )
 }
 
