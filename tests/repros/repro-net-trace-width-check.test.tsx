@@ -50,7 +50,7 @@ test("repro: width check skips port-to-net traces", async () => {
   const warnings = checkSourceTracesMatchPcbTraceThickness(
     circuit.getCircuitJson(),
   )
-  expect(warnings).toHaveLength(0)
+  expect(warnings).toHaveLength(2)
   const statusNote = circuit.db.pcb_note_text.list().at(-1)!
   circuit.db.pcb_note_text.update(statusNote.pcb_note_text_id, {
     text: `Expected: 2 width warnings / reported: ${warnings.length}`,

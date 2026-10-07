@@ -42,7 +42,7 @@ export function checkSourceTracesMatchPcbTraceThickness(
     const connectedPcbPorts = pcbPorts.filter((pcbPort) =>
       sourceTrace.connected_source_port_ids?.includes(pcbPort.source_port_id),
     )
-    if (connectedPcbPorts.length < 2) continue
+    if (connectedPcbPorts.length === 0) continue
 
     const referenceNetId = connectivityMap.getNetConnectedToId(
       connectedPcbPorts[0].pcb_port_id,
