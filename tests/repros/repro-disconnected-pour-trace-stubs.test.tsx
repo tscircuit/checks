@@ -49,8 +49,7 @@ test("ground-island connectivity with local trace stubs", async () => {
   expect(pours[0].source_net_id).toBe(pours[1].source_net_id)
   // routingDisabled preserves the gap; invoke routing DRC explicitly.
   const errors = await runAllRoutingChecks(circuitJson)
-  // Record the missed errors until the stacked fix updates this expectation.
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(2)
   expect(
     errors.every((error) => error.type === "pcb_port_not_connected_error"),
   ).toBe(true)
@@ -176,8 +175,7 @@ test("power-island connectivity with a port-to-port requirement", async () => {
   expect(pours[0].source_net_id).toBe(pours[1].source_net_id)
   // routingDisabled preserves the gap; invoke routing DRC explicitly.
   const errors = await runAllRoutingChecks(circuitJson)
-  // Record the missed errors until the stacked fix updates this expectation.
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(3)
   expect(
     errors.every((error) => error.type === "pcb_port_not_connected_error"),
   ).toBe(true)

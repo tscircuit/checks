@@ -54,6 +54,15 @@ function checkEachPcbPortConnectedToPcbTraces(
   // Generate the connectivity map from the circuit
   const connectivityMap =
     connMap ?? getFullConnectivityMapFromCircuitJson(circuitJson)
+  const pouredNetIds = new Set(
+    circuitJson.flatMap((element) => {
+      if (element.type !== "pcb_copper_pour" || !element.source_net_id)
+        return []
+      const netId = connectivityMap.getNetConnectedToId(element.source_net_id)
+      if (!netId) return []
+      return [netId]
+    }),
+  )
   pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
   let pourConnectivity: ReturnType<typeof getCopperPourConnectivity> | undefined
   const getPourConnectivity = () =>
@@ -86,9 +95,15 @@ function checkEachPcbPortConnectedToPcbTraces(
       const connectedPcbTraces = pcbConnectivityMap.getAllTracesConnectedToPort(
         pcbPort.pcb_port_id,
       )
+      const hasPouredNet = sourceTrace.connected_source_net_ids.some(
+        (sourceNetId) => {
+          const netId = connectivityMap.getNetConnectedToId(sourceNetId)
+          return netId !== undefined && pouredNetIds.has(netId)
+        },
+      )
 
       if (
-        connectedPcbTraces.length === 0 &&
+        (hasPouredNet || connectedPcbTraces.length === 0) &&
         !getPourConnectivity().isPortConnectedToNet(
           pcbPort.pcb_port_id,
           sourceTrace.connected_source_net_ids,
@@ -150,14 +165,13 @@ function checkEachPcbPortConnectedToPcbTraces(
     const pcbTraceIds = netElementIds.filter((id) =>
       circuitJson.some(
         (element) =>
-          element.type === "pcb_trace" &&
-          (("pcb_trace_id" in element && element.pcb_trace_id === id) ||
-            ("route_id" in element && element.route_id === id)),
+          element.type === "pcb_trace" && element.pcb_trace_id === id,
       ),
     )
 
     if (
-      pcbTraceIds.length === 0 &&
+      ((referenceNetId !== undefined && pouredNetIds.has(referenceNetId)) ||
+        pcbTraceIds.length === 0) &&
       !getPourConnectivity().arePortsConnected(
         pcbPortsInTrace.map((port) => port.pcb_port_id),
       )
