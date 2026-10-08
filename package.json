@@ -24,7 +24,7 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
-    "circuit-json": "^0.0.514",
+    "circuit-json": "https://pkg.pr.new/circuit-json@263d142",
     "circuit-json-to-connectivity-map": "^0.0.30",
     "circuit-to-svg": "^0.0.388",
     "debug": "^4.3.5",
@@ -35,7 +35,8 @@
     "@tscircuit/circuit-json-to-flattenjs": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-to-flattenjs/0.0.3.tgz",
     "@tscircuit/core": "^0.0.1930",
     "tscircuit-for-length-tests": "npm:tscircuit@0.0.2568",
-    "@tscircuit/circuit-json-util": "^0.0.120"
+    "@tscircuit/circuit-json-util": "^0.0.120",
+    "@tscircuit/circuit-json-pcb-style-analysis": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-pcb-style-analysis/0.0.3.tgz"
   },
   "peerDependencies": {
     "@flatten-js/core": "*",

@@ -6,6 +6,7 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   noExternal: [
+    "@tscircuit/circuit-json-pcb-style-analysis",
     "@tscircuit/circuit-json-schematic-placement-analysis",
     // The bundled analysis imports calculate-elbow source; keep it inside our
     // JS bundle rather than leaking a private directory import to Node.

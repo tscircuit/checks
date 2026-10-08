@@ -1,0 +1,1 @@
+Real RC car Circuit JSON copied from tscircuit/core, tests/repros/assets/rc-car-schematic-section-title-overlap.circuit.json. Formatting is compacted; geometry and element ordering are unchanged. This complete board has 94 PCB traces and two qualifying long segments at odd angles. No artificial error geometry is added.
