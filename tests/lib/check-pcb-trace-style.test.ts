@@ -62,7 +62,9 @@ test("real RC car style warnings retain both measurements and original copper lo
   expect(warnings[0].angle_deviation_degrees).toBeCloseTo(14.35677595345652)
   for (const warning of warnings)
     expect(pcb_trace_style_warning.parse(warning)).toEqual(warning)
-  expect(new Set(warnings.map((w) => w.pcb_trace_style_warning_id)).size).toBe(2)
+  expect(new Set(warnings.map((w) => w.pcb_trace_style_warning_id)).size).toBe(
+    2,
+  )
   expect(checkPcbTraceStyle(circuitJson, enabled)).toEqual(warnings)
   expect(JSON.stringify(circuitJson)).toBe(original)
 })
