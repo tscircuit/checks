@@ -36,15 +36,10 @@ test("real RC car style warnings retain both measurements and original copper lo
   const original = JSON.stringify(circuitJson)
   const warnings = checkPcbTraceStyle(circuitJson, enabled)
   expect(
-    warnings.map((w) => [
-      w.circuit_json_index,
-      w.start_route_index,
-      w.end_route_index,
-      w.layer,
-    ]),
+    warnings.map((w) => [w.start_route_index, w.end_route_index, w.layer]),
   ).toEqual([
-    [1360, 4, 5, "bottom"],
-    [1360, 5, 6, "bottom"],
+    [4, 5, "bottom"],
+    [5, 6, "bottom"],
   ])
   expect(warnings[0]).toMatchObject({
     type: "pcb_trace_style_warning",
@@ -52,8 +47,8 @@ test("real RC car style warnings retain both measurements and original copper lo
     pcb_trace_id: "pcb_trace_3",
     source_trace_id: "source_trace_44",
     styling_issue_type: "long_segment_at_odd_angle",
-    start: { x: -15.5, y: 9.1 },
-    end: { x: -3, y: -12.000000000000002 },
+    segment_start: { x: -15.5, y: 9.1 },
+    segment_end: { x: -3, y: -12.000000000000002 },
     center: { x: -9.25, y: -1.450000000000001 },
     minimum_segment_length: 5,
     angle_tolerance_degrees: 4,
@@ -66,6 +61,14 @@ test("real RC car style warnings retain both measurements and original copper lo
     2,
   )
   expect(checkPcbTraceStyle(circuitJson, enabled)).toEqual(warnings)
+  // Moving records within Circuit JSON must not change warning identity.
+  expect(checkPcbTraceStyle([...circuitJson].reverse(), enabled)).toEqual(
+    warnings,
+  )
+  for (const warning of warnings) {
+    expect(warning).not.toHaveProperty("circuit_json_index")
+    expect(warning).not.toHaveProperty("bounds")
+  }
   expect(JSON.stringify(circuitJson)).toBe(original)
 })
 
