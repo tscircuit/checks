@@ -1,4 +1,7 @@
-import { checkPcbTraceStyle, type PcbStyleCheckOptions } from "./check-pcb-trace-style"
+import {
+  checkPcbTraceStyle,
+  type PcbStyleCheckOptions,
+} from "./check-pcb-trace-style"
 import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
 import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
