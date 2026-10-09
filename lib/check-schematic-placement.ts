@@ -11,6 +11,9 @@ const enabledIssueTypes = [
   "TwoPinComponentHasInvertedRails",
   "RegulatorCapacitorsOnWrongSides",
   "PullResistorOnWrongSide",
+  "VoltageDividerSupplyResistorBelowGroundResistor",
+  "SeriesLedChainNotOrdered",
+  "ParallelRcNotAligned",
 ] as const
 
 export function checkSchematicPlacement(
@@ -34,7 +37,7 @@ export function checkSchematicPlacement(
             schematicComponentId ?? "",
           )
           stylingIssueType = "inverted_rails"
-          message = `${componentName} has its positive-supply connection below its ground connection. Rotate ${componentName} by 180°, preserving pin connections, and reroute attached traces.`
+          message = `${componentName} has its positive-supply pin facing down. Rotate ${componentName} by 180° so that pin faces up, preserving pin connections, and reroute attached traces.`
           break
         }
         case "RegulatorCapacitorsOnWrongSides": {
@@ -61,6 +64,51 @@ export function checkSchematicPlacement(
           stylingIssueType = "pull_resistor_on_wrong_side"
           message = `consider placing ${getReadableNameForElementId(circuitJson, schematicComponentId ?? "")} ${issue.preferredSide} ${getReadableNameForElementId(circuitJson, issue.hostSchematicBox.schematicComponentId ?? "")}.${getReadableNameForElementId(circuitJson, issue.signalSourcePortId)} so the pull-${issue.pullDirection} branch reads toward ${issue.pullDirection === "up" ? "power" : "ground"}`
           break
+        case "VoltageDividerSupplyResistorBelowGroundResistor": {
+          schematicComponentId =
+            issue.supplyResistorSchematicBox.schematicComponentId
+          const supplyResistorName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          const groundResistorName = getReadableNameForElementId(
+            circuitJson,
+            issue.groundResistorSchematicBox.schematicComponentId ?? "",
+          )
+          stylingIssueType =
+            "voltage_divider_supply_resistor_below_ground_resistor"
+          message = `${supplyResistorName}, connected to the supply, is below ${groundResistorName}, connected to ground. Place ${supplyResistorName} above ${groundResistorName} so their shared divider tap is easy to follow. Preserve pin connections and reroute affected traces; exact alignment is not required.`
+          break
+        }
+        case "SeriesLedChainNotOrdered": {
+          schematicComponentId =
+            issue.ledSchematicBoxes[0]?.schematicComponentId
+          const ledNames = issue.ledSchematicBoxes
+            .map((box) =>
+              getReadableNameForElementId(
+                circuitJson,
+                box.schematicComponentId ?? "",
+              ),
+            )
+            .join(", ")
+          stylingIssueType = "series_led_chain_not_ordered"
+          message = `The series chain ${ledNames} requires long connections behind LED pins. Arrange the LEDs in their connected order, preserving anode/cathode connections, and reroute affected traces. A horizontal, vertical, or clearly connected folded chain is acceptable.`
+          break
+        }
+        case "ParallelRcNotAligned": {
+          schematicComponentId = issue.resistorSchematicBox.schematicComponentId
+          const resistorName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          const capacitorName = getReadableNameForElementId(
+            circuitJson,
+            issue.capacitorSchematicBox.schematicComponentId ?? "",
+          )
+          stylingIssueType = "parallel_rc_not_aligned"
+          message = `${resistorName} and ${capacitorName} share chip-pin and ground connections but are not drawn as adjacent parallel branches. Place their shared connections at matching ends, preserving pin connections and capacitor polarity, and reroute affected traces.`
+          break
+        }
         default:
           return []
       }

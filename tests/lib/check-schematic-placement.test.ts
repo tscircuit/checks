@@ -20,7 +20,7 @@ test("converts inverted rails to a warning with component, port and sheet associ
       warning_type: "schematic_component_styling_warning",
       styling_issue_type: "inverted_rails",
       message:
-        "C1 has its positive-supply connection below its ground connection. Rotate C1 by 180°, preserving pin connections, and reroute attached traces.",
+        "C1 has its positive-supply pin facing down. Rotate C1 by 180° so that pin faces up, preserving pin connections, and reroute attached traces.",
       schematic_component_id: "schematic_component_1",
       source_component_id: "source_component_1",
       schematic_sheet_id: "schematic_sheet_1",
