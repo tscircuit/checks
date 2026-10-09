@@ -49,5 +49,7 @@ test("warns when parallel RC branches are not aligned", async () => {
   expect(warnings[0]).toMatchObject({
     type: "schematic_component_styling_warning",
     styling_issue_type: "parallel_rc_not_aligned",
+    message:
+      "R1 and C1 share chip-pin and ground connections but are not drawn as adjacent parallel branches. Place their shared connections at matching ends, preserving pin connections and capacitor polarity, and reroute affected traces.",
   })
 })

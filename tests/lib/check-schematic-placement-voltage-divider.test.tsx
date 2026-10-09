@@ -47,5 +47,7 @@ test("warns when the supply resistor is below the ground resistor", async () => 
   expect(warnings[0]).toMatchObject({
     type: "schematic_component_styling_warning",
     styling_issue_type: "voltage_divider_supply_resistor_below_ground_resistor",
+    message:
+      "R1, connected to the supply, is below R2, connected to ground. Place R1 above R2 so their shared divider tap is easy to follow. Preserve pin connections and reroute affected traces; exact alignment is not required.",
   })
 })

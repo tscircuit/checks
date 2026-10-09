@@ -23,5 +23,7 @@ test("warns when a series LED chain is not ordered", async () => {
   expect(warnings[0]).toMatchObject({
     type: "schematic_component_styling_warning",
     styling_issue_type: "series_led_chain_not_ordered",
+    message:
+      "The series chain LED1, LED2, LED3 requires long connections behind LED pins. Arrange the LEDs in their connected order, preserving anode/cathode connections, and reroute affected traces. A horizontal, vertical, or clearly connected folded chain is acceptable.",
   })
 })
