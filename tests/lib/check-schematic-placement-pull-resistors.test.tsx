@@ -9,7 +9,10 @@ import {
   runAllSchematicChecks,
 } from "../.."
 
-async function createPullResistorCircuit(corrected = false) {
+async function createPullResistorCircuit(
+  corrected = false,
+  supplyRotation = 270,
+) {
   const circuit = new Circuit()
   circuit.pcbDisabled = true
   circuit.add(
@@ -32,7 +35,7 @@ async function createPullResistorCircuit(corrected = false) {
         resistance="10k"
         schX={-3}
         schY={corrected ? 3 : -3}
-        schRotation={90}
+        schRotation={supplyRotation}
       />
       <resistor
         name="R2"
@@ -130,4 +133,15 @@ test("clears corrected placement and does not guess pull roles without pin metad
     delete element.needs_external_pulldown
   }
   expect(checkSchematicPlacement(before)).toEqual([])
+})
+
+test("describes an inverted pull-up supply pin without calling its signal pin ground", async () => {
+  const circuitJson = await createPullResistorCircuit(true, 90)
+  const warnings = checkSchematicPlacement(circuitJson)
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0]).toMatchObject({
+    styling_issue_type: "inverted_rails",
+    message:
+      "R1 has its positive-supply pin facing down. Rotate R1 by 180° so that pin faces up, preserving pin connections, and reroute attached traces.",
+  })
 })
