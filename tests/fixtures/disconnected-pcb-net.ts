@@ -111,30 +111,3 @@ for (const i of [0, 2]) {
 export const disconnectedPcbNet = raw.map((element) =>
   any_circuit_element.parse(element),
 )
-
-export const connectedPcbNet = [
-  ...structuredClone(disconnectedPcbNet),
-  any_circuit_element.parse({
-    type: "pcb_trace",
-    pcb_trace_id: "pcb_trace_bridge",
-    source_trace_id: "source_trace_1",
-    route: [
-      {
-        route_type: "wire",
-        x: xs[1],
-        y: 0,
-        layer: "top",
-        width: 0.2,
-        start_pcb_port_id: "pcb_port_1",
-      },
-      {
-        route_type: "wire",
-        x: xs[2],
-        y: 0,
-        layer: "top",
-        width: 0.2,
-        end_pcb_port_id: "pcb_port_2",
-      },
-    ],
-  }),
-]

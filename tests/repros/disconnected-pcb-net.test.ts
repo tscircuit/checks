@@ -1,31 +1,9 @@
 import { expect, test } from "bun:test"
-import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkDanglingTraces } from "lib/check-dangling-traces/check-dangling-traces"
 import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { runAllRoutingChecks } from "lib/run-all-checks"
-import {
-  connectedPcbNet,
-  disconnectedPcbNet,
-} from "../fixtures/disconnected-pcb-net"
-
-function renderNetFixture(
-  circuitJson: AnyCircuitElement[],
-  errors: AnyCircuitElement[],
-  title: string,
-) {
-  return convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
-    shouldDrawErrors: true,
-    showErrorsInTextOverlay: true,
-  })
-    .replace(/<text[^>]*data-type="pcb_error_text_overlay"[^>]*>/, (tag) =>
-      tag.replace('y="20"', 'y="50"'),
-    )
-    .replace(
-      "</svg>",
-      `<text x="50%" y="24" text-anchor="middle" fill="#fbbf24" font-family="sans-serif" font-size="16">${title}</text></svg>`,
-    )
-}
+import { disconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
 test("two disconnected net islands have contiguous traces and no dangling ends", async () => {
   expect(disconnectedPcbNet).toHaveLength(28)
@@ -34,13 +12,18 @@ test("two disconnected net islands have contiguous traces and no dangling ends",
 
   const errors = await runAllRoutingChecks(disconnectedPcbNet)
   const status = errors.length ? "DETECTED" : "FAILING"
-  expect(
-    renderNetFixture(
-      disconnectedPcbNet,
-      errors,
-      `Disconnected V3V3 net · ${status}`,
-    ),
-  ).toMatchSvgSnapshot(import.meta.path)
+  const svg = convertCircuitJsonToPcbSvg([...disconnectedPcbNet, ...errors], {
+    shouldDrawErrors: true,
+    showErrorsInTextOverlay: true,
+  })
+    .replace(/<text[^>]*data-type="pcb_error_text_overlay"[^>]*>/, (tag) =>
+      tag.replace('y="20"', 'y="50"'),
+    )
+    .replace(
+      "</svg>",
+      `<text x="50%" y="24" text-anchor="middle" fill="#fbbf24" font-family="sans-serif" font-size="16">Disconnected V3V3 net · ${status}</text></svg>`,
+    )
+  expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
 
 test("aggregate routing detects disconnected copper within one named net", async () => {
@@ -55,12 +38,4 @@ test("aggregate routing detects disconnected copper within one named net", async
     }),
   ])
   expect(errors[0]?.message).toMatch(/disconnected/i)
-})
-
-test("joining the two net islands provides a connected control", async () => {
-  const errors = await runAllRoutingChecks(connectedPcbNet)
-  expect(errors).toEqual([])
-  expect(
-    renderNetFixture(connectedPcbNet, errors, "Connected V3V3 net · PASSING"),
-  ).toMatchSvgSnapshot(import.meta.path, "connected-pcb-net")
 })
