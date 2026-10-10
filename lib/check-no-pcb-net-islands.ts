@@ -4,11 +4,12 @@ import { getPcbNetRequirements } from "./util/get-pcb-net-requirements"
 import { PcbConnectivityContext } from "./util/pcb-connectivity-context"
 import { PcbCopperConnectivity } from "./util/pcb-copper-connectivity"
 
-/** Check complete PCB nets independently of individual trace ownership/endpoints.
+/** No PCB Net Islands: each logical net's required PCB ports must share one
+ * connected copper island. Reports one error per net with disconnected ports.
  * Missing emitted copper and unsupported special routes defer affected nets;
  * an empty result is not a continuity proof for those geometries.
  */
-export function checkPcbNetsAreConnected(
+export function checkNoPcbNetIslands(
   circuitJson: AnyCircuitElement[],
 ): PcbPortNotConnectedError[] {
   const context = new PcbConnectivityContext(circuitJson)

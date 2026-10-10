@@ -30,7 +30,7 @@ and output an array of arrays for any issues found.
 | [`checkSameNetViaSpacing`](./lib/check-same-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on the same net are closer than the allowed margin. |
 | [`checkSourceTracesHavePcbTraces`](./lib/check-source-traces-have-pcb-traces.ts) | Returns `pcb_trace_error` when source traces are missing corresponding `pcb_trace` routes. |
 | [`checkTracesAreContiguous`](./lib/check-traces-are-contiguous/check-traces-are-contiguous.ts) | Returns `pcb_trace_error` when trace endpoints are floating or do not connect as expected. |
-| [`checkPcbNetsAreConnected`](./lib/check-pcb-nets-are-connected.ts) | Returns one `pcb_port_not_connected_error` per logical net whose required PCB ports occupy disconnected copper islands. Included in routing checks, separately from trace endpoint and dangling-edge checks. |
+| [`checkNoPcbNetIslands`](./lib/check-no-pcb-net-islands.ts) | Implements No PCB Net Islands: reports one `pcb_port_not_connected_error` per logical net whose required PCB ports do not share a single copper island. Included in routing checks. |
 | [`checkViasOffBoard`](./lib/check-pcb-components-out-of-board/checkViasOffBoard.ts) | Returns `pcb_placement_error` if any PCB via lies outside or crosses the board boundary. |
 | [`checkCopperPourShorts`](./lib/check-copper-pour-shorts.ts) | Detects copper-pour contact with different-net traces, pads, plated holes, vias, and pours, respecting layers and BRep cutouts. Included in routing checks. |
 | [`checkCopperToBoardEdgeClearance`](./lib/check-copper-to-board-edge-clearance.ts) | Checks via, SMT-pad, plated-hole, and copper-pour geometry against the polygon board outline and required edge clearance. |
@@ -43,22 +43,32 @@ and output an array of arrays for any issues found.
 | [`runAllNetlistChecks`](./lib/run-all-checks.ts) | Runs netlist connectivity checks (currently `checkPinMustBeConnected`). |
 | [`runAllPinSpecificationChecks`](./lib/run-all-checks.ts) | Runs pin specification checks (e.g. `checkAllPinsInComponentAreUnderspecified`, `checkNoPowerPinDefined`, and `checkNoGroundPinDefined`). |
 | [`runAllSchematicChecks`](./lib/run-all-checks.ts) | Runs schematic-layout checks (`checkSchematicComponentExcessiveVerticalPadding`, `checkSchematicComponentMissingReferenceDesignatorText`, `checkSchematicComponentPortsOutsideBody`, and `checkSchematicPlacement`). |
-| [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkPcbNetsAreConnected`, `checkEachPcbTraceNonOverlapping`, `checkCopperPourShorts`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
+| [`runAllRoutingChecks`](./lib/run-all-checks.ts) | Runs all routing checks currently enabled (`checkEachPcbPortConnectedToPcbTraces`, `checkSourceTracesHavePcbTraces`, `checkNoPcbNetIslands`, `checkEachPcbTraceNonOverlapping`, `checkCopperPourShorts`, `checkPadTraceClearance`, `checkViaTraceClearance`, same/different net via spacing, and `checkPcbTracesOutOfBoard`). Trace-obstacle pairs are classified before aggregation, so each pair produces one overlap or clearance diagnostic, never both. |
 | [`runAllChecks`](./lib/run-all-checks.ts) | Runs placement, schematic, netlist, pin specification, and routing checks and returns a combined list of issues. |
 
-PCB net continuity derives required ports from explicit source traces, including
-separate pin-to-named-net declarations and direct multiport traces. Net IDs and
-shared source ports establish logical membership; names, scoped connectivity keys,
-PCB endpoint IDs, and route ownership never establish a physical bridge. Copper
-contact uses constant-width traces, pads, plated holes, vias, and pours on their
-emitted layers. Short and dangling-edge diagnostics remain separate checks.
+`checkNoPcbNetIslands` enforces **No PCB Net Islands**: the required PCB ports of
+each logical net must share one connected copper island. An island is a physically
+connected group of copper; a net has disconnected islands when groups of its
+required ports have no copper path between them. For example, A–B and C–D on
+V3V3 produce one error for that net. The diagnostic lists each island's pins,
+separated by `|`.
 
-Unlisted pins, `do_not_connect` pins, and nets with fewer than two emitted PCB
-ports impose no net-continuity obligation. Internal component connections alone
+Required ports come from explicit source traces, including separate
+pin-to-named-net declarations and direct multiport traces. Net IDs and shared
+source ports establish logical membership; names, scoped connectivity keys,
+PCB endpoint IDs, and route ownership never establish a physical bridge. Physical
+contact uses constant-width traces, pads, plated holes, vias, and pours on their
+emitted layers.
+
+Unlisted pins, `do_not_connect` pins, and nets with fewer than two required emitted
+PCB ports impose no net-continuity obligation. Internal component connections alone
 do not create PCB copper requirements or certify a PCB bridge. Required ports with
 no pad/barrel geometry and nets with attributed interpolated/`through_pad` traces
 or diameter-less inline vias are deferred by this check; their continuity is
 unverified. Unsupported unowned traces defer only nearby copper networks.
+
+Detached copper containing no required port is outside this check's scope. Short
+and dangling-edge diagnostics remain separate checks.
 
 The copper model preserves pad/barrel annuli and pour cutouts but does not
 subtract unrelated drills or board cutouts from crossing trace polygons.

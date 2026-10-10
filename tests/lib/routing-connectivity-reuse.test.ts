@@ -16,7 +16,7 @@ const independentChecks = [
   checks.checkSameNetViaSpacing,
   checks.checkDifferentNetViaSpacing,
   checks.checkTracesAreContiguous,
-  checks.checkPcbNetsAreConnected,
+  checks.checkNoPcbNetIslands,
   checks.checkDanglingTraces,
   checks.checkPcbTracesOutOfBoard,
 ]
