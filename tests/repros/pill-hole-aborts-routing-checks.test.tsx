@@ -105,10 +105,13 @@ test("routing checks report a different-net crossing beside a pill hole", async 
   })
   expect(errors[0].message).toContain("(accidental contact)")
   expect(errorsWithSlot).toEqual(errors)
-  expect(await runAllRoutingChecks(structuredClone(circuitJson))).toEqual(
-    errors,
-  )
-  expect(await runAllRoutingChecks(withoutSlot)).toEqual(errors)
+  // Style warnings also run by default; this regression compares crossing errors.
+  for (const fixture of [circuitJson, withoutSlot]) {
+    const results = await runAllRoutingChecks(structuredClone(fixture))
+    expect(
+      results.filter((result) => result.type !== "pcb_trace_style_warning"),
+    ).toEqual(errors)
+  }
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errorsWithSlot], {
       shouldDrawErrors: true,
