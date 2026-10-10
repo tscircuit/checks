@@ -15,30 +15,30 @@ test("each disconnected net produces one error", () => {
     ) {
       circuitJson.push({
         ...circuitElement,
-        connected_source_net_ids: ["source_net_2"],
+        connected_source_net_ids: ["source_net_1"],
       })
       continue
     }
     circuitJson.push(circuitElement)
   }
-  const groundNet: SourceNet = {
+  const powerNet: SourceNet = {
     type: "source_net",
-    source_net_id: "source_net_2",
-    name: "GND",
+    source_net_id: "source_net_1",
+    name: "V3V3",
     member_source_group_ids: [],
   }
-  circuitJson.push(groundNet)
+  circuitJson.push(powerNet)
 
   const errors = checkNoPcbNetIslands(circuitJson)
 
   expect(errors).toEqual([
     expect.objectContaining({
       pcb_port_ids: ["pcb_port_0", "pcb_port_1"],
-      message: "Net [V3V3] has disconnected PCB copper: A.VDD | B.VDD.",
+      message: "Net [GND] has disconnected PCB copper: A.pin1 | B.pin1.",
     }),
     expect.objectContaining({
       pcb_port_ids: ["pcb_port_2", "pcb_port_3"],
-      message: "Net [GND] has disconnected PCB copper: C.VDD | D.VDD.",
+      message: "Net [V3V3] has disconnected PCB copper: C.pin1 | D.pin1.",
     }),
   ])
 })
