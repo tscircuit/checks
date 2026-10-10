@@ -1,20 +1,25 @@
 import { expect, test } from "bun:test"
+import { Circuit } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkDanglingTraces } from "lib/check-dangling-traces/check-dangling-traces"
 import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { runAllRoutingChecks } from "lib/run-all-checks"
-import { disconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
+import { DisconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
 test("two disconnected net islands have contiguous traces and no dangling ends", async () => {
-  expect(checkTracesAreContiguous(disconnectedPcbNet)).toEqual([])
-  expect(checkDanglingTraces(disconnectedPcbNet)).toEqual([])
+  const circuit = new Circuit()
+  circuit.add(<DisconnectedPcbNet />)
+  await circuit.renderUntilSettled()
+  const circuitJson = circuit.getCircuitJson()
 
-  const errors = await runAllRoutingChecks(disconnectedPcbNet)
+  expect(checkTracesAreContiguous(circuitJson)).toEqual([])
+  expect(checkDanglingTraces(circuitJson)).toEqual([])
+
+  const errors = await runAllRoutingChecks(circuitJson)
   const status = errors.length ? "DETECTED" : "FAILING"
-  const svg = convertCircuitJsonToPcbSvg([...disconnectedPcbNet, ...errors], {
+  const svg = convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
     shouldDrawErrors: true,
     showErrorsInTextOverlay: true,
-    showPcbNotes: false,
   })
     .replace(/<text[^>]*data-type="pcb_error_text_overlay"[^>]*>/, (tag) =>
       tag.replace('y="20"', 'y="50"'),
@@ -27,7 +32,11 @@ test("two disconnected net islands have contiguous traces and no dangling ends",
 })
 
 test("aggregate routing detects disconnected copper within one named net", async () => {
-  const errors = await runAllRoutingChecks(disconnectedPcbNet)
+  const circuit = new Circuit()
+  circuit.add(<DisconnectedPcbNet />)
+  await circuit.renderUntilSettled()
+  const circuitJson = circuit.getCircuitJson()
+  const errors = await runAllRoutingChecks(circuitJson)
 
   expect(errors).toEqual([
     expect.objectContaining({

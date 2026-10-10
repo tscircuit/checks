@@ -1,11 +1,16 @@
 import { expect, test } from "bun:test"
+import { Circuit } from "@tscircuit/core"
 import type { AnyCircuitElement, SourceNet } from "circuit-json"
 import { checkNoPcbNetIslands } from "lib/check-no-pcb-net-islands"
-import { disconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
+import { DisconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
-test("each disconnected net produces one error", () => {
+test("each disconnected net produces one error", async () => {
+  const circuit = new Circuit()
+  circuit.add(<DisconnectedPcbNet />)
+  await circuit.renderUntilSettled()
+
   const circuitJson: AnyCircuitElement[] = []
-  for (const circuitElement of disconnectedPcbNet) {
+  for (const circuitElement of circuit.getCircuitJson()) {
     if (circuitElement.type === "pcb_trace") continue
     if (
       circuitElement.type === "source_trace" &&
