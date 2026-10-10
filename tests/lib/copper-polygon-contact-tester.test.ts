@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { createRequire } from "node:module"
 import { Box, Circle, Point, Polygon } from "@flatten-js/core"
 import { copperPolygonsTouch } from "@tscircuit/circuit-json-util"
 import { createCopperPolygonContactTester } from "lib/copper-pour-connectivity/create-copper-polygon-contact-tester"
@@ -74,6 +75,54 @@ test("indexed contact matches the old predicate for seeded mixed curved and rota
       const expected = copperPolygonsTouch(shapes[i], shapes[j], tolerance)
       expect(touches(shapes[i], shapes[j])).toBe(expected)
       expect(touches(shapes[j], shapes[i])).toBe(expected)
+    }
+  }
+})
+
+test("contact checks accept polygons from a second Flatten module instance", () => {
+  // Flatten's ESM and CJS entrypoints have independent shape constructors.
+  // This reproduces duplicate installations without mocking the geometry API.
+  const other = createRequire(import.meta.url)(
+    "@flatten-js/core",
+  ) as typeof import("@flatten-js/core")
+  expect(other.Polygon).not.toBe(Polygon)
+  const foreign = (polygon: Polygon): Polygon =>
+    new other.Polygon(
+      polygon.toJSON() as ConstructorParameters<typeof Polygon>[0],
+    )
+
+  const donut = new Polygon(new Circle(new Point(0, 0), 4))
+  donut.addFace(new Circle(new Point(0, 0), 2)).reverse()
+  const ring = donut.scale(scale, scale)
+  const islands = new Polygon(new Box(-4, -1, -2, 1))
+  islands.addFace(new Box(2, -1, 4, 1))
+  const cases: [Polygon, Polygon, boolean][] = [
+    [rectangle(-3, -0.1, 6, 0.2), rectangle(-0.1, -3, 0.2, 6), true],
+    [rectangle(-5, -5, 10, 10), circle(0, 0, 1), true],
+    [circle(0, 0, 1), circle(2, 0, 1), true],
+    [rectangle(-1, -1, 2, 2), circle(2, 0, 1), true],
+    [circle(0, 0, 1), circle(2 + 0.5e-7, 0, 1), true],
+    [circle(0, 0, 1), circle(2 + 2e-7, 0, 1), false],
+    [ring, circle(0, 0, 1), false],
+    [ring, circle(0, 0, 2), true],
+    [islands.scale(scale, scale), circle(3, 0, 0.1), true],
+    [islands.scale(scale, scale), circle(0, 0, 0.1), false],
+    [new Polygon(), circle(0, 0, 1), false],
+  ]
+  const touches = createCopperPolygonContactTester(tolerance)
+  for (const [a, b, expected] of cases) {
+    for (const [first, second] of [
+      [a, foreign(b)],
+      [foreign(a), b],
+      [foreign(a), foreign(b)],
+    ]) {
+      const originalFirst = first.toJSON()
+      const originalSecond = second.toJSON()
+      expect(touches(first, second)).toBe(expected)
+      expect(touches(second, first)).toBe(expected)
+      expect(touches(first, second)).toBe(expected)
+      expect(first.toJSON()).toEqual(originalFirst)
+      expect(second.toJSON()).toEqual(originalSecond)
     }
   }
 })
