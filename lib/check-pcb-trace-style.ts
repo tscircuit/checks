@@ -2,25 +2,10 @@ import { analyzePcbStyle } from "@tscircuit/circuit-json-pcb-style-analysis/anal
 import type { AnyCircuitElement, PcbTraceStyleWarning } from "circuit-json"
 import { getReadableNameForTrace } from "./util/get-readable-names"
 
-export interface PcbStyleCheckConfig {
-  pcbStyleChecksEnabled?: boolean
-}
-
-export interface PcbStyleCheckOptions {
-  platformConfig?: PcbStyleCheckConfig
-  projectConfig?: PcbStyleCheckConfig
-}
-
-/** Style analysis is opt-in; either config must explicitly enable it. */
+/** Analyze PCB trace style as part of the standard routing checks. */
 export function checkPcbTraceStyle(
   circuitJson: AnyCircuitElement[],
-  options: PcbStyleCheckOptions = {},
 ): PcbTraceStyleWarning[] {
-  if (
-    options.platformConfig?.pcbStyleChecksEnabled !== true &&
-    options.projectConfig?.pcbStyleChecksEnabled !== true
-  )
-    return []
   return analyzePcbStyle(circuitJson).issues.map((issue) => ({
     type: "pcb_trace_style_warning",
     pcb_trace_style_warning_id: `pcb_trace_style_warning_${issue.pcbTraceId}_${issue.startRouteIndex}_${issue.endRouteIndex}`,
