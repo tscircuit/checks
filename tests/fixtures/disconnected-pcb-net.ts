@@ -65,7 +65,6 @@ for (let i = 0; i < 4; i++) {
       x: xs[i],
       y: 0,
       layers: ["top"],
-      subcircuit_connectivity_map_key: key,
     },
     {
       type: "pcb_smtpad",
@@ -78,7 +77,6 @@ for (let i = 0; i < 4; i++) {
       width: 1,
       height: 1,
       layer: "top",
-      subcircuit_connectivity_map_key: key,
     },
   )
 }
@@ -89,7 +87,6 @@ for (const i of [0, 2]) {
     type: "pcb_trace",
     pcb_trace_id: `pcb_trace_${i}`,
     source_trace_id: `source_trace_${i}`,
-    subcircuit_connectivity_map_key: key,
     route: [
       {
         route_type: "wire",
