@@ -125,9 +125,10 @@ export function checkPcbComponentOverlap(
     if (!componentMap.has(componentId)) {
       componentMap.set(componentId, {
         component_id: componentId,
-        elements: [hole],
+        elements: [],
       })
     }
+    componentMap.get(componentId)!.elements.push(hole)
   }
 
   for (const courtyard of courtyards) {
