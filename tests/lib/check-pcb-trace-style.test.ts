@@ -8,33 +8,9 @@ import {
 import fixture from "../assets/rc-car-style-analysis.circuit.json"
 
 const circuitJson = fixture as AnyCircuitElement[]
-const enabled = { platformConfig: { pcbStyleChecksEnabled: true } }
-
-test("PCB trace style checks are disabled unless either config explicitly enables them", () => {
-  for (const options of [
-    {},
-    { platformConfig: { pcbStyleChecksEnabled: false } },
-    { projectConfig: { pcbStyleChecksEnabled: false } },
-  ])
-    expect(checkPcbTraceStyle(circuitJson, options)).toEqual([])
-  for (const options of [
-    enabled,
-    { projectConfig: { pcbStyleChecksEnabled: true } },
-    {
-      platformConfig: { pcbStyleChecksEnabled: false },
-      projectConfig: { pcbStyleChecksEnabled: true },
-    },
-    {
-      platformConfig: { pcbStyleChecksEnabled: true },
-      projectConfig: { pcbStyleChecksEnabled: false },
-    },
-  ])
-    expect(checkPcbTraceStyle(circuitJson, options)).toHaveLength(2)
-})
-
 test("real RC car style warnings retain both measurements and original copper locations", () => {
   const original = JSON.stringify(circuitJson)
-  const warnings = checkPcbTraceStyle(circuitJson, enabled)
+  const warnings = checkPcbTraceStyle(circuitJson)
   expect(
     warnings.map((w) => [w.start_route_index, w.end_route_index, w.layer]),
   ).toEqual([
@@ -60,11 +36,9 @@ test("real RC car style warnings retain both measurements and original copper lo
   expect(new Set(warnings.map((w) => w.pcb_trace_style_warning_id)).size).toBe(
     2,
   )
-  expect(checkPcbTraceStyle(circuitJson, enabled)).toEqual(warnings)
+  expect(checkPcbTraceStyle(circuitJson)).toEqual(warnings)
   // Moving records within Circuit JSON must not change warning identity.
-  expect(checkPcbTraceStyle([...circuitJson].reverse(), enabled)).toEqual(
-    warnings,
-  )
+  expect(checkPcbTraceStyle([...circuitJson].reverse())).toEqual(warnings)
   for (const warning of warnings) {
     expect(warning).not.toHaveProperty("circuit_json_index")
     expect(warning).not.toHaveProperty("bounds")
@@ -73,12 +47,12 @@ test("real RC car style warnings retain both measurements and original copper lo
 })
 
 test("style warnings use readable names and honest unnamed labels instead of analyzer IDs", () => {
-  const named = checkPcbTraceStyle(circuitJson, enabled)
+  const named = checkPcbTraceStyle(circuitJson)
   expect(named[0].message).toContain("R_GPIO2.pin2 to J_HAT.GPIO2")
   const copperOnly = circuitJson.filter(
     (e) => e.type === "pcb_trace" || e.type === "pcb_board",
   )
-  const unnamed = checkPcbTraceStyle(copperOnly, enabled)
+  const unnamed = checkPcbTraceStyle(copperOnly)
   expect(unnamed[0].message).toContain("unnamed trace")
   for (const warning of [...named, ...unnamed]) {
     expect(warning.message).not.toMatch(
@@ -88,17 +62,13 @@ test("style warnings use readable names and honest unnamed labels instead of ana
   }
 })
 
-test("routing and all-check entrypoints propagate the opt-in setting", async () => {
+test("routing and all-check entrypoints report real board style warnings by default", async () => {
+  const expectedWarnings = checkPcbTraceStyle(circuitJson)
+  expect(expectedWarnings).toHaveLength(2)
   for (const run of [runAllRoutingChecks, runAllChecks]) {
-    const defaultResults = await run(structuredClone(circuitJson))
-    expect(
-      defaultResults.filter((w) => w.type === "pcb_trace_style_warning"),
-    ).toEqual([])
-    const enabledResults = await run(structuredClone(circuitJson), {
-      projectConfig: { pcbStyleChecksEnabled: true },
-    })
-    expect(
-      enabledResults.filter((w) => w.type === "pcb_trace_style_warning"),
-    ).toHaveLength(2)
+    const results = await run(structuredClone(circuitJson))
+    expect(results.filter((w) => w.type === "pcb_trace_style_warning")).toEqual(
+      expectedWarnings,
+    )
   }
 }, 30_000)
