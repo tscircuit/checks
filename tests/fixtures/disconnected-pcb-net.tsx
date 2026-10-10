@@ -21,7 +21,11 @@ export function DisconnectedPcbNet() {
           }
         />
       ))}
-      <net name="GND" connectsTo={["A.1", "B.1", "C.1", "D.1"]} />
+      <net name="GND" />
+      <trace from="A.1" to="net.GND" />
+      <trace from="B.1" to="net.GND" />
+      <trace from="C.1" to="net.GND" />
+      <trace from="D.1" to="net.GND" />
       <trace from="A.1" to="B.1" pcbPath={[]} thickness={0.3} />
       <trace from="C.1" to="D.1" pcbPath={[]} thickness={0.3} />
     </board>
