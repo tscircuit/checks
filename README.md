@@ -30,6 +30,7 @@ and output an array of arrays for any issues found.
 | [`checkSameNetViaSpacing`](./lib/check-same-net-via-spacing.ts) | Returns `pcb_via_clearance_error` if vias on the same net are closer than the allowed margin. |
 | [`checkSourceTracesHavePcbTraces`](./lib/check-source-traces-have-pcb-traces.ts) | Returns `pcb_trace_error` when source traces are missing corresponding `pcb_trace` routes. |
 | [`checkTracesAreContiguous`](./lib/check-traces-are-contiguous/check-traces-are-contiguous.ts) | Returns `pcb_trace_error` when trace endpoints are floating or do not connect as expected. |
+| [`checkNoPcbNetIslands`](./lib/check-no-pcb-net-islands.ts) | Reports one `pcb_port_not_connected_error` per logical net whose intended PCB ports span disconnected copper islands. Included in routing checks. |
 | [`checkViasOffBoard`](./lib/check-pcb-components-out-of-board/checkViasOffBoard.ts) | Returns `pcb_placement_error` if any PCB via lies outside or crosses the board boundary. |
 | [`checkCopperPourShorts`](./lib/check-copper-pour-shorts.ts) | Detects copper-pour contact with different-net traces, pads, plated holes, vias, and pours, respecting layers and BRep cutouts. Included in routing checks. |
 | [`checkCopperToBoardEdgeClearance`](./lib/check-copper-to-board-edge-clearance.ts) | Checks via, SMT-pad, plated-hole, and copper-pour geometry against the polygon board outline and required edge clearance. |

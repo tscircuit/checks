@@ -3,6 +3,7 @@ import type { Polygon } from "@flatten-js/core"
 import type {
   AnyCircuitElement,
   LayerRef,
+  PcbCopperPour,
   PcbPort,
   SourceNet,
 } from "circuit-json"
@@ -18,11 +19,15 @@ import {
 
 type NetId = NonNullable<ReturnType<ConnectivityMap["getNetConnectedToId"]>>
 type PcbPortId = PcbPort["pcb_port_id"]
+type PcbCopperPourId = PcbCopperPour["pcb_copper_pour_id"]
+type CopperId = PcbPortId | PcbCopperPourId
+type PourRootId = number
 interface Conductor {
   polygon: Polygon
   layers: LayerRef[]
   netId: NetId
   portIds?: PcbPortId[]
+  pourId?: PcbCopperPourId
   isPour?: boolean
 }
 
@@ -60,6 +65,7 @@ export function getCopperPourConnectivity(
       polygon: getPourPolygon(pour),
       layers: [pour.layer],
       netId,
+      pourId: pour.pcb_copper_pour_id,
       isPour: true,
     })
   }
@@ -193,6 +199,24 @@ export function getCopperPourConnectivity(
     portsByNet.set(netId, ports)
   }
   return {
+    getConnections() {
+      const idsByRoot = new Map<PourRootId, CopperId[]>()
+      for (const [i, conductor] of conductors.entries()) {
+        if (!conductor.pourId) continue
+        const root = find(i)
+        const ids = idsByRoot.get(root) ?? []
+        ids.push(conductor.pourId)
+        idsByRoot.set(root, ids)
+      }
+      for (const [portId, roots] of rootsByPort) {
+        for (const root of roots) {
+          const ids = idsByRoot.get(root) ?? []
+          ids.push(portId)
+          idsByRoot.set(root, ids)
+        }
+      }
+      return [...idsByRoot.values()]
+    },
     isPortConnectedToNet(
       portId: PcbPortId,
       sourceNetIds: SourceNet["source_net_id"][],
