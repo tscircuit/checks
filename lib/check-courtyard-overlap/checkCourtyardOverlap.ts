@@ -8,6 +8,8 @@ import type {
   PcbCourtyardCircle,
   PcbCourtyardOutline,
   PcbCourtyardOverlapError,
+  PcbCourtyardPill,
+  PcbCourtyardPolygon,
   PcbCourtyardRect,
 } from "circuit-json"
 
@@ -15,6 +17,8 @@ type CourtyardElement =
   | PcbCourtyardRect
   | PcbCourtyardCircle
   | PcbCourtyardOutline
+  | PcbCourtyardPolygon
+  | PcbCourtyardPill
 
 function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
   if (el.type === "pcb_courtyard_rect") {
@@ -43,6 +47,36 @@ function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
         y: el.center.y + el.radius * Math.sin(a),
       }
     })
+  }
+  if (el.type === "pcb_courtyard_pill") {
+    // A pill is a rectangle capped by two half-circles. Approximate it as a
+    // polygon: rounded ends sampled on each cap plus the straight-edge corners.
+    //
+    // The schema does not constrain `radius`, so an out-of-spec pill can ask
+    // for a cap that is wider than the body (`radius > width / 2`, making `hw`
+    // negative) or taller than the body (`radius > height / 2`). Either way the
+    // two caps cross each other and the ring becomes self-intersecting, which
+    // even-odd point tests and segment tests resolve into a shape that reaches
+    // well past the declared `width`/`height` — producing overlaps that the
+    // courtyard does not actually cover. Clamp the cap radius so the sampled
+    // ring always stays a valid, non-crossing outline within the declared
+    // bounds. For a spec-conformant pill the clamp is a no-op.
+    const r = Math.min(el.radius, el.height / 2, el.width / 2)
+    const hw = (el.width - 2 * r) / 2
+    const N = 12
+    const cap: { x: number; y: number }[] = Array.from(
+      { length: N },
+      (_, i) => {
+        const a = -Math.PI / 2 + (Math.PI * i) / (N - 1)
+        return { x: hw + r * Math.cos(a), y: r * Math.sin(a) }
+      },
+    )
+    const capReversed = [...cap].reverse().map(({ x, y }) => ({ x: -x, y }))
+    const local = [...cap, ...capReversed]
+    return local.map(({ x, y }) => ({ x: el.center.x + x, y: el.center.y + y }))
+  }
+  if (el.type === "pcb_courtyard_polygon") {
+    return el.points
   }
   return el.outline
 }
@@ -93,7 +127,9 @@ export function checkCourtyardOverlap(
       (el): el is CourtyardElement =>
         el.type === "pcb_courtyard_rect" ||
         el.type === "pcb_courtyard_circle" ||
-        el.type === "pcb_courtyard_outline",
+        el.type === "pcb_courtyard_outline" ||
+        el.type === "pcb_courtyard_polygon" ||
+        el.type === "pcb_courtyard_pill",
     )
     .filter((el) => !doNotPlaceComponentIds.has(el.pcb_component_id))
 
