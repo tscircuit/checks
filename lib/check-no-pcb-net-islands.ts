@@ -1,6 +1,6 @@
 import type { AnyCircuitElement, PcbPortNotConnectedError } from "circuit-json"
 import { createDisconnectedPcbNetError } from "./create-disconnected-pcb-net-error"
-import { getPcbNetRequirements } from "./util/get-pcb-net-requirements"
+import { getPcbNetsToCheck } from "./util/get-pcb-nets-to-check"
 import { PcbConnectivityContext } from "./util/pcb-connectivity-context"
 import { PcbCopperConnectivity } from "./util/pcb-copper-connectivity"
 
@@ -13,14 +13,15 @@ export function checkNoPcbNetIslands(
   circuitJson: AnyCircuitElement[],
 ): PcbPortNotConnectedError[] {
   const context = new PcbConnectivityContext(circuitJson)
-  const { sourceConnectivity, netRequirements } = getPcbNetRequirements(context)
-  if (!netRequirements.length) return []
+  const { sourceTraceConnectivityMap, pcbNetsToCheck } =
+    getPcbNetsToCheck(context)
+  if (!pcbNetsToCheck.length) return []
   const pcbCopperConnectivity = new PcbCopperConnectivity(
-    { connectivity: sourceConnectivity },
+    { connectivity: sourceTraceConnectivityMap },
     context,
   )
   const errors: PcbPortNotConnectedError[] = []
-  for (const { netId, pcbPorts, sourceNets } of netRequirements) {
+  for (const { netId, pcbPorts, sourceNets } of pcbNetsToCheck) {
     const pcbPortIds = pcbPorts.map((pcbPort) => pcbPort.pcb_port_id)
     if (!pcbCopperConnectivity.canVerifyNet({ netId, pcbPortIds })) continue
     if (pcbCopperConnectivity.arePortsConnected(pcbPortIds)) continue

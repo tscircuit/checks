@@ -9,15 +9,16 @@ import type {
   SourcePortId,
 } from "./pcb-connectivity-context"
 
-interface PcbNetRequirement {
+interface PcbNetToCheck {
   netId: ConnectivityNetId
   pcbPorts: PcbPort[]
   sourceNets: SourceNet[]
 }
 
-/** Only explicit source traces require a PCB bridge. Component-internal
+/** Groups two or more eligible emitted PCB ports per logical net.
+ * Only explicit source traces require a PCB bridge. Component-internal
  * connections, matching names, and connectivity-map keys do not add edges. */
-export function getPcbNetRequirements(context: PcbConnectivityContext) {
+export function getPcbNetsToCheck(context: PcbConnectivityContext) {
   const sourceConnections: string[][] = []
   const requiredSourcePortIds = new Set<SourcePortId>()
   for (const sourceTrace of context.sourceTraces) {
@@ -33,30 +34,32 @@ export function getPcbNetRequirements(context: PcbConnectivityContext) {
     if (sourcePort.do_not_connect)
       requiredSourcePortIds.delete(sourcePort.source_port_id)
   }
-  const sourceConnectivity = new ConnectivityMap(
+  const sourceTraceConnectivityMap = new ConnectivityMap(
     findConnectedNetworks(sourceConnections),
   )
-  const requirementsByNetId = new Map<ConnectivityNetId, PcbNetRequirement>()
+  const pcbNetsByNetId = new Map<ConnectivityNetId, PcbNetToCheck>()
   for (const pcbPort of context.pcbPorts) {
     if (!requiredSourcePortIds.has(pcbPort.source_port_id)) continue
-    const netId = sourceConnectivity.getNetConnectedToId(pcbPort.source_port_id)
+    const netId = sourceTraceConnectivityMap.getNetConnectedToId(
+      pcbPort.source_port_id,
+    )
     if (!netId) continue
-    let netRequirement = requirementsByNetId.get(netId)
-    if (!netRequirement) {
-      netRequirement = { netId, pcbPorts: [], sourceNets: [] }
-      requirementsByNetId.set(netId, netRequirement)
+    let pcbNet = pcbNetsByNetId.get(netId)
+    if (!pcbNet) {
+      pcbNet = { netId, pcbPorts: [], sourceNets: [] }
+      pcbNetsByNetId.set(netId, pcbNet)
     }
-    netRequirement.pcbPorts.push(pcbPort)
+    pcbNet.pcbPorts.push(pcbPort)
   }
   for (const sourceNet of context.sourceNets) {
-    const netId = sourceConnectivity.getNetConnectedToId(
+    const netId = sourceTraceConnectivityMap.getNetConnectedToId(
       sourceNet.source_net_id,
     )
-    if (netId) requirementsByNetId.get(netId)?.sourceNets.push(sourceNet)
+    if (netId) pcbNetsByNetId.get(netId)?.sourceNets.push(sourceNet)
   }
-  const netRequirements: PcbNetRequirement[] = []
-  for (const netRequirement of requirementsByNetId.values()) {
-    if (netRequirement.pcbPorts.length > 1) netRequirements.push(netRequirement)
+  const pcbNetsToCheck: PcbNetToCheck[] = []
+  for (const pcbNet of pcbNetsByNetId.values()) {
+    if (pcbNet.pcbPorts.length > 1) pcbNetsToCheck.push(pcbNet)
   }
-  return { sourceConnectivity, netRequirements }
+  return { sourceTraceConnectivityMap, pcbNetsToCheck }
 }
