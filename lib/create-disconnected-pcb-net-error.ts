@@ -8,16 +8,18 @@ import {
   getReadableNameForElementId,
   getReadableNameForPort,
 } from "./util/get-readable-names"
-import type { PcbComponentId, PcbPortId } from "./util/pcb-connectivity-context"
+
+type PcbPortId = PcbPort["pcb_port_id"]
+type PcbComponentId = NonNullable<PcbPort["pcb_component_id"]>
 
 export function createDisconnectedPcbNetError(
   {
     pcbPorts,
-    pcbPortGroups,
+    pcbPortIdsByIsland,
     sourceNets,
   }: {
     pcbPorts: PcbPort[]
-    pcbPortGroups: PcbPortId[][]
+    pcbPortIdsByIsland: PcbPortId[][]
     sourceNets: SourceNet[]
   },
   circuitJson: AnyCircuitElement[],
@@ -29,8 +31,8 @@ export function createDisconnectedPcbNetError(
     ? `Net [${netNames.join(", ")}]`
     : "Net"
   const islandDescriptions: string[] = []
-  for (const pcbPortGroup of pcbPortGroups) {
-    const portNames = pcbPortGroup.map((pcbPortId) =>
+  for (const pcbPortIds of pcbPortIdsByIsland) {
+    const portNames = pcbPortIds.map((pcbPortId) =>
       getReadableNameForPort(circuitJson, pcbPortId),
     )
     islandDescriptions.push(portNames.join(", "))

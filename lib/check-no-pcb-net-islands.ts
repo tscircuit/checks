@@ -1,35 +1,67 @@
-import type { AnyCircuitElement, PcbPortNotConnectedError } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbPort,
+  PcbPortNotConnectedError,
+} from "circuit-json"
+import {
+  ConnectivityMap,
+  findConnectedNetworks,
+  getFullConnectivityMapFromCircuitJson,
+  type PcbConnectivityMap,
+} from "circuit-json-to-connectivity-map"
+import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
 import { createDisconnectedPcbNetError } from "./create-disconnected-pcb-net-error"
+import { createIndexedPcbConnectivityMap } from "./util/create-indexed-pcb-connectivity-map"
 import { getPcbNetsToCheck } from "./util/get-pcb-nets-to-check"
-import { PcbConnectivityContext } from "./util/pcb-connectivity-context"
-import { PcbCopperConnectivity } from "./util/pcb-copper-connectivity"
 
-/** No PCB Net Islands: each logical net's required PCB ports must share one
- * connected copper island. Reports one error per net with disconnected ports.
- * Missing emitted copper and unsupported special routes defer affected nets;
- * an empty result is not a continuity proof for those geometries.
- */
+type PcbPortId = PcbPort["pcb_port_id"]
+type PcbIslandId = string
+
+/** Reports one error per logical net whose intended PCB ports span copper islands. */
 export function checkNoPcbNetIslands(
   circuitJson: AnyCircuitElement[],
+  {
+    connMap,
+    pcbConnectivityMap,
+  }: {
+    connMap?: ConnectivityMap
+    pcbConnectivityMap?: PcbConnectivityMap
+  } = {},
 ): PcbPortNotConnectedError[] {
-  const context = new PcbConnectivityContext(circuitJson)
-  const { sourceTraceConnectivityMap, pcbNetsToCheck } =
-    getPcbNetsToCheck(context)
+  connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  const pcbNetsToCheck = getPcbNetsToCheck(circuitJson, connMap)
   if (!pcbNetsToCheck.length) return []
-  const pcbCopperConnectivity = new PcbCopperConnectivity(
-    { connectivity: sourceTraceConnectivityMap },
-    context,
-  )
+  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
+
+  // Include pour-only pad connections without changing either shared map.
+  let pcbConnMap = pcbConnectivityMap.connMap
+  if (circuitJson.some((element) => element.type === "pcb_copper_pour")) {
+    const pourConnectivity = getCopperPourConnectivity(circuitJson, connMap)
+    pcbConnMap = new ConnectivityMap(
+      findConnectedNetworks([
+        ...Object.values(pcbConnMap.netMap),
+        ...pourConnectivity.getConnections(),
+      ]),
+    )
+  }
+
   const errors: PcbPortNotConnectedError[] = []
-  for (const { netId, pcbPorts, sourceNets } of pcbNetsToCheck) {
-    const pcbPortIds = pcbPorts.map((pcbPort) => pcbPort.pcb_port_id)
-    if (!pcbCopperConnectivity.canVerifyNet({ netId, pcbPortIds })) continue
-    if (pcbCopperConnectivity.arePortsConnected(pcbPortIds)) continue
+  for (const { pcbPorts, sourceNets } of pcbNetsToCheck) {
+    const pcbPortIdsByIslandId = new Map<PcbIslandId, PcbPortId[]>()
+    for (const pcbPort of pcbPorts) {
+      const pcbPortId = pcbPort.pcb_port_id
+      // Unrouted ports have no physical net ID and form separate islands.
+      const islandId = pcbConnMap.getNetConnectedToId(pcbPortId) ?? pcbPortId
+      const pcbPortIds = pcbPortIdsByIslandId.get(islandId) ?? []
+      pcbPortIds.push(pcbPortId)
+      pcbPortIdsByIslandId.set(islandId, pcbPortIds)
+    }
+    if (pcbPortIdsByIslandId.size < 2) continue
     errors.push(
       createDisconnectedPcbNetError(
         {
           pcbPorts,
-          pcbPortGroups: pcbCopperConnectivity.getPortGroups(pcbPortIds),
+          pcbPortIdsByIsland: [...pcbPortIdsByIslandId.values()],
           sourceNets,
         },
         circuitJson,

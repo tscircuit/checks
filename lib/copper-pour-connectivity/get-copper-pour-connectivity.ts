@@ -1,64 +1,243 @@
-import type { AnyCircuitElement } from "circuit-json"
+import { createCopperPolygonContactTester } from "./create-copper-polygon-contact-tester"
+import type { Polygon } from "@flatten-js/core"
+import type {
+  AnyCircuitElement,
+  LayerRef,
+  PcbCopperPour,
+  PcbPort,
+  SourceNet,
+} from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import {
-  type ConnectivityNetId,
-  PcbConnectivityContext,
-  type PcbPortId,
-  type SourceNetId,
-} from "../util/pcb-connectivity-context"
-import { PcbCopperConnectivity } from "../util/pcb-copper-connectivity"
+  getPrimaryId,
+  getPlatedHolePolygon,
+  getPourPolygon,
+  getSmtPadPolygon,
+  getTraceSegmentPolygon,
+  getViaPolygon,
+} from "@tscircuit/circuit-json-util"
 
-/** Physical same-net copper connectivity requiring a copper-pour path. */
+type NetId = NonNullable<ReturnType<ConnectivityMap["getNetConnectedToId"]>>
+type PcbPortId = PcbPort["pcb_port_id"]
+type PcbCopperPourId = PcbCopperPour["pcb_copper_pour_id"]
+type CopperId = PcbPortId | PcbCopperPourId
+type PourRootId = number
+interface Conductor {
+  polygon: Polygon
+  layers: LayerRef[]
+  netId: NetId
+  portIds?: PcbPortId[]
+  pourId?: PcbCopperPourId
+  isPour?: boolean
+}
+
+/** Physical pour connectivity in board-world mm (+X right, +Y up).
+ * Only touching copper on a common layer forms an edge. Plated pads and vias
+ * bridge their emitted layers; logical net membership never joins islands.
+ * Constant-width wire copper can connect pours. Interpolated traces and inline
+ * via inference are left to the existing trace checks; emitted barrels bridge layers.
+ */
 export function getCopperPourConnectivity(
   circuitJson: AnyCircuitElement[],
   connectivity: ConnectivityMap,
 ) {
-  const context = new PcbConnectivityContext(circuitJson)
-  const pouredNetIds = new Set<ConnectivityNetId>()
-  for (const copperElement of context.copperElements) {
-    if (
-      copperElement.type !== "pcb_copper_pour" ||
-      !copperElement.source_net_id
-    )
-      continue
-    const netId = connectivity.getNetConnectedToId(copperElement.source_net_id)
-    if (netId) pouredNetIds.add(netId)
+  // Scale before geometric predicates to preserve tiny edges in solver BReps.
+  const scale = 1e6
+  const tolerance = 1e-7 * scale
+  const copperPolygonsTouch = createCopperPolygonContactTester(tolerance)
+  const conductors: Conductor[] = []
+  const pouredNets = new Set<NetId>()
+  const netForId = (id: string) => connectivity.getNetConnectedToId(id)
+  const add = (conductor: Conductor) => {
+    if (!conductor.polygon.isEmpty()) {
+      conductors.push({
+        ...conductor,
+        polygon: conductor.polygon.scale(scale, scale),
+      })
+    }
   }
-  const pcbCopperConnectivity = new PcbCopperConnectivity(
-    {
-      connectivity,
-      netIds: pouredNetIds,
-      ignoreInlineVias: true,
-      restrictToSameNet: true,
-    },
-    context,
+  for (const pour of circuitJson) {
+    if (pour.type !== "pcb_copper_pour" || !pour.source_net_id) continue
+    const netId = netForId(pour.source_net_id)
+    if (!netId) continue
+    pouredNets.add(netId)
+    add({
+      polygon: getPourPolygon(pour),
+      layers: [pour.layer],
+      netId,
+      pourId: pour.pcb_copper_pour_id,
+      isPour: true,
+    })
+  }
+  const components = new Map(
+    circuitJson
+      .filter((e) => e.type === "pcb_component")
+      .map((e) => [e.pcb_component_id, e]),
   )
-  const pcbPortIdsByNetId = new Map<ConnectivityNetId, PcbPortId[]>()
-  for (const pcbPort of context.pcbPorts) {
-    const netId = connectivity.getNetConnectedToId(pcbPort.pcb_port_id)
-    if (!netId || !pouredNetIds.has(netId)) continue
-    const pcbPortIds = pcbPortIdsByNetId.get(netId) ?? []
-    pcbPortIds.push(pcbPort.pcb_port_id)
-    pcbPortIdsByNetId.set(netId, pcbPortIds)
+  if (pouredNets.size > 0) {
+    for (const copper of circuitJson) {
+      if (copper.type === "pcb_trace") {
+        const netId = netForId(copper.pcb_trace_id)
+        if (
+          !netId ||
+          !pouredNets.has(netId) ||
+          copper.route_thickness_mode === "interpolated"
+        )
+          continue
+        for (let i = 0; i < copper.route.length - 1; i++) {
+          const start = copper.route[i]
+          const end = copper.route[i + 1]
+          if (
+            start.route_type !== "wire" ||
+            end.route_type !== "wire" ||
+            start.layer !== end.layer
+          )
+            continue
+          add({
+            polygon: getTraceSegmentPolygon(start, end, start.width),
+            layers: [start.layer],
+            netId,
+          })
+        }
+        continue
+      }
+      if (
+        copper.type !== "pcb_smtpad" &&
+        copper.type !== "pcb_plated_hole" &&
+        copper.type !== "pcb_via"
+      )
+        continue
+      const netId = netForId(getPrimaryId(copper))
+      if (!netId || !pouredNets.has(netId)) continue
+      if (copper.type === "pcb_smtpad") {
+        add({
+          polygon: getSmtPadPolygon(copper),
+          layers: [copper.layer],
+          netId,
+          portIds: copper.pcb_port_id ? [copper.pcb_port_id] : [],
+        })
+      } else if (copper.type === "pcb_plated_hole") {
+        add({
+          polygon: getPlatedHolePolygon(
+            copper,
+            copper.pcb_component_id
+              ? components.get(copper.pcb_component_id)?.rotation
+              : 0,
+          ),
+          layers: copper.layers,
+          netId,
+          portIds: copper.pcb_port_id ? [copper.pcb_port_id] : [],
+        })
+      } else {
+        add({
+          polygon: getViaPolygon(
+            copper,
+            copper.outer_diameter,
+            copper.hole_diameter,
+          ),
+          layers: copper.layers,
+          netId,
+          portIds: copper.pcb_port_ids,
+        })
+      }
+    }
+  }
+
+  const parent = conductors.map((_, i) => i)
+  const find = (i: number): number => {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]]
+      i = parent[i]
+    }
+    return i
+  }
+  const bounds = conductors.map((c) => c.polygon.box)
+  const order = conductors
+    .map((_, i) => i)
+    .sort((a, b) => bounds[a].xmin - bounds[b].xmin)
+  for (let a = 0; a < order.length; a++) {
+    const i = order[a]
+    for (let b = a + 1; b < order.length; b++) {
+      const j = order[b]
+      if (bounds[j].xmin > bounds[i].xmax + tolerance) break
+      if (find(i) === find(j) || conductors[i].netId !== conductors[j].netId)
+        continue
+      if (
+        bounds[j].ymin > bounds[i].ymax + tolerance ||
+        bounds[j].ymax < bounds[i].ymin - tolerance
+      )
+        continue
+      if (
+        !conductors[i].layers.some((layer) =>
+          conductors[j].layers.includes(layer),
+        )
+      )
+        continue
+      if (copperPolygonsTouch(conductors[i].polygon, conductors[j].polygon))
+        parent[find(j)] = find(i)
+    }
+  }
+  const pourRoots = new Set(
+    conductors.flatMap((c, i) => (c.isPour ? [find(i)] : [])),
+  )
+  const rootsByPort = new Map<PcbPortId, Set<number>>()
+  for (const [i, conductor] of conductors.entries()) {
+    if (!pourRoots.has(find(i))) continue
+    for (const portId of conductor.portIds ?? []) {
+      const roots = rootsByPort.get(portId) ?? new Set<number>()
+      roots.add(find(i))
+      rootsByPort.set(portId, roots)
+    }
+  }
+  const portsByNet = new Map<NetId, PcbPortId[]>()
+  for (const port of circuitJson) {
+    if (port.type !== "pcb_port") continue
+    const netId = netForId(port.pcb_port_id)
+    if (!netId || !pouredNets.has(netId)) continue
+    const ports = portsByNet.get(netId) ?? []
+    ports.push(port.pcb_port_id)
+    portsByNet.set(netId, ports)
   }
   return {
-    isPortConnectedToNet(pcbPortId: PcbPortId, sourceNetIds: SourceNetId[]) {
-      for (const sourceNetId of sourceNetIds) {
-        const netId = connectivity.getNetConnectedToId(sourceNetId)
-        if (!netId) return false
-        if (
-          !pcbCopperConnectivity.isPortConnectedThroughPour({
-            pcbPortId,
-            netId,
-            requiredPcbPortIds: pcbPortIdsByNetId.get(netId) ?? [],
-          })
-        )
-          return false
+    getConnections() {
+      const idsByRoot = new Map<PourRootId, CopperId[]>()
+      for (const [i, conductor] of conductors.entries()) {
+        if (!conductor.pourId) continue
+        const root = find(i)
+        const ids = idsByRoot.get(root) ?? []
+        ids.push(conductor.pourId)
+        idsByRoot.set(root, ids)
       }
-      return true
+      for (const [portId, roots] of rootsByPort) {
+        for (const root of roots) {
+          const ids = idsByRoot.get(root) ?? []
+          ids.push(portId)
+          idsByRoot.set(root, ids)
+        }
+      }
+      return [...idsByRoot.values()]
     },
-    arePortsConnected(pcbPortIds: PcbPortId[]) {
-      return pcbCopperConnectivity.arePortsConnectedThroughPour(pcbPortIds)
+    isPortConnectedToNet(
+      portId: PcbPortId,
+      sourceNetIds: SourceNet["source_net_id"][],
+    ) {
+      const roots = rootsByPort.get(portId)
+      return sourceNetIds.every((id) =>
+        [...(roots ?? [])].some(
+          (root) =>
+            conductors[root].netId === netForId(id) &&
+            // Distinct same-net islands are not a physical connection.
+            (portsByNet.get(conductors[root].netId) ?? []).every((peer) =>
+              rootsByPort.get(peer)?.has(root),
+            ),
+        ),
+      )
+    },
+    arePortsConnected(portIds: PcbPortId[]) {
+      if (portIds.length < 2) return false
+      return [...(rootsByPort.get(portIds[0]) ?? [])].some((root) =>
+        portIds.every((id) => rootsByPort.get(id)?.has(root)),
+      )
     },
   }
 }

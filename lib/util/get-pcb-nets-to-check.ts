@@ -1,65 +1,87 @@
-import type { PcbPort, SourceNet } from "circuit-json"
-import {
-  ConnectivityMap,
-  findConnectedNetworks,
-} from "circuit-json-to-connectivity-map"
 import type {
-  ConnectivityNetId,
-  PcbConnectivityContext,
-  SourcePortId,
-} from "./pcb-connectivity-context"
+  AnyCircuitElement,
+  PcbPort,
+  SourceNet,
+  SourcePort,
+} from "circuit-json"
+import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
+
+type NetId = NonNullable<ReturnType<ConnectivityMap["getNetConnectedToId"]>>
+type SourcePortId = SourcePort["source_port_id"]
+type PcbPortId = PcbPort["pcb_port_id"]
 
 interface PcbNetToCheck {
-  netId: ConnectivityNetId
   pcbPorts: PcbPort[]
   sourceNets: SourceNet[]
 }
 
-/** Groups two or more eligible emitted PCB ports per logical net.
- * Only explicit source traces require a PCB bridge. Component-internal
- * connections, matching names, and connectivity-map keys do not add edges. */
-export function getPcbNetsToCheck(context: PcbConnectivityContext) {
-  const sourceConnections: string[][] = []
-  const requiredSourcePortIds = new Set<SourcePortId>()
-  for (const sourceTrace of context.sourceTraces) {
-    sourceConnections.push([
-      sourceTrace.source_trace_id,
-      ...sourceTrace.connected_source_port_ids,
-      ...sourceTrace.connected_source_net_ids,
-    ])
-    for (const sourcePortId of sourceTrace.connected_source_port_ids)
-      requiredSourcePortIds.add(sourcePortId)
+/** Select explicitly declared PCB ports without changing logical net membership. */
+export function getPcbNetsToCheck(
+  circuitJson: AnyCircuitElement[],
+  connMap: ConnectivityMap,
+): PcbNetToCheck[] {
+  const sourcePortIdsInTraces = new Set<SourcePortId>()
+  const doNotConnectSourcePortIds = new Set<SourcePortId>()
+  const pcbPortIdsWithCopper = new Set<PcbPortId>()
+  const pcbPorts: PcbPort[] = []
+  const sourceNets: SourceNet[] = []
+
+  for (const element of circuitJson) {
+    switch (element.type) {
+      case "source_trace":
+        for (const portId of element.connected_source_port_ids)
+          sourcePortIdsInTraces.add(portId)
+        break
+      case "source_port":
+        if (element.do_not_connect)
+          doNotConnectSourcePortIds.add(element.source_port_id)
+        break
+      case "pcb_port":
+        pcbPorts.push(element)
+        break
+      case "source_net":
+        sourceNets.push(element)
+        break
+      case "pcb_smtpad":
+      case "pcb_plated_hole":
+        if (element.pcb_port_id) pcbPortIdsWithCopper.add(element.pcb_port_id)
+        break
+      case "pcb_via":
+        for (const portId of element.pcb_port_ids ?? [])
+          pcbPortIdsWithCopper.add(portId)
+        break
+    }
   }
-  for (const sourcePort of context.sourcePorts) {
-    if (sourcePort.do_not_connect)
-      requiredSourcePortIds.delete(sourcePort.source_port_id)
-  }
-  const sourceTraceConnectivityMap = new ConnectivityMap(
-    findConnectedNetworks(sourceConnections),
-  )
-  const pcbNetsByNetId = new Map<ConnectivityNetId, PcbNetToCheck>()
-  for (const pcbPort of context.pcbPorts) {
-    if (!requiredSourcePortIds.has(pcbPort.source_port_id)) continue
-    const netId = sourceTraceConnectivityMap.getNetConnectedToId(
-      pcbPort.source_port_id,
-    )
+  for (const portId of doNotConnectSourcePortIds)
+    sourcePortIdsInTraces.delete(portId)
+
+  const pcbNetsByNetId = new Map<NetId, PcbNetToCheck>()
+  for (const pcbPort of pcbPorts) {
+    if (!sourcePortIdsInTraces.has(pcbPort.source_port_id)) continue
+    const netId = connMap.getNetConnectedToId(pcbPort.pcb_port_id)
     if (!netId) continue
     let pcbNet = pcbNetsByNetId.get(netId)
     if (!pcbNet) {
-      pcbNet = { netId, pcbPorts: [], sourceNets: [] }
+      pcbNet = { pcbPorts: [], sourceNets: [] }
       pcbNetsByNetId.set(netId, pcbNet)
     }
     pcbNet.pcbPorts.push(pcbPort)
   }
-  for (const sourceNet of context.sourceNets) {
-    const netId = sourceTraceConnectivityMap.getNetConnectedToId(
-      sourceNet.source_net_id,
-    )
+  for (const sourceNet of sourceNets) {
+    const netId = connMap.getNetConnectedToId(sourceNet.source_net_id)
     if (netId) pcbNetsByNetId.get(netId)?.sourceNets.push(sourceNet)
   }
   const pcbNetsToCheck: PcbNetToCheck[] = []
   for (const pcbNet of pcbNetsByNetId.values()) {
-    if (pcbNet.pcbPorts.length > 1) pcbNetsToCheck.push(pcbNet)
+    if (pcbNet.pcbPorts.length < 2) continue
+    // A missing pad or barrel leaves this net's copper connectivity unverified.
+    if (
+      pcbNet.pcbPorts.some(
+        (port) => !pcbPortIdsWithCopper.has(port.pcb_port_id),
+      )
+    )
+      continue
+    pcbNetsToCheck.push(pcbNet)
   }
-  return { sourceTraceConnectivityMap, pcbNetsToCheck }
+  return pcbNetsToCheck
 }
