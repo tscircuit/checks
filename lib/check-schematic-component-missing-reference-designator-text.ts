@@ -10,6 +10,12 @@ type SourceComponent = Extract<AnyCircuitElement, { type: "source_component" }>
 const isFallbackReferenceDesignator = (name: string) =>
   /^unnamed_[a-z0-9_-]+\d+$/i.test(name)
 
+const REFERENCE_DESIGNATOR_PLACEHOLDERS = new Set([
+  "{REF}",
+  "{REFERENCE}",
+  "{NAME}",
+])
+
 const isTextWithinComponentBounds = (
   schematicText: SchematicText,
   schematicComponent: SchematicComponent,
@@ -103,9 +109,13 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
       [...referenceDesignators].some((referenceDesignator) =>
         componentTexts?.has(referenceDesignator),
       ) ||
+      [...(componentTexts ?? [])].some((text) =>
+        REFERENCE_DESIGNATOR_PLACEHOLDERS.has(text),
+      ) ||
       customSymbolTexts.some(
         (schematicText) =>
-          referenceDesignators.has(schematicText.text.trim()) &&
+          (referenceDesignators.has(schematicText.text.trim()) ||
+            REFERENCE_DESIGNATOR_PLACEHOLDERS.has(schematicText.text.trim())) &&
           isTextWithinComponentBounds(schematicText, schematicComponent),
       )
 
@@ -120,7 +130,7 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
       type: "schematic_component_styling_warning",
       schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponent.schematic_component_id}_missing_reference_designator_text`,
       warning_type: "schematic_component_styling_warning",
-      message: `${readableComponentName} is missing schematic reference designator text. For a custom symbol, add name="{REFDES}" inside the symbol.`,
+      message: `${readableComponentName} is missing schematic reference designator text. For a custom symbol, add <schematictext text="{REF}" /> inside the symbol.`,
       schematic_component_id: schematicComponent.schematic_component_id,
       styling_issue_type: "missing_reference_designator_text",
       source_component_id: schematicComponent.source_component_id,
