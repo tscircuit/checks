@@ -16,6 +16,9 @@
     "format:check": "biome format .",
     "format": "biome format . --write"
   },
+  "dependencies": {
+    "transformation-matrix": "^3.1.0"
+  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
     "@tscircuit/circuit-json-schematic-placement-analysis": "https://codeload.github.com/tscircuit/circuit-json-schematic-placement-analysis/tar.gz/cece282ba71ba7466107a4243f27349500ba4a9d",
@@ -40,6 +43,7 @@
   },
   "peerDependencies": {
     "@flatten-js/core": "*",
+    "@tscircuit/circuit-json-util": "*",
     "@tscircuit/math-utils": "*",
     "circuit-json": "*",
     "circuit-json-to-connectivity-map": "*",
