@@ -42,6 +42,7 @@ import { checkSourcePinVoltageCompatibility } from "./check-source-pin-voltage-c
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSchematicComponentMissingReferenceDesignatorText } from "./check-schematic-component-missing-reference-designator-text"
+import { consolidateReferenceDesignatorWarnings } from "./consolidate-reference-designator-warnings"
 import { checkSchematicComponentPortsOutsideBody } from "./check-schematic-component-ports-outside-body"
 import { checkSchematicPlacement } from "./check-schematic-placement"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
@@ -86,13 +87,19 @@ export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
   ]
 }
 
-export async function runAllSchematicChecks(circuitJson: AnyCircuitElement[]) {
-  return [
+export async function runAllSchematicChecks(
+  circuitJson: AnyCircuitElement[],
+  { consolidateReferenceDesignators = true } = {},
+) {
+  const warnings = [
     ...checkSchematicComponentExcessiveVerticalPadding(circuitJson),
     ...checkSchematicComponentMissingReferenceDesignatorText(circuitJson),
     ...checkSchematicComponentPortsOutsideBody(circuitJson),
     ...checkSchematicPlacement(circuitJson),
   ]
+  return consolidateReferenceDesignators
+    ? consolidateReferenceDesignatorWarnings(circuitJson, warnings)
+    : warnings
 }
 
 export async function runAllPinSpecificationChecks(
