@@ -136,7 +136,7 @@ export async function runAllRoutingChecks(
     ...checkSameNetViaSpacing(circuitJson, connectivity),
     ...checkDifferentNetViaSpacing(circuitJson, connectivity),
     ...checkTracesAreContiguous(circuitJson, connectivity),
-    ...checkNoPcbNetIslands(circuitJson, connectivity),
+    ...checkNoPcbNetIslands(circuitJson),
     ...checkDanglingTraces(circuitJson, connectivity),
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
