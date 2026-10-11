@@ -4,132 +4,303 @@ import {
   convertCircuitJsonToFlattenJs,
   renderFlattenJsToSvg,
 } from "@tscircuit/circuit-json-to-flattenjs"
-import { checkSourceTracesMatchPcbTraceThickness as check } from "lib/check-source-traces-match-pcb-trace-thickness"
+import type { AnyCircuitElement, PcbTraceWarning } from "circuit-json"
 import { runAllRoutingChecks } from "lib/run-all-checks"
 import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 
-test.failing("owned routes ignore narrower same-net branches", async () => {
-  async function fixture(required: number, actual = required) {
-    const circuit = new Circuit({
-      platform: { routingDrcChecksDisabled: true },
-    })
-    circuit.add(
-      <board width={30} height={30} schematicDisabled routeRemaining={false}>
-        {(
-          [
-            ["A", 0, 0],
-            ["B", 10, 0],
-            ["C", 10, 10],
-          ] as const
-        ).map(([name, pcbX, pcbY]) => (
-          <testpoint
-            key={name}
-            name={name}
-            pcbX={pcbX}
-            pcbY={pcbY}
-            footprintVariant="pad"
-            padDiameter={0.5}
-          />
-        ))}
-        <trace
-          name={required === 0.5 ? "USB_GND_1" : "TEC_INPUT_HOT_LOOP"}
-          from="A.1"
-          to="B.1"
-          thickness={required}
-          pcbPath={["A.1", "B.1"]}
-        />
-        <trace
-          name={
-            required === 0.5 ? "INPUT_DVDT_LOCAL_GROUND" : "TEC_CONTROLLER_VIN"
-          }
-          from="B.1"
-          to="C.1"
-          thickness={0.2}
-          pcbPath={["B.1", "C.1"]}
-        />
-      </board>,
-    )
-    await circuit.renderUntilSettled()
-    const json = normalizeFixtureSourcePorts(circuit.getCircuitJson())
-    expect(json.filter((e) => e.type === "pcb_trace")).toHaveLength(2)
-    expect(json.filter((e) => e.type === "pcb_trace_error")).toEqual([])
-    const source = json.find(
-      (e) => e.type === "source_trace" && e.min_trace_thickness === required,
-    )!
-    if (source.type !== "source_trace") throw new Error("Missing source trace")
-    const owned = json.find(
-      (e) =>
-        e.type === "pcb_trace" && e.source_trace_id === source.source_trace_id,
-    )!
-    if (owned.type !== "pcb_trace") throw new Error("Missing owned route")
-    // Fault controls change only rendered copper, preserving the JSX requirement.
-    if (actual !== required)
-      for (const point of owned.route)
-        if (point.route_type === "wire") point.width = actual
-    return { circuit: json, source, owned }
-  }
-
-  const control = await fixture(0.5, 0.2)
-  const ownedWarnings = check(control.circuit)
-  expect(ownedWarnings).toHaveLength(1)
-  expect(ownedWarnings[0]).toMatchObject({
-    source_trace_id: control.source.source_trace_id,
-    pcb_trace_id: control.owned.pcb_trace_id,
+async function widthSnapshot(
+  circuitJson: AnyCircuitElement[],
+  warnings: PcbTraceWarning[],
+  title: string,
+  expectedWarnings: number,
+  name: string,
+) {
+  const geometry = convertCircuitJsonToFlattenJs(circuitJson, {
+    roles: ["copper"],
+    strict: true,
   })
-  expect(ownedWarnings[0].message).toContain("requested: 0.5mm, actual: 0.2mm")
-  for (const element of control.circuit)
-    if (element.type === "pcb_trace") delete element.source_trace_id
-  expect(check(control.circuit)).toHaveLength(1)
-  const results = await Promise.all(
-    [0.5, 3].map(async (required) => {
-      const { circuit } = await fixture(required)
-      const warnings = (await runAllRoutingChecks(circuit)).filter(
-        (e) => e.type === "pcb_trace_warning",
-      )
-      expect(warnings).toEqual(check(circuit))
-      return { required, circuit, warnings }
-    }),
-  )
-  const failed = results.some(({ warnings }) => warnings.length)
-  const panels = results
-    .map(({ required, circuit, warnings }, index) => {
-      const geometry = convertCircuitJsonToFlattenJs(circuit, {
-        roles: ["copper"],
-        strict: true,
-      })
-      const copper = renderFlattenJsToSvg(geometry, {
-        width: 400,
-        height: 400,
-        background: "white",
-        viewport: { minX: -3, maxX: 13, minY: -3, maxY: 13 },
-      })
-      // Mark actual checker coordinates, in the renderer's board-space viewBox.
-      const markers = warnings
-        .map(
-          ({ center }) =>
-            `<circle cx="${center!.x}" cy="${-center!.y!}" r="0.5" fill="none" stroke="#c62828" stroke-width="0.1"/>`,
-        )
-        .join("")
-      const title = required === 0.5 ? "USB_GND_1" : "TEC_INPUT_HOT_LOOP"
-      return `<g transform="translate(${50 + index * 450} 115)">
-      <text x="200" y="0" text-anchor="middle">${title}</text>
-      <g transform="translate(0 15)">${copper.replace("</svg>", `${markers}</svg>`)}</g>
-      <text x="200" y="435" text-anchor="middle">Owned: ${required} mm / required: ${required} mm; branch: 0.2 mm</text>
-      <text x="200" y="462" text-anchor="middle">${warnings.length ? "False width warning on the branch" : "No width warning"}</text>
-    </g>`
-    })
+  const copper = renderFlattenJsToSvg(geometry, {
+    width: 400,
+    height: 400,
+    background: "white",
+    viewport: { minX: -3, maxX: 13, minY: -3, maxY: 13 },
+  })
+  // Returned warning centers use board coordinates; SVG's Y axis points down.
+  const markers = warnings
+    .map(
+      ({ center }) =>
+        `<circle cx="${center!.x}" cy="${-center!.y!}" r="0.5" fill="none" stroke="#c62828" stroke-width="0.1"/>`,
+    )
     .join("")
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="950" height="610" viewBox="0 0 950 610">
-    <rect width="950" height="610" fill="white"/>
-    <g font-family="Arial, sans-serif" font-size="16" fill="#222">
-      <text x="475" y="38" text-anchor="middle" font-size="24">${failed ? "FAIL: unrelated branches trigger width warnings" : "PASS: source ownership keeps width checks on each route"}</text>
-      <text x="475" y="68" text-anchor="middle">Two compliant routes share nets with narrower, explicitly owned branches.</text>
-      ${panels}
+  const status = warnings.length === expectedWarnings ? "PASS" : "FAIL"
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="650" height="540" viewBox="0 0 650 540">
+    <rect width="650" height="540" fill="white"/>
+    <g font-family="Arial, sans-serif" fill="#222" text-anchor="middle">
+      <text x="325" y="32" font-size="22">${status}: ${title}</text>
+      <text x="325" y="60" font-size="16">Expected ${expectedWarnings} width warnings; received ${warnings.length}.</text>
     </g>
+    <g transform="translate(125 105)">${copper.replace("</svg>", `${markers}</svg>`)}</g>
   </svg>`
-  // Capture observed failures separately; only compliant output is a baseline.
   if (process.env.TRACE_WIDTH_EVIDENCE)
-    await Bun.write(process.env.TRACE_WIDTH_EVIDENCE, svg)
-  for (const { warnings } of results) expect(warnings).toEqual([])
-  await expect(svg).toMatchSvgSnapshot(import.meta.path)
+    await Bun.write(`${process.env.TRACE_WIDTH_EVIDENCE}/${name}.svg`, svg)
+  return svg
+}
+
+test.failing("USB ground ignores an unrelated narrow branch", async () => {
+  const circuit = new Circuit({ platform: { routingDrcChecksDisabled: true } })
+  circuit.add(
+    <board width={30} height={30} schematicDisabled routeRemaining={false}>
+      <testpoint
+        name="A"
+        pcbX={0}
+        pcbY={0}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <testpoint
+        name="B"
+        pcbX={10}
+        pcbY={0}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <testpoint
+        name="C"
+        pcbX={10}
+        pcbY={10}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <net name="GND" />
+      <trace
+        name="USB_GND_1"
+        path={["A.pin1", "B.pin1", "net.GND"]}
+        thickness={0.5}
+        pcbPath={["A.pin1", "B.pin1"]}
+      />
+      <trace
+        name="INPUT_DVDT_LOCAL_GROUND"
+        from="B.pin1"
+        to="C.pin1"
+        thickness={0.2}
+        pcbPath={["B.pin1", "C.pin1"]}
+      />
+    </board>,
+  )
+  await circuit.renderUntilSettled()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
+  expect(circuitJson.filter((e) => e.type === "pcb_trace")).toHaveLength(2)
+  expect(circuitJson.filter((e) => e.type === "pcb_trace_error")).toEqual([])
+  const warnings = (await runAllRoutingChecks(circuitJson)).filter(
+    (e) => e.type === "pcb_trace_warning",
+  )
+  const svg = await widthSnapshot(
+    circuitJson,
+    warnings,
+    "USB ground 0.5 mm; separate branch 0.2 mm",
+    0,
+    "usb-ground-width",
+  )
+  expect(warnings).toEqual([])
+  await expect(svg).toMatchSvgSnapshot(import.meta.path, "usb-ground-width")
+})
+
+test.failing("TEC hot loop ignores an unrelated narrow branch", async () => {
+  const circuit = new Circuit({ platform: { routingDrcChecksDisabled: true } })
+  circuit.add(
+    <board width={30} height={30} schematicDisabled routeRemaining={false}>
+      <testpoint
+        name="A"
+        pcbX={0}
+        pcbY={0}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <testpoint
+        name="B"
+        pcbX={10}
+        pcbY={0}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <testpoint
+        name="C"
+        pcbX={10}
+        pcbY={10}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <net name="TEC_VIN" />
+      <trace
+        name="TEC_INPUT_HOT_LOOP"
+        path={["A.pin1", "B.pin1", "net.TEC_VIN"]}
+        thickness={3}
+        pcbPath={["A.pin1", "B.pin1"]}
+      />
+      <trace
+        name="TEC_CONTROLLER_VIN"
+        from="B.pin1"
+        to="C.pin1"
+        thickness={0.2}
+        pcbPath={["B.pin1", "C.pin1"]}
+      />
+    </board>,
+  )
+  await circuit.renderUntilSettled()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
+  expect(circuitJson.filter((e) => e.type === "pcb_trace")).toHaveLength(2)
+  expect(circuitJson.filter((e) => e.type === "pcb_trace_error")).toEqual([])
+  const warnings = (await runAllRoutingChecks(circuitJson)).filter(
+    (e) => e.type === "pcb_trace_warning",
+  )
+  const svg = await widthSnapshot(
+    circuitJson,
+    warnings,
+    "TEC hot loop 3 mm; separate branch 0.2 mm",
+    0,
+    "tec-hot-loop-width",
+  )
+  expect(warnings).toEqual([])
+  await expect(svg).toMatchSvgSnapshot(import.meta.path, "tec-hot-loop-width")
+})
+
+test("undersized owned USB copper still warns", async () => {
+  const circuit = new Circuit({ platform: { routingDrcChecksDisabled: true } })
+  circuit.add(
+    <board width={30} height={30} schematicDisabled routingDisabled>
+      <testpoint
+        name="A"
+        pcbX={0}
+        pcbY={0}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <testpoint
+        name="B"
+        pcbX={10}
+        pcbY={0}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <net name="GND" />
+      <trace
+        name="USB_GND_1"
+        path={["A.pin1", "B.pin1", "net.GND"]}
+        thickness={0.5}
+      />
+      <pcbtrace
+        source_trace_id="source_trace_0"
+        route={[
+          {
+            route_type: "wire",
+            x: 0,
+            y: 0,
+            width: 0.2,
+            layer: "top",
+            start_pcb_port_id: "pcb_port_0",
+          },
+          {
+            route_type: "wire",
+            x: 10,
+            y: 0,
+            width: 0.2,
+            layer: "top",
+            end_pcb_port_id: "pcb_port_1",
+          },
+        ]}
+      />
+    </board>,
+  )
+  await circuit.renderUntilSettled()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
+  expect(circuitJson.filter((e) => e.type === "pcb_trace")).toHaveLength(1)
+  const warnings = (await runAllRoutingChecks(circuitJson)).filter(
+    (e) => e.type === "pcb_trace_warning",
+  )
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0]).toMatchObject({
+    source_trace_id: "source_trace_0",
+    pcb_trace_id: "pcb_trace_0",
+  })
+  expect(warnings[0].message).toContain("requested: 0.5mm, actual: 0.2mm")
+  const svg = await widthSnapshot(
+    circuitJson,
+    warnings,
+    "Owned USB copper 0.2 mm; required 0.5 mm",
+    1,
+    "undersized-owned-usb-width",
+  )
+  await expect(svg).toMatchSvgSnapshot(
+    import.meta.path,
+    "undersized-owned-usb-width",
+  )
+})
+
+test("unowned legacy copper still warns through net connectivity", async () => {
+  const circuit = new Circuit({ platform: { routingDrcChecksDisabled: true } })
+  circuit.add(
+    <board width={30} height={30} schematicDisabled routingDisabled>
+      <testpoint
+        name="A"
+        pcbX={0}
+        pcbY={0}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <testpoint
+        name="B"
+        pcbX={10}
+        pcbY={0}
+        footprintVariant="pad"
+        padDiameter={0.5}
+      />
+      <net name="GND" />
+      <trace
+        name="USB_GND_1"
+        path={["A.pin1", "B.pin1", "net.GND"]}
+        thickness={0.5}
+      />
+      <pcbtrace
+        route={[
+          {
+            route_type: "wire",
+            x: 0,
+            y: 0,
+            width: 0.2,
+            layer: "top",
+            start_pcb_port_id: "pcb_port_0",
+          },
+          {
+            route_type: "wire",
+            x: 10,
+            y: 0,
+            width: 0.2,
+            layer: "top",
+            end_pcb_port_id: "pcb_port_1",
+          },
+        ]}
+      />
+    </board>,
+  )
+  await circuit.renderUntilSettled()
+  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
+  const traces = circuitJson.filter((e) => e.type === "pcb_trace")
+  expect(traces).toHaveLength(1)
+  expect(traces[0].source_trace_id).toBeUndefined()
+  const warnings = (await runAllRoutingChecks(circuitJson)).filter(
+    (e) => e.type === "pcb_trace_warning",
+  )
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0]).toMatchObject({
+    source_trace_id: "source_trace_0",
+    pcb_trace_id: "pcb_trace_0",
+  })
+  const svg = await widthSnapshot(
+    circuitJson,
+    warnings,
+    "Unowned copper 0.2 mm; required 0.5 mm",
+    1,
+    "legacy-unowned-width",
+  )
+  await expect(svg).toMatchSvgSnapshot(import.meta.path, "legacy-unowned-width")
 })
