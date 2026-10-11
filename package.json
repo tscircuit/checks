@@ -36,7 +36,7 @@
     "@tscircuit/core": "^0.0.1930",
     "tscircuit-for-length-tests": "npm:tscircuit@0.0.2568",
     "@tscircuit/circuit-json-util": "^0.0.120",
-    "@tscircuit/circuit-json-pcb-style-analysis": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-pcb-style-analysis/0.0.3.tgz"
+    "@tscircuit/circuit-json-pcb-style-analysis": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-pcb-style-analysis/0.0.7.tgz"
   },
   "peerDependencies": {
     "@flatten-js/core": "*",

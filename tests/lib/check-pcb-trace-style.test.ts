@@ -1,5 +1,9 @@
 import { expect, test } from "bun:test"
-import { pcb_trace_style_warning, type AnyCircuitElement } from "circuit-json"
+import {
+  pcb_trace_style_warning,
+  type AnyCircuitElement,
+  type SourceBus,
+} from "circuit-json"
 import {
   checkPcbTraceStyle,
   runAllChecks,
@@ -72,3 +76,32 @@ test("routing and all-check entrypoints report real board style warnings by defa
     )
   }
 }, 30_000)
+
+test("explicit length matching exempts the real RC car trace without changing its copper", () => {
+  const baseline = checkPcbTraceStyle(circuitJson)
+  expect(baseline).toHaveLength(2)
+  const bus: SourceBus = {
+    type: "source_bus",
+    source_bus_id: "source_bus_style_regression",
+    source_trace_ids: ["source_trace_44"],
+  }
+  // Membership and an upper bound alone do not imply length matching.
+  expect(checkPcbTraceStyle([...circuitJson, bus])).toEqual(baseline)
+  expect(
+    checkPcbTraceStyle([...circuitJson, { ...bus, max_length: 50 }]),
+  ).toEqual(baseline)
+  const matchingBuses: SourceBus[] = [
+    { ...bus, max_length_skew: 0 },
+    { ...bus, target_length: 50 },
+    {
+      ...bus,
+      source_trace_ids: [],
+      length_match_source_trace_ids: ["source_trace_44"],
+    },
+  ]
+  const original = JSON.stringify(circuitJson)
+  for (const matchingBus of matchingBuses) {
+    expect(checkPcbTraceStyle([...circuitJson, matchingBus])).toEqual([])
+  }
+  expect(JSON.stringify(circuitJson)).toBe(original)
+})
