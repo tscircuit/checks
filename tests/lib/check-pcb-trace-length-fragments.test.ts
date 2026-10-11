@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
 import { checkPcbTraceLengths } from "../.."
 
-test("enforces max_length across multiple PCB route fragments", () => {
+test("reports unknown connectivity instead of summing disconnected route fragments", () => {
   const circuit: AnyCircuitElement[] = [
     {
       type: "source_trace",
@@ -28,8 +28,8 @@ test("enforces max_length across multiple PCB route fragments", () => {
   ]
   expect(checkPcbTraceLengths(circuit)).toEqual([
     expect.objectContaining({
-      type: "pcb_trace_too_long_error",
-      actual_trace_length: 12,
+      type: "pcb_trace_warning",
+      trace_length_status: "indeterminate",
       maximum_trace_length: 10,
     }),
   ])

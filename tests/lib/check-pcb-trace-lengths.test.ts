@@ -52,21 +52,20 @@ const circuitJson = [
 ] as AnyCircuitElement[]
 
 test("errors when a PCB trace exceeds its source trace maximum length", () => {
-  expect(checkPcbTraceLengths(circuitJson)).toEqual([
-    {
+  const errors = checkPcbTraceLengths(circuitJson)
+  expect(errors).toEqual([
+    expect.objectContaining({
       type: "pcb_trace_too_long_error",
-      pcb_trace_too_long_error_id:
-        "pcb_trace_too_long_error_overlength_pcb_trace",
-      error_type: "pcb_trace_too_long_error",
-      message: "PCB trace is 12.00mm long, exceeding the 10mm maximum",
       pcb_trace_id: "overlength_pcb_trace",
       source_trace_id: "overlength_source_trace",
       source_net_id: "signal_net",
       actual_trace_length: 12,
       maximum_trace_length: 10,
       subcircuit_id: "board",
-    },
+    }),
   ])
+  expect(errors[0]!.message).toContain("origin unavailable")
+  expect(errors[0]!.message).not.toContain("overlength_source_trace")
 })
 
 test("is included in the routing check pipeline", async () => {
@@ -74,18 +73,23 @@ test("is included in the routing check pipeline", async () => {
 
   expect(
     results.filter((result) => result.type === "pcb_trace_too_long_error"),
-  ).toEqual(checkPcbTraceLengths(circuitJson))
+  ).toEqual(
+    checkPcbTraceLengths(circuitJson).filter(
+      (result) => result.type === "pcb_trace_too_long_error",
+    ),
+  )
 })
 
 const makePcbPort = (
   pcbPortId: string,
   sourcePortId: string,
+  x = 0,
 ): AnyCircuitElement => ({
   type: "pcb_port",
   pcb_port_id: pcbPortId,
   source_port_id: sourcePortId,
   pcb_component_id: `component_${pcbPortId}`,
-  x: 0,
+  x,
   y: 0,
   layers: ["top"],
 })
@@ -151,8 +155,8 @@ test("ignores unrelated long MST branches when exact two-port traces are short",
           max_length: maximum,
         },
         makePcbPort(startPcbPortId, startSourcePortId),
-        makePcbPort(endPcbPortId, endSourcePortId),
-        makePcbPort(branchPcbPortId, branchSourcePortId),
+        makePcbPort(endPcbPortId, endSourcePortId, exact),
+        makePcbPort(branchPcbPortId, branchSourcePortId, branch),
         makeStraightPcbTrace({
           pcbTraceId: `pcb_trace_${id}_exact`,
           sourceTraceId,
@@ -184,8 +188,8 @@ test("retains a violation on the exact two-port PCB trace", () => {
       max_length: 5,
     },
     makePcbPort("pcb_port_a", "source_port_a"),
-    makePcbPort("pcb_port_b", "source_port_b"),
-    makePcbPort("pcb_port_branch", "source_port_branch"),
+    makePcbPort("pcb_port_b", "source_port_b", 7),
+    makePcbPort("pcb_port_branch", "source_port_branch", 12),
     makeStraightPcbTrace({
       pcbTraceId: "pcb_trace_exact_violation",
       sourceTraceId: "source_trace_exact_violation",
@@ -222,7 +226,11 @@ test("retains one-port-to-net trace length errors", () => {
       max_length: 5,
     },
     makePcbPort("pcb_port_c9_ground", "source_port_c9_ground"),
-    makePcbPort("pcb_port_c3_ground", "source_port_c3_ground"),
+    makePcbPort(
+      "pcb_port_c3_ground",
+      "source_port_c3_ground",
+      5.062790456754819,
+    ),
     makeStraightPcbTrace({
       pcbTraceId: "pcb_trace_c9_to_ground",
       sourceTraceId: "source_trace_ground_drop",
@@ -252,7 +260,7 @@ test("keeps existing attribution when no exact endpoint route is exposed", () =>
       max_length: 5,
     },
     makePcbPort("pcb_port_a", "source_port_a"),
-    makePcbPort("pcb_port_b", "source_port_b"),
+    makePcbPort("pcb_port_b", "source_port_b", 7),
     {
       type: "pcb_trace",
       pcb_trace_id: "pcb_trace_without_endpoint_metadata",

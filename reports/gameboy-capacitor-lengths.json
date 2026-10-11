@@ -1,0 +1,841 @@
+{
+  "package": "abse/gameboy-advance@0.0.15",
+  "tscircuit": "0.0.2827",
+  "limitNote": "The 5.5mm project limit is configured. It is not independently verified datasheet guidance and does not alone establish a fabrication defect.",
+  "reviewCandidates": [
+    {
+      "sourceTrace": {
+        "type": "source_trace",
+        "source_trace_id": "source_trace_34",
+        "connected_source_port_ids": [
+          "source_port_118",
+          "source_port_45"
+        ],
+        "connected_source_net_ids": [],
+        "subcircuit_id": "subcircuit_source_group_0",
+        "name": "C_VREG_AVDD_P",
+        "display_name": ".C_VREG_AVDD > .pin1 to .U1 > .VREG_AVDD",
+        "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net16",
+        "max_length": 5.5,
+        "max_length_origin": "configured_capacitor",
+        "capacitor_connection": {
+          "capacitor_source_component_id": "source_component_16",
+          "capacitor_source_port_id": "source_port_118",
+          "associated_source_component_id": "source_component_0",
+          "associated_source_port_id": "source_port_45",
+          "connection_type": "supply",
+          "capacitor_role": "unspecified"
+        }
+      },
+      "measurement": {
+        "status": "indeterminate",
+        "reason": "Via or plated-pad depth is unavailable for this layer span",
+        "knownPathLengthLowerBound": 3.54650159807566,
+        "pcbTraceIds": [
+          "pcb_trace_10"
+        ],
+        "pcbViaIds": [
+          "pcb_via_13",
+          "pcb_via_14"
+        ]
+      },
+      "status": "indeterminate",
+      "message": "C_VREG_AVDD_P: C_VREG_AVDD (unspecified capacitor, supply to U1.VREG_AVDD); limit 5.5mm from configured capacitor maxDecouplingTraceLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.55mm with unresolved barrel/pad depth. Layout review required.",
+      "reviewEvidence": {
+        "capacitor": "C_VREG_AVDD",
+        "role": "local regulator analog-supply decoupling",
+        "associatedIcPin": "U1.VREG_AVDD",
+        "limitOrigin": "configured capacitor maxDecouplingTraceLength",
+        "review": "Check local supply path with the actual layer stackup."
+      }
+    },
+    {
+      "sourceTrace": {
+        "type": "source_trace",
+        "source_trace_id": "source_trace_31",
+        "connected_source_port_ids": [
+          "source_port_117",
+          "source_port_46"
+        ],
+        "connected_source_net_ids": [],
+        "subcircuit_id": "subcircuit_source_group_0",
+        "name": "C_CORE_G",
+        "display_name": "GND",
+        "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+        "max_length": 5.5,
+        "max_length_origin": "configured_capacitor",
+        "capacitor_connection": {
+          "capacitor_source_component_id": "source_component_15",
+          "capacitor_source_port_id": "source_port_117",
+          "associated_source_component_id": "source_component_0",
+          "associated_source_port_id": "source_port_46",
+          "connection_type": "return",
+          "capacitor_role": "unspecified"
+        }
+      },
+      "measurement": {
+        "status": "indeterminate",
+        "reason": "Connected plane copper has no uniquely measurable routed return path"
+      },
+      "status": "indeterminate",
+      "message": "C_CORE_G: C_CORE (unspecified capacitor, return to U1.VREG_PGND); limit 5.5mm from configured capacitor maxDecouplingTraceLength; path indeterminate: Connected plane copper has no uniquely measurable routed return path. Layout review required.",
+      "reviewEvidence": {
+        "capacitor": "C_CORE",
+        "role": "regulator output capacitor return",
+        "associatedIcPin": "U1.VREG_PGND",
+        "limitOrigin": "configured capacitor maxDecouplingTraceLength",
+        "review": "Check the regulator output loop and plane return. The other terminal connects to the inductor output and VREG_FB; this is not inferred IC supply decoupling."
+      }
+    },
+    {
+      "sourceTrace": {
+        "type": "source_trace",
+        "source_trace_id": "source_trace_165",
+        "connected_source_port_ids": [
+          "source_port_233",
+          "source_port_231"
+        ],
+        "connected_source_net_ids": [],
+        "subcircuit_id": "subcircuit_source_group_0",
+        "name": "PSRAM_DECOUPLING",
+        "display_name": ".C_PSRAM > .pin1 to .U_PSRAM > .VDD",
+        "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net103",
+        "max_length": 5.5,
+        "max_length_origin": "explicit",
+        "capacitor_connection": {
+          "capacitor_source_component_id": "source_component_65",
+          "capacitor_source_port_id": "source_port_233",
+          "associated_source_component_id": "source_component_64",
+          "associated_source_port_id": "source_port_231",
+          "connection_type": "supply",
+          "capacitor_role": "unspecified"
+        }
+      },
+      "measurement": {
+        "status": "indeterminate",
+        "reason": "Via or plated-pad depth is unavailable for this layer span",
+        "knownPathLengthLowerBound": 4.777544,
+        "pcbTraceIds": [
+          "pcb_trace_132"
+        ],
+        "pcbViaIds": [
+          "pcb_via_59",
+          "pcb_via_60"
+        ]
+      },
+      "status": "indeterminate",
+      "message": "PSRAM_DECOUPLING: C_PSRAM (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.78mm with unresolved barrel/pad depth. Layout review required.",
+      "reviewEvidence": {
+        "capacitor": "C_PSRAM",
+        "role": "local 100nF decoupling",
+        "associatedIcPin": "U_PSRAM.VDD",
+        "limitOrigin": "authored trace maxLength",
+        "review": "Check supply path with the actual layer stackup."
+      }
+    },
+    {
+      "sourceTrace": {
+        "type": "source_trace",
+        "source_trace_id": "source_trace_167",
+        "connected_source_port_ids": [
+          "source_port_237",
+          "source_port_231"
+        ],
+        "connected_source_net_ids": [],
+        "subcircuit_id": "subcircuit_source_group_0",
+        "name": "PSRAM_BULK",
+        "display_name": ".C_PSRAM_BULK > .pin1 to .U_PSRAM > .VDD",
+        "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net103",
+        "max_length": 5.5,
+        "max_length_origin": "explicit",
+        "capacitor_connection": {
+          "capacitor_source_component_id": "source_component_67",
+          "capacitor_source_port_id": "source_port_237",
+          "associated_source_component_id": "source_component_64",
+          "associated_source_port_id": "source_port_231",
+          "connection_type": "supply",
+          "capacitor_role": "unspecified"
+        }
+      },
+      "measurement": {
+        "status": "indeterminate",
+        "reason": "Via or plated-pad depth is unavailable for this layer span",
+        "knownPathLengthLowerBound": 5.637327999999999,
+        "pcbTraceIds": [
+          "pcb_trace_133"
+        ],
+        "pcbViaIds": [
+          "pcb_via_61",
+          "pcb_via_62"
+        ]
+      },
+      "status": "indeterminate",
+      "message": "PSRAM_BULK: C_PSRAM_BULK (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.64mm with unresolved barrel/pad depth. Layout review required.",
+      "reviewEvidence": {
+        "capacitor": "C_PSRAM_BULK",
+        "role": "local 1uF bulk supply capacitor",
+        "associatedIcPin": "U_PSRAM.VDD",
+        "limitOrigin": "authored trace maxLength",
+        "review": "Review bulk capacitance and local supply layout under their own requirements."
+      }
+    },
+    {
+      "sourceTrace": {
+        "type": "source_trace",
+        "source_trace_id": "source_trace_344",
+        "connected_source_port_ids": [
+          "source_port_234",
+          "source_port_227"
+        ],
+        "connected_source_net_ids": [],
+        "subcircuit_id": "subcircuit_source_group_0",
+        "name": "PSRAM_VSS_GND_BRIDGE",
+        "display_name": ".C_PSRAM > .pin2 to .U_PSRAM > .VSS",
+        "min_trace_thickness": 0.1,
+        "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+        "max_length": 5.5,
+        "max_length_origin": "explicit",
+        "capacitor_connection": {
+          "capacitor_source_component_id": "source_component_65",
+          "capacitor_source_port_id": "source_port_234",
+          "associated_source_component_id": "source_component_64",
+          "associated_source_port_id": "source_port_227",
+          "connection_type": "return",
+          "capacitor_role": "unspecified"
+        }
+      },
+      "measurement": {
+        "status": "measured",
+        "length": 14.237312000000003,
+        "pcbTraceIds": [
+          "pcb_trace_181"
+        ],
+        "pcbViaIds": [
+          "pcb_via_145",
+          "pcb_via_146"
+        ],
+        "method": "shortest_copper_path"
+      },
+      "status": "exceeds_limit",
+      "message": "PSRAM_VSS_GND_BRIDGE: C_PSRAM (unspecified capacitor, return to U_PSRAM.VSS); limit 5.5mm from authored trace maxLength; authored routed copper path including pad traversal and known barrel depth measures 14.24mm, exceeding the configured rule. Layout review required.",
+      "reviewEvidence": {
+        "capacitor": "C_PSRAM",
+        "role": "decoupling return bridge",
+        "associatedIcPin": "U_PSRAM.VSS",
+        "limitOrigin": "authored trace maxLength",
+        "review": "Review the authored return trace and its relationship to the ground plane."
+      }
+    },
+    {
+      "sourceTrace": {
+        "type": "source_trace",
+        "source_trace_id": "source_trace_123",
+        "connected_source_port_ids": [
+          "source_port_188",
+          "source_port_179"
+        ],
+        "connected_source_net_ids": [],
+        "subcircuit_id": "subcircuit_source_group_0",
+        "name": "BAT_INPUT_CAP_B",
+        "display_name": ".C_BAT_IN_BULK_B > .pin1 to .U_BAT_BUCKBOOST > .VIN",
+        "min_trace_thickness": 0.4,
+        "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net40",
+        "max_length": 5.5,
+        "max_length_origin": "explicit",
+        "capacitor_connection": {
+          "capacitor_source_component_id": "source_component_47",
+          "capacitor_source_port_id": "source_port_188",
+          "associated_source_component_id": "source_component_43",
+          "associated_source_port_id": "source_port_179",
+          "connection_type": "supply",
+          "capacitor_role": "unspecified"
+        }
+      },
+      "measurement": {
+        "status": "measured",
+        "length": 5.847914361045932,
+        "pcbTraceIds": [
+          "pcb_trace_298"
+        ],
+        "pcbViaIds": [],
+        "method": "shortest_copper_path"
+      },
+      "status": "exceeds_limit",
+      "message": "BAT_INPUT_CAP_B: C_BAT_IN_BULK_B (unspecified capacitor, supply to U_BAT_BUCKBOOST.VIN); limit 5.5mm from authored trace maxLength; authored routed copper path including pad traversal and known barrel depth measures 5.85mm, exceeding the configured rule. Layout review required.",
+      "reviewEvidence": {
+        "capacitor": "C_BAT_IN_BULK_B",
+        "role": "10uF regulator input bulk capacitor",
+        "associatedIcPin": "U_BAT_BUCKBOOST.VIN",
+        "limitOrigin": "authored trace maxLength",
+        "review": "Review the regulator input loop, capacitor placement and applicable regulator guidance."
+      }
+    }
+  ],
+  "originalFindings": [
+    {
+      "name": "C_DVDD2_BULK_SUPPLY",
+      "legacyBranchTotal": 5.850000000000001,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_16",
+          "connected_source_port_ids": [
+            "source_port_156",
+            "source_port_154"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "C_DVDD2_BULK_SUPPLY",
+          "display_name": ".C_DVDD2_BULK > .pin1 to .C_DVDD2 > .pin1",
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net8",
+          "max_length": 5.5,
+          "max_length_origin": "explicit"
+        },
+        "measurement": {
+          "status": "measured",
+          "length": 5.850000000000001,
+          "pcbTraceIds": [
+            "pcb_trace_2"
+          ],
+          "pcbViaIds": [],
+          "method": "shortest_copper_path"
+        },
+        "status": "exceeds_limit",
+        "message": "C_DVDD2_BULK_SUPPLY: C_DVDD2, C_DVDD2_BULK (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; authored routed copper path including pad traversal and known barrel depth measures 5.85mm, exceeding the configured rule. Layout review required."
+      }
+    },
+    {
+      "name": "C_VREG_AVDD_P",
+      "legacyBranchTotal": 6.746501598075659,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_34",
+          "connected_source_port_ids": [
+            "source_port_118",
+            "source_port_45"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "C_VREG_AVDD_P",
+          "display_name": ".C_VREG_AVDD > .pin1 to .U1 > .VREG_AVDD",
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net16",
+          "max_length": 5.5,
+          "max_length_origin": "configured_capacitor",
+          "capacitor_connection": {
+            "capacitor_source_component_id": "source_component_16",
+            "capacitor_source_port_id": "source_port_118",
+            "associated_source_component_id": "source_component_0",
+            "associated_source_port_id": "source_port_45",
+            "connection_type": "supply",
+            "capacitor_role": "unspecified"
+          }
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Via or plated-pad depth is unavailable for this layer span",
+          "knownPathLengthLowerBound": 3.54650159807566,
+          "pcbTraceIds": [
+            "pcb_trace_10"
+          ],
+          "pcbViaIds": [
+            "pcb_via_13",
+            "pcb_via_14"
+          ]
+        },
+        "status": "indeterminate",
+        "message": "C_VREG_AVDD_P: C_VREG_AVDD (unspecified capacitor, supply to U1.VREG_AVDD); limit 5.5mm from configured capacitor maxDecouplingTraceLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.55mm with unresolved barrel/pad depth. Layout review required."
+      }
+    },
+    {
+      "name": "C_CORE_G",
+      "legacyBranchTotal": 7.832852169372634,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_31",
+          "connected_source_port_ids": [
+            "source_port_117",
+            "source_port_46"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "C_CORE_G",
+          "display_name": "GND",
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "configured_capacitor",
+          "capacitor_connection": {
+            "capacitor_source_component_id": "source_component_15",
+            "capacitor_source_port_id": "source_port_117",
+            "associated_source_component_id": "source_component_0",
+            "associated_source_port_id": "source_port_46",
+            "connection_type": "return",
+            "capacitor_role": "unspecified"
+          }
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Connected plane copper has no uniquely measurable routed return path"
+        },
+        "status": "indeterminate",
+        "message": "C_CORE_G: C_CORE (unspecified capacitor, return to U1.VREG_PGND); limit 5.5mm from configured capacitor maxDecouplingTraceLength; path indeterminate: Connected plane copper has no uniquely measurable routed return path. Layout review required."
+      }
+    },
+    {
+      "name": "PSRAM_DECOUPLING",
+      "legacyBranchTotal": 7.977544,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_165",
+          "connected_source_port_ids": [
+            "source_port_233",
+            "source_port_231"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "PSRAM_DECOUPLING",
+          "display_name": ".C_PSRAM > .pin1 to .U_PSRAM > .VDD",
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net103",
+          "max_length": 5.5,
+          "max_length_origin": "explicit",
+          "capacitor_connection": {
+            "capacitor_source_component_id": "source_component_65",
+            "capacitor_source_port_id": "source_port_233",
+            "associated_source_component_id": "source_component_64",
+            "associated_source_port_id": "source_port_231",
+            "connection_type": "supply",
+            "capacitor_role": "unspecified"
+          }
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Via or plated-pad depth is unavailable for this layer span",
+          "knownPathLengthLowerBound": 4.777544,
+          "pcbTraceIds": [
+            "pcb_trace_132"
+          ],
+          "pcbViaIds": [
+            "pcb_via_59",
+            "pcb_via_60"
+          ]
+        },
+        "status": "indeterminate",
+        "message": "PSRAM_DECOUPLING: C_PSRAM (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.78mm with unresolved barrel/pad depth. Layout review required."
+      }
+    },
+    {
+      "name": "PSRAM_BULK",
+      "legacyBranchTotal": 8.837328,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_167",
+          "connected_source_port_ids": [
+            "source_port_237",
+            "source_port_231"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "PSRAM_BULK",
+          "display_name": ".C_PSRAM_BULK > .pin1 to .U_PSRAM > .VDD",
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net103",
+          "max_length": 5.5,
+          "max_length_origin": "explicit",
+          "capacitor_connection": {
+            "capacitor_source_component_id": "source_component_67",
+            "capacitor_source_port_id": "source_port_237",
+            "associated_source_component_id": "source_component_64",
+            "associated_source_port_id": "source_port_231",
+            "connection_type": "supply",
+            "capacitor_role": "unspecified"
+          }
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Via or plated-pad depth is unavailable for this layer span",
+          "knownPathLengthLowerBound": 5.637327999999999,
+          "pcbTraceIds": [
+            "pcb_trace_133"
+          ],
+          "pcbViaIds": [
+            "pcb_via_61",
+            "pcb_via_62"
+          ]
+        },
+        "status": "indeterminate",
+        "message": "PSRAM_BULK: C_PSRAM_BULK (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.64mm with unresolved barrel/pad depth. Layout review required."
+      }
+    },
+    {
+      "name": "LCD_UNUSED_RD_HIGH",
+      "legacyBranchTotal": 8.624773257461971,
+      "outcome": "Removed capacitor-derived rule: no identified local IC decoupling connection"
+    },
+    {
+      "name": "IOVDD6_IOVDD5_BRIDGE",
+      "legacyBranchTotal": 7.012242218182137,
+      "outcome": "Removed capacitor-derived rule: no identified local IC decoupling connection"
+    },
+    {
+      "name": "IOVDD4_IOVDD5_BRIDGE",
+      "legacyBranchTotal": 6.530221116507051,
+      "outcome": "Removed capacitor-derived rule: no identified local IC decoupling connection"
+    },
+    {
+      "name": "VREG_AVDD_CORE_GND_BRIDGE",
+      "legacyBranchTotal": 9.20795589507512,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_343",
+          "connected_source_port_ids": [
+            "source_port_119",
+            "source_port_117"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "VREG_AVDD_CORE_GND_BRIDGE",
+          "display_name": ".C_VREG_AVDD > .pin2 to .C_CORE > .pin2",
+          "min_trace_thickness": 0.1,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "explicit"
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Via or plated-pad depth is unavailable for this layer span",
+          "knownPathLengthLowerBound": 6.007955895075121,
+          "pcbTraceIds": [
+            "pcb_trace_180"
+          ],
+          "pcbViaIds": [
+            "pcb_via_143",
+            "pcb_via_144"
+          ]
+        },
+        "status": "indeterminate",
+        "message": "VREG_AVDD_CORE_GND_BRIDGE: C_CORE, C_VREG_AVDD (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 6.01mm with unresolved barrel/pad depth. Layout review required."
+      }
+    },
+    {
+      "name": "PSRAM_VSS_GND_BRIDGE",
+      "legacyBranchTotal": 14.237312000000003,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_344",
+          "connected_source_port_ids": [
+            "source_port_234",
+            "source_port_227"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "PSRAM_VSS_GND_BRIDGE",
+          "display_name": ".C_PSRAM > .pin2 to .U_PSRAM > .VSS",
+          "min_trace_thickness": 0.1,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "explicit",
+          "capacitor_connection": {
+            "capacitor_source_component_id": "source_component_65",
+            "capacitor_source_port_id": "source_port_234",
+            "associated_source_component_id": "source_component_64",
+            "associated_source_port_id": "source_port_227",
+            "connection_type": "return",
+            "capacitor_role": "unspecified"
+          }
+        },
+        "measurement": {
+          "status": "measured",
+          "length": 14.237312000000003,
+          "pcbTraceIds": [
+            "pcb_trace_181"
+          ],
+          "pcbViaIds": [
+            "pcb_via_145",
+            "pcb_via_146"
+          ],
+          "method": "shortest_copper_path"
+        },
+        "status": "exceeds_limit",
+        "message": "PSRAM_VSS_GND_BRIDGE: C_PSRAM (unspecified capacitor, return to U_PSRAM.VSS); limit 5.5mm from authored trace maxLength; authored routed copper path including pad traversal and known barrel depth measures 14.24mm, exceeding the configured rule. Layout review required."
+      }
+    },
+    {
+      "name": "XIN_IOVDD4_GND_BRIDGE",
+      "legacyBranchTotal": 7.06831744033212,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_346",
+          "connected_source_port_ids": [
+            "source_port_127",
+            "source_port_145"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "XIN_IOVDD4_GND_BRIDGE",
+          "display_name": ".C_XIN > .pin2 to .C_IOVDD4 > .pin2",
+          "min_trace_thickness": 0.1,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "explicit"
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Via or plated-pad depth is unavailable for this layer span",
+          "knownPathLengthLowerBound": 3.868317440332119,
+          "pcbTraceIds": [
+            "pcb_trace_183"
+          ],
+          "pcbViaIds": [
+            "pcb_via_149",
+            "pcb_via_150"
+          ]
+        },
+        "status": "indeterminate",
+        "message": "XIN_IOVDD4_GND_BRIDGE: C_XIN, C_IOVDD4 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.87mm with unresolved barrel/pad depth. Layout review required."
+      }
+    },
+    {
+      "name": "CORE_VREG_IN_GND_BRIDGE",
+      "legacyBranchTotal": 6.6913001248325275,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_347",
+          "connected_source_port_ids": [
+            "source_port_117",
+            "source_port_115"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "CORE_VREG_IN_GND_BRIDGE",
+          "display_name": ".C_CORE > .pin2 to .C_VREG_IN > .pin2",
+          "min_trace_thickness": 0.1,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "explicit"
+        },
+        "measurement": {
+          "status": "measured",
+          "length": 6.6913001248325275,
+          "pcbTraceIds": [
+            "pcb_trace_184"
+          ],
+          "pcbViaIds": [],
+          "method": "shortest_copper_path"
+        },
+        "status": "exceeds_limit",
+        "message": "CORE_VREG_IN_GND_BRIDGE: C_VREG_IN, C_CORE (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; authored routed copper path including pad traversal and known barrel depth measures 6.69mm, exceeding the configured rule. Layout review required."
+      }
+    },
+    {
+      "name": "V3V3_AVDD_ADC_BRIDGE",
+      "legacyBranchTotal": 10.4627,
+      "outcome": "Removed capacitor-derived rule: no identified local IC decoupling connection"
+    },
+    {
+      "name": "QSPI_IOVDD6_GND_BRIDGE",
+      "legacyBranchTotal": 9.926004541235795,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_352",
+          "connected_source_port_ids": [
+            "source_port_121",
+            "source_port_141"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "QSPI_IOVDD6_GND_BRIDGE",
+          "display_name": ".C_QSPI_USB > .pin2 to .C_IOVDD6 > .pin2",
+          "min_trace_thickness": 0.1,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "explicit"
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Via or plated-pad depth is unavailable for this layer span",
+          "knownPathLengthLowerBound": 6.726004541235795,
+          "pcbTraceIds": [
+            "pcb_trace_188"
+          ],
+          "pcbViaIds": [
+            "pcb_via_159",
+            "pcb_via_160"
+          ]
+        },
+        "status": "indeterminate",
+        "message": "QSPI_IOVDD6_GND_BRIDGE: C_QSPI_USB, C_IOVDD6 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 6.73mm with unresolved barrel/pad depth. Layout review required."
+      }
+    },
+    {
+      "name": "AMP_CAP_GROUND_BRIDGE",
+      "legacyBranchTotal": 6.300000000000001,
+      "outcome": "Removed capacitor-derived rule: no identified local IC decoupling connection"
+    },
+    {
+      "name": "FLASH_GND_EP_MANUAL_BRIDGE",
+      "legacyBranchTotal": 7.8991235214545785,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_359",
+          "connected_source_port_ids": [
+            "source_port_64",
+            "source_port_69"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "FLASH_GND_EP_MANUAL_BRIDGE",
+          "display_name": ".U2 > .GND to .U2 > .EP",
+          "min_trace_thickness": 0.1,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "explicit"
+        },
+        "measurement": {
+          "status": "measured",
+          "length": 7.8991235214545785,
+          "pcbTraceIds": [
+            "pcb_trace_191"
+          ],
+          "pcbViaIds": [
+            "pcb_via_163",
+            "pcb_via_164"
+          ],
+          "method": "shortest_copper_path"
+        },
+        "status": "exceeds_limit",
+        "message": "FLASH_GND_EP_MANUAL_BRIDGE: no capacitor decoupling association; limit 5.5mm from authored trace maxLength; authored routed copper path including pad traversal and known barrel depth measures 7.90mm, exceeding the configured rule. Layout review required."
+      }
+    },
+    {
+      "name": "ADC_DVDD1_OFFPAD_GND",
+      "legacyBranchTotal": 8.132242077028693,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_378",
+          "connected_source_port_ids": [
+            "source_port_123",
+            "source_port_159"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "ADC_DVDD1_OFFPAD_GND",
+          "display_name": ".C_ADC > .pin2 to .C_DVDD1 > .pin2",
+          "min_trace_thickness": 0.1,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "explicit"
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Via or plated-pad depth is unavailable for this layer span",
+          "knownPathLengthLowerBound": 4.932242077028693,
+          "pcbTraceIds": [
+            "pcb_trace_203"
+          ],
+          "pcbViaIds": [
+            "pcb_via_191",
+            "pcb_via_192"
+          ]
+        },
+        "status": "indeterminate",
+        "message": "ADC_DVDD1_OFFPAD_GND: C_ADC, C_DVDD1 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.93mm with unresolved barrel/pad depth. Layout review required."
+      }
+    },
+    {
+      "name": "VBUS_XOUT_OFFPAD_GROUND",
+      "legacyBranchTotal": 8.344597602374305,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_379",
+          "connected_source_port_ids": [
+            "source_port_131",
+            "source_port_129"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "VBUS_XOUT_OFFPAD_GROUND",
+          "display_name": ".C_VBUS > .pin2 to .C_XOUT > .pin2",
+          "min_trace_thickness": 0.8,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net81",
+          "max_length": 5.5,
+          "max_length_origin": "explicit"
+        },
+        "measurement": {
+          "status": "indeterminate",
+          "reason": "Via or plated-pad depth is unavailable for this layer span",
+          "knownPathLengthLowerBound": 5.144597602374306,
+          "pcbTraceIds": [
+            "pcb_trace_204"
+          ],
+          "pcbViaIds": [
+            "pcb_via_193",
+            "pcb_via_194"
+          ]
+        },
+        "status": "indeterminate",
+        "message": "VBUS_XOUT_OFFPAD_GROUND: C_XOUT, C_VBUS (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.14mm with unresolved barrel/pad depth. Layout review required."
+      }
+    },
+    {
+      "name": "C_IOVDD5_GND",
+      "legacyBranchTotal": 665.6077535494062,
+      "outcome": "Removed capacitor-derived rule: no identified local IC decoupling connection"
+    },
+    {
+      "name": "BAT_INPUT_CAP_B",
+      "legacyBranchTotal": 5.847914361045932,
+      "outcome": {
+        "sourceTrace": {
+          "type": "source_trace",
+          "source_trace_id": "source_trace_123",
+          "connected_source_port_ids": [
+            "source_port_188",
+            "source_port_179"
+          ],
+          "connected_source_net_ids": [],
+          "subcircuit_id": "subcircuit_source_group_0",
+          "name": "BAT_INPUT_CAP_B",
+          "display_name": ".C_BAT_IN_BULK_B > .pin1 to .U_BAT_BUCKBOOST > .VIN",
+          "min_trace_thickness": 0.4,
+          "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net40",
+          "max_length": 5.5,
+          "max_length_origin": "explicit",
+          "capacitor_connection": {
+            "capacitor_source_component_id": "source_component_47",
+            "capacitor_source_port_id": "source_port_188",
+            "associated_source_component_id": "source_component_43",
+            "associated_source_port_id": "source_port_179",
+            "connection_type": "supply",
+            "capacitor_role": "unspecified"
+          }
+        },
+        "measurement": {
+          "status": "measured",
+          "length": 5.847914361045932,
+          "pcbTraceIds": [
+            "pcb_trace_298"
+          ],
+          "pcbViaIds": [],
+          "method": "shortest_copper_path"
+        },
+        "status": "exceeds_limit",
+        "message": "BAT_INPUT_CAP_B: C_BAT_IN_BULK_B (unspecified capacitor, supply to U_BAT_BUCKBOOST.VIN); limit 5.5mm from authored trace maxLength; authored routed copper path including pad traversal and known barrel depth measures 5.85mm, exceeding the configured rule. Layout review required."
+      }
+    },
+    {
+      "name": "BAT_OUTPUT_FEEDBACK_LINK",
+      "legacyBranchTotal": 9.981793124746183,
+      "outcome": "Removed capacitor-derived rule: no identified local IC decoupling connection"
+    }
+  ]
+}

@@ -1,9 +1,18 @@
-import { getPcbTraceLength } from "./util/get-pcb-trace-length"
+import {
+  createPcbTracePathMeasurer,
+  type PcbTracePathMeasurement,
+} from "./util/measure-pcb-trace-path"
+import {
+  getReadableNameForElementId,
+  getReadableNameForSourcePort,
+} from "./util/get-readable-names"
 import type {
   AnyCircuitElement,
   PcbPort,
   PcbTrace,
   PcbTraceTooLongError,
+  PcbTraceWarning,
+  PcbTraceLengthWarning,
   SourceTrace,
 } from "circuit-json"
 
@@ -96,44 +105,200 @@ export const getPcbTracesBySourceTraceId = (
   return pcbTracesBySourceTraceId
 }
 
+export interface PcbTraceLengthFinding {
+  sourceTrace: SourceTrace
+  measurement: PcbTracePathMeasurement
+  status: "within_limit" | "exceeds_limit" | "indeterminate"
+  message: string
+}
+
+/** Inspect all constrained connections, including paths that cannot be measured.
+ * A configured limit is a design rule, not independently verified guidance. */
+export const analyzePcbTraceLengths = (
+  circuitJson: AnyCircuitElement[],
+): PcbTraceLengthFinding[] => {
+  const measure = createPcbTracePathMeasurer(circuitJson)
+  return circuitJson.flatMap((sourceTrace): PcbTraceLengthFinding[] => {
+    if (
+      sourceTrace.type !== "source_trace" ||
+      typeof sourceTrace.max_length !== "number" ||
+      !Number.isFinite(sourceTrace.max_length)
+    )
+      return []
+    const connection = sourceTrace.capacitor_connection
+    let measurement: PcbTracePathMeasurement
+    if (
+      sourceTrace.max_length_origin === "inferred_decoupling" &&
+      (!connection ||
+        connection.capacitor_role !== "decoupling" ||
+        !sourceTrace.connected_source_port_ids.includes(
+          connection.capacitor_source_port_id,
+        ) ||
+        !sourceTrace.connected_source_port_ids.includes(
+          connection.associated_source_port_id,
+        ))
+    ) {
+      measurement = {
+        status: "indeterminate",
+        reason:
+          "An inferred decoupling rule has no identified local capacitor/IC connection",
+      }
+    } else measurement = measure(sourceTrace)
+    const origin = {
+      explicit: "authored trace maxLength",
+      inferred_decoupling: "automatic decoupling policy",
+      configured_capacitor: "configured capacitor maxDecouplingTraceLength",
+      crystal: "crystal layout requirement",
+    }[sourceTrace.max_length_origin ?? "explicit"]
+    const limitOrigin = sourceTrace.max_length_origin
+      ? origin
+      : "legacy max_length; origin unavailable"
+    const name = getReadableNameForElementId(
+      circuitJson,
+      sourceTrace.source_trace_id,
+    )
+    const port =
+      connection &&
+      circuitJson.find(
+        (e) =>
+          e.type === "source_port" &&
+          e.source_port_id === connection.associated_source_port_id,
+      )
+    const capacitorName = connection
+      ? getReadableNameForElementId(
+          circuitJson,
+          connection.capacitor_source_component_id,
+        )
+      : undefined
+    const capacitorPorts = circuitJson.filter(
+      (e) =>
+        e.type === "source_port" &&
+        sourceTrace.connected_source_port_ids.includes(e.source_port_id),
+    )
+    const attachedCapacitors = circuitJson
+      .filter(
+        (e) => e.type === "source_component" && e.ftype === "simple_capacitor",
+      )
+      .filter((e) =>
+        capacitorPorts.some(
+          (p) =>
+            p.type === "source_port" &&
+            p.source_component_id === e.source_component_id,
+        ),
+      )
+    const context = connection
+      ? `${capacitorName} (${connection.capacitor_role} capacitor, ${connection.connection_type} to ${port?.type === "source_port" ? getReadableNameForSourcePort(circuitJson, port) : "unresolved IC pin"})`
+      : attachedCapacitors.length
+        ? `${attachedCapacitors.map((c) => getReadableNameForElementId(circuitJson, c.source_component_id)).join(", ")} (capacitor role unspecified); no local decoupling IC/pin identified`
+        : "no capacitor decoupling association"
+    const explanation = `${name}: ${context}; limit ${sourceTrace.max_length}mm from ${limitOrigin}`
+    if (measurement.status === "indeterminate")
+      return [
+        {
+          sourceTrace,
+          measurement,
+          status: "indeterminate",
+          message: `${explanation}; path indeterminate: ${measurement.reason}${measurement.knownPathLengthLowerBound !== undefined ? `; routed copper lower bound ${measurement.knownPathLengthLowerBound.toFixed(2)}mm with unresolved barrel/pad depth` : ""}. Layout review required.`,
+        },
+      ]
+    const exceeds = measurement.length > sourceTrace.max_length + 1e-9
+    return [
+      {
+        sourceTrace,
+        measurement,
+        status: exceeds ? "exceeds_limit" : "within_limit",
+        message: `${explanation}; ${measurement.method === "shortest_copper_path" ? (sourceTrace.max_length_origin === "explicit" ? "authored routed copper path including pad traversal and known barrel depth" : "shortest routed copper path including pad traversal and known barrel depth") : "single authored route"} measures ${measurement.length.toFixed(2)}mm${exceeds ? ", exceeding the configured rule. Layout review required." : ", within the configured rule."}`,
+      },
+    ]
+  })
+}
+
 export const checkPcbTraceLengths = (
   circuitJson: AnyCircuitElement[],
-): PcbTraceTooLongError[] => {
-  const sourceTracesById = new Map(
-    circuitJson
-      .filter((e): e is SourceTrace => e.type === "source_trace")
-      .map((e) => [e.source_trace_id, e]),
-  )
-  const pcbTracesBySourceTraceId = getPcbTracesBySourceTraceId(circuitJson)
-  const errors: PcbTraceTooLongError[] = []
-
-  for (const [sourceTraceId, pcbTraces] of pcbTracesBySourceTraceId) {
-    const pcbTrace = pcbTraces[0]!
-    const sourceTrace = sourceTracesById.get(sourceTraceId)
-    if (!sourceTrace) continue
-
-    const maximumTraceLength = sourceTrace.max_length
-    if (typeof maximumTraceLength !== "number") continue
-
-    const actualTraceLength = pcbTraces.reduce(
-      (sum, trace) => sum + getPcbTraceLength(trace),
-      0,
+): (PcbTraceTooLongError | PcbTraceWarning | PcbTraceLengthWarning)[] => {
+  const diagnostics: (
+    | PcbTraceTooLongError
+    | PcbTraceWarning
+    | PcbTraceLengthWarning
+  )[] = []
+  for (const finding of analyzePcbTraceLengths(circuitJson)) {
+    if (finding.status === "within_limit") continue
+    const { sourceTrace, measurement } = finding
+    const pcbTrace = circuitJson.find(
+      (e) =>
+        e.type === "pcb_trace" &&
+        (measurement.status === "measured"
+          ? measurement.pcbTraceIds.includes(e.pcb_trace_id)
+          : e.source_trace_id === sourceTrace.source_trace_id),
     )
-    if (actualTraceLength <= maximumTraceLength + 1e-9) continue
-
-    errors.push({
-      type: "pcb_trace_too_long_error",
-      pcb_trace_too_long_error_id: `pcb_trace_too_long_error_${pcbTrace.pcb_trace_id}`,
-      error_type: "pcb_trace_too_long_error",
-      message: `PCB trace is ${actualTraceLength.toFixed(2)}mm long, exceeding the ${maximumTraceLength}mm maximum`,
-      pcb_trace_id: pcbTrace.pcb_trace_id,
+    const common = {
       source_trace_id: sourceTrace.source_trace_id,
-      source_net_id: sourceTrace.connected_source_net_ids[0],
-      actual_trace_length: actualTraceLength,
-      maximum_trace_length: maximumTraceLength,
-      subcircuit_id: pcbTrace.subcircuit_id ?? sourceTrace.subcircuit_id,
-    })
+      maximum_trace_length: sourceTrace.max_length!,
+      max_length_origin: sourceTrace.max_length_origin,
+      capacitor_connection: sourceTrace.capacitor_connection,
+      subcircuit_id:
+        pcbTrace?.type === "pcb_trace"
+          ? (pcbTrace.subcircuit_id ?? sourceTrace.subcircuit_id)
+          : sourceTrace.subcircuit_id,
+      message: finding.message,
+    }
+    if (measurement.status === "indeterminate") {
+      const ports = circuitJson.filter(
+        (e) =>
+          e.type === "pcb_port" &&
+          sourceTrace.connected_source_port_ids.includes(e.source_port_id!),
+      )
+      const warningDetails = {
+        ...common,
+        trace_length_status: "indeterminate" as const,
+        measurement_reason: measurement.reason,
+        known_path_length_lower_bound: measurement.knownPathLengthLowerBound,
+        path_pcb_trace_ids: measurement.pcbTraceIds,
+        path_pcb_via_ids: measurement.pcbViaIds,
+        pcb_component_ids: [
+          ...new Set(
+            ports.flatMap((p) =>
+              p.type === "pcb_port" && p.pcb_component_id
+                ? [p.pcb_component_id]
+                : [],
+            ),
+          ),
+        ],
+        pcb_port_ids: ports.flatMap((p) =>
+          p.type === "pcb_port" ? [p.pcb_port_id] : [],
+        ),
+      }
+      diagnostics.push(
+        pcbTrace?.type === "pcb_trace"
+          ? {
+              ...warningDetails,
+              type: "pcb_trace_warning",
+              pcb_trace_warning_id: `pcb_trace_length_indeterminate_${sourceTrace.source_trace_id}`,
+              warning_type: "pcb_trace_warning",
+              pcb_trace_id: pcbTrace.pcb_trace_id,
+            }
+          : {
+              ...warningDetails,
+              type: "pcb_trace_length_warning",
+              pcb_trace_length_warning_id: `pcb_trace_length_indeterminate_${sourceTrace.source_trace_id}`,
+              warning_type: "pcb_trace_length_warning",
+            },
+      )
+    } else {
+      if (pcbTrace?.type !== "pcb_trace") continue
+      diagnostics.push({
+        ...common,
+        pcb_trace_id: pcbTrace.pcb_trace_id,
+        type: "pcb_trace_too_long_error",
+        pcb_trace_too_long_error_id: `pcb_trace_too_long_error_${sourceTrace.source_trace_id}`,
+        error_type: "pcb_trace_too_long_error",
+        source_net_id: sourceTrace.connected_source_net_ids[0],
+        actual_trace_length: measurement.length,
+        measurement_method: measurement.method,
+        path_pcb_trace_ids: measurement.pcbTraceIds,
+        path_pcb_via_ids: measurement.pcbViaIds,
+      })
+    }
   }
-
-  return errors
+  return diagnostics
 }
