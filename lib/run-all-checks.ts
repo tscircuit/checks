@@ -1,7 +1,4 @@
-import {
-  checkPcbTraceStyle,
-  type PcbStyleCheckOptions,
-} from "./check-pcb-trace-style"
+import { checkPcbTraceStyle } from "./check-pcb-trace-style"
 import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
 import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
@@ -105,10 +102,7 @@ export async function runAllPinSpecificationChecks(
   ]
 }
 
-export async function runAllRoutingChecks(
-  circuitJson: AnyCircuitElement[],
-  options: PcbStyleCheckOptions = {},
-) {
+export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   // Infer endpoint IDs before taking connectivity snapshots. Keep these maps
   // local to this pass so edits to the same circuit array cannot leave stale data.
   addStartAndEndPortIdsIfMissing(circuitJson)
@@ -122,7 +116,7 @@ export async function runAllRoutingChecks(
     ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
     ...checkPcbBendZoneTraces(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
-    ...checkPcbTraceStyle(circuitJson, options),
+    ...checkPcbTraceStyle(circuitJson),
     ...checkPcbBusLengthSkew(circuitJson),
     ...checkPcbRoutingConstraints(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),
@@ -140,15 +134,12 @@ export async function runAllRoutingChecks(
   ]
 }
 
-export async function runAllChecks(
-  circuitJson: AnyCircuitElement[],
-  options: PcbStyleCheckOptions = {},
-) {
+export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
   return [
     ...(await runAllPlacementChecks(circuitJson)),
     ...(await runAllSchematicChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
-    ...(await runAllRoutingChecks(circuitJson, options)),
+    ...(await runAllRoutingChecks(circuitJson)),
   ]
 }
