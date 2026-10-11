@@ -41,12 +41,7 @@ test("Core compact via route has the same copper as its accepted contact control
   )
   const compactErrors = checkTracesAreContiguous(compact)
   const controlErrors = checkTracesAreContiguous(control)
-  expect(compactErrors).toHaveLength(1)
-  expect(compactErrors[0]).toMatchObject({
-    pcb_trace_error_id: "misaligned_via_pcb_trace_0_1",
-    message:
-      "Via in trace [SAVED_START.1 to SAVED_END.1] is misaligned at position {x: 0, y: 1}.",
-  })
+  expect(compactErrors).toEqual([])
   expect(controlErrors).toEqual([])
   expect(compact).toEqual(original)
   const svg = getCompactViaContinuitySvg({
@@ -56,14 +51,14 @@ test("Core compact via route has the same copper as its accepted contact control
     controlErrors,
   })
   const snapshot = new URL(
-    "./__snapshots__/compact-via-continuity.before.svg",
+    "./__snapshots__/compact-via-continuity.after.svg",
     import.meta.url,
   )
   if (process.env.UPDATE_COMPACT_VIA_SNAPSHOTS === "1") {
     writeFileSync(snapshot, svg)
     writeFileSync(
       new URL(
-        "./__snapshots__/compact-via-continuity.before.png",
+        "./__snapshots__/compact-via-continuity.after.png",
         import.meta.url,
       ),
       new Uint8Array(new Resvg(svg).render().asPng()),

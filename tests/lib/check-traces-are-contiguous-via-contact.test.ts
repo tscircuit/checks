@@ -446,7 +446,7 @@ describe("contact with a separate route-only via", () => {
     expect(targetErrorIds(circuitJson)).toEqual([END_ERROR])
   })
 
-  test("continues reporting misaligned vias inside a route", () => {
+  test("accepts nonzero copper legs around an interior via", () => {
     const circuitJson = [
       board,
       sourceTrace("source_trace_target"),
@@ -464,8 +464,6 @@ describe("contact with a separate route-only via", () => {
         "source_trace_target",
       ),
     ] satisfies AnyCircuitElement[]
-    expect(targetErrorIds(circuitJson)).toEqual([
-      "misaligned_via_pcb_trace_target_2",
-    ])
+    expect(targetErrorIds(circuitJson)).toEqual([])
   })
 })
