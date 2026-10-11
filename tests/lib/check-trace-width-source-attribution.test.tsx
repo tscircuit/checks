@@ -8,7 +8,7 @@ import { checkSourceTracesMatchPcbTraceThickness as check } from "lib/check-sour
 import { runAllRoutingChecks } from "lib/run-all-checks"
 import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 
-test.failing("owned routes ignore narrower same-net branches", async () => {
+test("owned routes ignore narrower same-net branches", async () => {
   async function fixture(required: number, actual = required) {
     const circuit = new Circuit({
       platform: { routingDrcChecksDisabled: true },
