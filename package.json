@@ -24,7 +24,7 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
-    "circuit-json": "^0.0.525",
+    "circuit-json": "github:tscircuit/circuit-json#801268c9d140e61d473a1cc3646f3ba4093e3d83",
     "circuit-json-to-connectivity-map": "^0.0.30",
     "circuit-to-svg": "^0.0.388",
     "debug": "^4.3.5",
@@ -48,5 +48,8 @@
   },
   "dependencies": {
     "flatbush": "^4.6.2"
-  }
+  },
+  "trustedDependencies": [
+    "circuit-json"
+  ]
 }

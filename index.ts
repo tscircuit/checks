@@ -22,7 +22,14 @@ export { checkTracesAreContiguous } from "./lib/check-traces-are-contiguous/chec
 export { checkPcbTracesOutOfBoard } from "./lib/check-trace-out-of-board/checkTraceOutOfBoard"
 export { checkPcbComponentOverlap } from "./lib/check-pcb-components-overlap/checkPcbComponentOverlap"
 export { checkPcbComponentsMissingCourtyard } from "./lib/check-pcb-components-missing-courtyard"
-export { checkPcbTraceLengths } from "./lib/check-pcb-trace-lengths"
+export {
+  checkPcbTraceLengths,
+  checkPcbTraceLengthMeasurementWarnings,
+} from "./lib/check-pcb-trace-lengths"
+export {
+  measureConstrainedPcbPath,
+  type PcbPathMeasurement,
+} from "./lib/util/measure-constrained-pcb-path"
 export { checkPcbTraceViaCounts } from "./lib/check-pcb-trace-via-counts"
 export { checkPadPadClearance } from "./lib/check-pad-pad-clearance"
 export { checkPadTraceClearance } from "./lib/check-pad-trace-clearance"

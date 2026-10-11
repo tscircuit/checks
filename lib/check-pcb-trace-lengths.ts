@@ -1,10 +1,11 @@
-import { getPcbTraceLength } from "./util/get-pcb-trace-length"
+import { measureConstrainedPcbPath } from "./util/measure-constrained-pcb-path"
 import type {
   AnyCircuitElement,
   PcbPort,
   PcbTrace,
   PcbTraceTooLongError,
   SourceTrace,
+  PcbTraceWarning,
 } from "circuit-json"
 
 const getReferencedPcbPortIds = (pcbTrace: PcbTrace): Set<string> => {
@@ -115,10 +116,13 @@ export const checkPcbTraceLengths = (
     const maximumTraceLength = sourceTrace.max_length
     if (typeof maximumTraceLength !== "number") continue
 
-    const actualTraceLength = pcbTraces.reduce(
-      (sum, trace) => sum + getPcbTraceLength(trace),
-      0,
+    const measurement = measureConstrainedPcbPath(
+      circuitJson,
+      sourceTrace,
+      pcbTraces,
     )
+    if (measurement.status === "unavailable") continue
+    const actualTraceLength = measurement.length
     if (actualTraceLength <= maximumTraceLength + 1e-9) continue
 
     errors.push({
@@ -136,4 +140,39 @@ export const checkPcbTraceLengths = (
   }
 
   return errors
+}
+
+/** Surface indeterminate local measurements separately from length violations. */
+export const checkPcbTraceLengthMeasurementWarnings = (
+  circuitJson: AnyCircuitElement[],
+): PcbTraceWarning[] => {
+  const traces = getPcbTracesBySourceTraceId(circuitJson)
+  return circuitJson.flatMap((element) => {
+    if (
+      element.type !== "source_trace" ||
+      element.max_length_constraint?.origin !== "decoupling" ||
+      typeof element.max_length !== "number"
+    )
+      return []
+    const pcbTraces = traces.get(element.source_trace_id) ?? []
+    const measurement = measureConstrainedPcbPath(
+      circuitJson,
+      element,
+      pcbTraces,
+    )
+    if (measurement.status !== "unavailable") return []
+    return [
+      {
+        type: "pcb_trace_warning",
+        warning_type: "pcb_trace_warning",
+        pcb_trace_warning_id: `pcb_trace_length_measurement_${element.source_trace_id}`,
+        message: `Cannot measure local decoupling length: ${measurement.reason}. The ${element.max_length}mm constraint remains unresolved.`,
+        pcb_trace_id: pcbTraces[0]?.pcb_trace_id ?? "",
+        source_trace_id: element.source_trace_id,
+        pcb_port_ids: [],
+        pcb_component_ids: [],
+        subcircuit_id: element.subcircuit_id,
+      },
+    ]
+  })
 }

@@ -35,7 +35,10 @@ import {
   checkPcbBendZonePlacement,
   checkPcbBendZoneTraces,
 } from "./check-pcb-bend-zones"
-import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
+import {
+  checkPcbTraceLengths,
+  checkPcbTraceLengthMeasurementWarnings,
+} from "./check-pcb-trace-lengths"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
 import { checkSourcePinVoltageCompatibility } from "./check-source-pin-voltage-compatibility"
@@ -122,6 +125,7 @@ export async function runAllRoutingChecks(
     ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
     ...checkPcbBendZoneTraces(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
+    ...checkPcbTraceLengthMeasurementWarnings(circuitJson),
     ...checkPcbTraceStyle(circuitJson, options),
     ...checkPcbBusLengthSkew(circuitJson),
     ...checkPcbRoutingConstraints(circuitJson),
