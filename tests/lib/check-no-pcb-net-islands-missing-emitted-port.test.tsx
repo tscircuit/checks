@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "@tscircuit/core"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { checkNoPcbNetIslands } from "lib/check-no-pcb-net-islands"
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { DisconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
 test("a net with only one emitted PCB port produces no island error", async () => {
@@ -15,5 +17,12 @@ test("a net with only one emitted PCB port produces no island error", async () =
     return true
   })
 
-  expect(checkNoPcbNetIslands(circuitWithOnePcbPort)).toEqual([])
+  expect(
+    checkNoPcbNetIslands(circuitWithOnePcbPort, {
+      connMap: getFullConnectivityMapFromCircuitJson(circuitWithOnePcbPort),
+      pcbConnectivityMap: createIndexedPcbConnectivityMap(
+        circuitWithOnePcbPort,
+      ),
+    }),
+  ).toEqual([])
 })

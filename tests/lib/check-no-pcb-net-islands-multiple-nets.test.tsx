@@ -1,7 +1,9 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "@tscircuit/core"
 import type { AnyCircuitElement, SourceNet } from "circuit-json"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { checkNoPcbNetIslands } from "lib/check-no-pcb-net-islands"
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { DisconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
 test("each disconnected net produces one error", async () => {
@@ -34,7 +36,10 @@ test("each disconnected net produces one error", async () => {
   }
   circuitJson.push(powerNet)
 
-  const errors = checkNoPcbNetIslands(circuitJson)
+  const errors = checkNoPcbNetIslands(circuitJson, {
+    connMap: getFullConnectivityMapFromCircuitJson(circuitJson),
+    pcbConnectivityMap: createIndexedPcbConnectivityMap(circuitJson),
+  })
 
   expect(errors).toEqual([
     expect.objectContaining({

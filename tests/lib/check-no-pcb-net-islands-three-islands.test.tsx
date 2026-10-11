@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "@tscircuit/core"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { checkNoPcbNetIslands } from "lib/check-no-pcb-net-islands"
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { DisconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
 test("three copper islands produce one error for their net", async () => {
@@ -14,7 +16,16 @@ test("three copper islands produce one error for their net", async () => {
         element.type !== "pcb_trace" || element.pcb_trace_id !== "pcb_trace_1",
     )
 
-  expect(checkNoPcbNetIslands(circuitWithThreeCopperIslands)).toEqual([
+  expect(
+    checkNoPcbNetIslands(circuitWithThreeCopperIslands, {
+      connMap: getFullConnectivityMapFromCircuitJson(
+        circuitWithThreeCopperIslands,
+      ),
+      pcbConnectivityMap: createIndexedPcbConnectivityMap(
+        circuitWithThreeCopperIslands,
+      ),
+    }),
+  ).toEqual([
     expect.objectContaining({
       pcb_port_ids: ["pcb_port_0", "pcb_port_1", "pcb_port_2", "pcb_port_3"],
       message:

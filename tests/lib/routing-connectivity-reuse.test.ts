@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import * as checks from "../../index"
 
 const independentChecks = [
@@ -16,7 +18,11 @@ const independentChecks = [
   checks.checkSameNetViaSpacing,
   checks.checkDifferentNetViaSpacing,
   checks.checkTracesAreContiguous,
-  checks.checkNoPcbNetIslands,
+  (circuitJson: AnyCircuitElement[]) =>
+    checks.checkNoPcbNetIslands(circuitJson, {
+      connMap: getFullConnectivityMapFromCircuitJson(circuitJson),
+      pcbConnectivityMap: createIndexedPcbConnectivityMap(circuitJson),
+    }),
   checks.checkDanglingTraces,
   checks.checkPcbTracesOutOfBoard,
 ]

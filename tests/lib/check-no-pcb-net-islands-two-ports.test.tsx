@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "@tscircuit/core"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { checkNoPcbNetIslands } from "lib/check-no-pcb-net-islands"
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { DisconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
 test("two required PCB ports on separate pads produce one island error", async () => {
@@ -18,7 +20,14 @@ test("two required PCB ports on separate pads produce one island error", async (
     return true
   })
 
-  expect(checkNoPcbNetIslands(circuitWithTwoPcbPorts)).toEqual([
+  expect(
+    checkNoPcbNetIslands(circuitWithTwoPcbPorts, {
+      connMap: getFullConnectivityMapFromCircuitJson(circuitWithTwoPcbPorts),
+      pcbConnectivityMap: createIndexedPcbConnectivityMap(
+        circuitWithTwoPcbPorts,
+      ),
+    }),
+  ).toEqual([
     expect.objectContaining({
       pcb_port_ids: ["pcb_port_0", "pcb_port_1"],
       message: "Net [GND] has disconnected PCB copper: A.pin1 | B.pin1.",

@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "@tscircuit/core"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { checkNoPcbNetIslands } from "lib/check-no-pcb-net-islands"
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { DisconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
 test("a net with an emitted PCB port missing its pad is deferred", async () => {
@@ -14,5 +16,12 @@ test("a net with an emitted PCB port missing its pad is deferred", async () => {
         element.type !== "pcb_smtpad" || element.pcb_port_id !== "pcb_port_1",
     )
 
-  expect(checkNoPcbNetIslands(circuitWithoutSecondPad)).toEqual([])
+  expect(
+    checkNoPcbNetIslands(circuitWithoutSecondPad, {
+      connMap: getFullConnectivityMapFromCircuitJson(circuitWithoutSecondPad),
+      pcbConnectivityMap: createIndexedPcbConnectivityMap(
+        circuitWithoutSecondPad,
+      ),
+    }),
+  ).toEqual([])
 })

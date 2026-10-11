@@ -6,12 +6,10 @@ import type {
 import {
   ConnectivityMap,
   findConnectedNetworks,
-  getFullConnectivityMapFromCircuitJson,
   type PcbConnectivityMap,
 } from "circuit-json-to-connectivity-map"
 import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
 import { createDisconnectedPcbNetError } from "./create-disconnected-pcb-net-error"
-import { createIndexedPcbConnectivityMap } from "./util/create-indexed-pcb-connectivity-map"
 import { getPcbNetsToCheck } from "./util/get-pcb-nets-to-check"
 
 type PcbPortId = PcbPort["pcb_port_id"]
@@ -24,14 +22,12 @@ export function checkNoPcbNetIslands(
     connMap,
     pcbConnectivityMap,
   }: {
-    connMap?: ConnectivityMap
-    pcbConnectivityMap?: PcbConnectivityMap
-  } = {},
+    connMap: ConnectivityMap
+    pcbConnectivityMap: PcbConnectivityMap
+  },
 ): PcbPortNotConnectedError[] {
-  connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const pcbNetsToCheck = getPcbNetsToCheck(circuitJson, connMap)
   if (!pcbNetsToCheck.length) return []
-  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
 
   // Include pour-only pad connections without changing either shared map.
   let pcbConnMap = pcbConnectivityMap.connMap
