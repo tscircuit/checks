@@ -1,3 +1,4 @@
+import { getTerminalViaContactWidth } from "../util/get-terminal-via-contact-width"
 import {
   getReadableNameForPort as getReadableNameForPcbPort,
   getReadableNameForTrace as getReadableNameForPcbTrace,
@@ -592,13 +593,20 @@ function checkTracesAreContiguous(
           traceWireSegmentsByNetAndLayer: getTraceWireSegmentIndex(),
           fullConnectivityMap: getFullConnectivityMap(),
         })
+      const firstViaWidth =
+        firstEndpointTraceCopperWidth ??
+        getTerminalViaContactWidth(trace, "start")
+      const lastViaWidth =
+        lastEndpointTraceCopperWidth ?? getTerminalViaContactWidth(trace, "end")
       const firstIsConnected =
         firstConnectsToAnyPad ||
         firstConnectsToLogicallyConnectedTraceCopper ||
-        (firstEndpointTraceCopperWidth !== undefined &&
+        (firstViaWidth !== undefined &&
           endpointTouchesVia({
             point: firstPoint,
-            width: firstEndpointTraceCopperWidth,
+            width: firstViaWidth,
+            allowOwnerVia:
+              getTerminalViaContactWidth(trace, "start") !== undefined,
             ownerTrace: trace,
             index: getViaIndex(),
             connectivity: getFullConnectivityMap(),
@@ -606,10 +614,12 @@ function checkTracesAreContiguous(
       const lastIsConnected =
         lastConnectsToAnyPad ||
         lastConnectsToLogicallyConnectedTraceCopper ||
-        (lastEndpointTraceCopperWidth !== undefined &&
+        (lastViaWidth !== undefined &&
           endpointTouchesVia({
             point: lastPoint,
-            width: lastEndpointTraceCopperWidth,
+            width: lastViaWidth,
+            allowOwnerVia:
+              getTerminalViaContactWidth(trace, "end") !== undefined,
             ownerTrace: trace,
             index: getViaIndex(),
             connectivity: getFullConnectivityMap(),
