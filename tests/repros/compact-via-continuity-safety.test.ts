@@ -100,6 +100,7 @@ test("compact acceptance preserves invalid transition and disconnected-pad diagn
   const authoredBlindEndPad = authoredBlind.find(
     (element) =>
       element.type === "pcb_smtpad" &&
+      element.shape === "rect" &&
       element.layer === "bottom" &&
       element.x === outgoing.x &&
       element.y === outgoing.y,
@@ -116,6 +117,7 @@ test("compact acceptance preserves invalid transition and disconnected-pad diagn
   const endPad = displacedPad.find(
     (element) =>
       element.type === "pcb_smtpad" &&
+      element.shape === "rect" &&
       element.layer === "bottom" &&
       element.x === outgoing.x &&
       element.y === outgoing.y,
