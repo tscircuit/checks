@@ -15,6 +15,33 @@ test("Core compact via route has the same copper as its accepted contact control
   const compactTrace = compact.find((element) => element.type === "pcb_trace")!
   const controlTrace = control.find((element) => element.type === "pcb_trace")!
   expect(
+    compact.filter(
+      (element) =>
+        element.type === "source_component" &&
+        element.ftype === "simple_resistor",
+    ),
+  ).toHaveLength(2)
+  const pads = compact.filter((element) => element.type === "pcb_smtpad")
+  expect(pads).toHaveLength(4)
+  expect(
+    pads.every(
+      (pad) => pad.shape === "rect" && pad.width === 0.8 && pad.height === 0.95,
+    ),
+  ).toBeTrue()
+  for (const endpoint of [compactTrace.route[0]!, compactTrace.route.at(-1)!]) {
+    if (endpoint.route_type !== "wire")
+      throw new Error("Expected real footprint wire endpoints")
+    expect(
+      pads.some(
+        (pad) =>
+          pad.shape === "rect" &&
+          pad.x === endpoint.x &&
+          pad.y === endpoint.y &&
+          pad.layer === endpoint.layer,
+      ),
+    ).toBeTrue()
+  }
+  expect(
     compact.find((element) => element.type === "pcb_board")!.num_layers,
   ).toBe(4)
   expect(compactTrace.route.map((point) => point.route_type)).toEqual([

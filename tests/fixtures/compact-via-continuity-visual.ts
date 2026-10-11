@@ -72,6 +72,13 @@ export function getCompactViaContinuitySvg({
           return `<rect x="${x(pad.x - pad.width / 2)}" y="${y(pad.y + pad.height / 2)}" width="${pad.width * 80}" height="${pad.height * 80}" rx="3" fill="#ddd" stroke="#555"/>`
         })
         .join("")
+      const silk = circuit
+        .filter((element) => element.type === "pcb_silkscreen_path")
+        .map(
+          (path) =>
+            `<polyline points="${path.route.map((point) => `${x(point.x)},${y(point.y)}`).join(" ")}" fill="none" stroke="#555" stroke-width="${path.stroke_width * 80}"/>`,
+        )
+        .join("")
       const via = circuit.find((element) => element.type === "pcb_via")!
       const color = errors.length === 0 ? "#167648" : "#b52935"
       const status =
@@ -81,9 +88,9 @@ export function getCompactViaContinuitySvg({
       const marker = errors.length
         ? `<circle cx="${x(via.x)}" cy="${y(via.y)}" r="24" fill="none" stroke="#b52935" stroke-width="3"/><text x="${x(via.x) + 30}" y="${y(via.y) - 12}" fill="#b52935" font-size="15">Reported misaligned</text>`
         : ""
-      return `<g><rect x="${left}" y="162" width="558" height="461" rx="8" fill="#fafafa" stroke="#c4c8ce"/><text x="${left + 20}" y="197" font-size="20" font-weight="bold">${label}</text><text x="${left + 20}" y="228" font-size="18" font-weight="bold" fill="${color}">${status}</text>${copper}${pads}<circle cx="${x(via.x)}" cy="${y(via.y)}" r="12" fill="#7357a4"/><circle cx="${x(via.x)}" cy="${y(via.y)}" r="4" fill="white"/>${marker}<text x="${x(0) - 25}" y="${y(-2)}" text-anchor="end" font-size="14">SAVED_START.1</text><text x="${x(2)}" y="${y(1) + 42}" text-anchor="middle" font-size="14">SAVED_END.1</text><text x="${x(0) - 20}" y="${y(-0.5)}" text-anchor="end" fill="#d86f12" font-size="16">TOP: 3 mm</text><text x="${x(1)}" y="${y(1) - 35}" text-anchor="middle" fill="#147a91" font-size="16">BOTTOM: 2 mm</text><text x="${left + 20}" y="601" font-size="15">Barrel spans TOP, INNER1, INNER2, BOTTOM.</text></g>`
+      return `<g><rect x="${left}" y="162" width="558" height="486" rx="8" fill="#fafafa" stroke="#c4c8ce"/><text x="${left + 20}" y="197" font-size="20" font-weight="bold">${label}</text><text x="${left + 20}" y="228" font-size="18" font-weight="bold" fill="${color}">${status}</text>${copper}${pads}${silk}<circle cx="${x(via.x)}" cy="${y(via.y)}" r="12" fill="#7357a4"/><circle cx="${x(via.x)}" cy="${y(via.y)}" r="4" fill="white"/>${marker}<text x="${x(0) - 35}" y="${y(-2)}" text-anchor="end" font-size="14">R1.1</text><text x="${x(2)}" y="${y(1) + 55}" text-anchor="middle" font-size="14">R2.2</text><text x="${x(0.825)}" y="${y(-2) + 57}" text-anchor="middle" font-size="14">R1 · 0603 · 10kΩ</text><text x="${x(2.825)}" y="${y(1) - 60}" text-anchor="middle" font-size="14">R2 · 0603 · 10kΩ</text><text x="${x(0) - 20}" y="${y(-0.5)}" text-anchor="end" fill="#d86f12" font-size="16">TOP: 3 mm</text><text x="${x(1)}" y="${y(1) - 35}" text-anchor="middle" fill="#147a91" font-size="16">BOTTOM: 2 mm</text><text x="${left + 20}" y="636" font-size="15">Barrel spans TOP, INNER1, INNER2, BOTTOM.</text></g>`
     })
     .join("")
   const pass = compactErrors.length === 0 && controlErrors.length === 0
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1228" height="720" viewBox="0 0 1228 720"><rect width="1228" height="720" fill="white"/><g font-family="Arial, sans-serif" fill="#222"><text x="36" y="46" font-size="27" font-weight="bold">${pass ? "AFTER: equivalent compact and expanded copper accepted" : "BEFORE: physically connected compact route rejected"}</text><text x="36" y="82" font-size="19">Both circuits compiled independently from TSX pcbPath; no route points removed.</text><text x="36" y="119" font-size="20" font-weight="bold">Equal physical copper: 5 mm lateral wire + one through-via + two actual pads.</text>${panels}<text x="36" y="661" font-size="17">Projection overlays TOP (orange) and BOTTOM (teal); purple is the emitted four-layer via.</text><text x="36" y="691" font-size="16">Actual checkTracesAreContiguous result: compact ${compactErrors.length} errors; authored contact control ${controlErrors.length} errors.</text></g></svg>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1228" height="738" viewBox="0 0 1228 738"><rect width="1228" height="738" fill="white"/><g font-family="Arial, sans-serif" fill="#222"><text x="36" y="46" font-size="27" font-weight="bold">${pass ? "AFTER: equivalent compact and expanded copper accepted" : "BEFORE: physically connected compact route rejected"}</text><text x="36" y="82" font-size="19">Both circuits compiled independently from TSX pcbPath with standard 0603 resistor footprints.</text><text x="36" y="119" font-size="20" font-weight="bold">Equal physical copper: 5 mm wire + one through-via between actual R1.1 and R2.2 pads.</text>${panels}<text x="36" y="683" font-size="17">Actual footprint pads and silk; TOP (orange), BOTTOM (teal), emitted four-layer via (purple).</text><text x="36" y="713" font-size="16">Actual checkTracesAreContiguous result: compact ${compactErrors.length} errors; authored contact control ${controlErrors.length} errors.</text></g></svg>`
 }

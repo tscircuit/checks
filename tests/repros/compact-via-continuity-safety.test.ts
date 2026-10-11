@@ -78,7 +78,7 @@ test("compact acceptance preserves invalid transition and disconnected-pad diagn
       pcb_trace_error_id: "misaligned_via_pcb_trace_0_1",
     }),
   )
-  expect(invalidErrors[0]!.message).toContain("SAVED_START.1 to SAVED_END.1")
+  expect(invalidErrors[0]!.message).toContain("R1.1 to R2.2")
 
   const blindSpan = structuredClone(control)
   const barrel = blindSpan.find((element) => element.type === "pcb_via")!
@@ -97,15 +97,28 @@ test("compact acceptance preserves invalid transition and disconnected-pad diagn
   expect(
     authoredBlind.find((element) => element.type === "pcb_via")!.layers,
   ).toEqual(["top", "inner1"])
+  const authoredBlindEndPad = authoredBlind.find(
+    (element) =>
+      element.type === "pcb_smtpad" &&
+      element.layer === "bottom" &&
+      element.x === outgoing.x &&
+      element.y === outgoing.y,
+  )!
+  if (authoredBlindEndPad.type !== "pcb_smtpad")
+    throw new Error("Expected actual R2.2 footprint pad")
   expect(checkTracesAreContiguous(authoredBlind)).toContainEqual(
     expect.objectContaining({
-      pcb_trace_error_id: "missing_layer_connection_pcb_trace_0_2_pcb_port_1",
+      pcb_trace_error_id: `missing_layer_connection_${compactTrace.pcb_trace_id}_2_${authoredBlindEndPad.pcb_port_id}`,
     }),
   )
 
   const displacedPad = structuredClone(control)
   const endPad = displacedPad.find(
-    (element) => element.type === "pcb_smtpad" && element.layer === "bottom",
+    (element) =>
+      element.type === "pcb_smtpad" &&
+      element.layer === "bottom" &&
+      element.x === outgoing.x &&
+      element.y === outgoing.y,
   )!
   if (endPad.type !== "pcb_smtpad" || endPad.shape !== "rect")
     throw new Error("Expected rectangular end pad")
@@ -118,7 +131,7 @@ test("compact acceptance preserves invalid transition and disconnected-pad diagn
   endPort.x += 2
   expect(checkTracesAreContiguous(displacedPad)).toContainEqual(
     expect.objectContaining({
-      pcb_trace_error_id: "missing_connection_pcb_trace_0_pcb_port_1",
+      pcb_trace_error_id: `missing_connection_${compactTrace.pcb_trace_id}_${endPort.pcb_port_id}`,
     }),
   )
 

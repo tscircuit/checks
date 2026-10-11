@@ -10,13 +10,8 @@ export async function renderCompactViaContinuity({
   viaToLayer?: "bottom" | "inner1"
 } = {}): Promise<AnyCircuitElement[]> {
   const circuit = new RootCircuit()
-  const footprint = (
-    <footprint>
-      <smtpad portHints={["pin1"]} shape="rect" width={0.5} height={0.5} />
-    </footprint>
-  )
   const via = {
-    x: 0,
+    x: -0.825,
     y: 3,
     via: true,
     fromLayer: "top" as const,
@@ -24,21 +19,30 @@ export async function renderCompactViaContinuity({
   }
   circuit.add(
     <board width={10} height={10} layers={4} routingDisabled schematicDisabled>
-      <chip name="SAVED_START" pcbY={-2} footprint={footprint} />
-      <chip
-        name="SAVED_END"
-        pcbX={2}
+      <resistor
+        name="R1"
+        resistance="10k"
+        footprint="0603"
+        pcbX={0.825}
+        pcbY={-2}
+      />
+      <resistor
+        name="R2"
+        resistance="10k"
+        footprint="0603"
+        pcbX={2.825}
         pcbY={1}
         layer="bottom"
-        footprint={footprint}
       />
       <trace
         name="RETAINED"
-        from="SAVED_START.1"
-        to="SAVED_END.1"
+        from="R1.1"
+        to="R2.2"
         thickness={0.2}
         pcbPath={
-          explicitContacts ? [{ x: 0, y: 3 }, via, { x: 0, y: 3 }] : [via]
+          explicitContacts
+            ? [{ x: -0.825, y: 3 }, via, { x: -0.825, y: 3 }]
+            : [via]
         }
       />
     </board>,
