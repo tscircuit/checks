@@ -1,0 +1,48 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/lib/check-trace-width-source-attribution.test.ts:
+68 |           null,
+69 |           2,
+70 |         ),
+71 |       )
+72 |     }
+73 |     for (const { warnings } of results) expect(warnings).toEqual([])
+                                                              ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   {
++     "center": {
++       "x": 10,
++       "y": 5,
++     },
++     "message": "Trace [USB_GND_1] is routed thinner than requested (requested: 0.5mm, actual: 0.2mm).",
++     "pcb_component_ids": [
++       "pcb_component_0",
++       "pcb_component_1",
++     ],
++     "pcb_port_ids": [
++       "pcb_port_0",
++       "pcb_port_1",
++     ],
++     "pcb_trace_id": "pcb_trace_1",
++     "pcb_trace_warning_id": "pcb_trace_warning_source_trace_0",
++     "source_trace_id": "source_trace_0",
++     "type": "pcb_trace_warning",
++     "warning_type": "pcb_trace_warning",
++   },
++ ]
+
+- Expected  - 1
++ Received  + 22
+
+      at <anonymous> (/Users/ankan/Documents/Codex/2026-10-11/source-trace-width-checker-repro/work/checks/tests/lib/check-trace-width-source-attribution.test.ts:73:58)
+(fail) compliant owned routes ignore narrower branches on the same net [14.19ms]
+(pass) an actually undersized owned USB route still warns on its own copper [0.14ms]
+(pass) legacy unowned copper still uses connectivity for width warnings [0.06ms]
+
+ 2 pass
+ 1 fail
+ 7 expect() calls
+Ran 3 tests across 1 file. [250.00ms]

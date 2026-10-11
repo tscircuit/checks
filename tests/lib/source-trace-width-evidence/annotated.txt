@@ -1,0 +1,11 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/lib/check-trace-width-source-attribution.test.ts:
+(pass) compliant owned routes ignore narrower branches on the same net [12.27ms]
+(pass) an actually undersized owned USB route still warns on its own copper [0.13ms]
+(pass) legacy unowned copper still uses connectivity for width warnings [0.05ms]
+
+ 3 pass
+ 0 fail
+ 7 expect() calls
+Ran 3 tests across 1 file. [185.00ms]
