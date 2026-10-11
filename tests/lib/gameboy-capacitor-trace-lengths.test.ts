@@ -72,6 +72,19 @@ test("published GBA findings are reclassified without editing the PCB or authore
   expect(corrected.filter((e) => e.type.startsWith("pcb_"))).toEqual(
     published.filter((e) => e.type.startsWith("pcb_")),
   )
+  const bulkFinding = findings.find((f) => f.sourceTrace.name === "PSRAM_BULK")!
+  expect(bulkFinding.status).toBe("exceeds_limit")
+  expect(bulkFinding.measurement.status).toBe("indeterminate")
+  expect(
+    checkPcbTraceLengths(corrected).find(
+      (e) => e.source_trace_id === bulkFinding.sourceTrace.source_trace_id,
+    ),
+  ).toMatchObject({
+    type: "pcb_trace_too_long_error",
+    actual_trace_length_is_lower_bound: true,
+    measurement_method: "copper_path_lower_bound",
+    maximum_trace_length: 5.5,
+  })
   for (const diagnostic of checkPcbTraceLengths(corrected)) {
     if (diagnostic.type === "pcb_trace_too_long_error")
       expect(diagnostic.actual_trace_length).toBeLessThan(100)

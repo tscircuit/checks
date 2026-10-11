@@ -246,16 +246,16 @@ test("a layer crossing without a barrel is indeterminate, never a connected path
     route("top", [wire(0, 0), wire(10, 0)]),
     route("bottom", [wire(5, 0, "bottom"), wire(5, 4, "bottom")]),
   ]
-  expect(checkPcbTraceLengths(c)[0]).toMatchObject({
-    type: "pcb_trace_warning",
-    trace_length_status: "indeterminate",
+  expect(checkPcbTraceLengths(c)).toEqual([])
+  expect(analyzePcbTraceLengths(c)[0]).toMatchObject({
+    status: "indeterminate",
+    measurement: { status: "indeterminate" },
   })
-  expect(checkPcbTraceLengths(c)[0]).not.toHaveProperty("actual_trace_length")
 })
 
 test("unknown inner-layer depth is reported rather than guessed", () => {
   const c: AnyCircuitElement[] = [
-    source(),
+    source(10),
     port("a", 0),
     port("b", 7, 0, "inner1"),
     {
@@ -275,11 +275,31 @@ test("unknown inner-layer depth is reported rather than guessed", () => {
       ],
     },
   ]
-  expect(checkPcbTraceLengths(c)[0]).toMatchObject({
-    trace_length_status: "indeterminate",
-    measurement_reason:
-      "Via or plated-pad depth is unavailable for this layer span",
+  expect(checkPcbTraceLengths(c)).toEqual([])
+  expect(analyzePcbTraceLengths(c)[0]).toMatchObject({
+    status: "indeterminate",
+    measurement: {
+      status: "indeterminate",
+      reason: "Via or plated-pad depth is unavailable for this layer span",
+    },
   })
+  // The unknown barrel cannot rescue a path whose known copper is already
+  // longer than its configured limit. Preserve that confirmed rule violation.
+  const constrained = c.map((e) =>
+    e.type === "source_trace" ? { ...e, max_length: 5 } : e,
+  )
+  expect(checkPcbTraceLengths(constrained)[0]).toMatchObject({
+    type: "pcb_trace_too_long_error",
+    actual_trace_length: 7,
+    actual_trace_length_is_lower_bound: true,
+    maximum_trace_length: 5,
+    measurement_method: "copper_path_lower_bound",
+  })
+  const [finding] = analyzePcbTraceLengths(constrained)
+  expect(finding.status).toBe("exceeds_limit")
+  expect(finding.measurement.status).toBe("indeterminate")
+  expect(finding.message).toContain("known copper alone exceeds")
+  expect(finding.message).toContain("total path indeterminate")
 })
 
 test("declared plane returns are indeterminate and do not aggregate ground branches", () => {
@@ -298,14 +318,14 @@ test("declared plane returns are indeterminate and do not aggregate ground branc
       source_net_id: "ground",
     },
   ]
-  const [finding] = checkPcbTraceLengths(c)
+  expect(checkPcbTraceLengths(c)).toEqual([])
+  const [finding] = analyzePcbTraceLengths(c)
   expect(finding).toMatchObject({
-    type: "pcb_trace_warning",
-    trace_length_status: "indeterminate",
-    max_length_origin: "explicit",
-    maximum_trace_length: 5,
+    status: "indeterminate",
+    sourceTrace: { max_length_origin: "explicit", max_length: 5 },
+    measurement: { status: "indeterminate" },
   })
-  expect(finding).not.toHaveProperty("actual_trace_length")
+  expect(finding!.measurement).not.toHaveProperty("length")
   expect(finding!.message).toContain("Plane return")
 })
 
@@ -324,16 +344,15 @@ test("a plane-only connection reports uncertainty without a fabricated trace rec
       source_net_id: "ground",
     },
   ]
-  const [finding] = checkPcbTraceLengths(c)
+  expect(checkPcbTraceLengths(c)).toEqual([])
+  const [finding] = analyzePcbTraceLengths(c)
   expect(finding).toMatchObject({
-    type: "pcb_trace_length_warning",
-    trace_length_status: "indeterminate",
-    maximum_trace_length: 5,
-    source_trace_id: "s",
-    pcb_port_ids: ["pcb_a"],
+    status: "indeterminate",
+    sourceTrace: { max_length: 5, source_trace_id: "s" },
+    measurement: { status: "indeterminate" },
   })
-  expect(finding).not.toHaveProperty("pcb_trace_id")
-  expect(finding).not.toHaveProperty("actual_trace_length")
+  expect(finding!.measurement).not.toHaveProperty("pcbTraceIds")
+  expect(finding!.measurement).not.toHaveProperty("length")
 })
 
 test("connected pours leave return length indeterminate; a disconnected island does not join traces", () => {
@@ -358,10 +377,8 @@ test("connected pours leave return length indeterminate; a disconnected island d
       covered_with_solder_mask: true,
     },
   ]
-  expect(checkPcbTraceLengths(c)[0]).toMatchObject({
-    type: "pcb_trace_warning",
-    trace_length_status: "indeterminate",
-  })
+  expect(checkPcbTraceLengths(c)).toEqual([])
+  expect(analyzePcbTraceLengths(c)[0].status).toBe("indeterminate")
   const disconnected = c.map((e) =>
     e.type === "pcb_copper_pour" ? { ...e, center: { x: 5, y: 20 } } : e,
   )
@@ -396,8 +413,6 @@ test("inferred capacitor constraints without an IC association require review", 
     port("b", 8),
     route("bridge", [wire(0, 0), wire(8, 0)]),
   ]
-  expect(checkPcbTraceLengths(c)[0]).toMatchObject({
-    type: "pcb_trace_warning",
-    trace_length_status: "indeterminate",
-  })
+  expect(checkPcbTraceLengths(c)).toEqual([])
+  expect(analyzePcbTraceLengths(c)[0].status).toBe("indeterminate")
 })

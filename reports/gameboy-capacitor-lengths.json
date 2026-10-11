@@ -40,7 +40,7 @@
         ]
       },
       "status": "indeterminate",
-      "message": "C_VREG_AVDD_P: C_VREG_AVDD (unspecified capacitor, supply to U1.VREG_AVDD); limit 5.5mm from configured capacitor maxDecouplingTraceLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.55mm with unresolved barrel/pad depth. Layout review required.",
+      "message": "C_VREG_AVDD_P: C_VREG_AVDD (unspecified capacitor, supply to U1.VREG_AVDD); limit 5.5mm from configured capacitor maxDecouplingTraceLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.55mm with unresolved barrel/pad depth. Layout review required.",
       "reviewEvidence": {
         "capacitor": "C_VREG_AVDD",
         "role": "local regulator analog-supply decoupling",
@@ -78,7 +78,7 @@
         "reason": "Connected plane copper has no uniquely measurable routed return path"
       },
       "status": "indeterminate",
-      "message": "C_CORE_G: C_CORE (unspecified capacitor, return to U1.VREG_PGND); limit 5.5mm from configured capacitor maxDecouplingTraceLength; path indeterminate: Connected plane copper has no uniquely measurable routed return path. Layout review required.",
+      "message": "C_CORE_G: C_CORE (unspecified capacitor, return to U1.VREG_PGND); limit 5.5mm from configured capacitor maxDecouplingTraceLength; total path indeterminate: Connected plane copper has no uniquely measurable routed return path. Layout review required.",
       "reviewEvidence": {
         "capacitor": "C_CORE",
         "role": "regulator output capacitor return",
@@ -124,7 +124,7 @@
         ]
       },
       "status": "indeterminate",
-      "message": "PSRAM_DECOUPLING: C_PSRAM (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.78mm with unresolved barrel/pad depth. Layout review required.",
+      "message": "PSRAM_DECOUPLING: C_PSRAM (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.78mm with unresolved barrel/pad depth. Layout review required.",
       "reviewEvidence": {
         "capacitor": "C_PSRAM",
         "role": "local 100nF decoupling",
@@ -169,8 +169,8 @@
           "pcb_via_62"
         ]
       },
-      "status": "indeterminate",
-      "message": "PSRAM_BULK: C_PSRAM_BULK (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.64mm with unresolved barrel/pad depth. Layout review required.",
+      "status": "exceeds_limit",
+      "message": "PSRAM_BULK: C_PSRAM_BULK (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.64mm with unresolved barrel/pad depth; known copper alone exceeds the configured rule. Layout review required.",
       "reviewEvidence": {
         "capacitor": "C_PSRAM_BULK",
         "role": "local 1uF bulk supply capacitor",
@@ -344,7 +344,7 @@
           ]
         },
         "status": "indeterminate",
-        "message": "C_VREG_AVDD_P: C_VREG_AVDD (unspecified capacitor, supply to U1.VREG_AVDD); limit 5.5mm from configured capacitor maxDecouplingTraceLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.55mm with unresolved barrel/pad depth. Layout review required."
+        "message": "C_VREG_AVDD_P: C_VREG_AVDD (unspecified capacitor, supply to U1.VREG_AVDD); limit 5.5mm from configured capacitor maxDecouplingTraceLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.55mm with unresolved barrel/pad depth. Layout review required."
       }
     },
     {
@@ -379,7 +379,7 @@
           "reason": "Connected plane copper has no uniquely measurable routed return path"
         },
         "status": "indeterminate",
-        "message": "C_CORE_G: C_CORE (unspecified capacitor, return to U1.VREG_PGND); limit 5.5mm from configured capacitor maxDecouplingTraceLength; path indeterminate: Connected plane copper has no uniquely measurable routed return path. Layout review required."
+        "message": "C_CORE_G: C_CORE (unspecified capacitor, return to U1.VREG_PGND); limit 5.5mm from configured capacitor maxDecouplingTraceLength; total path indeterminate: Connected plane copper has no uniquely measurable routed return path. Layout review required."
       }
     },
     {
@@ -422,7 +422,7 @@
           ]
         },
         "status": "indeterminate",
-        "message": "PSRAM_DECOUPLING: C_PSRAM (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.78mm with unresolved barrel/pad depth. Layout review required."
+        "message": "PSRAM_DECOUPLING: C_PSRAM (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.78mm with unresolved barrel/pad depth. Layout review required."
       }
     },
     {
@@ -464,8 +464,8 @@
             "pcb_via_62"
           ]
         },
-        "status": "indeterminate",
-        "message": "PSRAM_BULK: C_PSRAM_BULK (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.64mm with unresolved barrel/pad depth. Layout review required."
+        "status": "exceeds_limit",
+        "message": "PSRAM_BULK: C_PSRAM_BULK (unspecified capacitor, supply to U_PSRAM.VDD); limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.64mm with unresolved barrel/pad depth; known copper alone exceeds the configured rule. Layout review required."
       }
     },
     {
@@ -515,8 +515,8 @@
             "pcb_via_144"
           ]
         },
-        "status": "indeterminate",
-        "message": "VREG_AVDD_CORE_GND_BRIDGE: C_CORE, C_VREG_AVDD (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 6.01mm with unresolved barrel/pad depth. Layout review required."
+        "status": "exceeds_limit",
+        "message": "VREG_AVDD_CORE_GND_BRIDGE: C_CORE, C_VREG_AVDD (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 6.01mm with unresolved barrel/pad depth; known copper alone exceeds the configured rule. Layout review required."
       }
     },
     {
@@ -596,7 +596,7 @@
           ]
         },
         "status": "indeterminate",
-        "message": "XIN_IOVDD4_GND_BRIDGE: C_XIN, C_IOVDD4 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.87mm with unresolved barrel/pad depth. Layout review required."
+        "message": "XIN_IOVDD4_GND_BRIDGE: C_XIN, C_IOVDD4 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 3.87mm with unresolved barrel/pad depth. Layout review required."
       }
     },
     {
@@ -669,8 +669,8 @@
             "pcb_via_160"
           ]
         },
-        "status": "indeterminate",
-        "message": "QSPI_IOVDD6_GND_BRIDGE: C_QSPI_USB, C_IOVDD6 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 6.73mm with unresolved barrel/pad depth. Layout review required."
+        "status": "exceeds_limit",
+        "message": "QSPI_IOVDD6_GND_BRIDGE: C_QSPI_USB, C_IOVDD6 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 6.73mm with unresolved barrel/pad depth; known copper alone exceeds the configured rule. Layout review required."
       }
     },
     {
@@ -747,7 +747,7 @@
           ]
         },
         "status": "indeterminate",
-        "message": "ADC_DVDD1_OFFPAD_GND: C_ADC, C_DVDD1 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.93mm with unresolved barrel/pad depth. Layout review required."
+        "message": "ADC_DVDD1_OFFPAD_GND: C_ADC, C_DVDD1 (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 4.93mm with unresolved barrel/pad depth. Layout review required."
       }
     },
     {
@@ -783,7 +783,7 @@
           ]
         },
         "status": "indeterminate",
-        "message": "VBUS_XOUT_OFFPAD_GROUND: C_XOUT, C_VBUS (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.14mm with unresolved barrel/pad depth. Layout review required."
+        "message": "VBUS_XOUT_OFFPAD_GROUND: C_XOUT, C_VBUS (capacitor role unspecified); no local decoupling IC/pin identified; limit 5.5mm from authored trace maxLength; total path indeterminate: Via or plated-pad depth is unavailable for this layer span; routed copper lower bound 5.14mm with unresolved barrel/pad depth. Layout review required."
       }
     },
     {

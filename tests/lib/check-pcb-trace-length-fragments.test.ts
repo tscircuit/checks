@@ -1,6 +1,9 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
-import { checkPcbTraceLengths } from "../.."
+import {
+  analyzePcbTraceLengths,
+  checkPcbTraceLengths,
+} from "../../lib/check-pcb-trace-lengths"
 
 test("reports unknown connectivity instead of summing disconnected route fragments", () => {
   const circuit: AnyCircuitElement[] = [
@@ -26,11 +29,10 @@ test("reports unknown connectivity instead of summing disconnected route fragmen
       route: [],
     },
   ]
-  expect(checkPcbTraceLengths(circuit)).toEqual([
-    expect.objectContaining({
-      type: "pcb_trace_warning",
-      trace_length_status: "indeterminate",
-      maximum_trace_length: 10,
-    }),
-  ])
+  expect(checkPcbTraceLengths(circuit)).toEqual([])
+  expect(analyzePcbTraceLengths(circuit)[0]).toMatchObject({
+    status: "indeterminate",
+    sourceTrace: { max_length: 10 },
+    measurement: { status: "indeterminate" },
+  })
 })
