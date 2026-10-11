@@ -50,9 +50,16 @@ export function checkSourceTracesMatchPcbTraceThickness(
     if (!referenceNetId) continue
 
     const netElementIds = connectivityMap.getIdsConnectedToNet(referenceNetId)
-    const relatedPcbTraces = pcbTraces.filter((pcbTrace) =>
-      netElementIds.includes(pcbTrace.pcb_trace_id),
+    const ownedPcbTraces = pcbTraces.filter(
+      (pcbTrace) => pcbTrace.source_trace_id === sourceTrace.source_trace_id,
     )
+    // Legacy/autorouted nets may lack a route attributed to this source.
+    // Use net connectivity only when explicit ownership is unavailable.
+    const relatedPcbTraces = ownedPcbTraces.length
+      ? ownedPcbTraces
+      : pcbTraces.filter((pcbTrace) =>
+          netElementIds.includes(pcbTrace.pcb_trace_id),
+        )
     if (relatedPcbTraces.length === 0) continue
 
     let undersizedSegment:

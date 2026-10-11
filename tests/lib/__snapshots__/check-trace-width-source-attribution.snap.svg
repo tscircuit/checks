@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="950" height="610" viewBox="0 0 950 610">
+    <rect width="950" height="610" fill="white"/>
+    <g font-family="Arial, sans-serif" font-size="16" fill="#222">
+      <text x="475" y="38" text-anchor="middle" font-size="24">PASS: source ownership keeps width checks on each route</text>
+      <text x="475" y="68" text-anchor="middle">Two compliant routes share nets with narrower, explicitly owned branches.</text>
+      <g transform="translate(50 115)">
+      <text x="200" y="0" text-anchor="middle">USB_GND_1</text>
+      <g transform="translate(0 15)"><svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="-3 -13 16 16"><rect x="-3" y="-13" width="16" height="16" fill="white"/><g transform="scale(1,-1)"><g data-element-id="pcb_smtpad_0" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M-0.25,0 A0.25,0.25 0 0,1 0.25,0 A0.25,0.25 0 0,1 -0.25,0 Z"/></g><g data-element-id="pcb_smtpad_1" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M9.75,0 A0.25,0.25 0 0,1 10.25,0 A0.25,0.25 0 0,1 9.75,0 Z"/></g><g data-element-id="pcb_smtpad_2" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M9.75,10 A0.25,0.25 0 0,1 10.25,10 A0.25,0.25 0 0,1 9.75,10 Z"/></g><g data-element-id="pcb_trace_0" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M0,-0.25 L10,-0.25 A0.25,0.25 0 0,1 10,0.25 L0,0.25 A0.25,0.25 0 0,1 0,-0.25 Z"/></g><g data-element-id="pcb_trace_1" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M10.1,0 L10.1,10 A0.1,0.1 0 0,1 9.9,10 L9.9,0 A0.1,0.1 0 0,1 10.1,0 Z"/></g></g></svg></g>
+      <text x="200" y="435" text-anchor="middle">Owned: 0.5 mm / required: 0.5 mm; branch: 0.2 mm</text>
+      <text x="200" y="462" text-anchor="middle">No width warning</text>
+    </g><g transform="translate(500 115)">
+      <text x="200" y="0" text-anchor="middle">TEC_INPUT_HOT_LOOP</text>
+      <g transform="translate(0 15)"><svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="-3 -13 16 16"><rect x="-3" y="-13" width="16" height="16" fill="white"/><g transform="scale(1,-1)"><g data-element-id="pcb_smtpad_0" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M-0.25,0 A0.25,0.25 0 0,1 0.25,0 A0.25,0.25 0 0,1 -0.25,0 Z"/></g><g data-element-id="pcb_smtpad_1" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M9.75,0 A0.25,0.25 0 0,1 10.25,0 A0.25,0.25 0 0,1 9.75,0 Z"/></g><g data-element-id="pcb_smtpad_2" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M9.75,10 A0.25,0.25 0 0,1 10.25,10 A0.25,0.25 0 0,1 9.75,10 Z"/></g><g data-element-id="pcb_trace_0" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M0,-1.5 L10,-1.5 A1.5,1.5 0 0,1 10,1.5 L0,1.5 A1.5,1.5 0 0,1 0,-1.5 Z"/></g><g data-element-id="pcb_trace_1" data-layer="top"><path fill="#c87828" stroke="none" stroke-width="0.1" fill-rule="evenodd" d="M10.1,0 L10.1,10 A0.1,0.1 0 0,1 9.9,10 L9.9,0 A0.1,0.1 0 0,1 10.1,0 Z"/></g></g></svg></g>
+      <text x="200" y="435" text-anchor="middle">Owned: 3 mm / required: 3 mm; branch: 0.2 mm</text>
+      <text x="200" y="462" text-anchor="middle">No width warning</text>
+    </g>
+    </g>
+  </svg>
