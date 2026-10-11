@@ -1,17 +1,88 @@
 import { expect, test } from "bun:test"
+import { Circuit } from "@tscircuit/core"
 import {
   convertCircuitJsonToFlattenJs,
   renderFlattenJsToSvg,
 } from "@tscircuit/circuit-json-to-flattenjs"
 import { checkSourceTracesMatchPcbTraceThickness as check } from "lib/check-source-traces-match-pcb-trace-thickness"
 import { runAllRoutingChecks } from "lib/run-all-checks"
-import { sourceAttributionFixture } from "../fixtures/trace-width-source-attribution"
-import { traceWidthFixture } from "../fixtures/trace-width"
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 
 test.failing("owned routes ignore narrower same-net branches", async () => {
+  async function fixture(required: number, actual = required) {
+    const circuit = new Circuit({
+      platform: { routingDrcChecksDisabled: true },
+    })
+    circuit.add(
+      <board width={30} height={30} schematicDisabled routeRemaining={false}>
+        {(
+          [
+            ["A", 0, 0],
+            ["B", 10, 0],
+            ["C", 10, 10],
+          ] as const
+        ).map(([name, pcbX, pcbY]) => (
+          <testpoint
+            key={name}
+            name={name}
+            pcbX={pcbX}
+            pcbY={pcbY}
+            footprintVariant="pad"
+            padDiameter={0.5}
+          />
+        ))}
+        <trace
+          name={required === 0.5 ? "USB_GND_1" : "TEC_INPUT_HOT_LOOP"}
+          from="A.1"
+          to="B.1"
+          thickness={required}
+          pcbPath={["A.1", "B.1"]}
+        />
+        <trace
+          name={
+            required === 0.5 ? "INPUT_DVDT_LOCAL_GROUND" : "TEC_CONTROLLER_VIN"
+          }
+          from="B.1"
+          to="C.1"
+          thickness={0.2}
+          pcbPath={["B.1", "C.1"]}
+        />
+      </board>,
+    )
+    await circuit.renderUntilSettled()
+    const json = normalizeFixtureSourcePorts(circuit.getCircuitJson())
+    expect(json.filter((e) => e.type === "pcb_trace")).toHaveLength(2)
+    expect(json.filter((e) => e.type === "pcb_trace_error")).toEqual([])
+    const source = json.find(
+      (e) => e.type === "source_trace" && e.min_trace_thickness === required,
+    )!
+    if (source.type !== "source_trace") throw new Error("Missing source trace")
+    const owned = json.find(
+      (e) =>
+        e.type === "pcb_trace" && e.source_trace_id === source.source_trace_id,
+    )!
+    if (owned.type !== "pcb_trace") throw new Error("Missing owned route")
+    // Fault controls change only rendered copper, preserving the JSX requirement.
+    if (actual !== required)
+      for (const point of owned.route)
+        if (point.route_type === "wire") point.width = actual
+    return { circuit: json, source, owned }
+  }
+
+  const control = await fixture(0.5, 0.2)
+  const ownedWarnings = check(control.circuit)
+  expect(ownedWarnings).toHaveLength(1)
+  expect(ownedWarnings[0]).toMatchObject({
+    source_trace_id: control.source.source_trace_id,
+    pcb_trace_id: control.owned.pcb_trace_id,
+  })
+  expect(ownedWarnings[0].message).toContain("requested: 0.5mm, actual: 0.2mm")
+  for (const element of control.circuit)
+    if (element.type === "pcb_trace") delete element.source_trace_id
+  expect(check(control.circuit)).toHaveLength(1)
   const results = await Promise.all(
     [0.5, 3].map(async (required) => {
-      const circuit = sourceAttributionFixture(required)
+      const { circuit } = await fixture(required)
       const warnings = (await runAllRoutingChecks(circuit)).filter(
         (e) => e.type === "pcb_trace_warning",
       )
@@ -61,20 +132,4 @@ test.failing("owned routes ignore narrower same-net branches", async () => {
     await Bun.write(process.env.TRACE_WIDTH_EVIDENCE, svg)
   for (const { warnings } of results) expect(warnings).toEqual([])
   await expect(svg).toMatchSvgSnapshot(import.meta.path)
-})
-
-test("an actually undersized owned USB route still warns on its own copper", () => {
-  const warnings = check(sourceAttributionFixture(0.5, 0.2))
-  expect(warnings).toHaveLength(1)
-  expect(warnings[0]).toMatchObject({
-    source_trace_id: "source_trace_0",
-    pcb_trace_id: "pcb_trace_0",
-  })
-  expect(warnings[0].message).toContain("requested: 0.5mm, actual: 0.2mm")
-})
-
-test("legacy unowned copper still uses connectivity for width warnings", () => {
-  const circuit = traceWidthFixture([0.2, 0.2])
-  delete circuit.find((e) => e.type === "pcb_trace")!.source_trace_id
-  expect(check(circuit)).toHaveLength(1)
 })
