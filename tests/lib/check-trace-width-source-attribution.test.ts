@@ -59,17 +59,8 @@ test.failing(
     </g>
   </svg>`
     // Capture observed failures separately; only compliant output is a baseline.
-    if (process.env.TRACE_WIDTH_EVIDENCE) {
-      await Bun.write(`${process.env.TRACE_WIDTH_EVIDENCE}.svg`, svg)
-      await Bun.write(
-        `${process.env.TRACE_WIDTH_EVIDENCE}.json`,
-        JSON.stringify(
-          results.map(({ required, warnings }) => ({ required, warnings })),
-          null,
-          2,
-        ),
-      )
-    }
+    if (process.env.TRACE_WIDTH_EVIDENCE)
+      await Bun.write(process.env.TRACE_WIDTH_EVIDENCE, svg)
     for (const { warnings } of results) expect(warnings).toEqual([])
     await expect(svg).toMatchSvgSnapshot(import.meta.path)
   },
