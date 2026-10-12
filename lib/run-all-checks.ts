@@ -49,6 +49,7 @@ import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-termi
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
+import { checkSoldermaskBridge } from "./check-soldermask-bridge"
 
 export async function runAllPlacementChecks(
   circuitJson: AnyCircuitElement[],
@@ -68,6 +69,7 @@ export async function runAllPlacementChecks(
     ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
+    ...checkSoldermaskBridge(circuitJson),
   ]
   return consolidateOverlaps
     ? consolidatePcbOverlapErrors(circuitJson, errors)
