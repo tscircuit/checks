@@ -1,24 +1,33 @@
-import type { AnyCircuitElement, PcbTrace, PcbTraceError } from "circuit-json"
+import type { AnyCircuitElement, PcbTrace, PcbTraceWarning } from "circuit-json"
+import { getBoardDrcValue, getPcbBoard } from "./drc-defaults"
 
 export interface PcbTraceAcuteAngleCheckConfig {
-  /** Minimum angle between consecutive trace segments in degrees. Defaults to 80. */
+  /** Minimum angle between consecutive trace segments in degrees. */
   minAngleDegrees?: number
 }
 
-const DEFAULT_MIN_ANGLE_DEGREES = 80
 const EPSILON = 1e-4
 
 /**
  * Checks for acute angles / acid traps between consecutive wire segments of PCB traces.
- * Sharp bends (angles < minAngleDegrees, default 80°) trap etchant during PCB manufacturing
+ * Sharp bends (angles < minAngleDegrees) trap etchant during PCB manufacturing
  * causing trace necking or over-etching defects.
+ *
+ * Configurable via config.minAngleDegrees or pcb_board.min_trace_acute_angle.
  */
 export function checkPcbTraceAcuteAngles(
   circuitJson: AnyCircuitElement[],
   config: PcbTraceAcuteAngleCheckConfig = {},
-): PcbTraceError[] {
-  const errors: PcbTraceError[] = []
-  const minAngle = config.minAngleDegrees ?? DEFAULT_MIN_ANGLE_DEGREES
+): PcbTraceWarning[] {
+  const errors: PcbTraceWarning[] = []
+  const board = getPcbBoard(circuitJson)
+  const minAngle =
+    config.minAngleDegrees ??
+    (getBoardDrcValue(board, "min_trace_acute_angle" as any) as
+      | number
+      | undefined)
+
+  if (!minAngle || minAngle <= 0) return errors
 
   const traces = circuitJson.filter(
     (el): el is PcbTrace => el.type === "pcb_trace",
@@ -60,9 +69,9 @@ export function checkPcbTraceAcuteAngles(
 
       if (angleDegrees < minAngle - EPSILON) {
         errors.push({
-          type: "pcb_trace_error",
-          error_type: "pcb_trace_error",
-          pcb_trace_error_id: `trace_acute_angle_${trace.pcb_trace_id}_vertex_${i}`,
+          type: "pcb_trace_warning",
+          warning_type: "pcb_trace_warning",
+          pcb_trace_warning_id: `trace_acute_angle_${trace.pcb_trace_id}_vertex_${i}`,
           message: `Trace angle of ${angleDegrees.toFixed(1)}° at (${p2.x.toFixed(2)}mm, ${p2.y.toFixed(2)}mm) is below the minimum allowed angle (${minAngle}°) (acid trap defect)`,
           center: { x: p2.x, y: p2.y },
           pcb_trace_id: trace.pcb_trace_id,

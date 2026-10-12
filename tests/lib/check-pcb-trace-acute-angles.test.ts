@@ -6,6 +6,17 @@ import { runAllChecks, runAllRoutingChecks } from "lib/run-all-checks"
 test("normal 90-degree and 45-degree bends pass with no errors", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
+      type: "pcb_board",
+      pcb_board_id: "board1",
+      center: { x: 0, y: 0 },
+      width: 50,
+      height: 50,
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+      min_trace_acute_angle: 80,
+    } as any,
+    {
       type: "pcb_trace",
       pcb_trace_id: "trace_normal",
       route: [
@@ -27,6 +38,17 @@ test("reproduces issue #5559: detects acute 31-degree bend at vertex (5, 2.5)", 
   // Bends through about 31° at (5, 2.5)
   const circuitJson: AnyCircuitElement[] = [
     {
+      type: "pcb_board",
+      pcb_board_id: "board1",
+      center: { x: 0, y: 0 },
+      width: 50,
+      height: 50,
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+      min_trace_acute_angle: 80,
+    } as any,
+    {
       type: "pcb_trace",
       pcb_trace_id: "trace_acute",
       source_trace_id: "source_trace_1",
@@ -40,14 +62,14 @@ test("reproduces issue #5559: detects acute 31-degree bend at vertex (5, 2.5)", 
 
   const errors = checkPcbTraceAcuteAngles(circuitJson)
   expect(errors).toHaveLength(1)
-  expect(errors[0].type).toBe("pcb_trace_error")
+  expect(errors[0].type).toBe("pcb_trace_warning")
   expect(errors[0].center).toEqual({ x: 5, y: 2.5 })
   expect(errors[0].message).toContain("30.9°")
   expect(errors[0].message).toContain("below the minimum allowed angle (80°)")
   expect(errors[0].message).toContain("acid trap defect")
 })
 
-test("detects hairpin reversal bend (< 10 degrees)", () => {
+test("detects hairpin reversal bend (< 10 degrees) with config override", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
       type: "pcb_trace",
@@ -60,7 +82,7 @@ test("detects hairpin reversal bend (< 10 degrees)", () => {
     },
   ]
 
-  const errors = checkPcbTraceAcuteAngles(circuitJson)
+  const errors = checkPcbTraceAcuteAngles(circuitJson, { minAngleDegrees: 80 })
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain("below the minimum allowed angle (80°)")
 })
@@ -78,7 +100,7 @@ test("ignores bends on different layers across via transitions", () => {
     },
   ]
 
-  const errors = checkPcbTraceAcuteAngles(circuitJson)
+  const errors = checkPcbTraceAcuteAngles(circuitJson, { minAngleDegrees: 80 })
   expect(errors).toHaveLength(0)
 })
 
@@ -102,8 +124,10 @@ test("respects configurable minAngleDegrees override", () => {
     },
   ]
 
-  // Default (80°) flags it
-  expect(checkPcbTraceAcuteAngles(circuitJson)).toHaveLength(1)
+  // With minAngleDegrees = 80°, flags it
+  expect(
+    checkPcbTraceAcuteAngles(circuitJson, { minAngleDegrees: 80 }),
+  ).toHaveLength(1)
 
   // With minAngleDegrees = 45°, 60° passes
   expect(
@@ -111,8 +135,19 @@ test("respects configurable minAngleDegrees override", () => {
   ).toHaveLength(0)
 })
 
-test("is included in runAllRoutingChecks and runAllChecks", async () => {
+test("is included in runAllRoutingChecks and runAllChecks when board specifies min_trace_acute_angle", async () => {
   const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "board1",
+      center: { x: 0, y: 0 },
+      width: 50,
+      height: 50,
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+      min_trace_acute_angle: 80,
+    } as any,
     {
       type: "pcb_trace",
       pcb_trace_id: "trace_acute",
