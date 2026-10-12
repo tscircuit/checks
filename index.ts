@@ -61,5 +61,6 @@ export { checkPcbBusLengthSkew } from "./lib/check-pcb-bus-length-skew"
 export { checkHoleTraceClearance } from "./lib/check-hole-trace-clearance"
 
 export { checkPcbRoutingConstraints } from "./lib/check-pcb-routing-constraints"
+export { checkViaAndHoleAnnularRing } from "./lib/check-via-and-hole-annular-ring"
 
 export * from "./lib/check-pcb-trace-style"
