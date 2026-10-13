@@ -1,5 +1,5 @@
 import { createTracePortLayerConnectivity } from "./trace-port-layer-connectivity"
-import type { AnyCircuitElement } from "circuit-json"
+import type { AnyCircuitElement, PcbTrace } from "circuit-json"
 import {
   ConnectivityMap,
   findConnectedNetworks,
@@ -8,8 +8,9 @@ import {
 import Flatbush from "flatbush"
 import { getViaAndPourConnections } from "./get-via-and-pour-connections"
 
-type TraceBounds = {
+type TraceSegmentBounds = {
   traceIndex: number
+  segmentTrace: PcbTrace
   minX: number
   minY: number
   maxX: number
@@ -32,9 +33,8 @@ export function createIndexedPcbConnectivityMap(
     }
   }
   const traces = [...map.traceIdToElm.values()]
-  const boundsByLayer = new Map<string, TraceBounds[]>()
+  const boundsByLayer = new Map<string, TraceSegmentBounds[]>()
   for (const [traceIndex, trace] of traces.entries()) {
-    const boundsForTrace = new Map<string, TraceBounds>()
     for (let i = 0; i < trace.route.length - 1; i++) {
       const a = trace.route[i]
       const b = trace.route[i + 1]
@@ -44,26 +44,20 @@ export function createIndexedPcbConnectivityMap(
         a.layer !== b.layer
       )
         continue
-      const bounds = boundsForTrace.get(a.layer) ?? {
-        traceIndex,
-        minX: Infinity,
-        minY: Infinity,
-        maxX: -Infinity,
-        maxY: -Infinity,
-      }
-      // The exact predicate uses the first point's width for each segment.
-      // A small conservative margin avoids excluding contacts at rounding boundaries.
+      // Index individual segments so distant parts of a long trace do not
+      // admit unrelated copper to the exact segment intersection predicate.
+      // The predicate uses the first point's width for each segment.
       const radius = a.width / 2 + 1e-9
-      bounds.minX = Math.min(bounds.minX, a.x - radius, b.x - radius)
-      bounds.minY = Math.min(bounds.minY, a.y - radius, b.y - radius)
-      bounds.maxX = Math.max(bounds.maxX, a.x + radius, b.x + radius)
-      bounds.maxY = Math.max(bounds.maxY, a.y + radius, b.y + radius)
-      boundsForTrace.set(a.layer, bounds)
-    }
-    for (const [layer, bounds] of boundsForTrace) {
-      const entries = boundsByLayer.get(layer) ?? []
-      entries.push(bounds)
-      boundsByLayer.set(layer, entries)
+      const entries = boundsByLayer.get(a.layer) ?? []
+      entries.push({
+        traceIndex,
+        segmentTrace: { ...trace, route: [a, b] },
+        minX: Math.min(a.x, b.x) - radius,
+        minY: Math.min(a.y, b.y) - radius,
+        maxX: Math.max(a.x, b.x) + radius,
+        maxY: Math.max(a.y, b.y) + radius,
+      })
+      boundsByLayer.set(a.layer, entries)
     }
   }
   const candidates = traces.map(() => new Set<number>())
@@ -73,8 +67,16 @@ export function createIndexedPcbConnectivityMap(
     index.finish()
     for (const box of bounds) {
       for (const hit of index.search(box.minX, box.minY, box.maxX, box.maxY)) {
-        const other = bounds[hit].traceIndex
-        if (other > box.traceIndex) candidates[box.traceIndex].add(other)
+        const otherBox = bounds[hit]
+        const other = otherBox.traceIndex
+        const connected = candidates[box.traceIndex]
+        if (
+          other > box.traceIndex &&
+          !connected.has(other) &&
+          map._arePcbTracesConnected(box.segmentTrace, otherBox.segmentTrace)
+        ) {
+          connected.add(other)
+        }
       }
     }
   }
@@ -82,9 +84,7 @@ export function createIndexedPcbConnectivityMap(
   // Preserve the original pair order for stable net IDs and diagnostics.
   for (const [i, neighbors] of candidates.entries()) {
     for (const j of [...neighbors].sort((a, b) => a - b)) {
-      if (map._arePcbTracesConnected(traces[i], traces[j])) {
-        connections.push([traces[i].pcb_trace_id, traces[j].pcb_trace_id])
-      }
+      connections.push([traces[i].pcb_trace_id, traces[j].pcb_trace_id])
     }
   }
   const layerConnectivity = createTracePortLayerConnectivity(circuitJson)
