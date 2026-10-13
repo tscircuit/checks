@@ -1,5 +1,5 @@
 import type { Polygon } from "@flatten-js/core"
-import { all_layers, type AnyCircuitElement, type PcbVia } from "circuit-json"
+import { all_layers, type AnyCircuitElement, type PcbVia, type PcbTraceRoutePoint } from "circuit-json"
 import {
   circlePolygon,
   getPlatedHolePolygon,
@@ -12,7 +12,13 @@ import { createCopperPolygonContactTester } from "../copper-pour-connectivity/cr
 type Conductor = {
   id: string
   layers: string[]
-  polygon: Polygon
+  geometry:
+    | { polygon: Polygon }
+    | {
+        start: Extract<PcbTraceRoutePoint, { route_type: "wire" }>
+        end: Extract<PcbTraceRoutePoint, { route_type: "wire" }>
+      }
+  box: { xmin: number; ymin: number; xmax: number; ymax: number }
   bridges: boolean
   platedPort: boolean
 }
@@ -49,14 +55,28 @@ export function getViaAndPourConnections(
     bridges = false,
     platedPort = false,
   ) => {
-    if (!polygon.isEmpty())
+    if (!polygon.isEmpty()) {
+      const scaledPolygon = polygon.scale(scale, scale)
       conductors.push({
         id,
         layers,
-        polygon: polygon.scale(scale, scale),
+        geometry: { polygon: scaledPolygon },
+        box: scaledPolygon.box,
         bridges,
         platedPort,
       })
+    }
+  }
+  const polygonCache = new Map<Conductor, Polygon>()
+  const getPolygon = (conductor: Conductor): Polygon => {
+    if ("polygon" in conductor.geometry) return conductor.geometry.polygon
+    let polygon = polygonCache.get(conductor)
+    if (!polygon) {
+      const { start, end } = conductor.geometry
+      polygon = getTraceSegmentPolygon(start, end, start.width).scale(scale, scale)
+      polygonCache.set(conductor, polygon)
+    }
+    return polygon
   }
   const vias = circuit.filter((e) => e.type === "pcb_via")
   const components = new Map(
@@ -116,11 +136,28 @@ export function getViaAndPourConnections(
           a.layer === b.layer &&
           (a.x !== b.x || a.y !== b.y)
         ) {
-          add(
-            copper.pcb_trace_id,
-            [a.layer],
-            getTraceSegmentPolygon(a, b, a.width),
-          )
+          if (a.width > 0) {
+            const radius = a.width / 2
+            conductors.push({
+              id: copper.pcb_trace_id,
+              layers: [a.layer],
+              geometry: { start: a, end: b },
+              box: {
+                xmin: (Math.min(a.x, b.x) - radius) * scale,
+                ymin: (Math.min(a.y, b.y) - radius) * scale,
+                xmax: (Math.max(a.x, b.x) + radius) * scale,
+                ymax: (Math.max(a.y, b.y) + radius) * scale,
+              },
+              bridges: false,
+              platedPort: false,
+            })
+          } else {
+            add(
+              copper.pcb_trace_id,
+              [a.layer],
+              getTraceSegmentPolygon(a, b, a.width),
+            )
+          }
         } else if (a.route_type === "via") {
           // A materialized via is authoritative (especially for blind/buried spans).
           if (
@@ -155,14 +192,13 @@ export function getViaAndPourConnections(
   }
   if (!conductors.length) return connections
   const index = new Flatbush(conductors.length)
-  for (const { polygon } of conductors) {
-    const b = polygon.box
+  for (const { box: b } of conductors) {
     index.add(b.xmin, b.ymin, b.xmax, b.ymax)
   }
   index.finish()
   for (const [i, a] of conductors.entries()) {
     if (!a.bridges) continue
-    const box = a.polygon.box
+    const box = a.box
     for (const j of index.search(
       box.xmin - tolerance,
       box.ymin - tolerance,
@@ -179,7 +215,7 @@ export function getViaAndPourConnections(
         !a.layers.some((l) => b.layers.includes(l))
       )
         continue
-      if (touches(a.polygon, b.polygon)) connections.push([a.id, b.id])
+      if (touches(getPolygon(a), getPolygon(b))) connections.push([a.id, b.id])
     }
   }
   return connections

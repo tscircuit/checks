@@ -323,7 +323,6 @@ function checkTracesAreContiguous(
   ) as PcbPlatedHole[]
 
   const padMap = new Map<PcbPortId, PcbPad[]>()
-  pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
   let fullConnectivityMap: ConnectivityMap | undefined = connMap
   let traceWireSegmentsByNetAndLayer: TraceWireSegmentsByNetAndLayer | undefined
   const getFullConnectivityMap = () => {
@@ -398,6 +397,7 @@ function checkTracesAreContiguous(
     )
     if (cached) return cached
 
+    pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
     const connectedTraceIds = new Set<string>()
     const pendingTraceIds = [startTrace.pcb_trace_id]
 
@@ -511,6 +511,18 @@ function checkTracesAreContiguous(
 
       if (!pads?.length) continue
 
+      const isFirstPointConnected = pads.some((pad) =>
+        routePointTouchesPad(firstPoint, pad),
+      )
+
+      const isLastPointConnected = pads.some((pad) =>
+        routePointTouchesPad(lastPoint, pad),
+      )
+
+      // Direct endpoint contact already establishes this required port. Build
+      // the physical copper graph only when reaching it needs other traces.
+      if (isFirstPointConnected || isLastPointConnected) continue
+
       const isConnectedByRoutedSourceTrace = getPhysicallyConnectedTraces(
         trace,
       ).some((candidateTrace) =>
@@ -519,14 +531,6 @@ function checkTracesAreContiguous(
           ?.has(port.pcb_port_id),
       )
       if (isConnectedByRoutedSourceTrace) continue
-
-      const isFirstPointConnected = pads.some((pad) =>
-        routePointTouchesPad(firstPoint, pad),
-      )
-
-      const isLastPointConnected = pads.some((pad) =>
-        routePointTouchesPad(lastPoint, pad),
-      )
 
       if (!isFirstPointConnected && !isLastPointConnected) {
         const portName = getReadableNameForPcbPort(
