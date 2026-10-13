@@ -116,8 +116,15 @@ test("clears corrected placement and does not guess pull roles without pin metad
   const before = await createPullResistorCircuit()
   const after = await createPullResistorCircuit(true)
   expect(checkSchematicPlacement(after)).toEqual([])
-  expect(after.filter((e) => e.type.startsWith("source_"))).toEqual(
-    before.filter((e) => e.type.startsWith("source_")),
+  // Compare source definitions, not instance-specific runtime diagnostics.
+  expect(
+    after.filter(
+      (e) => e.type.startsWith("source_") && !e.type.endsWith("_warning"),
+    ),
+  ).toEqual(
+    before.filter(
+      (e) => e.type.startsWith("source_") && !e.type.endsWith("_warning"),
+    ),
   )
   const separateSheet = structuredClone(before)
   const db = cju(separateSheet)

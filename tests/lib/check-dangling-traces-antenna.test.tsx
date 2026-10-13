@@ -1,10 +1,9 @@
 import { expect, test } from "bun:test"
-import { Circuit, PcbTrace } from "tscircuit"
+import { Circuit, PcbTrace } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { runAllRoutingChecks } from "../../lib/run-all-checks"
 import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
 import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
-import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 
 test("intentional antenna copper does not exempt a dangling feed branch", async () => {
   const circuit = new Circuit()
@@ -41,7 +40,7 @@ test("intentional antenna copper does not exempt a dangling feed branch", async 
   await circuit.renderUntilSettled()
   // Core's marker support is merged in tscircuit/core#4132 but not released yet.
   // Supply the published Circuit JSON field only on the radiator, not the feed.
-  const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
+  const circuitJson = circuit.getCircuitJson()
   for (const element of circuitJson) {
     if (
       element.type === "pcb_trace" &&

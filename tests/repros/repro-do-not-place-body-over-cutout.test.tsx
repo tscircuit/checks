@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { Circuit } from "tscircuit-for-repro-tests"
+import { Circuit } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbComponentOverCutout } from "lib/check-pcb-component-over-cutout"
 

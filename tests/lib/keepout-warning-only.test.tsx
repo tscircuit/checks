@@ -16,7 +16,7 @@ const renderDemo = async (diagnostics: AnyCircuitElement[] = []) => {
         color="white"
       />
       {[-13, 13].map((x) => (
-        <group key={x}>
+        <group key={x} pcbX={0} pcbY={0}>
           <keepout shape="rect" width={8} height={8} pcbX={x} />
           <smtpad shape="rect" width={1.2} height={1.2} pcbX={x} pcbY={2} />
           <pcbnotetext
