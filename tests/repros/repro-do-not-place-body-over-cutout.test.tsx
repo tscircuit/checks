@@ -3,7 +3,7 @@ import { Circuit } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbComponentOverCutout } from "lib/check-pcb-component-over-cutout"
 
-test("repro: an unpopulated component body still reports a cutout overlap", async () => {
+test("only populated component bodies report cutout overlaps", async () => {
   for (const doNotPlace of [false, true]) {
     const circuit = new Circuit()
     circuit.add(
@@ -46,10 +46,11 @@ test("repro: an unpopulated component body still reports a cutout overlap", asyn
     expect(component?.do_not_place).toBe(doNotPlace)
 
     const errors = checkPcbComponentOverCutout(circuitJson)
-    // The populated-body collision is valid. Current bug: the same body-only
-    // error remains for the DNP case, although both pads are outside the slot.
-    expect(errors).toHaveLength(1)
-    expect(errors[0].message).toContain("Component ENCODER_OPTION overlaps")
+    // Both pads are outside the slot; only the populated body collides.
+    expect(errors).toHaveLength(doNotPlace ? 0 : 1)
+    if (!doNotPlace) {
+      expect(errors[0].message).toContain("Component ENCODER_OPTION overlaps")
+    }
 
     if (doNotPlace) {
       expect(
