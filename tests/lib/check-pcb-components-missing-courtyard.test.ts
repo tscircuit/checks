@@ -4,6 +4,83 @@ import { checkPcbComponentsMissingCourtyard } from "lib/check-pcb-components-mis
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
 
 describe("checkPcbComponentsMissingCourtyard", () => {
+  test.each(["pad", "through_hole"])(
+    "does not warn for a %s test point without a courtyard",
+    (footprintVariant) => {
+      const circuitJson = [
+        {
+          type: "pcb_component",
+          pcb_component_id: "pcb_component_test_point",
+          source_component_id: "source_component_test_point",
+          center: { x: 0, y: 0 },
+        },
+        {
+          type: "source_component",
+          source_component_id: "source_component_test_point",
+          ftype: "simple_test_point",
+          name: "Probe",
+          footprint_variant: footprintVariant,
+          supplier_part_numbers: {},
+        },
+      ] as unknown as AnyCircuitElement[]
+
+      expect(checkPcbComponentsMissingCourtyard(circuitJson)).toHaveLength(0)
+    },
+  )
+
+  test("only exempts test points in a mixed circuit", () => {
+    const circuitJson = [
+      {
+        type: "source_component",
+        source_component_id: "source_component_test_point",
+        ftype: "simple_test_point",
+        name: "",
+        supplier_part_numbers: {},
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_component_test_point",
+        source_component_id: "source_component_test_point",
+        center: { x: 0, y: 0 },
+      },
+      {
+        type: "source_component",
+        source_component_id: "source_component_resistor",
+        ftype: "simple_resistor",
+        name: "TP2",
+        resistance: 1000,
+        supplier_part_numbers: {},
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_component_resistor",
+        source_component_id: "source_component_resistor",
+        center: { x: 2, y: 0 },
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_component_unnamed",
+        center: { x: 4, y: 0 },
+      },
+    ] as unknown as AnyCircuitElement[]
+
+    const warnings = checkPcbComponentsMissingCourtyard(circuitJson)
+
+    expect(warnings).toMatchObject([
+      {
+        pcb_component_id: "pcb_component_resistor",
+        message: "TP2 has no courtyard",
+      },
+      {
+        pcb_component_id: "pcb_component_unnamed",
+        message: "unnamed component has no courtyard",
+      },
+    ])
+    expect(
+      warnings.every((warning) => !containsCircuitJsonId(warning.message)),
+    ).toBe(true)
+  })
+
   test("returns a warning when a component has no courtyard", () => {
     const circuitJson = [
       {

@@ -13,14 +13,23 @@ const courtyardTypes = new Set([
   "pcb_courtyard_rect",
 ])
 
-/** Returns warnings for PCB components without courtyards, excluding manually placed vias. */
+/** Returns warnings for PCB components without courtyards, excluding manually placed vias and test points. */
 export function checkPcbComponentsMissingCourtyard(
   circuitJson: AnyCircuitElement[],
 ): PcbComponentMissingCourtyardWarning[] {
-  const manuallyPlacedViaSourceIds = new Set(
-    circuitJson
-      .filter((element) => element.type === "source_manually_placed_via")
-      .map((element) => element.source_manually_placed_via_id),
+  const courtyardExemptSourceIds = new Set(
+    circuitJson.flatMap((element) => {
+      if (element.type === "source_manually_placed_via") {
+        return [element.source_manually_placed_via_id]
+      }
+      if (
+        element.type === "source_component" &&
+        element.ftype === "simple_test_point"
+      ) {
+        return [element.source_component_id]
+      }
+      return []
+    }),
   )
   const componentIdsWithCourtyards = new Set(
     circuitJson
@@ -40,7 +49,7 @@ export function checkPcbComponentsMissingCourtyard(
       (component) =>
         !componentIdsWithCourtyards.has(component.pcb_component_id) &&
         (!component.source_component_id ||
-          !manuallyPlacedViaSourceIds.has(component.source_component_id)),
+          !courtyardExemptSourceIds.has(component.source_component_id)),
     )
     .map((component) => {
       const sourceComponent = component.source_component_id
