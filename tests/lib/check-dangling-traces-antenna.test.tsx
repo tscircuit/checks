@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { Circuit, PcbTrace } from "@tscircuit/core"
+import { Circuit, PcbTrace } from "tscircuit"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { runAllRoutingChecks } from "../../lib/run-all-checks"
 import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"

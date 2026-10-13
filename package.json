@@ -36,6 +36,7 @@
     "@tscircuit/circuit-json-to-flattenjs": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-to-flattenjs/0.0.3.tgz",
     "@tscircuit/core": "^0.0.1930",
     "tscircuit-for-length-tests": "npm:tscircuit@0.0.2568",
+    "tscircuit-for-repro-tests": "npm:tscircuit@0.0.2857",
     "@tscircuit/circuit-json-util": "^0.0.120",
     "@tscircuit/circuit-json-pcb-style-analysis": "https://jscdn.tscircuit.com/@tscircuit/circuit-json-pcb-style-analysis/0.0.7.tgz"
   },
