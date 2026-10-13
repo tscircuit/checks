@@ -25,6 +25,10 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 import { endpointTouchesVia, getViaContactIndex } from "./via-contact-index"
+import {
+  createRouteViaContactContext,
+  routeViaConnectsAdjacentWires,
+} from "./route-via-connects-adjacent-wires"
 
 type PcbPortId = PcbPort["pcb_port_id"]
 type PcbTraceRoutePoint = PcbTrace["route"][number]
@@ -287,6 +291,7 @@ function checkTracesAreContiguous(
     pcbConnectivityMap?: PcbConnectivityMap
   } = {},
 ): PcbTraceError[] {
+  const routeViaContext = createRouteViaContactContext(circuitJson)
   const errors: PcbTraceError[] = getTracePortLayerMismatches(circuitJson).map(
     ({ trace, point, index, port, padLayers }) => ({
       type: "pcb_trace_error",
@@ -457,22 +462,22 @@ function checkTracesAreContiguous(
         const nextIsWire = nextPoint.route_type === "wire"
 
         if (prevIsWire && nextIsWire) {
-          const prevAligned =
-            Math.abs(prevPoint.x - currentPoint.x) < 0.01 &&
-            Math.abs(prevPoint.y - currentPoint.y) < 0.01
-
-          const nextAligned =
-            Math.abs(nextPoint.x - currentPoint.x) < 0.01 &&
-            Math.abs(nextPoint.y - currentPoint.y) < 0.01
-
-          if (!prevAligned || !nextAligned) {
+          if (
+            !routeViaConnectsAdjacentWires({
+              via: currentPoint,
+              incoming: prevPoint,
+              outgoing: nextPoint,
+              traceId: trace.pcb_trace_id,
+              context: routeViaContext,
+            })
+          ) {
             const traceName = getReadableNameForPcbTrace(
               circuitJson,
               trace.pcb_trace_id,
             )
             errors.push({
               type: "pcb_trace_error",
-              message: `Via in trace [${traceName}] is misaligned at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
+              message: `Via in trace [${traceName}] does not connect its adjacent wire layers at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
               source_trace_id:
                 sourceTrace?.source_trace_id ||
                 trace.source_trace_id ||
