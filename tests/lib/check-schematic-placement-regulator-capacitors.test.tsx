@@ -112,8 +112,15 @@ test("clears the warning after placement correction and skips incomplete or cros
   const before = await createRegulatorCircuit()
   const after = await createRegulatorCircuit(true)
   expect(checkSchematicPlacement(after)).toEqual([])
-  expect(after.filter((e) => e.type.startsWith("source_"))).toEqual(
-    before.filter((e) => e.type.startsWith("source_")),
+  // Compare source definitions, not instance-specific runtime diagnostics.
+  expect(
+    after.filter(
+      (e) => e.type.startsWith("source_") && !e.type.endsWith("_warning"),
+    ),
+  ).toEqual(
+    before.filter(
+      (e) => e.type.startsWith("source_") && !e.type.endsWith("_warning"),
+    ),
   )
   const db = cju(before)
   const capSource = db.source_component.list().find((e) => e.name === "CIN")!
