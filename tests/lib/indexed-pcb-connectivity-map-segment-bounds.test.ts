@@ -3,11 +3,15 @@ import type { PcbTrace } from "circuit-json"
 import { PcbConnectivityMap } from "circuit-json-to-connectivity-map"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 
-const wire = (x: number, y: number, width = 0.2, layer: "top" | "bottom" = "top") =>
-  ({ route_type: "wire", x, y, width, layer }) as const
+const wire = (
+  x: number,
+  y: number,
+  width = 0.2,
+  layer: "top" | "bottom" = "top",
+) => ({ route_type: "wire", x, y, width, layer }) as const
 
 /** Folded traces have overlapping envelopes but mostly distant segment copper. */
-test("segment connectivity preserves exact contact geometry and stable net IDs", () => {
+test("segment index preserves copper contacts and stable net IDs", () => {
   const traces: PcbTrace[] = Array.from({ length: 40 }, (_, index) => ({
     type: "pcb_trace",
     pcb_trace_id: `folded_${index}`,

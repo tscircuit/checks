@@ -1,5 +1,10 @@
 import type { Polygon } from "@flatten-js/core"
-import { all_layers, type AnyCircuitElement, type PcbVia, type PcbTraceRoutePoint } from "circuit-json"
+import {
+  all_layers,
+  type AnyCircuitElement,
+  type PcbVia,
+  type PcbTraceRoutePoint,
+} from "circuit-json"
 import {
   circlePolygon,
   getPlatedHolePolygon,
@@ -73,7 +78,10 @@ export function getViaAndPourConnections(
     let polygon = polygonCache.get(conductor)
     if (!polygon) {
       const { start, end } = conductor.geometry
-      polygon = getTraceSegmentPolygon(start, end, start.width).scale(scale, scale)
+      polygon = getTraceSegmentPolygon(start, end, start.width).scale(
+        scale,
+        scale,
+      )
       polygonCache.set(conductor, polygon)
     }
     return polygon
