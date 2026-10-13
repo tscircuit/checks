@@ -3,7 +3,7 @@
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
-  "version": "0.0.253",
+  "version": "0.0.254",
   "repository": {
     "type": "git",
     "url": "https://github.com/tscircuit/checks"
