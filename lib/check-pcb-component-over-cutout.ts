@@ -117,7 +117,7 @@ function doPolygonsOverlap(
 }
 
 /**
- * Cutouts remove PCB material on every layer, so a component body or SMT pad
+ * Cutouts remove PCB material on every layer, so a populated component body
  * overlapping a cutout is invalid on both top and bottom.
  */
 export function checkPcbComponentOverCutout(
@@ -140,6 +140,7 @@ export function checkPcbComponentOverCutout(
   const errors: PcbPlacementError[] = []
 
   for (const component of components) {
+    if (component.do_not_place) continue
     if (!component.center || component.width <= 0 || component.height <= 0) {
       continue
     }
