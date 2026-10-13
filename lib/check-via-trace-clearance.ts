@@ -27,7 +27,20 @@ export function checkViaTraceClearance(
   }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbViaTraceClearanceError[] {
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
-  const segments = getTraceSegments(circuitJson)
+  const segments = getTraceSegments(circuitJson).map((segment) => ({
+    ...segment,
+    minX: Math.min(segment.x1, segment.x2),
+    maxX: Math.max(segment.x1, segment.x2),
+    minY: Math.min(segment.y1, segment.y2),
+    maxY: Math.max(segment.y1, segment.y2),
+    radius: Math.max(0, segment.thickness / 2),
+    finiteBounds:
+      Number.isFinite(segment.x1) &&
+      Number.isFinite(segment.x2) &&
+      Number.isFinite(segment.y1) &&
+      Number.isFinite(segment.y2) &&
+      Number.isFinite(segment.thickness),
+  }))
   if (vias.length === 0 || segments.length === 0) return []
 
   const board = getPcbBoard(circuitJson)
@@ -42,8 +55,27 @@ export function checkViaTraceClearance(
   const overlappingPairIds = new Set<string>()
 
   for (const via of vias) {
+    const layers = getLayersOfPcbElement(via)
+    const finiteBounds =
+      Number.isFinite(via.x) &&
+      Number.isFinite(via.y) &&
+      Number.isFinite(via.outer_diameter) &&
+      Number.isFinite(minClearance)
+    const radius =
+      Math.max(0, via.outer_diameter / 2) + Math.max(0, minClearance!) + EPSILON
     for (const segment of segments) {
-      if (!getLayersOfPcbElement(via).includes(segment.layer)) continue
+      const expansion = radius + segment.radius
+      // Conservative bounds retain every overlap and clearance hit.
+      if (
+        finiteBounds &&
+        segment.finiteBounds &&
+        (via.x < segment.minX - expansion ||
+          via.x > segment.maxX + expansion ||
+          via.y < segment.minY - expansion ||
+          via.y > segment.maxY + expansion)
+      )
+        continue
+      if (!layers.includes(segment.layer)) continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, via.pcb_via_id))
         continue
 
