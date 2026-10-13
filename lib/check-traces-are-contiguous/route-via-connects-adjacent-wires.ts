@@ -56,21 +56,25 @@ export function routeViaConnectsAdjacentWires({
   const fromIndex = stack.indexOf(via.from_layer)
   const toIndex = stack.indexOf(via.to_layer)
   if (fromIndex < 0 || toIndex < 0) return false
-  // A materialized barrel is authoritative over stale route-span metadata.
-  const emitted = ownedViasByTrace
-    .get(traceId)
-    ?.find(
-      (element) =>
-        Math.abs(element.x - via.x) < CONTACT_EPSILON &&
-        Math.abs(element.y - via.y) < CONTACT_EPSILON,
-    )
-  const layers =
-    emitted !== undefined
-      ? emitted.layers
-      : stack.slice(
-          Math.min(fromIndex, toIndex),
-          Math.max(fromIndex, toIndex) + 1,
-        )
+  // Materialized barrels are authoritative over stale route-span metadata.
+  // Test coincident barrels separately; combining their layers can hide gaps.
+  const emitted =
+    ownedViasByTrace
+      .get(traceId)
+      ?.filter(
+        (element) =>
+          Math.abs(element.x - via.x) < CONTACT_EPSILON &&
+          Math.abs(element.y - via.y) < CONTACT_EPSILON,
+      ) ?? []
+  const spans =
+    emitted.length > 0
+      ? emitted.map((element) => element.layers)
+      : [
+          stack.slice(
+            Math.min(fromIndex, toIndex),
+            Math.max(fromIndex, toIndex) + 1,
+          ),
+        ]
   const incomingAtVia =
     Math.abs(incoming.x - via.x) < CONTACT_EPSILON &&
     Math.abs(incoming.y - via.y) < CONTACT_EPSILON
@@ -80,8 +84,10 @@ export function routeViaConnectsAdjacentWires({
   return (
     stack.includes(incoming.layer) &&
     stack.includes(outgoing.layer) &&
-    layers.includes(incoming.layer) &&
-    layers.includes(outgoing.layer) &&
+    spans.some(
+      (layers) =>
+        layers.includes(incoming.layer) && layers.includes(outgoing.layer),
+    ) &&
     (incomingAtVia || incoming.layer === via.from_layer) &&
     (outgoingAtVia || outgoing.layer === via.to_layer)
   )
