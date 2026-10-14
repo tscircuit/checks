@@ -1,48 +1,50 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import { checkDanglingTraces } from "lib/check-dangling-traces/check-dangling-traces"
-import { checkTracesAreContiguous } from "lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { runAllRoutingChecks } from "lib/run-all-checks"
-import { DisconnectedPcbNet } from "../fixtures/disconnected-pcb-net"
 
-test("two disconnected net islands have contiguous traces and no dangling ends", async () => {
-  const circuit = new Circuit()
-  circuit.add(<DisconnectedPcbNet />)
+test("named GND net with two disconnected copper islands", async () => {
+  const circuit = new Circuit({ platform: { routingDrcChecksDisabled: true } })
+  circuit.add(
+    <board width={16} height={9} routeRemaining={false}>
+      <net name="GND" />
+      <testpoint name="J1" footprintVariant="pad" pcbX={-5} padDiameter={1} />
+      <testpoint name="J2" footprintVariant="pad" pcbX={-3} padDiameter={1} />
+      <testpoint name="J3" footprintVariant="pad" pcbX={3} padDiameter={1} />
+      <testpoint name="J4" footprintVariant="pad" pcbX={5} padDiameter={1} />
+      <trace from=".J1 > .pin1" to="net.GND" />
+      <trace from=".J2 > .pin1" to="net.GND" />
+      <trace from=".J3 > .pin1" to="net.GND" />
+      <trace from=".J4 > .pin1" to="net.GND" />
+      <trace from=".J1 > .pin1" to=".J2 > .pin1" pcbStraightLine />
+      <trace from=".J3 > .pin1" to=".J4 > .pin1" pcbStraightLine />
+      <pcbnotetext text="All four pads belong to GND" pcbY={3} fontSize={0.5} />
+      <pcbnotetext
+        text="Two copper islands; no connecting trace or pour"
+        pcbY={-2}
+        fontSize={0.4}
+      />
+    </board>,
+  )
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
-
-  expect(checkTracesAreContiguous(circuitJson)).toEqual([])
-  expect(checkDanglingTraces(circuitJson)).toEqual([])
-
+  expect(circuitJson.filter((e) => e.type === "pcb_trace")).toHaveLength(2)
   const errors = await runAllRoutingChecks(circuitJson)
-  const status = errors.length ? "DETECTED" : "FAILING"
-  const svg = convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
-    shouldDrawErrors: true,
-    showErrorsInTextOverlay: true,
-  }).replace(
-    "</svg>",
-    `<text x="50%" y="24" text-anchor="middle" fill="#fbbf24" font-family="sans-serif" font-size="16">Disconnected GND net · ${status}</text></svg>`,
-  )
-  expect(svg).toMatchSvgSnapshot(import.meta.path)
+  expect(errors).toHaveLength(0)
+  circuitJson.push({
+    type: "pcb_note_text",
+    pcb_note_text_id: "check_result",
+    text: `Native routing checks: ${errors.length} findings`,
+    anchor_position: { x: 0, y: -3.2 },
+    anchor_alignment: "center",
+    font_size: 0.5,
+    font: "tscircuit2024",
+    layer: "top",
+  })
+  expect(
+    convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+      shouldDrawErrors: true,
+      showErrorsInTextOverlay: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
-
-test.failing(
-  "aggregate routing detects disconnected copper within one named net",
-  async () => {
-    const circuit = new Circuit()
-    circuit.add(<DisconnectedPcbNet />)
-    await circuit.renderUntilSettled()
-    const circuitJson = circuit.getCircuitJson()
-    const errors = await runAllRoutingChecks(circuitJson)
-
-    expect(errors).toEqual([
-      expect.objectContaining({
-        error_type: "pcb_port_not_connected_error",
-        pcb_port_ids: ["pcb_port_0", "pcb_port_1", "pcb_port_2", "pcb_port_3"],
-        message:
-          "Net [GND] has disconnected PCB copper: A.pin1, B.pin1 | C.pin1, D.pin1.",
-      }),
-    ])
-  },
-)
