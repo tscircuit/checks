@@ -16,6 +16,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPort } from "./util/get-readable-names"
 import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
+import { checkNamedNetPcbConnectivity } from "./check-named-net-pcb-connectivity"
 
 function checkEachPcbPortConnectedToPcbTraces(
   circuitJson: AnyCircuitElement[],
@@ -183,6 +184,14 @@ function checkEachPcbPortConnectedToPcbTraces(
     }
   }
 
+  errors.push(
+    ...checkNamedNetPcbConnectivity({
+      circuitJson,
+      connMap: connectivityMap,
+      pcbConnectivityMap,
+      portErrors: errors,
+    }),
+  )
   return errors
 }
 

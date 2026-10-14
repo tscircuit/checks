@@ -30,7 +30,16 @@ test("named GND net with two disconnected copper islands", async () => {
   const circuitJson = circuit.getCircuitJson()
   expect(circuitJson.filter((e) => e.type === "pcb_trace")).toHaveLength(2)
   const errors = await runAllRoutingChecks(circuitJson)
-  expect(errors).toHaveLength(0)
+  expect(errors).toEqual([
+    expect.objectContaining({
+      type: "pcb_port_not_connected_error",
+      pcb_port_ids: circuitJson
+        .filter((e) => e.type === "pcb_port")
+        .map((port) => port.pcb_port_id),
+      message:
+        "Net [GND] has disconnected PCB copper: J1.pin1, J2.pin1 | J3.pin1, J4.pin1.",
+    }),
+  ])
   circuitJson.push({
     type: "pcb_note_text",
     pcb_note_text_id: "check_result",
