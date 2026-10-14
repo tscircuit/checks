@@ -193,6 +193,17 @@ export function getCopperPourConnectivity(
     portsByNet.set(netId, ports)
   }
   return {
+    getPortConnections() {
+      const portsByRoot = new Map<number, PcbPortId[]>()
+      for (const [portId, roots] of rootsByPort) {
+        for (const root of roots) {
+          const ports = portsByRoot.get(root) ?? []
+          ports.push(portId)
+          portsByRoot.set(root, ports)
+        }
+      }
+      return [...portsByRoot.values()]
+    },
     isPortConnectedToNet(
       portId: PcbPortId,
       sourceNetIds: SourceNet["source_net_id"][],
