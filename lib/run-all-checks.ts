@@ -1,47 +1,47 @@
-import { checkPcbTraceStyle } from "./check-pcb-trace-style"
-import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
-import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
-import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
-import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
-import { checkCopperPourShorts } from "./check-copper-pour-shorts"
-import { checkPcbBusLengthSkew } from "./check-pcb-bus-length-skew"
-import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
-import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
 import type { AnyCircuitElement } from "circuit-json"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
+import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
+import { checkCopperPourShorts } from "./check-copper-pour-shorts"
 import { checkCopperToBoardEdgeClearance } from "./check-copper-to-board-edge-clearance"
 import { checkCourtyardOverlap } from "./check-courtyard-overlap/checkCourtyardOverlap"
 import { checkDanglingTraces } from "./check-dangling-traces/check-dangling-traces"
 import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
 import { checkEachPcbPortConnectedToPcbTraces } from "./check-each-pcb-port-connected-to-pcb-trace"
 import { checkEachPcbTraceNonOverlapping } from "./check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
+import { checkHoleTraceClearance } from "./check-hole-trace-clearance"
 import { checkNoGroundPinDefined } from "./check-no-ground-pin-defined"
 import { checkNoPowerPinDefined } from "./check-no-power-pin-defined"
 import { checkPadPadClearance } from "./check-pad-pad-clearance"
-import { checkHoleTraceClearance } from "./check-hole-trace-clearance"
 import { checkPadTraceClearance } from "./check-pad-trace-clearance"
-import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
-import { checkPcbComponentsMissingCourtyard } from "./check-pcb-components-missing-courtyard"
-import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
-import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
-import { checkPcbCourtyardOverKeepout } from "./check-pcb-courtyard-over-keepout"
-import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
 import {
   checkPcbBendZonePlacement,
   checkPcbBendZoneTraces,
 } from "./check-pcb-bend-zones"
+import { checkPcbBusLengthSkew } from "./check-pcb-bus-length-skew"
+import { checkPcbComponentOverCutout } from "./check-pcb-component-over-cutout"
+import { checkPcbComponentsMissingCourtyard } from "./check-pcb-components-missing-courtyard"
+import { checkPcbComponentsOutOfBoard } from "./check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
+import { checkPcbComponentOverlap } from "./check-pcb-components-overlap/checkPcbComponentOverlap"
+import { checkPcbCopperOverKeepout } from "./check-pcb-copper-over-keepout"
+import { checkPcbCourtyardOverKeepout } from "./check-pcb-courtyard-over-keepout"
+import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
+import { checkPcbTraceAcuteAngles } from "./check-pcb-trace-acute-angles"
 import { checkPcbTraceLengths } from "./check-pcb-trace-lengths"
+import { checkPcbTraceStyle } from "./check-pcb-trace-style"
 import { checkPcbTraceViaCounts } from "./check-pcb-trace-via-counts"
 import { checkPinMustBeConnected } from "./check-pin-must-be-connected"
-import { checkSourcePinVoltageCompatibility } from "./check-source-pin-voltage-compatibility"
+import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
 import { checkSameNetViaSpacing } from "./check-same-net-via-spacing"
 import { checkSchematicComponentExcessiveVerticalPadding } from "./check-schematic-component-excessive-vertical-padding"
 import { checkSchematicComponentMissingReferenceDesignatorText } from "./check-schematic-component-missing-reference-designator-text"
 import { checkSchematicComponentPortsOutsideBody } from "./check-schematic-component-ports-outside-body"
 import { checkSchematicPlacement } from "./check-schematic-placement"
+import { checkSourcePinVoltageCompatibility } from "./check-source-pin-voltage-compatibility"
 import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-traces"
+import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
 import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
@@ -49,6 +49,7 @@ import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-termi
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
+import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 
 export async function runAllPlacementChecks(
   circuitJson: AnyCircuitElement[],
@@ -117,6 +118,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPcbBendZoneTraces(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
     ...checkPcbTraceStyle(circuitJson),
+    ...checkPcbTraceAcuteAngles(circuitJson),
     ...checkPcbBusLengthSkew(circuitJson),
     ...checkPcbRoutingConstraints(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),
