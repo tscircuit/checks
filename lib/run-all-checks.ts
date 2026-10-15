@@ -45,6 +45,7 @@ import { checkSourceTracesHavePcbTraces } from "./check-source-traces-have-pcb-t
 import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
+import { checkNoPcbNetIslands } from "./check-no-pcb-net-islands"
 import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-terminal-switch-contacts-on-different-nets"
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
@@ -129,6 +130,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkSameNetViaSpacing(circuitJson, connectivity),
     ...checkDifferentNetViaSpacing(circuitJson, connectivity),
     ...checkTracesAreContiguous(circuitJson, connectivity),
+    ...checkNoPcbNetIslands(circuitJson, connectivity),
     ...checkDanglingTraces(circuitJson, connectivity),
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
