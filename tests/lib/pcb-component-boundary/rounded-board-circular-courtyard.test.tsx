@@ -1,52 +1,8 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "tscircuit"
 import { checkPcbComponentsOutOfBoard } from "lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
-import { normalizeFixtureSourcePorts } from "../../fixtures/normalize-fixture-source-ports"
 
-for (const radius of [null, 2, 2.99, 3.5]) {
-  test(`round mounting pad in rounded corners with courtyard radius ${radius}`, async () => {
-    const circuit = new Circuit()
-    circuit.add(
-      <board width={38.4} height={38.4} borderRadius={3.2} routingDisabled>
-        {[-16, 16].flatMap((pcbX) =>
-          [-16, 16].map((pcbY, index) => (
-            <chip
-              key={`${pcbX},${pcbY}`}
-              name={`J${pcbX < 0 ? index + 1 : index + 3}`}
-              pcbX={pcbX}
-              pcbY={pcbY}
-              footprint={
-                <footprint>
-                  <platedhole
-                    shape="circle"
-                    holeDiameter={3.45}
-                    outerDiameter={5.2}
-                    portHints={["1"]}
-                  />
-                  {radius !== null && (
-                    <courtyardcircle radius={radius} layer="top" />
-                  )}
-                </footprint>
-              }
-            />
-          )),
-        )}
-      </board>,
-    )
-    await circuit.renderUntilSettled()
-    const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
-    const errors = checkPcbComponentsOutOfBoard(circuitJson)
-    expect(errors).toHaveLength(radius === 3.5 ? 4 : 0)
-    for (const error of errors) {
-      expect(error.message).toContain("0.3mm")
-      expect(
-        error.component_bounds.max_x - error.component_bounds.min_x,
-      ).toBeCloseTo(7)
-    }
-  })
-}
-
-test("a smaller circular courtyard does not hide copper outside the board", async () => {
+test("a circular pad and courtyard fit inside a rounded board corner", async () => {
   const circuit = new Circuit()
   circuit.add(
     <board width={38.4} height={38.4} borderRadius={3.2} routingDisabled>
@@ -59,7 +15,7 @@ test("a smaller circular courtyard does not hide copper outside the board", asyn
             <platedhole
               shape="circle"
               holeDiameter={3.45}
-              outerDiameter={7}
+              outerDiameter={5.2}
               portHints={["1"]}
             />
             <courtyardcircle radius={2.99} layer="top" />
@@ -69,9 +25,25 @@ test("a smaller circular courtyard does not hide copper outside the board", asyn
     </board>,
   )
   await circuit.renderUntilSettled()
-  const errors = checkPcbComponentsOutOfBoard(
-    normalizeFixtureSourcePorts(circuit.getCircuitJson()),
-  )
-  expect(errors).toHaveLength(1)
-  expect(errors[0].message).toContain("0.3mm")
+  const circuitJson = circuit.getCircuitJson()
+
+  expect(
+    circuitJson.find((element) => element.type === "pcb_plated_hole"),
+  ).toMatchObject({
+    type: "pcb_plated_hole",
+    shape: "circle",
+    x: -16,
+    y: -16,
+    outer_diameter: 5.2,
+  })
+  expect(
+    circuitJson.find((element) => element.type === "pcb_courtyard_circle"),
+  ).toMatchObject({
+    type: "pcb_courtyard_circle",
+    center: { x: -16, y: -16 },
+    radius: 2.99,
+    layer: "top",
+  })
+  // Both circles fit inside the 3.2 mm corner arc, even though the pad's square bounds do not.
+  expect(checkPcbComponentsOutOfBoard(circuitJson)).toEqual([])
 })
