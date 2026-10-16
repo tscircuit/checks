@@ -112,8 +112,17 @@ export function getViaAndPourConnections(
         connections.push([copper.pcb_via_id, copper.pcb_trace_id])
     } else if (copper.type === "pcb_plated_hole") {
       if (!copper.pcb_port_id) continue
-      // Historical circular-hole/rect-pad records omit centered offsets.
-      const pad = { hole_offset_x: 0, hole_offset_y: 0, ...copper }
+      // Historical circular-hole/rect-pad records omit centered offsets, and
+      // core writes them as present-but-undefined keys before serialization.
+      const offset = copper as {
+        hole_offset_x?: number
+        hole_offset_y?: number
+      }
+      const pad = {
+        ...copper,
+        hole_offset_x: offset.hole_offset_x ?? 0,
+        hole_offset_y: offset.hole_offset_y ?? 0,
+      }
       add(
         copper.pcb_port_id,
         copper.layers,
