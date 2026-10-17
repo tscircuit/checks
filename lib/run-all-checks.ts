@@ -5,6 +5,7 @@ import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-con
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { checkCopperPourShorts } from "./check-copper-pour-shorts"
+import { checkCopperPourDeadEndFingers } from "./check-copper-pour-dead-end-fingers"
 import { checkPcbBusLengthSkew } from "./check-pcb-bus-length-skew"
 import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
@@ -122,6 +123,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPcbTraceViaCounts(circuitJson),
     ...checkEachPcbTraceNonOverlapping(circuitJson, connectivity),
     ...checkCopperPourShorts(circuitJson, connectivity),
+    ...checkCopperPourDeadEndFingers(circuitJson, connectivity),
     ...checkPadTraceClearance(circuitJson, connectivity),
     ...checkHoleTraceClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson, connectivity),

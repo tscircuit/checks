@@ -1,6 +1,10 @@
 export { checkDanglingTraces } from "./lib/check-dangling-traces/check-dangling-traces"
 export { checkPcbTraceSelfShorts } from "./lib/check-pcb-trace-self-shorts"
 export { checkCopperPourShorts } from "./lib/check-copper-pour-shorts"
+export {
+  checkCopperPourDeadEndFingers,
+  type CopperPourDeadEndFingerOptions,
+} from "./lib/check-copper-pour-dead-end-fingers"
 export { checkEachPcbPortConnectedToPcbTraces } from "./lib/check-each-pcb-port-connected-to-pcb-trace"
 export { checkEachPcbTraceNonOverlapping } from "./lib/check-each-pcb-trace-non-overlapping/check-each-pcb-trace-non-overlapping"
 export { NetManager } from "./lib/net-manager"

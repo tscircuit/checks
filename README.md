@@ -32,6 +32,7 @@ and output an array of arrays for any issues found.
 | [`checkTracesAreContiguous`](./lib/check-traces-are-contiguous/check-traces-are-contiguous.ts) | Returns `pcb_trace_error` when trace endpoints are floating or do not connect as expected. |
 | [`checkViasOffBoard`](./lib/check-pcb-components-out-of-board/checkViasOffBoard.ts) | Returns `pcb_placement_error` if any PCB via lies outside or crosses the board boundary. |
 | [`checkCopperPourShorts`](./lib/check-copper-pour-shorts.ts) | Detects copper-pour contact with different-net traces, pads, plated holes, vias, and pours, respecting layers and BRep cutouts. Included in routing checks. |
+| [`checkCopperPourDeadEndFingers`](./docs/check-copper-pour-dead-end-fingers.md) | Reports nonfatal diagnostics for long, narrow copper-pour branches without a same-net contact near the tip. Included in routing checks; thresholds are configurable on direct calls. |
 | [`checkCopperToBoardEdgeClearance`](./lib/check-copper-to-board-edge-clearance.ts) | Checks via, SMT-pad, plated-hole, and copper-pour geometry against the polygon board outline and required edge clearance. |
 
 ## Aggregate check runner functions
