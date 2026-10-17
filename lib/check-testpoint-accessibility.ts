@@ -45,9 +45,7 @@ const isPointInsideCourtyard = (
     const dy =
       Math.abs(point.y - courtyard.center.y) -
       (courtyard.height / 2 - courtyard.radius)
-    return (
-      Math.hypot(Math.max(0, dx), Math.max(0, dy)) <= courtyard.radius
-    )
+    return Math.hypot(Math.max(0, dx), Math.max(0, dy)) <= courtyard.radius
   }
 
   if (courtyard.type === "pcb_courtyard_rect") {
