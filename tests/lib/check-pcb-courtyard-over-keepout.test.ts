@@ -116,6 +116,15 @@ const courtyards: CourtyardElement[] = [
     pcb_courtyard_polygon_id: "polygon",
     points: square,
   },
+  {
+    ...common,
+    type: "pcb_courtyard_pill",
+    pcb_courtyard_pill_id: "pill",
+    center: { x: 0, y: 0 },
+    width: 2,
+    height: 2,
+    radius: 1,
+  },
 ]
 const keepouts: PCBKeepout[] = [
   {
@@ -199,6 +208,41 @@ test("concave courtyard does not flag a keepout in its empty notch", () => {
     radius: 0.4,
   }
   expect(checkPcbCourtyardOverKeepout([courtyard, keepout])).toEqual([])
+})
+
+test("pill courtyard does not include its rounded-off corners", () => {
+  const courtyard: CourtyardElement = {
+    ...common,
+    type: "pcb_courtyard_pill",
+    pcb_courtyard_pill_id: "pill",
+    center: { x: 0, y: 0 },
+    width: 6,
+    height: 4,
+    radius: 1,
+  }
+  const keepout: PCBKeepout = {
+    type: "pcb_keepout",
+    pcb_keepout_id: "k",
+    layers: ["top"],
+    shape: "rect",
+    center: { x: 2.85, y: 1.85 },
+    width: 0.2,
+    height: 0.2,
+  }
+
+  expect(checkPcbCourtyardOverKeepout([courtyard, keepout])).toEqual([])
+  expect(
+    checkPcbCourtyardOverKeepout([
+      courtyard,
+      { ...keepout, center: { x: 2.5, y: 1.5 } },
+    ]),
+  ).toHaveLength(1)
+  expect(
+    checkPcbCourtyardOverKeepout([
+      courtyard,
+      { ...keepout, layers: ["bottom"], center: { x: 0, y: 0 } },
+    ]),
+  ).toEqual([])
 })
 
 test("multiple overlapping courtyard elements produce one hard error", () => {
