@@ -38,11 +38,23 @@ interface Finger {
   width: number
 }
 
-const EPSILON = 1e-6
-
 interface BoundaryPoint {
   point: Point
   edge: PolygonEdge
+}
+
+type Orientation = ReturnType<Polygon["orientation"]>
+
+const EPSILON = 1e-6
+
+function distanceToNeck(point: Point, neck: Segment): number {
+  return point.distanceTo(neck)[0]
+}
+
+// Flatten's arc flag is opposite to the polygon orientation convention here.
+function arcOrientation(arc: Arc): number {
+  if (arc.counterClockwise) return -1
+  return 1
 }
 
 function branchBetween(start: BoundaryPoint, end: BoundaryPoint): Polygon {
@@ -60,7 +72,7 @@ function branchBetween(start: BoundaryPoint, end: BoundaryPoint): Polygon {
 function smallerBranch(
   start: BoundaryPoint,
   end: BoundaryPoint,
-  orientation: ReturnType<Polygon["orientation"]>,
+  orientation: Orientation,
   islandArea: number,
 ): Polygon | undefined {
   const position = ({ edge, point }: BoundaryPoint) =>
@@ -86,31 +98,72 @@ function neckCrossesCopper(island: Polygon, neck: Segment): boolean {
   const nearby = island.edges.search(neck.box) as unknown as PolygonEdge[]
   // Keep this local to the neck. Flatten's polygon/segment relation splits
   // whole boundaries and can fail on tiny edges in real routed pours.
-  return !nearby.some(
-    (edge) =>
-      edge.shape.contains(middle) ||
-      edge.shape
-        .intersect(neck)
-        .some(
-          (point) =>
-            neck.contains(point) &&
-            edge.shape.contains(point) &&
-            !point.equalTo(neck.start) &&
-            !point.equalTo(neck.end),
-        ),
-  )
+  for (const edge of nearby) {
+    if (edge.shape.contains(middle)) return false
+    for (const point of edge.shape.intersect(neck)) {
+      const crossesInside =
+        neck.contains(point) &&
+        edge.shape.contains(point) &&
+        !point.equalTo(neck.start) &&
+        !point.equalTo(neck.end)
+      if (crossesInside) return false
+    }
+  }
+  return true
 }
 
 // Include analytic arc extrema without turning rounded pours into a bitmap.
 function boundaryPoints(polygon: Polygon): Point[] {
-  return [...polygon.edges].flatMap((edge: PolygonEdge) => [
-    edge.start,
-    ...(edge.shape instanceof Arc
-      ? edge.shape
-          .breakToFunctional()
-          .flatMap((arc) => [arc.start, arc.middle()])
-      : []),
-  ])
+  const points: Point[] = []
+  for (const edge of polygon.edges as Iterable<PolygonEdge>) {
+    points.push(edge.start)
+    if (!(edge.shape instanceof Arc)) continue
+    for (const arc of edge.shape.breakToFunctional())
+      points.push(arc.start, arc.middle())
+  }
+  return points
+}
+
+function findRoots(island: Polygon, orientation: Orientation): BoundaryPoint[] {
+  const roots: BoundaryPoint[] = []
+  for (const edge of island.edges as Iterable<PolygonEdge>) {
+    if (edge.length <= EPSILON || edge.prev.length <= EPSILON) continue
+    const turn = edge.prev.shape
+      .tangentInEnd()
+      .cross(edge.shape.tangentInStart())
+    if (turn * orientation < -EPSILON) roots.push({ point: edge.start, edge })
+    // Smooth, concave fillets have no reflex vertex at their tangent joins.
+    if (
+      edge.shape instanceof Arc &&
+      arcOrientation(edge.shape) !== orientation
+    ) {
+      for (const point of [edge.start, edge.middle(), edge.end])
+        roots.push({ point, edge })
+    }
+  }
+  return roots
+}
+
+// Ties keep the earlier boundary point.
+function farthestPoint(points: Point[], neck: Segment): Point {
+  return points.reduce((farthest, point) => {
+    if (distanceToNeck(farthest, neck) >= distanceToNeck(point, neck))
+      return farthest
+    return point
+  })
+}
+
+function containsOtherLoop(
+  island: Polygon,
+  rootFace: PolygonEdge["face"],
+  finger: Polygon,
+): boolean {
+  for (const face of island.faces) {
+    if (face === rootFace) continue
+    if (finger.box.intersect(face.box) && finger.contains(face.first.start))
+      return true
+  }
+  return false
 }
 
 function findFingers(
@@ -128,36 +181,15 @@ function findFingers(
         .filter((face) => face.orientation() !== orientation)
         .map((face) => [face, face.toPolygon()]),
     )
-    const roots: BoundaryPoint[] = []
-    for (const edge of island.edges as Iterable<PolygonEdge>) {
-      if (edge.length <= EPSILON || edge.prev.length <= EPSILON) continue
-      const turn = edge.prev.shape
-        .tangentInEnd()
-        .cross(edge.shape.tangentInStart())
-      if (turn * orientation < -EPSILON) roots.push({ point: edge.start, edge })
-      // Smooth, concave fillets have no reflex vertex at their tangent joins.
-      if (
-        edge.shape instanceof Arc &&
-        (edge.shape.counterClockwise ? -1 : 1) !== orientation
-      ) {
-        roots.push(
-          ...[edge.start, edge.middle(), edge.end].map((point) => ({
-            point,
-            edge,
-          })),
-        )
-      }
-    }
-    for (const origin of roots) {
+    for (const origin of findRoots(island, orientation)) {
       const root = origin.point
-      const nearby = island.edges.search(
-        new Box(
-          root.x - maxWidth,
-          root.y - maxWidth,
-          root.x + maxWidth,
-          root.y + maxWidth,
-        ),
-      ) as unknown as PolygonEdge[]
+      const searchBox = new Box(
+        root.x - maxWidth,
+        root.y - maxWidth,
+        root.x + maxWidth,
+        root.y + maxWidth,
+      )
+      const nearby = island.edges.search(searchBox) as unknown as PolygonEdge[]
       for (const edge of nearby) {
         // A cut joining different boundary loops opens a hole, not a dead end.
         if (edge === origin.edge || edge.face !== origin.edge.face) continue
@@ -176,37 +208,24 @@ function findFingers(
           islandArea,
         )
         if (!finger) continue
-        const points = boundaryPoints(finger)
-        const tip = points.reduce((a, b) =>
-          a.distanceTo(neck)[0] >= b.distanceTo(neck)[0] ? a : b,
-        )
-        const length = Math.max(
-          tip.distanceTo(neck)[0],
-          ([...finger.faces][0].perimeter - 2 * width) / 2,
-        )
+
+        const tip = farthestPoint(boundaryPoints(finger), neck)
+        const halfPerimeter = ([...finger.faces][0].perimeter - 2 * width) / 2
+        const length = Math.max(distanceToNeck(tip, neck), halfPerimeter)
         const averageWidth = finger.area() / length
-        if (
-          length + EPSILON < minLength ||
-          averageWidth > maxWidth + EPSILON ||
-          length + EPSILON < minAspectRatio * Math.max(width, averageWidth)
-        )
-          continue
+        const fingerWidth = Math.max(width, averageWidth)
+        if (length + EPSILON < minLength) continue
+        if (averageWidth > maxWidth + EPSILON) continue
+        if (length + EPSILON < minAspectRatio * fingerWidth) continue
         // A hole-bearing lobe is not a simple dead-end finger.
-        if (
-          [...island.faces].some(
-            (face) =>
-              face !== origin.edge.face &&
-              finger.box.intersect(face.box) &&
-              finger.contains(face.first.start),
-          )
-        )
-          continue
+        if (containsOtherLoop(island, origin.edge.face, finger)) continue
+
         candidates.push({
           polygon: finger,
           neck,
           tip,
           length,
-          width: Math.max(width, averageWidth),
+          width: fingerWidth,
         })
       }
     }
@@ -221,11 +240,27 @@ function touchesDistalHalf(finger: Finger, copper: Polygon): boolean {
     ...boundaryPoints(copper).filter((point) => finger.polygon.contains(point)),
     ...boundaryPoints(finger.polygon).filter((point) => copper.contains(point)),
   ]
+  const halfLength = distanceToNeck(finger.tip, finger.neck) / 2
   return contacts.some(
-    (point) =>
-      point.distanceTo(finger.neck)[0] >=
-      finger.tip.distanceTo(finger.neck)[0] / 2,
+    (point) => distanceToNeck(point, finger.neck) >= halfLength,
   )
+}
+
+function unifyTouchingShapes(
+  shapes: Polygon[],
+  touches: ReturnType<typeof createCopperPolygonContactTester>,
+): Polygon[] {
+  const islands: Polygon[] = []
+  for (const shape of shapes) {
+    let merged = shape
+    for (let i = islands.length - 1; i >= 0; i--) {
+      if (!touches(islands[i], merged)) continue
+      merged = BooleanOperations.unify(islands[i], merged)
+      islands.splice(i, 1)
+    }
+    islands.push(merged)
+  }
+  return islands
 }
 
 /**
@@ -264,12 +299,12 @@ export function checkCopperPourDeadEndFingers(
   })
   const netFor = (element: FlattenElement) => {
     const source = element.sourceElement
-    const id =
-      source.type === "pcb_copper_pour"
-        ? source.source_net_id
-        : element.elementId
-    return id ? (connMap.getNetConnectedToId(id) ?? id) : undefined
+    let id: string | undefined = element.elementId
+    if (source.type === "pcb_copper_pour") id = source.source_net_id
+    if (!id) return undefined
+    return connMap.getNetConnectedToId(id) ?? id
   }
+
   const pours = new Map<string, FlattenElement[]>()
   for (const element of elements) {
     if (element.sourceElement.type !== "pcb_copper_pour") continue
@@ -281,19 +316,14 @@ export function checkCopperPourDeadEndFingers(
     group.push(element)
     pours.set(key, group)
   }
+
   const errors: PcbPlacementError[] = []
   const touches = createCopperPolygonContactTester(EPSILON)
   for (const group of pours.values()) {
-    const islands: Polygon[] = []
-    for (const shape of group.flatMap((element) => element.shapes)) {
-      let merged = shape
-      for (let i = islands.length - 1; i >= 0; i--) {
-        if (!touches(islands[i], merged)) continue
-        merged = BooleanOperations.unify(islands[i], merged)
-        islands.splice(i, 1)
-      }
-      islands.push(merged)
-    }
+    const islands = unifyTouchingShapes(
+      group.flatMap((element) => element.shapes),
+      touches,
+    )
     const net = netFor(group[0])
     const contacts = elements.filter(
       (element) =>
@@ -302,29 +332,24 @@ export function checkCopperPourDeadEndFingers(
         net !== undefined &&
         netFor(element) === net,
     )
-    const reported: Finger[] = []
-    for (const finger of findFingers(
-      islands,
-      maxWidth,
-      minLength,
-      minAspectRatio,
-    )) {
-      if (
-        contacts.some((element) =>
-          element.shapes.some((shape) => touchesDistalHalf(finger, shape)),
-        )
+    const isSupported = (finger: Finger) =>
+      contacts.some((element) =>
+        element.shapes.some((shape) => touchesDistalHalf(finger, shape)),
       )
-        continue
+    const reported: Finger[] = []
+    const isDuplicate = (finger: Finger) =>
+      reported.some(
+        (previous) =>
+          previous.polygon.contains(finger.tip) ||
+          finger.polygon.contains(previous.tip),
+      )
+
+    const fingers = findFingers(islands, maxWidth, minLength, minAspectRatio)
+    for (const finger of fingers) {
+      if (isSupported(finger)) continue
       // Deduplicate only after checking contacts: a useful fork can still have
       // an unsupported child branch. Opposite root corners report once.
-      if (
-        reported.some(
-          (previous) =>
-            previous.polygon.contains(finger.tip) ||
-            finger.polygon.contains(previous.tip),
-        )
-      )
-        continue
+      if (isDuplicate(finger)) continue
       const owner =
         group.find((element) =>
           element.shapes.some((shape) => shape.contains(finger.tip)),
