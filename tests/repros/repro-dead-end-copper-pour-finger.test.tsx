@@ -12,13 +12,13 @@ test("repro: routing checks miss a dead-end GND pour finger", async () => {
         name="J1"
         pcbY={-4}
         pinLabels={{ pin1: "TX", pin2: "GND", pin3: "RX" }}
-        footprint="pinrow3_id0.8_od1.6_p2.54_norefdes"
+        footprint="pinrow3_id0.8_od1.6_p2.54"
       />
       <chip
         name="J2"
         pcbY={4}
         pinLabels={{ pin1: "TX", pin2: "GND", pin3: "RX" }}
-        footprint="pinrow3_id0.8_od1.6_p2.54_norefdes"
+        footprint="pinrow3_id0.8_od1.6_p2.54"
       />
       <trace
         from=".J1 > .TX"
@@ -66,7 +66,7 @@ test("repro: routing checks miss a dead-end GND pour finger", async () => {
           { x: -1, y: 5.5 },
         ]}
       />
-      <pcbnotetext text="UART ADAPTER / TOP COPPER" pcbY={7} fontSize={0.6} />
+      <pcbnotetext text="UART ADAPTER / TOP COPPER" pcbY={7.6} fontSize={0.5} />
       <pcbnotetext
         text="Dead-end GND finger"
         pcbY={0.8}
