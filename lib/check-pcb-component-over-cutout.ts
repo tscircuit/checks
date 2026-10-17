@@ -133,7 +133,9 @@ export function checkPcbComponentOverCutout(
   if (cutouts.length === 0 || components.length === 0) return []
 
   const padPolygonsByComponent = new Map<string, Flatten.Polygon[]>()
-  if (components.some((component) => component.obstructs_within_bounds === false)) {
+  if (
+    components.some((component) => component.obstructs_within_bounds === false)
+  ) {
     const padGeometry = convertCircuitJsonToFlattenJs(circuitJson, {
       elementTypes: ["pcb_smtpad", "pcb_plated_hole"],
       includeDrillHoles: false,
@@ -141,10 +143,14 @@ export function checkPcbComponentOverCutout(
     }).elements
 
     for (const { sourceElement, shapes } of padGeometry) {
-      if (!("pcb_component_id" in sourceElement) || !sourceElement.pcb_component_id) {
+      if (
+        !("pcb_component_id" in sourceElement) ||
+        !sourceElement.pcb_component_id
+      ) {
         continue
       }
-      const polygons = padPolygonsByComponent.get(sourceElement.pcb_component_id) ?? []
+      const polygons =
+        padPolygonsByComponent.get(sourceElement.pcb_component_id) ?? []
       polygons.push(...shapes)
       padPolygonsByComponent.set(sourceElement.pcb_component_id, polygons)
     }
@@ -176,7 +182,11 @@ export function checkPcbComponentOverCutout(
           ]
     for (const { cutout, polygon: cutoutPolygon } of cutoutPolygons) {
       if (cutout.pcb_component_id === component.pcb_component_id) continue
-      if (!componentPolygons.some((polygon) => doPolygonsOverlap(polygon, cutoutPolygon))) {
+      if (
+        !componentPolygons.some((polygon) =>
+          doPolygonsOverlap(polygon, cutoutPolygon),
+        )
+      ) {
         continue
       }
 
