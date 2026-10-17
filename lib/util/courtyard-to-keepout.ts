@@ -53,7 +53,11 @@ export const courtyardToKeepout = (courtyard: CourtyardElement): PCBKeepout => {
   if (courtyard.type === "pcb_courtyard_pill") {
     const halfWidth = courtyard.width / 2
     const halfHeight = courtyard.height / 2
-    const radius = Math.min(Math.max(0, courtyard.radius), halfWidth, halfHeight)
+    const radius = Math.min(
+      Math.max(0, courtyard.radius),
+      halfWidth,
+      halfHeight,
+    )
     const corners = [
       { x: halfWidth - radius, y: halfHeight - radius, start: 0 },
       { x: -halfWidth + radius, y: halfHeight - radius, start: 90 },
