@@ -68,19 +68,43 @@ function getRecommendedFacingDirection(
 export function checkConnectorAccessibleOrientation(
   circuitJson: AnyCircuitElement[],
 ): PcbConnectorNotInAccessibleOrientationWarning[] {
-  const board = circuitJson.find(
+  const boards = circuitJson.filter(
     (el): el is PcbBoard => el.type === "pcb_board",
   )
-  if (!board) return []
+  if (boards.length === 0) return []
 
-  const bounds = (() => {
-    try {
-      return getBoardBounds(board)
-    } catch {
-      return null
+  const boardsById = new Map(boards.map((board) => [board.pcb_board_id, board]))
+  const boardsBySubcircuit = new Map(
+    boards
+      .filter((board) => board.subcircuit_id)
+      .map((board) => [board.subcircuit_id!, board]),
+  )
+  const parentSubcircuits = new Map(
+    circuitJson.flatMap((element) =>
+      element.type === "source_group" &&
+      element.is_subcircuit &&
+      element.subcircuit_id
+        ? [[element.subcircuit_id, element.parent_subcircuit_id] as const]
+        : [],
+    ),
+  )
+
+  const getComponentBoard = (component: PcbComponent): PcbBoard | undefined => {
+    if (component.positioned_relative_to_pcb_board_id) {
+      return boardsById.get(component.positioned_relative_to_pcb_board_id)
     }
-  })()
-  if (!bounds) return []
+
+    let subcircuitId = component.subcircuit_id
+    const visited = new Set<string>()
+    while (subcircuitId && !visited.has(subcircuitId)) {
+      const board = boardsBySubcircuit.get(subcircuitId)
+      if (board) return board
+      visited.add(subcircuitId)
+      subcircuitId = parentSubcircuits.get(subcircuitId)
+    }
+
+    return boards.length === 1 ? boards[0] : undefined
+  }
 
   const warnings: PcbConnectorNotInAccessibleOrientationWarning[] = []
 
@@ -105,6 +129,16 @@ export function checkConnectorAccessibleOrientation(
       pinHeaderSourceIds.has(component.source_component_id)
     )
       continue
+    const board = getComponentBoard(component)
+    if (!board) continue
+
+    let bounds: ReturnType<typeof getBoardBounds>
+    try {
+      bounds = getBoardBounds(board)
+    } catch {
+      continue
+    }
+
     const facingDirection = getFacingDirection(component)
     const recommendedFacingDirection = getRecommendedFacingDirection(
       component,
