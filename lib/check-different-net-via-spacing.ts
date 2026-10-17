@@ -11,6 +11,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { distance } from "lib/util/distance"
+import { doViaDrillSpansOverlap } from "lib/util/do-via-drill-spans-overlap"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
 export function checkDifferentNetViaSpacing(
@@ -37,13 +38,13 @@ export function checkDifferentNetViaSpacing(
     for (let j = i + 1; j < vias.length; j++) {
       const viaA = vias[i]
       const viaB = vias[j]
+      if (!doViaDrillSpansOverlap(viaA, viaB)) continue
       // TODO: It is a very inefficient piece of code, the way to fix it is to use flatbush.
       if (connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
       const centerDistance = distance(viaA, viaB)
       let gap = centerDistance - viaA.hole_diameter / 2 - viaB.hole_diameter / 2
       let minimumClearance = minClearance!
       if (gap + EPSILON >= minimumClearance) {
-        if (!viaA.layers.some((layer) => viaB.layers.includes(layer))) continue
         gap = centerDistance - viaA.outer_diameter / 2 - viaB.outer_diameter / 2
         minimumClearance = minCopperClearance
         // A negative copper gap is a short, even within the clearance tolerance.

@@ -11,6 +11,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { distance } from "lib/util/distance"
+import { doViaDrillSpansOverlap } from "lib/util/do-via-drill-spans-overlap"
 import { viasAreAtSameLocation } from "lib/util/viasAreAtSameLocation"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
@@ -35,6 +36,7 @@ export function checkSameNetViaSpacing(
     for (let j = i + 1; j < vias.length; j++) {
       const viaA = vias[i]
       const viaB = vias[j]
+      if (!doViaDrillSpansOverlap(viaA, viaB)) continue
       // TODO: It is a very inefficient piece of code, the way to fix it is to use flatbush.
       if (viasAreAtSameLocation(viaA, viaB)) continue
       if (!connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
