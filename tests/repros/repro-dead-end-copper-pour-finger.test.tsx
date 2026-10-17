@@ -66,7 +66,6 @@ test("repro: routing checks miss a dead-end GND pour finger", async () => {
           { x: -1, y: 5.5 },
         ]}
       />
-      <pcbnotetext text="UART ADAPTER / TOP COPPER" pcbY={7.6} fontSize={0.5} />
       <pcbnotetext
         text="Dead-end GND finger"
         pcbY={0.8}
