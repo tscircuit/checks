@@ -1,5 +1,6 @@
 import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
+import { convertCircuitJsonToFlattenJs } from "@tscircuit/circuit-json-to-flattenjs"
 import type {
   AnyCircuitElement,
   PcbComponent,
@@ -131,6 +132,24 @@ export function checkPcbComponentOverCutout(
   )
   if (cutouts.length === 0 || components.length === 0) return []
 
+  const padPolygonsByComponent = new Map<string, Flatten.Polygon[]>()
+  if (components.some((component) => component.obstructs_within_bounds === false)) {
+    const padGeometry = convertCircuitJsonToFlattenJs(circuitJson, {
+      elementTypes: ["pcb_smtpad", "pcb_plated_hole"],
+      includeDrillHoles: false,
+      strict: true,
+    }).elements
+
+    for (const { sourceElement, shapes } of padGeometry) {
+      if (!("pcb_component_id" in sourceElement) || !sourceElement.pcb_component_id) {
+        continue
+      }
+      const polygons = padPolygonsByComponent.get(sourceElement.pcb_component_id) ?? []
+      polygons.push(...shapes)
+      padPolygonsByComponent.set(sourceElement.pcb_component_id, polygons)
+    }
+  }
+
   const cutoutPolygons = cutouts
     .map((cutout) => ({ cutout, polygon: cutoutToPolygon(cutout) }))
     .filter(
@@ -145,14 +164,21 @@ export function checkPcbComponentOverCutout(
       continue
     }
 
-    const componentPolygon = rectanglePolygon({
-      center: component.center,
-      width: component.width,
-      height: component.height,
-    })
+    const componentPolygons =
+      component.obstructs_within_bounds === false
+        ? (padPolygonsByComponent.get(component.pcb_component_id) ?? [])
+        : [
+            rectanglePolygon({
+              center: component.center,
+              width: component.width,
+              height: component.height,
+            }),
+          ]
     for (const { cutout, polygon: cutoutPolygon } of cutoutPolygons) {
       if (cutout.pcb_component_id === component.pcb_component_id) continue
-      if (!doPolygonsOverlap(componentPolygon, cutoutPolygon)) continue
+      if (!componentPolygons.some((polygon) => doPolygonsOverlap(polygon, cutoutPolygon))) {
+        continue
+      }
 
       const componentName = getReadableNameForComponent(
         circuitJson,
