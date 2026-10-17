@@ -73,9 +73,7 @@ export function checkConnectorAccessibleOrientation(
   )
   if (boards.length === 0) return []
 
-  const boardsById = new Map(
-    boards.map((board) => [board.pcb_board_id, board]),
-  )
+  const boardsById = new Map(boards.map((board) => [board.pcb_board_id, board]))
   const boardsBySubcircuit = new Map(
     boards
       .filter((board) => board.subcircuit_id)
