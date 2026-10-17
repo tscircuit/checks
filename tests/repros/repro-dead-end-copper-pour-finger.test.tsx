@@ -1,6 +1,5 @@
 import { expect, test } from "bun:test"
-import { Circuit, PcbNoteText } from "@tscircuit/core"
-import { Fragment } from "react"
+import { Circuit } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { runAllRoutingChecks } from "../../lib/run-all-checks"
 
@@ -9,43 +8,36 @@ test("routing checks report the dead-end GND pour finger on a UART adapter", asy
   circuit.add(
     <board width={14} height={16} layers={2} schematicDisabled routingDisabled>
       <net name="GND" />
-      {[-4, 4].map((y, i) => (
-        <chip
-          key={i}
-          name={`J${i + 1}`}
-          pcbY={y}
-          pinLabels={{ pin1: "TX", pin2: "GND", pin3: "RX" }}
-          footprint={
-            <footprint>
-              {[-2.54, 0, 2.54].map((x, pin) => (
-                <Fragment key={pin}>
-                  <platedhole
-                    portHints={[`pin${pin + 1}`]}
-                    pcbX={x}
-                    holeDiameter={0.8}
-                    outerDiameter={1.6}
-                    shape="circle"
-                  />
-                </Fragment>
-              ))}
-              <silkscreenrect width={7.6} height={2.5} />
-            </footprint>
-          }
-        />
-      ))}
-      {[-1, 1].map((side, i) => (
-        <Fragment key={side}>
-          <trace
-            from={`.J1 > .pin${i * 2 + 1}`}
-            to={`.J2 > .pin${i * 2 + 1}`}
-            thickness={0.25}
-            pcbPath={[
-              { x: side * 0.75, y: 1.79 },
-              { x: side * 0.75, y: 6.21 },
-            ]}
-          />
-        </Fragment>
-      ))}
+      <chip
+        name="J1"
+        pcbY={-4}
+        pinLabels={{ pin1: "TX", pin2: "GND", pin3: "RX" }}
+        footprint="pinrow3_id0.8_od1.6_p2.54"
+      />
+      <chip
+        name="J2"
+        pcbY={4}
+        pinLabels={{ pin1: "TX", pin2: "GND", pin3: "RX" }}
+        footprint="pinrow3_id0.8_od1.6_p2.54"
+      />
+      <trace
+        from=".J1 > .TX"
+        to=".J2 > .TX"
+        thickness={0.25}
+        pcbPath={[
+          { x: -0.75, y: 1.79 },
+          { x: -0.75, y: 6.21 },
+        ]}
+      />
+      <trace
+        from=".J1 > .RX"
+        to=".J2 > .RX"
+        thickness={0.25}
+        pcbPath={[
+          { x: 0.75, y: 1.79 },
+          { x: 0.75, y: 6.21 },
+        ]}
+      />
       <trace from=".J1 > .GND" to="net.GND" />
       <trace from=".J2 > .GND" to="net.GND" />
       <copperpour
@@ -74,17 +66,6 @@ test("routing checks report the dead-end GND pour finger on a UART adapter", asy
           { x: -1, y: 5.5 },
         ]}
       />
-      <pcbnotetext text="UART ADAPTER / TOP COPPER" pcbY={7} fontSize={0.6} />
-      {["TX", "GND", "RX"].map((name, i) => (
-        <Fragment key={name}>
-          <pcbnotetext
-            text={name}
-            pcbX={(i - 1) * 2.54}
-            pcbY={5.6}
-            fontSize={0.5}
-          />
-        </Fragment>
-      ))}
       <pcbnotetext
         text="Dead-end GND finger"
         pcbY={0.8}
@@ -118,34 +99,14 @@ test("routing checks report the dead-end GND pour finger on a UART adapter", asy
   expect(errors[0].message).toMatchInlineSnapshot(
     `"Copper pour (GND) on top has a possible dead-end finger near (-0.20mm, 2.10mm): approximately 4.49mm long, 0.96mm wide. Review the pour or add a same-net connection near the tip."`,
   )
-  circuit.children[0]!.add(
-    new PcbNoteText({
-      text: `Routing DRC errors: ${errors.length}`,
-      pcbY: -8.8,
-      fontSize: 0.55,
-      color: errors.length ? "#ff6b6b" : "white",
-    }),
-  )
-  if (errors.length) {
-    circuit.children[0]!.add(
-      new PcbNoteText({
-        text: errors
-          .map((error) => error.message.match(/.{1,65}(?:\s|$)/g)!.join("\n"))
-          .join("\n"),
-        pcbY: -10.5,
-        fontSize: 0.4,
-        color: "#ff6b6b",
-      }),
-    )
-  }
-  await circuit.renderUntilSettled()
   await expect(
-    convertCircuitJsonToPcbSvg([...circuit.getCircuitJson(), ...errors], {
+    convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       layer: "top",
-      width: 900,
-      height: 1250,
-      viewport: { minX: -7.8, maxX: 7.8, minY: -12, maxY: 8.5 },
+      width: 1400,
+      height: 1200,
+      viewport: { minX: -10.5, maxX: 10.5, minY: -8.6, maxY: 9.5 },
       shouldDrawErrors: true,
+      showErrorsInTextOverlay: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
 })
