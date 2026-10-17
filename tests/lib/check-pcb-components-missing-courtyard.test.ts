@@ -117,10 +117,7 @@ describe("checkPcbComponentsMissingCourtyard", () => {
     { name: "", expected: "unnamed component" },
     { name: "source_component_resistor", expected: "unnamed component" },
     { name: "R1", expected: "R1" },
-  ])("uses a readable name for a source component named '$name'", ({
-    name,
-    expected,
-  }) => {
+  ])("uses readable source component names: $name", ({ name, expected }) => {
     const circuitJson = [
       {
         type: "source_component",
