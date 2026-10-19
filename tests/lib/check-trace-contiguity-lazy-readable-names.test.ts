@@ -39,6 +39,7 @@ test("contiguity resolves names only for errors and preserves named and unnamed 
             type: "source_component",
             source_component_id: `source_component_${suffix}`,
             ftype: "simple_resistor",
+            resistance: 1000,
             name: named ? `R${index + 1}` : `source_component_${suffix}`,
           },
           {
