@@ -6,6 +6,7 @@ import type {
   PcbComponentOutsideBoardError,
 } from "circuit-json"
 import { getReadableNameForComponent } from "lib/util/get-readable-names"
+import { getBoardOwnerResolver } from "lib/util/get-board-owner-resolver"
 import type { Point } from "@tscircuit/math-utils"
 import * as Flatten from "@flatten-js/core"
 import { rotateDEG, applyToPoint } from "transformation-matrix"
@@ -199,13 +200,16 @@ function getRepositionSuggestion({
 export function checkPcbComponentsOutOfBoard(
   circuitJson: AnyCircuitElement[],
 ): PcbComponentOutsideBoardError[] {
-  const board = circuitJson.find(
+  const boards = circuitJson.filter(
     (el): el is PcbBoard => el.type === "pcb_board",
   )
-  if (!board) return []
-
-  const boardPoly = boardToPolygon({ board })
-  if (!boardPoly) return []
+  if (boards.length === 0) return []
+  const boardsById = new Map(boards.map((board) => [board.pcb_board_id, board]))
+  const boardPolygons = new Map<
+    PcbBoard["pcb_board_id"],
+    Flatten.Polygon | null
+  >()
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
 
   const components = circuitJson.filter(
     (el): el is PcbComponent => el.type === "pcb_component",
@@ -230,6 +234,21 @@ export function checkPcbComponentsOutOfBoard(
 
   for (const c of components) {
     if (c.is_allowed_to_be_off_board) continue
+
+    const boardId = getBoardOwner(c)
+    // Older single-board exports can omit ownership. Multiple boards require
+    // a resolved owner; neither array order nor geometric proximity is evidence.
+    const board = boardId
+      ? boardsById.get(boardId)
+      : boards.length === 1
+        ? boards[0]
+        : undefined
+    if (!board) continue
+    if (!boardPolygons.has(board.pcb_board_id)) {
+      boardPolygons.set(board.pcb_board_id, boardToPolygon({ board }))
+    }
+    const boardPoly = boardPolygons.get(board.pcb_board_id)
+    if (!boardPoly) continue
 
     // need center, width, height
     if (
