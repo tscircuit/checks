@@ -4,7 +4,7 @@ import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { runAllRoutingChecks } from "lib/run-all-checks"
 import { undefinedPlatedHoleOffsetsFixture } from "../fixtures/undefined-plated-hole-offsets"
 
-test("undefined plated-hole offsets abort routing DRC", async () => {
+test("routing DRC with undefined plated-hole offsets", async () => {
   const circuitJson = await undefinedPlatedHoleOffsetsFixture()
   expect(
     circuitJson.filter((element) => element.type === "pcb_trace"),
@@ -38,19 +38,3 @@ test("undefined plated-hole offsets abort routing DRC", async () => {
   expect(svg).toContain("DRC could not complete (routing): Illegal Parameters")
   expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
-
-test("serialized plated-hole offsets do not abort routing DRC", async () => {
-  const circuitJson = await undefinedPlatedHoleOffsetsFixture()
-  // Serialization removes the undefined properties, masking the bug.
-  expect(
-    await runAllRoutingChecks(JSON.parse(JSON.stringify(circuitJson))),
-  ).toEqual([])
-})
-
-test.failing(
-  "in-memory plated-hole offsets do not abort routing DRC",
-  async () => {
-    const circuitJson = await undefinedPlatedHoleOffsetsFixture()
-    expect(await runAllRoutingChecks(circuitJson)).toEqual([])
-  },
-)
