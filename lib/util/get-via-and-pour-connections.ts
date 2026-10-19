@@ -112,8 +112,14 @@ export function getViaAndPourConnections(
         connections.push([copper.pcb_via_id, copper.pcb_trace_id])
     } else if (copper.type === "pcb_plated_hole") {
       if (!copper.pcb_port_id) continue
-      // Historical circular-hole/rect-pad records omit centered offsets.
-      const pad = { hole_offset_x: 0, hole_offset_y: 0, ...copper }
+      // Centered offsets can be omitted or explicitly undefined in memory.
+      const pad = {
+        ...copper,
+        hole_offset_x:
+          "hole_offset_x" in copper ? (copper.hole_offset_x ?? 0) : 0,
+        hole_offset_y:
+          "hole_offset_y" in copper ? (copper.hole_offset_y ?? 0) : 0,
+      }
       add(
         copper.pcb_port_id,
         copper.layers,
