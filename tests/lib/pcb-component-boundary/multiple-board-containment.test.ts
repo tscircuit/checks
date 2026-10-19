@@ -10,7 +10,7 @@ import {
   componentSource,
 } from "../../fixtures/multi-board-component-containment"
 
-test("reproduces component containment changing when board order changes", () => {
+test("component containment uses its own board regardless of board order", () => {
   for (const named of [true, false]) {
     for (const scenario of [
       {
@@ -64,19 +64,17 @@ test("reproduces component containment changing when board order changes", () =>
       ]
       const original = structuredClone(circuitJson)
       const errors = checkPcbComponentsOutOfBoard(circuitJson)
-      // Capture the current bug: the first board controls containment, so
-      // placing board A first reverses the expected result for board B.
-      expect(errors).toHaveLength(scenario.count === 0 ? 1 : 0)
+      expect(errors).toHaveLength(scenario.count)
       expect(
         checkPcbComponentsOutOfBoard([
           scenario.second,
           scenario.first,
           ...circuitJson.slice(2),
         ]),
-      ).toHaveLength(scenario.count)
+      ).toEqual(errors)
       expect(circuitJson).toEqual(original)
       for (const error of errors) {
-        expect(error.pcb_board_id).toBe(firstBoard.pcb_board_id)
+        expect(error.pcb_board_id).toBe(secondBoard.pcb_board_id)
         expect(error.pcb_component_id).toBe(component.pcb_component_id)
         expect(error.message).toContain(named ? "U2" : "unnamed component")
         expect(containsCircuitJsonId(error.message)).toBe(false)
@@ -84,10 +82,7 @@ test("reproduces component containment changing when board order changes", () =>
       if (!named) continue
       const annotated: AnyCircuitElement[] = [
         ...circuitJson,
-        ...errors.map((error) => ({
-          ...error,
-          message: "FALSE BOARD-A ERROR",
-        })),
+        ...errors.map((error) => ({ ...error, message: "U2 OUTSIDE BOARD B" })),
         {
           type: "pcb_note_text",
           pcb_note_text_id: "board_a_note",
@@ -115,8 +110,8 @@ test("reproduces component containment changing when board order changes", () =>
           type: "pcb_note_text",
           pcb_note_text_id: "ownership_note",
           text: scenario.count
-            ? "MISSED VIOLATION: U2 IS OUTSIDE BOARD B"
-            : "FALSE ERROR: U2 FITS BOARD B",
+            ? "U2 IS OUTSIDE ITS OWN BOARD B"
+            : "U2 BELONGS TO BOARD B: VALID",
           anchor_position: { x: 3, y: -7 },
           anchor_alignment: "center",
           font: "tscircuit2024",
