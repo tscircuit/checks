@@ -1,0 +1,970 @@
+{
+  "source_trace_0": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_1": {},
+  "source_trace_2": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_30",
+      "capacitor_source_port_id": "source_port_142",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_10",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_3": {},
+  "source_trace_4": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_5": {},
+  "source_trace_6": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_32",
+      "capacitor_source_port_id": "source_port_146",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_29",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_7": {},
+  "source_trace_8": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_33",
+      "capacitor_source_port_id": "source_port_148",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_37",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_9": {},
+  "source_trace_10": {
+    "max_length": 9.525501406782109,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_34",
+      "capacitor_source_port_id": "source_port_150",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_44",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_11": {},
+  "source_trace_12": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_35",
+      "capacitor_source_port_id": "source_port_152",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_5",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_13": {},
+  "source_trace_14": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_36",
+      "capacitor_source_port_id": "source_port_154",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_22",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_15": {},
+  "source_trace_16": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_17": {},
+  "source_trace_18": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_38",
+      "capacitor_source_port_id": "source_port_158",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_38",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_19": {},
+  "source_trace_20": {},
+  "source_trace_21": {},
+  "source_trace_22": {},
+  "source_trace_23": {},
+  "source_trace_24": {},
+  "source_trace_25": {},
+  "source_trace_26": {},
+  "source_trace_27": {},
+  "source_trace_28": {},
+  "source_trace_29": {},
+  "source_trace_30": {},
+  "source_trace_31": {
+    "max_length": 5.5,
+    "max_length_origin": "configured_capacitor",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_15",
+      "capacitor_source_port_id": "source_port_117",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_46",
+      "connection_type": "return",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_32": {},
+  "source_trace_33": {},
+  "source_trace_34": {
+    "max_length": 5.5,
+    "max_length_origin": "configured_capacitor",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_16",
+      "capacitor_source_port_id": "source_port_118",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_45",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_35": {},
+  "source_trace_36": {},
+  "source_trace_37": {},
+  "source_trace_38": {},
+  "source_trace_39": {},
+  "source_trace_40": {},
+  "source_trace_41": {},
+  "source_trace_42": {},
+  "source_trace_43": {},
+  "source_trace_44": {},
+  "source_trace_45": {
+    "max_length": 5.5,
+    "max_length_origin": "configured_capacitor",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_17",
+      "capacitor_source_port_id": "source_port_120",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_0",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_46": {},
+  "source_trace_47": {
+    "max_length": 5.5,
+    "max_length_origin": "configured_capacitor",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_18",
+      "capacitor_source_port_id": "source_port_122",
+      "associated_source_component_id": "source_component_0",
+      "associated_source_port_id": "source_port_44",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_48": {},
+  "source_trace_49": {},
+  "source_trace_50": {},
+  "source_trace_51": {},
+  "source_trace_52": {},
+  "source_trace_53": {},
+  "source_trace_54": {},
+  "source_trace_55": {},
+  "source_trace_56": {
+    "max_length": 5.5,
+    "max_length_origin": "configured_capacitor",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_17",
+      "capacitor_source_port_id": "source_port_120",
+      "associated_source_component_id": "source_component_1",
+      "associated_source_port_id": "source_port_68",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_57": {},
+  "source_trace_58": {},
+  "source_trace_59": {},
+  "source_trace_60": {},
+  "source_trace_61": {},
+  "source_trace_62": {},
+  "source_trace_63": {},
+  "source_trace_64": {},
+  "source_trace_65": {},
+  "source_trace_66": {
+    "max_length": 5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_67": {
+    "max_length": 5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_68": {
+    "max_length": 5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_69": {},
+  "source_trace_70": {},
+  "source_trace_71": {
+    "max_length": 5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_72": {},
+  "source_trace_73": {
+    "max_length": 5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_74": {},
+  "source_trace_75": {},
+  "source_trace_76": {},
+  "source_trace_77": {},
+  "source_trace_78": {},
+  "source_trace_79": {},
+  "source_trace_80": {},
+  "source_trace_81": {},
+  "source_trace_82": {},
+  "source_trace_83": {},
+  "source_trace_84": {},
+  "source_trace_85": {},
+  "source_trace_86": {},
+  "source_trace_87": {},
+  "source_trace_88": {},
+  "source_trace_89": {},
+  "source_trace_90": {},
+  "source_trace_91": {},
+  "source_trace_92": {},
+  "source_trace_93": {},
+  "source_trace_94": {},
+  "source_trace_95": {},
+  "source_trace_96": {},
+  "source_trace_97": {},
+  "source_trace_98": {},
+  "source_trace_99": {},
+  "source_trace_100": {},
+  "source_trace_101": {},
+  "source_trace_102": {},
+  "source_trace_103": {},
+  "source_trace_104": {},
+  "source_trace_105": {},
+  "source_trace_106": {},
+  "source_trace_107": {},
+  "source_trace_108": {},
+  "source_trace_109": {},
+  "source_trace_110": {},
+  "source_trace_111": {},
+  "source_trace_112": {},
+  "source_trace_113": {},
+  "source_trace_114": {},
+  "source_trace_115": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_116": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_117": {},
+  "source_trace_118": {},
+  "source_trace_119": {},
+  "source_trace_120": {},
+  "source_trace_121": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_45",
+      "capacitor_source_port_id": "source_port_184",
+      "associated_source_component_id": "source_component_43",
+      "associated_source_port_id": "source_port_179",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_122": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_46",
+      "capacitor_source_port_id": "source_port_186",
+      "associated_source_component_id": "source_component_43",
+      "associated_source_port_id": "source_port_179",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_123": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_47",
+      "capacitor_source_port_id": "source_port_188",
+      "associated_source_component_id": "source_component_43",
+      "associated_source_port_id": "source_port_179",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_124": {},
+  "source_trace_125": {},
+  "source_trace_126": {},
+  "source_trace_127": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_128": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_129": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_130": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_131": {},
+  "source_trace_132": {},
+  "source_trace_133": {},
+  "source_trace_134": {},
+  "source_trace_135": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_136": {},
+  "source_trace_137": {},
+  "source_trace_138": {},
+  "source_trace_139": {},
+  "source_trace_140": {},
+  "source_trace_141": {},
+  "source_trace_142": {},
+  "source_trace_143": {},
+  "source_trace_144": {},
+  "source_trace_145": {},
+  "source_trace_146": {},
+  "source_trace_147": {},
+  "source_trace_148": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_60",
+      "capacitor_source_port_id": "source_port_215",
+      "associated_source_component_id": "source_component_59",
+      "associated_source_port_id": "source_port_214",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_149": {},
+  "source_trace_150": {},
+  "source_trace_151": {},
+  "source_trace_152": {},
+  "source_trace_153": {},
+  "source_trace_154": {},
+  "source_trace_155": {},
+  "source_trace_156": {},
+  "source_trace_157": {},
+  "source_trace_158": {},
+  "source_trace_159": {},
+  "source_trace_160": {},
+  "source_trace_161": {},
+  "source_trace_162": {},
+  "source_trace_163": {},
+  "source_trace_164": {},
+  "source_trace_165": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_65",
+      "capacitor_source_port_id": "source_port_233",
+      "associated_source_component_id": "source_component_64",
+      "associated_source_port_id": "source_port_231",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_166": {},
+  "source_trace_167": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_67",
+      "capacitor_source_port_id": "source_port_237",
+      "associated_source_component_id": "source_component_64",
+      "associated_source_port_id": "source_port_231",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_168": {},
+  "source_trace_169": {},
+  "source_trace_170": {},
+  "source_trace_171": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_172": {},
+  "source_trace_173": {},
+  "source_trace_174": {},
+  "source_trace_175": {},
+  "source_trace_176": {},
+  "source_trace_177": {},
+  "source_trace_178": {},
+  "source_trace_179": {},
+  "source_trace_180": {},
+  "source_trace_181": {},
+  "source_trace_182": {},
+  "source_trace_183": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_184": {},
+  "source_trace_185": {},
+  "source_trace_186": {},
+  "source_trace_187": {},
+  "source_trace_188": {},
+  "source_trace_189": {},
+  "source_trace_190": {},
+  "source_trace_191": {},
+  "source_trace_192": {},
+  "source_trace_193": {},
+  "source_trace_194": {},
+  "source_trace_195": {},
+  "source_trace_196": {},
+  "source_trace_197": {},
+  "source_trace_198": {},
+  "source_trace_199": {},
+  "source_trace_200": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_79",
+      "capacitor_source_port_id": "source_port_276",
+      "associated_source_component_id": "source_component_77",
+      "associated_source_port_id": "source_port_270",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_201": {},
+  "source_trace_202": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_203": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_204": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_205": {},
+  "source_trace_206": {},
+  "source_trace_207": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_208": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_209": {},
+  "source_trace_210": {},
+  "source_trace_211": {},
+  "source_trace_212": {},
+  "source_trace_213": {},
+  "source_trace_214": {},
+  "source_trace_215": {},
+  "source_trace_216": {},
+  "source_trace_217": {},
+  "source_trace_218": {},
+  "source_trace_219": {},
+  "source_trace_220": {},
+  "source_trace_221": {},
+  "source_trace_222": {},
+  "source_trace_223": {},
+  "source_trace_224": {},
+  "source_trace_225": {},
+  "source_trace_226": {},
+  "source_trace_227": {},
+  "source_trace_228": {},
+  "source_trace_229": {},
+  "source_trace_230": {},
+  "source_trace_231": {},
+  "source_trace_232": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_233": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_234": {},
+  "source_trace_235": {},
+  "source_trace_236": {},
+  "source_trace_237": {},
+  "source_trace_238": {},
+  "source_trace_239": {},
+  "source_trace_240": {},
+  "source_trace_241": {},
+  "source_trace_242": {},
+  "source_trace_243": {},
+  "source_trace_244": {},
+  "source_trace_245": {},
+  "source_trace_246": {},
+  "source_trace_247": {},
+  "source_trace_248": {},
+  "source_trace_249": {},
+  "source_trace_250": {},
+  "source_trace_251": {},
+  "source_trace_252": {},
+  "source_trace_253": {},
+  "source_trace_254": {},
+  "source_trace_255": {},
+  "source_trace_256": {},
+  "source_trace_257": {},
+  "source_trace_258": {},
+  "source_trace_259": {},
+  "source_trace_260": {},
+  "source_trace_261": {},
+  "source_trace_262": {},
+  "source_trace_263": {},
+  "source_trace_264": {},
+  "source_trace_265": {},
+  "source_trace_266": {},
+  "source_trace_267": {},
+  "source_trace_268": {},
+  "source_trace_269": {},
+  "source_trace_270": {},
+  "source_trace_271": {},
+  "source_trace_272": {},
+  "source_trace_273": {},
+  "source_trace_274": {},
+  "source_trace_275": {},
+  "source_trace_276": {},
+  "source_trace_277": {},
+  "source_trace_278": {},
+  "source_trace_279": {},
+  "source_trace_280": {},
+  "source_trace_281": {},
+  "source_trace_282": {},
+  "source_trace_283": {},
+  "source_trace_284": {},
+  "source_trace_285": {},
+  "source_trace_286": {},
+  "source_trace_287": {},
+  "source_trace_288": {},
+  "source_trace_289": {},
+  "source_trace_290": {},
+  "source_trace_291": {},
+  "source_trace_292": {},
+  "source_trace_293": {},
+  "source_trace_294": {},
+  "source_trace_295": {},
+  "source_trace_296": {},
+  "source_trace_297": {},
+  "source_trace_298": {},
+  "source_trace_299": {},
+  "source_trace_300": {
+    "max_length": 20.874998549999997,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_301": {},
+  "source_trace_302": {},
+  "source_trace_303": {},
+  "source_trace_304": {},
+  "source_trace_305": {},
+  "source_trace_306": {},
+  "source_trace_307": {},
+  "source_trace_308": {},
+  "source_trace_309": {},
+  "source_trace_310": {},
+  "source_trace_311": {},
+  "source_trace_312": {},
+  "source_trace_313": {},
+  "source_trace_314": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_315": {},
+  "source_trace_316": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_317": {},
+  "source_trace_318": {},
+  "source_trace_319": {},
+  "source_trace_320": {},
+  "source_trace_321": {},
+  "source_trace_322": {},
+  "source_trace_323": {},
+  "source_trace_324": {},
+  "source_trace_325": {},
+  "source_trace_326": {
+    "max_length": 10.35,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_327": {},
+  "source_trace_328": {},
+  "source_trace_329": {},
+  "source_trace_330": {},
+  "source_trace_331": {},
+  "source_trace_332": {},
+  "source_trace_333": {},
+  "source_trace_334": {},
+  "source_trace_335": {},
+  "source_trace_336": {},
+  "source_trace_337": {},
+  "source_trace_338": {},
+  "source_trace_339": {},
+  "source_trace_340": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_341": {},
+  "source_trace_342": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_343": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_344": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_65",
+      "capacitor_source_port_id": "source_port_234",
+      "associated_source_component_id": "source_component_64",
+      "associated_source_port_id": "source_port_227",
+      "connection_type": "return",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_345": {
+    "max_length": 33.029939549999995,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_346": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_347": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_348": {},
+  "source_trace_349": {
+    "max_length": 50.72264567444163,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_350": {},
+  "source_trace_351": {},
+  "source_trace_352": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_353": {},
+  "source_trace_354": {},
+  "source_trace_355": {},
+  "source_trace_356": {},
+  "source_trace_357": {},
+  "source_trace_358": {
+    "max_length": 11.936897768508878,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_359": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_360": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_361": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_89",
+      "capacitor_source_port_id": "source_port_315",
+      "associated_source_component_id": "source_component_88",
+      "associated_source_port_id": "source_port_304",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_362": {
+    "max_length": 8.339999999999996,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_363": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_90",
+      "capacitor_source_port_id": "source_port_317",
+      "associated_source_component_id": "source_component_88",
+      "associated_source_port_id": "source_port_311",
+      "connection_type": "supply",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_364": {
+    "max_length": 23.42482875908946,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_365": {
+    "max_length": 75.79285268711928,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_366": {
+    "max_length": 63.821318000000005,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_367": {
+    "max_length": 22.100105999999997,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_368": {
+    "max_length": 91.70010799999999,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_369": {
+    "max_length": 8.140447893019768,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_370": {
+    "max_length": 8.279768,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_371": {
+    "max_length": 23.254900000000003,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_372": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_373": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_374": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_375": {
+    "max_length": 14.76662896627327,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_376": {
+    "max_length": 12.125021550000003,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_377": {
+    "max_length": 13.924999999999995,
+    "max_length_origin": "explicit",
+    "capacitor_connection": {
+      "capacitor_source_component_id": "source_component_90",
+      "capacitor_source_port_id": "source_port_318",
+      "associated_source_component_id": "source_component_88",
+      "associated_source_port_id": "source_port_313",
+      "connection_type": "return",
+      "capacitor_role": "unspecified"
+    }
+  },
+  "source_trace_378": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_379": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_380": {
+    "max_length": 5.5,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_381": {
+    "max_length": 8.709904576044574,
+    "max_length_origin": "explicit"
+  },
+  "source_trace_382": {},
+  "source_trace_383": {},
+  "source_trace_384": {},
+  "source_trace_385": {},
+  "source_trace_386": {},
+  "source_trace_387": {},
+  "source_trace_388": {},
+  "source_trace_389": {},
+  "source_trace_390": {},
+  "source_trace_391": {},
+  "source_trace_392": {},
+  "source_trace_393": {},
+  "source_trace_394": {},
+  "source_trace_395": {},
+  "source_trace_396": {},
+  "source_trace_397": {},
+  "source_trace_398": {},
+  "source_trace_399": {},
+  "source_trace_400": {},
+  "source_trace_401": {},
+  "source_trace_402": {},
+  "source_trace_403": {},
+  "source_trace_404": {},
+  "source_trace_405": {},
+  "source_trace_406": {},
+  "source_trace_407": {},
+  "source_trace_408": {},
+  "source_trace_409": {},
+  "source_trace_410": {},
+  "source_trace_411": {},
+  "source_trace_412": {},
+  "source_trace_413": {},
+  "source_trace_414": {},
+  "source_trace_415": {},
+  "source_trace_416": {},
+  "source_trace_417": {},
+  "source_trace_418": {},
+  "source_trace_419": {},
+  "source_trace_420": {},
+  "source_trace_421": {},
+  "source_trace_422": {},
+  "source_trace_423": {},
+  "source_trace_424": {},
+  "source_trace_425": {},
+  "source_trace_426": {},
+  "source_trace_427": {},
+  "source_trace_428": {},
+  "source_trace_429": {},
+  "source_trace_430": {},
+  "source_trace_431": {},
+  "source_trace_432": {},
+  "source_trace_433": {},
+  "source_trace_434": {},
+  "source_trace_435": {},
+  "source_trace_436": {},
+  "source_trace_437": {},
+  "source_trace_438": {},
+  "source_trace_439": {},
+  "source_trace_440": {},
+  "source_trace_441": {},
+  "source_trace_442": {},
+  "source_trace_443": {},
+  "source_trace_444": {},
+  "source_trace_445": {},
+  "source_trace_446": {},
+  "source_trace_447": {},
+  "source_trace_448": {},
+  "source_trace_449": {},
+  "source_trace_450": {},
+  "source_trace_451": {},
+  "source_trace_452": {},
+  "source_trace_453": {},
+  "source_trace_454": {},
+  "source_trace_455": {},
+  "source_trace_456": {},
+  "source_trace_457": {},
+  "source_trace_458": {},
+  "source_trace_459": {},
+  "source_trace_460": {},
+  "source_trace_461": {},
+  "source_trace_462": {},
+  "source_trace_463": {},
+  "source_trace_464": {},
+  "source_trace_465": {},
+  "source_trace_466": {},
+  "source_trace_467": {},
+  "source_trace_468": {},
+  "source_trace_469": {},
+  "source_trace_470": {},
+  "source_trace_471": {},
+  "source_trace_472": {},
+  "source_trace_473": {},
+  "source_trace_474": {},
+  "source_trace_475": {},
+  "source_trace_476": {},
+  "source_trace_477": {},
+  "source_trace_478": {},
+  "source_trace_479": {},
+  "source_trace_480": {},
+  "source_trace_481": {},
+  "source_trace_482": {},
+  "source_trace_483": {},
+  "source_trace_484": {},
+  "source_trace_485": {},
+  "source_trace_486": {},
+  "source_trace_487": {},
+  "source_trace_488": {},
+  "source_trace_489": {},
+  "source_trace_490": {},
+  "source_trace_491": {},
+  "source_trace_492": {},
+  "source_trace_493": {},
+  "source_trace_494": {},
+  "source_trace_495": {},
+  "source_trace_496": {},
+  "source_trace_497": {},
+  "source_trace_498": {},
+  "source_trace_499": {},
+  "source_trace_500": {},
+  "source_trace_501": {},
+  "source_trace_502": {},
+  "source_trace_503": {},
+  "source_trace_504": {},
+  "source_trace_505": {},
+  "source_trace_506": {},
+  "source_trace_507": {},
+  "source_trace_508": {},
+  "source_trace_509": {},
+  "source_trace_510": {},
+  "source_trace_511": {},
+  "source_trace_512": {},
+  "source_trace_513": {},
+  "source_trace_514": {},
+  "source_trace_515": {},
+  "source_trace_516": {},
+  "source_trace_517": {},
+  "source_trace_518": {},
+  "source_trace_519": {},
+  "source_trace_520": {},
+  "source_trace_521": {},
+  "source_trace_522": {},
+  "source_trace_523": {},
+  "source_trace_524": {},
+  "source_trace_525": {},
+  "source_trace_526": {},
+  "source_trace_527": {},
+  "source_trace_528": {},
+  "source_trace_529": {},
+  "source_trace_530": {},
+  "source_trace_531": {},
+  "source_trace_532": {},
+  "source_trace_533": {},
+  "source_trace_534": {},
+  "source_trace_535": {},
+  "source_trace_536": {},
+  "source_trace_537": {},
+  "source_trace_538": {},
+  "source_trace_539": {},
+  "source_trace_540": {},
+  "source_trace_541": {},
+  "source_trace_542": {},
+  "source_trace_543": {}
+}

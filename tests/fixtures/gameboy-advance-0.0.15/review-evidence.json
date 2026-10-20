@@ -1,0 +1,8 @@
+{
+  "C_VREG_AVDD_P": {"capacitor": "C_VREG_AVDD", "role": "local regulator analog-supply decoupling", "associatedIcPin": "U1.VREG_AVDD", "limitOrigin": "configured capacitor maxDecouplingTraceLength", "review": "Check local supply path with the actual layer stackup."},
+  "C_CORE_G": {"capacitor": "C_CORE", "role": "regulator output capacitor return", "associatedIcPin": "U1.VREG_PGND", "limitOrigin": "configured capacitor maxDecouplingTraceLength", "review": "Check the regulator output loop and plane return. The other terminal connects to the inductor output and VREG_FB; this is not inferred IC supply decoupling."},
+  "PSRAM_DECOUPLING": {"capacitor": "C_PSRAM", "role": "local 100nF decoupling", "associatedIcPin": "U_PSRAM.VDD", "limitOrigin": "authored trace maxLength", "review": "Check supply path with the actual layer stackup."},
+  "PSRAM_BULK": {"capacitor": "C_PSRAM_BULK", "role": "local 1uF bulk supply capacitor", "associatedIcPin": "U_PSRAM.VDD", "limitOrigin": "authored trace maxLength", "review": "Review bulk capacitance and local supply layout under their own requirements."},
+  "PSRAM_VSS_GND_BRIDGE": {"capacitor": "C_PSRAM", "role": "decoupling return bridge", "associatedIcPin": "U_PSRAM.VSS", "limitOrigin": "authored trace maxLength", "review": "Review the authored return trace and its relationship to the ground plane."},
+  "BAT_INPUT_CAP_B": {"capacitor": "C_BAT_IN_BULK_B", "role": "10uF regulator input bulk capacitor", "associatedIcPin": "U_BAT_BUCKBOOST.VIN", "limitOrigin": "authored trace maxLength", "review": "Review the regulator input loop, capacitor placement and applicable regulator guidance."}
+}

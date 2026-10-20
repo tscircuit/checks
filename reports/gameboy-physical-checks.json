@@ -1,0 +1,107 @@
+{
+  "pcbUnchanged": true,
+  "checks": [
+    {
+      "name": "checkEachPcbPortConnectedToPcbTraces",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkSourceTracesHavePcbTraces",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkEachPcbTraceNonOverlapping",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkTracesAreContiguous",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkSourceTracesMatchPcbTraceThickness",
+      "before": 25,
+      "after": 25,
+      "unchanged": true
+    },
+    {
+      "name": "checkPadPadClearance",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkPadTraceClearance",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkViaPadClearance",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkViaTraceClearance",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkSameNetViaSpacing",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkDifferentNetViaSpacing",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkPcbTracesOutOfBoard",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkCopperToBoardEdgeClearance",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkViasOffBoard",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkCopperPourShorts",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkHoleTraceClearance",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    {
+      "name": "checkPcbComponentOverCutout",
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    }
+  ]
+}
