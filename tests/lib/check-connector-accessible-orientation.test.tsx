@@ -314,3 +314,54 @@ test("pin headers ignore inferred side entry but retain explicit right-angle war
   ])
   expect(warnings).toHaveLength(1)
 })
+
+test("connector orientation uses the component's board", () => {
+  const board: AnyCircuitElement = {
+    type: "pcb_board",
+    pcb_board_id: "board_a",
+    center: { x: 0, y: 0 },
+    width: 30,
+    height: 20,
+    thickness: 1.6,
+    num_layers: 2,
+    material: "fr4",
+  }
+  const connector: Extract<AnyCircuitElement, { type: "pcb_component" }> = {
+    type: "pcb_component",
+    pcb_component_id: "connector_b",
+    source_component_id: "source_connector",
+    positioned_relative_to_pcb_board_id: "board_b",
+    center: { x: 86, y: 0 },
+    width: 2,
+    height: 2,
+    layer: "top",
+    rotation: 0,
+    insertion_direction: "from_left",
+    obstructs_within_bounds: true,
+  }
+  const circuitJson: AnyCircuitElement[] = [
+    board,
+    { ...board, pcb_board_id: "board_b", center: { x: 100, y: 0 } },
+    {
+      type: "source_component",
+      source_component_id: "source_connector",
+      ftype: "simple_connector",
+      name: "J1",
+    },
+    connector,
+  ]
+
+  expect(checkConnectorAccessibleOrientation(circuitJson)).toHaveLength(0)
+
+  const warnings = checkConnectorAccessibleOrientation([
+    ...circuitJson.slice(0, -1),
+    { ...connector, insertion_direction: "from_right" },
+  ])
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0]).toMatchObject({
+    pcb_component_id: "connector_b",
+    pcb_board_id: "board_b",
+    facing_direction: "x+",
+    recommended_facing_direction: "x-",
+  })
+})
