@@ -451,6 +451,7 @@ function checkTracesAreContiguous(
           sourceTrace.connected_source_port_ids?.includes(port.source_port_id),
         )
       : []
+    let traceName: string | undefined
 
     for (let i = 1; i < trace.route.length - 1; i++) {
       const prevPoint = trace.route[i - 1]
@@ -471,7 +472,7 @@ function checkTracesAreContiguous(
               context: routeViaContext,
             })
           ) {
-            const traceName = getReadableNameForPcbTrace(
+            traceName ??= getReadableNameForPcbTrace(
               circuitJson,
               trace.pcb_trace_id,
             )
@@ -492,11 +493,6 @@ function checkTracesAreContiguous(
         }
       }
     }
-
-    const traceName = getReadableNameForPcbTrace(
-      circuitJson,
-      trace.pcb_trace_id,
-    )
 
     // Validate required ports once for the complete routed source trace.
     if (sourceTrace && expectedPorts.length > 0) {
@@ -533,6 +529,10 @@ function checkTracesAreContiguous(
       if (isConnectedByRoutedSourceTrace) continue
 
       if (!isFirstPointConnected && !isLastPointConnected) {
+        traceName ??= getReadableNameForPcbTrace(
+          circuitJson,
+          trace.pcb_trace_id,
+        )
         const portName = getReadableNameForPcbPort(
           circuitJson,
           port.pcb_port_id,
@@ -631,6 +631,10 @@ function checkTracesAreContiguous(
           ENDPOINT_CONTACT_EPSILON
 
       if (!firstIsConnected && firstPoint.route_type === "wire") {
+        traceName ??= getReadableNameForPcbTrace(
+          circuitJson,
+          trace.pcb_trace_id,
+        )
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] has disconnected endpoint at (${firstPoint.x.toFixed(2)}, ${firstPoint.y.toFixed(2)})`,
@@ -651,6 +655,10 @@ function checkTracesAreContiguous(
         lastPoint.route_type === "wire" &&
         !(endpointsAreSame && !firstIsConnected)
       ) {
+        traceName ??= getReadableNameForPcbTrace(
+          circuitJson,
+          trace.pcb_trace_id,
+        )
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] has disconnected endpoint at (${lastPoint.x.toFixed(2)}, ${lastPoint.y.toFixed(2)})`,

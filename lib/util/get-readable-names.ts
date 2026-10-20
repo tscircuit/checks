@@ -142,25 +142,23 @@ export const getReadableNameForSourceTrace = (
   )
   if (displayName) return displayName
 
-  const connectedPortNames = (sourceTrace.connected_source_port_ids ?? [])
-    .map((sourcePortId) => {
-      const pcbPort = circuitJson.find(
-        (element) =>
-          element.type === "pcb_port" &&
-          element.source_port_id === sourcePortId,
-      )
+  const connectedPortNames: string[] = []
+  for (const sourcePortId of sourceTrace.connected_source_port_ids ?? []) {
+    const pcbPort = circuitJson.find(
+      (element) =>
+        element.type === "pcb_port" && element.source_port_id === sourcePortId,
+    )
 
-      if (pcbPort?.type === "pcb_port") {
-        const name = getReadableNameForPort(circuitJson, pcbPort.pcb_port_id)
-        return name === "unnamed port" ? null : name
-      }
-
+    if (pcbPort?.type === "pcb_port") {
+      const name = getReadableNameForPort(circuitJson, pcbPort.pcb_port_id)
+      if (name !== "unnamed port") connectedPortNames.push(name)
+    } else {
       const sourcePort = circuitJson.find(
         (element) =>
           element.type === "source_port" &&
           element.source_port_id === sourcePortId,
       )
-      if (sourcePort?.type !== "source_port") return null
+      if (sourcePort?.type !== "source_port") continue
 
       const sourceComponent = circuitJson.find(
         (element) =>
@@ -187,15 +185,14 @@ export const getReadableNameForSourceTrace = (
       )
 
       if (sourceComponentName && sourcePortName) {
-        return `${sourceComponentName}.${sourcePortName}`
+        connectedPortNames.push(`${sourceComponentName}.${sourcePortName}`)
+      } else if (sourcePortName) {
+        connectedPortNames.push(sourcePortName)
       }
-
-      return sourcePortName || null
-    })
-    .filter((name): name is string => Boolean(name))
-
-  if (connectedPortNames.length >= 2) {
-    return `${connectedPortNames[0]} to ${connectedPortNames[1]}`
+    }
+    if (connectedPortNames.length === 2) {
+      return `${connectedPortNames[0]} to ${connectedPortNames[1]}`
+    }
   }
 
   if (connectedPortNames.length === 1) {
