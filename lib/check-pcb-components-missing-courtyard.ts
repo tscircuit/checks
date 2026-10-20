@@ -41,6 +41,14 @@ export function checkPcbComponentsMissingCourtyard(
       ),
   )
 
+  // Manually placed vias are drilled holes, not assembled components, so
+  // they never require a courtyard.
+  const manuallyPlacedViaSourceIds = new Set(
+    circuitJson
+      .filter((element) => element.type === "source_manually_placed_via")
+      .map((element) => element.source_manually_placed_via_id),
+  )
+
   return circuitJson
     .filter(
       (element): element is PcbComponent => element.type === "pcb_component",
@@ -50,6 +58,11 @@ export function checkPcbComponentsMissingCourtyard(
         !componentIdsWithCourtyards.has(component.pcb_component_id) &&
         (!component.source_component_id ||
           !courtyardExemptSourceIds.has(component.source_component_id)),
+    )
+    .filter(
+      (component) =>
+        !component.source_component_id ||
+        !manuallyPlacedViaSourceIds.has(component.source_component_id),
     )
     .map((component) => {
       const sourceComponent = component.source_component_id
