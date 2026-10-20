@@ -105,34 +105,70 @@ export const checkPcbTraceLengths = (
       .map((e) => [e.source_trace_id, e]),
   )
   const pcbTracesBySourceTraceId = getPcbTracesBySourceTraceId(circuitJson)
+  const pcbPorts = circuitJson.filter(
+    (element): element is PcbPort => element.type === "pcb_port",
+  )
   const errors: PcbTraceTooLongError[] = []
 
   for (const [sourceTraceId, pcbTraces] of pcbTracesBySourceTraceId) {
-    const pcbTrace = pcbTraces[0]!
     const sourceTrace = sourceTracesById.get(sourceTraceId)
     if (!sourceTrace) continue
 
     const maximumTraceLength = sourceTrace.max_length
     if (typeof maximumTraceLength !== "number") continue
 
-    const actualTraceLength = pcbTraces.reduce(
-      (sum, trace) => sum + getPcbTraceLength(trace),
-      0,
-    )
-    if (actualTraceLength <= maximumTraceLength + 1e-9) continue
+    let traceGroups = [pcbTraces]
+    if (
+      sourceTrace.connected_source_port_ids.length === 1 &&
+      sourceTrace.connected_source_net_ids.length > 0
+    ) {
+      const endpointPcbPortIds = new Set(
+        pcbPorts
+          .filter(
+            (port) =>
+              port.source_port_id === sourceTrace.connected_source_port_ids[0],
+          )
+          .map((port) => port.pcb_port_id),
+      )
+      const referencedPorts = pcbTraces.map(getReferencedPcbPortIds)
+      // Complete pin-to-pin branches sharing a source ID are separate routes,
+      // not serial fragments. Constrain only branches incident to this pin.
+      // Without complete endpoint metadata, preserve fragment aggregation.
+      if (
+        endpointPcbPortIds.size > 0 &&
+        referencedPorts.every((portIds) => portIds.size >= 2)
+      ) {
+        traceGroups = pcbTraces
+          .filter((_, index) =>
+            [...endpointPcbPortIds].some((portId) =>
+              referencedPorts[index]!.has(portId),
+            ),
+          )
+          .map((trace) => [trace])
+      }
+    }
 
-    errors.push({
-      type: "pcb_trace_too_long_error",
-      pcb_trace_too_long_error_id: `pcb_trace_too_long_error_${pcbTrace.pcb_trace_id}`,
-      error_type: "pcb_trace_too_long_error",
-      message: `PCB trace is ${actualTraceLength.toFixed(2)}mm long, exceeding the ${maximumTraceLength}mm maximum`,
-      pcb_trace_id: pcbTrace.pcb_trace_id,
-      source_trace_id: sourceTrace.source_trace_id,
-      source_net_id: sourceTrace.connected_source_net_ids[0],
-      actual_trace_length: actualTraceLength,
-      maximum_trace_length: maximumTraceLength,
-      subcircuit_id: pcbTrace.subcircuit_id ?? sourceTrace.subcircuit_id,
-    })
+    for (const traceGroup of traceGroups) {
+      const pcbTrace = traceGroup[0]!
+      const actualTraceLength = traceGroup.reduce(
+        (sum, trace) => sum + getPcbTraceLength(trace),
+        0,
+      )
+      if (actualTraceLength <= maximumTraceLength + 1e-9) continue
+
+      errors.push({
+        type: "pcb_trace_too_long_error",
+        pcb_trace_too_long_error_id: `pcb_trace_too_long_error_${pcbTrace.pcb_trace_id}`,
+        error_type: "pcb_trace_too_long_error",
+        message: `PCB trace is ${actualTraceLength.toFixed(2)}mm long, exceeding the ${maximumTraceLength}mm maximum`,
+        pcb_trace_id: pcbTrace.pcb_trace_id,
+        source_trace_id: sourceTrace.source_trace_id,
+        source_net_id: sourceTrace.connected_source_net_ids[0],
+        actual_trace_length: actualTraceLength,
+        maximum_trace_length: maximumTraceLength,
+        subcircuit_id: pcbTrace.subcircuit_id ?? sourceTrace.subcircuit_id,
+      })
+    }
   }
 
   return errors
