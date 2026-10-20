@@ -30,7 +30,8 @@ export function checkPcbCourtyardOverKeepout(
       el.type === "pcb_courtyard_rect" ||
       el.type === "pcb_courtyard_circle" ||
       el.type === "pcb_courtyard_outline" ||
-      el.type === "pcb_courtyard_polygon",
+      el.type === "pcb_courtyard_polygon" ||
+      el.type === "pcb_courtyard_pill",
   )
   const errors = new Map<string, PcbPlacementError | PcbKeepoutOverlapWarning>()
   for (const courtyard of courtyards) {
