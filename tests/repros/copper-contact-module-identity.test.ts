@@ -2,6 +2,7 @@ import { expect, test } from "bun:test"
 import { createRequire } from "node:module"
 import { Box, Polygon } from "@flatten-js/core"
 import { createCopperPolygonContactTester } from "lib/copper-pour-connectivity/create-copper-polygon-contact-tester"
+import { copperContactSnapshot } from "../fixtures/copper-contact-snapshot"
 
 test("copper contact accepts polygons with independent Flatten constructors", () => {
   // The package's ESM and CJS entrypoints provide real independent constructors,
@@ -21,6 +22,16 @@ test("copper contact accepts polygons with independent Flatten constructors", ()
   const touches = createCopperPolygonContactTester(0.1)
 
   expect(touches(horizontal, vertical)).toBe(true)
-  expect(touches(horizontal, foreignVertical)).toBe(true)
+  const contact = touches(horizontal, foreignVertical)
+  expect(contact).toBe(true)
   expect(touches(foreignVertical, horizontal)).toBe(true)
+
+  const svg = copperContactSnapshot(
+    horizontal.box,
+    foreignVertical.box,
+    [],
+    `Contact detected: ${contact}`,
+  )
+  expect(svg).not.toContain("pcb_error_text_overlay")
+  expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
