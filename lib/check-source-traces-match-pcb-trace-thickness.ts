@@ -7,7 +7,6 @@ import type {
   PcbTraceWarning,
   SourceTrace,
 } from "circuit-json"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { getReadableNameForSourceTrace } from "lib/util/get-readable-names"
 
 export function checkSourceTracesMatchPcbTraceThickness(
@@ -33,7 +32,6 @@ export function checkSourceTracesMatchPcbTraceThickness(
   const sourceTraces = db.source_trace.list() as SourceTrace[]
   const pcbTraces = db.pcb_trace.list() as PcbTrace[]
   const pcbPorts = db.pcb_port.list() as PcbPort[]
-  const connectivityMap = getFullConnectivityMapFromCircuitJson(circuitJson)
 
   for (const sourceTrace of sourceTraces) {
     const requestedThickness = sourceTrace.min_trace_thickness
@@ -44,14 +42,10 @@ export function checkSourceTracesMatchPcbTraceThickness(
     )
     if (connectedPcbPorts.length < 2) continue
 
-    const referenceNetId = connectivityMap.getNetConnectedToId(
-      connectedPcbPorts[0].pcb_port_id,
-    )
-    if (!referenceNetId) continue
-
-    const netElementIds = connectivityMap.getIdsConnectedToNet(referenceNetId)
-    const relatedPcbTraces = pcbTraces.filter((pcbTrace) =>
-      netElementIds.includes(pcbTrace.pcb_trace_id),
+    // Source traces on a shared net may request different nominal widths.
+    // Check only copper attributed to this request through its explicit owner.
+    const relatedPcbTraces = pcbTraces.filter(
+      (pcbTrace) => pcbTrace.source_trace_id === sourceTrace.source_trace_id,
     )
     if (relatedPcbTraces.length === 0) continue
 
