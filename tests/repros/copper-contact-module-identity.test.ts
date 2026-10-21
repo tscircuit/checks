@@ -21,6 +21,17 @@ test("copper contact crashes when polygons use independent Flatten constructors"
   const touches = createCopperPolygonContactTester(0.1)
 
   expect(touches(horizontal, vertical)).toBe(true)
-  expect(() => touches(horizontal, foreignVertical)).toThrow(TypeError)
-  expect(() => touches(horizontal, foreignVertical)).toThrow("distanceTo")
+
+  let error: unknown
+  try {
+    touches(horizontal, foreignVertical)
+  } catch (cause) {
+    error = cause
+  }
+  expect(error).toBeInstanceOf(TypeError)
+  // Core prefixes this exception with "DRC could not complete (routing): ".
+  expect(error).toHaveProperty(
+    "message",
+    "undefined is not an object (evaluating 'edge.distanceTo(candidate.shape)[0]')",
+  )
 })
