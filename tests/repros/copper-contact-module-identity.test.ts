@@ -3,7 +3,7 @@ import { createRequire } from "node:module"
 import { Box, Polygon } from "@flatten-js/core"
 import { createCopperPolygonContactTester } from "lib/copper-pour-connectivity/create-copper-polygon-contact-tester"
 
-test("copper contact crashes when polygons use independent Flatten constructors", () => {
+test("copper contact accepts polygons with independent Flatten constructors", () => {
   // The package's ESM and CJS entrypoints provide real independent constructors,
   // as can happen when the checker and a geometry producer load separate copies.
   const other = createRequire(import.meta.url)(
@@ -21,6 +21,6 @@ test("copper contact crashes when polygons use independent Flatten constructors"
   const touches = createCopperPolygonContactTester(0.1)
 
   expect(touches(horizontal, vertical)).toBe(true)
-  expect(() => touches(horizontal, foreignVertical)).toThrow(TypeError)
-  expect(() => touches(horizontal, foreignVertical)).toThrow("distanceTo")
+  expect(touches(horizontal, foreignVertical)).toBe(true)
+  expect(touches(foreignVertical, horizontal)).toBe(true)
 })

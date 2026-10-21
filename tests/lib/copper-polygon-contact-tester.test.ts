@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { createRequire } from "node:module"
 import { Box, Circle, Point, Polygon } from "@flatten-js/core"
 import { copperPolygonsTouch } from "@tscircuit/circuit-json-util"
 import { createCopperPolygonContactTester } from "lib/copper-pour-connectivity/create-copper-polygon-contact-tester"
@@ -10,17 +11,31 @@ const rectangle = (x: number, y: number, w: number, h: number) =>
 const circle = (x: number, y: number, radius: number) =>
   new Polygon(new Circle(new Point(x, y), radius)).scale(scale, scale)
 
+const other = createRequire(import.meta.url)(
+  "@flatten-js/core",
+) as typeof import("@flatten-js/core")
+const foreign = (polygon: Polygon) =>
+  new other.Polygon(
+    polygon.toJSON() as ConstructorParameters<typeof Polygon>[0],
+  )
+
 function compare(a: Polygon, b: Polygon, expected: boolean) {
   const touches = createCopperPolygonContactTester(tolerance)
-  const originalA = a.toJSON()
-  const originalB = b.toJSON()
+  expect(other.Polygon).not.toBe(Polygon)
   expect(copperPolygonsTouch(a, b, tolerance)).toBe(expected)
-  expect(touches(a, b)).toBe(expected)
-  expect(touches(b, a)).toBe(expected)
-  // Cached geometry must give the same result and leave polygons untouched.
-  expect(touches(a, b)).toBe(expected)
-  expect(a.toJSON()).toEqual(originalA)
-  expect(b.toJSON()).toEqual(originalB)
+  // Retain the same geometric expectations for local, mixed and foreign pairs.
+  for (const first of [a, foreign(a)]) {
+    for (const second of [b, foreign(b)]) {
+      const originalA = first.toJSON()
+      const originalB = second.toJSON()
+      expect(touches(first, second)).toBe(expected)
+      expect(touches(second, first)).toBe(expected)
+      // Cached geometry must give the same result and leave polygons untouched.
+      expect(touches(first, second)).toBe(expected)
+      expect(first.toJSON()).toEqual(originalA)
+      expect(second.toJSON()).toEqual(originalB)
+    }
+  }
 }
 
 test("contacts include containment, crossings, tangent arcs and tolerance-sized gaps", () => {
@@ -54,6 +69,9 @@ test("holes and separate faces do not become filled copper", () => {
   const touches = createCopperPolygonContactTester(tolerance)
   expect(touches(new Polygon(), scaled)).toBe(false)
   expect(touches(scaled, new Polygon())).toBe(false)
+  expect(touches(new other.Polygon(), scaled)).toBe(false)
+  expect(touches(scaled, new other.Polygon())).toBe(false)
+  expect(touches(new other.Polygon(), new Polygon())).toBe(false)
 })
 
 test("indexed contact matches the old predicate for seeded mixed curved and rotated geometry", () => {
