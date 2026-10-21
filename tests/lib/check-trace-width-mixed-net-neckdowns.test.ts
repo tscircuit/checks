@@ -1,11 +1,10 @@
 import { expect, test } from "bun:test"
-import {
-  convertCircuitJsonToFlattenJs,
-  renderFlattenJsToSvg,
-} from "@tscircuit/circuit-json-to-flattenjs"
 import { checkSourceTracesMatchPcbTraceThickness } from "lib/check-source-traces-match-pcb-trace-thickness"
 import { runAllRoutingChecks } from "lib/run-all-checks"
-import { mixedWidthNetWithNeckdownsFixture } from "../fixtures/mixed-width-net"
+import {
+  mixedWidthNetWithNeckdownsFixture,
+  renderMixedWidthNetWarnings,
+} from "../fixtures/mixed-width-net"
 
 test.each([
   { mode: "constant", expectedWidthAtPadEdge: 0.2 },
@@ -15,27 +14,16 @@ test.each([
   async ({ mode, expectedWidthAtPadEdge }) => {
     const { circuitJson, sourceTrace, pcbTrace } =
       await mixedWidthNetWithNeckdownsFixture(mode)
-    expect(checkSourceTracesMatchPcbTraceThickness(circuitJson)).toEqual([])
+    const warnings = checkSourceTracesMatchPcbTraceThickness(circuitJson)
+    expect(warnings).toEqual([])
 
     const routingChecks = await runAllRoutingChecks(circuitJson)
     expect(
       routingChecks.filter((check) => check.type === "pcb_trace_warning"),
     ).toEqual([])
 
-    // Use the actual copper polygons: the pinned PCB renderer does not draw
-    // interpolated tapers accurately. This matches the pad-escape visual tests.
-    const geometry = convertCircuitJsonToFlattenJs(circuitJson, {
-      layers: ["top"],
-      roles: ["copper"],
-      strict: true,
-    })
-    expect(geometry.warnings).toEqual([])
     expect(
-      renderFlattenJsToSvg(geometry, {
-        width: 1000,
-        height: 350,
-        viewport: { minX: -6.5, maxX: 6.5, minY: -1.5, maxY: 3.05 },
-      }),
+      renderMixedWidthNetWarnings(circuitJson, warnings),
     ).toMatchSvgSnapshot(
       import.meta.path,
       `check-trace-width-mixed-net-neckdowns-${mode}`,

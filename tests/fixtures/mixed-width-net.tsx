@@ -1,6 +1,7 @@
 import { Circuit } from "@tscircuit/core"
 import type { AnyCircuitElement, PcbTrace, PcbTraceWarning } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { applyToPoint, compose, scale, translate } from "transformation-matrix"
 
 export async function mixedWidthNetFixture(routedThickTraceWidth = 0.8) {
   const circuit = new Circuit({ platform: { routingDrcChecksDisabled: true } })
@@ -81,6 +82,10 @@ export async function mixedWidthNetWithNeckdownsFixture(
     },
     { ...end, width: 0.2 },
   ]
+  const note = fixture.circuitJson.find(
+    (element) => element.type === "pcb_note_text",
+  )!
+  note.text = `R1 to R2: 0.8 mm body, 0.2 mm ${mode === "interpolated" ? "tapered" : "stepped"} neck-downs`
   return fixture
 }
 
@@ -91,18 +96,32 @@ export function renderMixedWidthNetWarnings(
   const width = 1000
   const height = 650
   const viewport = { minX: -11, maxX: 11, minY: -6, maxY: 6 }
-  const scale = Math.min(width / 22, height / 12)
+  const scalePxPerMm = Math.min(
+    width / (viewport.maxX - viewport.minX),
+    height / (viewport.maxY - viewport.minY),
+  )
+  // Board-world mm (+X right, +Y up) to SVG pixels (+X right, +Y down).
+  const boardToSvgTransform = compose(
+    translate(width / 2, height / 2),
+    scale(scalePxPerMm, -scalePxPerMm),
+    translate(
+      -(viewport.minX + viewport.maxX) / 2,
+      -(viewport.minY + viewport.maxY) / 2,
+    ),
+  )
   const svg = convertCircuitJsonToPcbSvg(circuitJson, {
     width,
     height,
     viewport,
     shouldDrawErrors: true,
   })
-  // The pinned renderer omits pcb_trace_warning. As in render-clearance-locations,
-  // map emitted board-world points (mm, +X right, +Y up) to SVG (+Y down).
+  // The pinned renderer omits pcb_trace_warning; transform its actual center
+  // into the same SVG coordinate space as the rendered board.
   const markers = warnings.map(({ center, message }, warningIndex) => {
-    const x = width / 2 + center!.x! * scale
-    const y = height / 2 - center!.y! * scale
+    const { x, y } = applyToPoint(boardToSvgTransform, {
+      x: center!.x!,
+      y: center!.y!,
+    })
     const text = message
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
