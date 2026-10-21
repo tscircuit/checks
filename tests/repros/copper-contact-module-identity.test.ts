@@ -60,7 +60,10 @@ test("motor-controller GND contact crashes routing DRC with independent Flatten 
         layer: "bottom",
         xRayElementIds: traces.map((trace) => trace.pcb_trace_id),
       }),
-    ).toMatchSvgSnapshot(import.meta.path, "copper-contact-module-identity-detail")
+    ).toMatchSvgSnapshot(
+      import.meta.path,
+      "copper-contact-module-identity-detail",
+    )
   } finally {
     await rm(outdir, { recursive: true, force: true })
   }
