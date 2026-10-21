@@ -19,7 +19,10 @@ import type {
   PcbTrace,
   PcbVia,
 } from "circuit-json"
-import type { PcbTraceSegment } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
+import {
+  getCollidableBounds,
+  type PcbTraceSegment,
+} from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import {
   getPillCenterLineForPad,
   getPolygonPointsForPad,
@@ -59,6 +62,10 @@ export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
       maxX: pad.center.x + pad.width / 2,
       maxY: pad.center.y + pad.height / 2,
     }
+  }
+
+  if (pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad") {
+    return getCollidableBounds(pad)
   }
 
   return getBoundsOfPcbElements([pad])
@@ -150,8 +157,8 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
 
   if (
     pad.type === "pcb_plated_hole" &&
-    "rect_pad_width" in pad &&
-    "rect_pad_height" in pad
+    (pad.shape === "hole_with_polygon_pad" ||
+      ("rect_pad_width" in pad && "rect_pad_height" in pad))
   ) {
     return {
       kind: "polygon" as const,
@@ -296,11 +303,28 @@ export const getPadToPadGap = (
   )
 }
 
-export const getPads = (circuitJson: AnyCircuitElement[]) =>
-  [
-    ...cju(circuitJson).pcb_smtpad.list(),
-    ...cju(circuitJson).pcb_plated_hole.list(),
-  ] as PadElement[]
+export const getPads = (circuitJson: AnyCircuitElement[]): PadElement[] => {
+  const db = cju(circuitJson)
+  const componentRotations = new Map(
+    db.pcb_component
+      .list()
+      .map((component) => [component.pcb_component_id, component.rotation]),
+  )
+  return [
+    ...db.pcb_smtpad.list(),
+    ...db.pcb_plated_hole.list().map((hole) => {
+      if (
+        hole.shape !== "hole_with_polygon_pad" ||
+        hole.ccw_rotation !== undefined
+      )
+        return hole
+      return {
+        ...hole,
+        ccw_rotation: componentRotations.get(hole.pcb_component_id ?? "") ?? 0,
+      }
+    }),
+  ]
+}
 
 export const getTraceSegments = (
   circuitJson: AnyCircuitElement[],
