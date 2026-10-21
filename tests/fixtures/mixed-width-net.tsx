@@ -1,5 +1,5 @@
 import { Circuit } from "@tscircuit/core"
-import type { AnyCircuitElement, PcbTraceWarning } from "circuit-json"
+import type { AnyCircuitElement, PcbTrace, PcbTraceWarning } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 
 export async function mixedWidthNetFixture(routedThickTraceWidth = 0.8) {
@@ -48,6 +48,40 @@ export async function mixedWidthNetFixture(routedThickTraceWidth = 0.8) {
     }
   }
   return { circuitJson, sourceTrace, pcbTrace }
+}
+
+export async function mixedWidthNetWithNeckdownsFixture(
+  mode: PcbTrace["route_thickness_mode"],
+) {
+  const fixture = await mixedWidthNetFixture()
+  const { pcbTrace } = fixture
+  const start = pcbTrace.route[0]
+  const end = pcbTrace.route.at(-1)!
+  if (start.route_type !== "wire" || end.route_type !== "wire") {
+    throw new Error("Expected a wire between the connected resistor pads")
+  }
+  pcbTrace.route_thickness_mode = mode
+  // Each pad extends 0.4 mm along the route. A 1 mm neck-down therefore
+  // uses only 0.6 mm of the default 0.8 mm escape allowance beyond its edge.
+  pcbTrace.route = [
+    { ...start, width: 0.2 },
+    {
+      route_type: "wire",
+      x: start.x + 1,
+      y: start.y,
+      width: 0.8,
+      layer: start.layer,
+    },
+    {
+      route_type: "wire",
+      x: end.x - 1,
+      y: end.y,
+      width: mode === "interpolated" ? 0.8 : 0.2,
+      layer: end.layer,
+    },
+    { ...end, width: 0.2 },
+  ]
+  return fixture
 }
 
 export function renderMixedWidthNetWarnings(
