@@ -21,24 +21,29 @@ const foreign = (polygon: Polygon) =>
 
 function compare(a: Polygon, b: Polygon, expected: boolean) {
   const touches = createCopperPolygonContactTester(tolerance)
+  const foreignA = foreign(a)
+  const foreignB = foreign(b)
+  const originalA = a.toJSON()
+  const originalB = b.toJSON()
   expect(other.Polygon).not.toBe(Polygon)
   expect(copperPolygonsTouch(a, b, tolerance)).toBe(expected)
-  // Each pair is checked in both orders, covering local, mixed and foreign inputs.
-  const pairs: [Polygon, Polygon][] = [
-    [a, b],
-    [a, foreign(b)],
-    [foreign(a), foreign(b)],
-  ]
-  for (const [first, second] of pairs) {
-    const originalA = first.toJSON()
-    const originalB = second.toJSON()
-    expect(touches(first, second)).toBe(expected)
-    expect(touches(second, first)).toBe(expected)
-    // Cached geometry must give the same result and leave polygons untouched.
-    expect(touches(first, second)).toBe(expected)
-    expect(first.toJSON()).toEqual(originalA)
-    expect(second.toJSON()).toEqual(originalB)
-  }
+
+  // Local, mixed and foreign inputs must agree in both argument orders.
+  expect(touches(a, b)).toBe(expected)
+  expect(touches(b, a)).toBe(expected)
+  expect(touches(a, foreignB)).toBe(expected)
+  expect(touches(foreignB, a)).toBe(expected)
+  expect(touches(foreignA, foreignB)).toBe(expected)
+  expect(touches(foreignB, foreignA)).toBe(expected)
+
+  // Cached geometry must give the same result and leave every input untouched.
+  expect(touches(a, b)).toBe(expected)
+  expect(touches(a, foreignB)).toBe(expected)
+  expect(touches(foreignA, foreignB)).toBe(expected)
+  expect(a.toJSON()).toEqual(originalA)
+  expect(b.toJSON()).toEqual(originalB)
+  expect(foreignA.toJSON()).toEqual(originalA)
+  expect(foreignB.toJSON()).toEqual(originalB)
 }
 
 test("contacts include containment, crossings, tangent arcs and tolerance-sized gaps", () => {
