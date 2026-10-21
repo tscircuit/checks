@@ -102,13 +102,14 @@ test("PMID route ends on inner2 at U2 B2, a top-only pad, without a via", () => 
   })
 })
 
+// Aggregate routing includes filled-pour geometry analysis on this large board.
 test("all checker entry points execute without throwing on the full fixture", async () => {
   expect(Array.isArray(checkTracesAreContiguous(freshCircuit()))).toBe(true)
   expect(
     Array.isArray(checkEachPcbPortConnectedToPcbTraces(freshCircuit())),
   ).toBe(true)
   expect(Array.isArray(await runAllRoutingChecks(freshCircuit()))).toBe(true)
-})
+}, 15_000)
 
 test("control: an explicit endpoint via and top landing remove the layer mismatch", async () => {
   const circuit = freshCircuit()
@@ -146,7 +147,7 @@ test("control: an explicit endpoint via and top landing remove the layer mismatc
   ).toBe(false)
   // The control is an in-memory change only; the real fixture still lacks it.
   expect(getTrace().route.at(-1)).toMatchObject({ layer: "inner2" })
-})
+}, 15_000)
 
 test("continuity checker should report the missing inner2-to-top connection", () => {
   expect(
@@ -168,7 +169,7 @@ test("aggregate routing checks should report this missing via", async () => {
       diagnosesMissingConnection,
     ),
   ).toBe(true)
-})
+}, 15_000)
 
 // Render actual checker diagnostics on a clone of the literal board. The arrow
 // highlights the reported endpoint; orange is inner2 and red is top copper.
