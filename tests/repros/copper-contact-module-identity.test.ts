@@ -1,37 +1,40 @@
 import { expect, test } from "bun:test"
-import { createRequire } from "node:module"
-import { Box, Polygon } from "@flatten-js/core"
-import { createCopperPolygonContactTester } from "lib/copper-pour-connectivity/create-copper-polygon-contact-tester"
-import { copperContactSnapshot } from "../fixtures/copper-contact-snapshot"
+import { mkdtemp, rm } from "node:fs/promises"
+import { join, resolve } from "node:path"
+import type { AnyCircuitElement } from "circuit-json"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 
-test("copper contact accepts polygons with independent Flatten constructors", () => {
-  // The package's ESM and CJS entrypoints provide real independent constructors,
-  // as can happen when the checker and a geometry producer load separate copies.
-  const other = createRequire(import.meta.url)(
-    "@flatten-js/core",
-  ) as typeof import("@flatten-js/core")
-  expect(other.Polygon).not.toBe(Polygon)
-
-  // Overlapping strips with no contained vertices force the edge-distance path.
-  // Use the same coordinate scale and tolerance as copper connectivity checks.
-  const horizontal = new Polygon(new Box(-2, -0.25, 2, 0.25)).scale(1e6, 1e6)
-  const vertical = new Polygon(new Box(0.4, -2, 0.9, 2)).scale(1e6, 1e6)
-  const foreignVertical = new other.Polygon(
-    new other.Box(0.4e6, -2e6, 0.9e6, 2e6),
-  )
-  const touches = createCopperPolygonContactTester(0.1)
-
-  expect(touches(horizontal, vertical)).toBe(true)
-  const contact = touches(horizontal, foreignVertical)
-  expect(contact).toBe(true)
-  expect(touches(foreignVertical, horizontal)).toBe(true)
-
-  const svg = copperContactSnapshot(
-    horizontal.box,
-    foreignVertical.box,
-    [],
-    `Contact detected: ${contact}`,
-  )
-  expect(svg).not.toContain("pcb_error_text_overlay")
-  expect(svg).toMatchSvgSnapshot(import.meta.path)
-})
+test("routing DRC accepts copper contact with independent Flatten instances", async () => {
+  // Keep the bundle under the repository so external packages resolve normally.
+  const outdir = await mkdtemp(join(import.meta.dir, ".copper-contact-"))
+  try {
+    // Exercise a consumer bundle independently of the test runner's module cache.
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        resolve(import.meta.dir, "../fixtures/build-copper-contact-repro.ts"),
+        outdir,
+      ],
+      { stdout: "inherit", stderr: "inherit" },
+    )
+    expect(await child.exited).toBe(0)
+    const circuitJson: AnyCircuitElement[] = await Bun.file(
+      join(outdir, "circuit.json"),
+    ).json()
+    expect(circuitJson.filter((e) => e.type === "pcb_trace")).toHaveLength(1)
+    expect(
+      circuitJson.filter((e) => e.type === "pcb_copper_pour"),
+    ).toHaveLength(1)
+    expect(circuitJson.filter((e) => e.type.endsWith("_error"))).toEqual([])
+    await expect(
+      convertCircuitJsonToPcbSvg(circuitJson, {
+        width: 1200,
+        height: 700,
+        shouldDrawErrors: true,
+        showErrorsInTextOverlay: true,
+      }),
+    ).toMatchSvgSnapshot(import.meta.path)
+  } finally {
+    await rm(outdir, { recursive: true, force: true })
+  }
+}, 30_000)
