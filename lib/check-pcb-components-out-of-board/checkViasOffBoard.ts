@@ -10,7 +10,12 @@ export function checkViasOffBoard(
   const violationsById = new Map(
     checkCopperToBoardEdgeClearance(
       circuitJson.filter(
-        (element) => element.type === "pcb_board" || element.type === "pcb_via",
+        (element) =>
+          element.type === "pcb_board" ||
+          element.type === "pcb_via" ||
+          element.type === "pcb_component" ||
+          element.type === "pcb_trace" ||
+          element.type === "source_group",
       ),
     ).map((error) => [
       error.pcb_placement_error_id.replace(
