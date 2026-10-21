@@ -1,7 +1,9 @@
 import { expect, test } from "bun:test"
 import { createRequire } from "node:module"
 import { Box, Polygon } from "@flatten-js/core"
+import type { AnyCircuitElement } from "circuit-json"
 import { createCopperPolygonContactTester } from "lib/copper-pour-connectivity/create-copper-polygon-contact-tester"
+import { copperContactSnapshot } from "../fixtures/copper-contact-snapshot"
 
 test("copper contact crashes when polygons use independent Flatten constructors", () => {
   // The package's ESM and CJS entrypoints provide real independent constructors,
@@ -34,4 +36,25 @@ test("copper contact crashes when polygons use independent Flatten constructors"
     "message",
     "undefined is not an object (evaluating 'edge.distanceTo(candidate.shape)[0]')",
   )
+
+  // Render the caught exception using core's routing DRC diagnostic format.
+  if (!(error instanceof Error))
+    throw new Error("Expected the contact checker to throw")
+  const diagnostics: AnyCircuitElement[] = [
+    {
+      type: "source_runtime_error",
+      source_runtime_error_id: "contact_runtime_error",
+      error_type: "source_runtime_error",
+      phase_name: "PcbDesignRuleChecks",
+      message: `DRC could not complete (routing): ${error.message}`,
+    },
+  ]
+  const svg = copperContactSnapshot(
+    horizontal.box,
+    foreignVertical.box,
+    diagnostics,
+    "Contact check: crashed",
+  )
+  expect(svg).toContain("DRC could not complete (routing):")
+  expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
