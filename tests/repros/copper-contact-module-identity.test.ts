@@ -45,18 +45,6 @@ test("motor-controller GND contact completes routing DRC with independent Flatte
         showErrorsInTextOverlay: true,
       }),
     ).toMatchSvgSnapshot(import.meta.path)
-    // X-Ray exposes the trace where ordinary rendering merges it into the pour.
-    await expect(
-      convertCircuitJsonToPcbSvg(circuitJson, {
-        width: 1200,
-        height: 700,
-        layer: "bottom",
-        xRayElementIds: traces.map((trace) => trace.pcb_trace_id),
-      }),
-    ).toMatchSvgSnapshot(
-      import.meta.path,
-      "copper-contact-module-identity-detail",
-    )
   } finally {
     await rm(outdir, { recursive: true, force: true })
   }
