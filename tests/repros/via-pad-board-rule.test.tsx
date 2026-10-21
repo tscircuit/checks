@@ -58,7 +58,10 @@ test("via-to-pad clearance uses the board's via rule", async () => {
     6,
   )
   const errors = checkViaPadClearance(circuitJson)
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(1)
+  expect(errors[0].minimum_clearance).toBe(0.2)
+  expect(errors[0].actual_clearance).toBeCloseTo(0.15, 6)
+  expect(errors[0].pcb_pad_ids).toEqual([via.pcb_via_id, pad.pcb_smtpad_id])
   circuitJson.push({
     type: "pcb_note_text",
     pcb_note_text_id: "check_result",
