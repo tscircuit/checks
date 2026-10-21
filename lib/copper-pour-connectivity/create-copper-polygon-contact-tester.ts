@@ -2,12 +2,13 @@ import {
   Box,
   type Arc,
   type Point,
-  type Polygon,
+  Polygon,
   type PolygonEdge,
   type Segment,
 } from "@flatten-js/core"
 
 interface PolygonGeometry {
+  polygon: Polygon
   box: Box
   facePoints: Point[]
   edges: (Segment | Arc)[]
@@ -20,11 +21,22 @@ export function createCopperPolygonContactTester(tolerance: number) {
   const getGeometry = (polygon: Polygon): PolygonGeometry => {
     let geometry = cache.get(polygon)
     if (!geometry) {
+      // Geometry producers may load another Flatten instance. Its shapes fail
+      // Flatten's instanceof dispatch, even if both copies have the same version.
+      // Reconstruct once using the supported JSON format, preserving curved
+      // edges and face winding; retain the original polygon as the cache key.
+      let localPolygon = polygon
+      if (polygon.constructor !== Polygon) {
+        localPolygon = new Polygon(
+          polygon.toJSON() as ConstructorParameters<typeof Polygon>[0],
+        )
+      }
       geometry = {
-        box: polygon.box,
-        facePoints: [...polygon.faces].map((face) => face.first.start),
-        edges: [...polygon.edges].map((edge) => edge.shape),
-        edgeIndex: polygon.edges,
+        polygon: localPolygon,
+        box: localPolygon.box,
+        facePoints: [...localPolygon.faces].map((face) => face.first.start),
+        edges: [...localPolygon.edges].map((edge) => edge.shape),
+        edgeIndex: localPolygon.edges,
       }
       cache.set(polygon, geometry)
     }
@@ -47,9 +59,11 @@ export function createCopperPolygonContactTester(tolerance: number) {
     // Polygon.contains retains the polygon's holes and separate faces.
     if (
       ga.facePoints.some(
-        (point) => gb.box.contains(point) && b.contains(point),
+        (point) => gb.box.contains(point) && gb.polygon.contains(point),
       ) ||
-      gb.facePoints.some((point) => ga.box.contains(point) && a.contains(point))
+      gb.facePoints.some(
+        (point) => ga.box.contains(point) && ga.polygon.contains(point),
+      )
     )
       return true
 
