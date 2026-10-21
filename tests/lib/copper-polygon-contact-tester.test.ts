@@ -23,18 +23,21 @@ function compare(a: Polygon, b: Polygon, expected: boolean) {
   const touches = createCopperPolygonContactTester(tolerance)
   expect(other.Polygon).not.toBe(Polygon)
   expect(copperPolygonsTouch(a, b, tolerance)).toBe(expected)
-  // Retain the same geometric expectations for local, mixed and foreign pairs.
-  for (const first of [a, foreign(a)]) {
-    for (const second of [b, foreign(b)]) {
-      const originalA = first.toJSON()
-      const originalB = second.toJSON()
-      expect(touches(first, second)).toBe(expected)
-      expect(touches(second, first)).toBe(expected)
-      // Cached geometry must give the same result and leave polygons untouched.
-      expect(touches(first, second)).toBe(expected)
-      expect(first.toJSON()).toEqual(originalA)
-      expect(second.toJSON()).toEqual(originalB)
-    }
+  // Each pair is checked in both orders, covering local, mixed and foreign inputs.
+  const pairs: [Polygon, Polygon][] = [
+    [a, b],
+    [a, foreign(b)],
+    [foreign(a), foreign(b)],
+  ]
+  for (const [first, second] of pairs) {
+    const originalA = first.toJSON()
+    const originalB = second.toJSON()
+    expect(touches(first, second)).toBe(expected)
+    expect(touches(second, first)).toBe(expected)
+    // Cached geometry must give the same result and leave polygons untouched.
+    expect(touches(first, second)).toBe(expected)
+    expect(first.toJSON()).toEqual(originalA)
+    expect(second.toJSON()).toEqual(originalB)
   }
 }
 

@@ -25,12 +25,12 @@ export function createCopperPolygonContactTester(tolerance: number) {
       // Flatten's instanceof dispatch, even if both copies have the same version.
       // Reconstruct once using the supported JSON format, preserving curved
       // edges and face winding; retain the original polygon as the cache key.
-      const localPolygon =
-        polygon.constructor === Polygon
-          ? polygon
-          : new Polygon(
-              polygon.toJSON() as ConstructorParameters<typeof Polygon>[0],
-            )
+      let localPolygon = polygon
+      if (polygon.constructor !== Polygon) {
+        localPolygon = new Polygon(
+          polygon.toJSON() as ConstructorParameters<typeof Polygon>[0],
+        )
+      }
       geometry = {
         polygon: localPolygon,
         box: localPolygon.box,
