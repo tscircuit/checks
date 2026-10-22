@@ -47,6 +47,8 @@ import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceO
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
 import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-terminal-switch-contacts-on-different-nets"
 import { checkViaPadClearance } from "./check-via-pad-clearance"
+import { checkViaDimensions } from "./check-via-dimensions"
+import { checkPlatedHoleAnnularRing } from "./check-plated-hole-annular-ring"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
 
@@ -65,6 +67,7 @@ export async function runAllPlacementChecks(
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPcbComponentsMissingCourtyard(circuitJson),
     ...checkPadPadClearance(circuitJson),
+    ...checkPlatedHoleAnnularRing(circuitJson),
     ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
@@ -126,6 +129,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkHoleTraceClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson, connectivity),
     ...checkViaPadClearance(circuitJson, connectivity),
+    ...checkViaDimensions(circuitJson),
     ...checkSameNetViaSpacing(circuitJson, connectivity),
     ...checkDifferentNetViaSpacing(circuitJson, connectivity),
     ...checkTracesAreContiguous(circuitJson, connectivity),
