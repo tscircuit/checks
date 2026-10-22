@@ -1,6 +1,7 @@
 import { checkPcbTraceStyle } from "./check-pcb-trace-style"
 import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
 import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
+import { checkPcbTraceMinWidth } from "./check-pcb-trace-min-width"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
@@ -114,6 +115,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson, connectivity),
     ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
     ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
+    ...checkPcbTraceMinWidth(circuitJson),
     ...checkPcbBendZoneTraces(circuitJson),
     ...checkPcbTraceLengths(circuitJson),
     ...checkPcbTraceStyle(circuitJson),

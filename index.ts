@@ -17,6 +17,7 @@ export {
 export { checkSameNetViaSpacing } from "./lib/check-same-net-via-spacing"
 export { checkDifferentNetViaSpacing } from "./lib/check-different-net-via-spacing"
 export { checkSourceTracesMatchPcbTraceThickness } from "./lib/check-source-traces-match-pcb-trace-thickness"
+export { checkPcbTraceMinWidth } from "./lib/check-pcb-trace-min-width"
 export { checkSourceTracesHavePcbTraces } from "./lib/check-source-traces-have-pcb-traces"
 export { checkTracesAreContiguous } from "./lib/check-traces-are-contiguous/check-traces-are-contiguous"
 export { checkPcbTracesOutOfBoard } from "./lib/check-trace-out-of-board/checkTraceOutOfBoard"
