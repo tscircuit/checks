@@ -15,6 +15,10 @@ import type {
 } from "circuit-json"
 import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import { isPointInPad } from "./is-point-in-pad"
+import {
+  getPadBounds,
+  getTraceObstacleClearance,
+} from "../check-pad-clearance/common"
 import { distance } from "../util/distance"
 import { getPcbPortIdsConnectedToRoutePoint } from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
 
@@ -52,12 +56,46 @@ type TraceWireSegmentsByNetAndLayer = Map<
 const ENDPOINT_CONTACT_EPSILON = 1e-9
 const TRACE_SEGMENT_GEOMETRY_EPSILON = 1e-9
 
-function routePointTouchesPad(point: PcbTraceRoutePoint, pad: PcbPad) {
-  return (
-    point.route_type === "wire" &&
-    getLayersOfPcbElement(pad).includes(point.layer) &&
-    isPointInPad(point, pad)
+function routePointTouchesPad(
+  point: PcbTraceRoutePoint,
+  pad: PcbPad,
+  endpointCopperWidth?: number,
+  bounds?: ReturnType<typeof getPadBounds>,
+): boolean {
+  if (
+    point.route_type !== "wire" ||
+    !getLayersOfPcbElement(pad).includes(point.layer)
   )
+    return false
+  if (isPointInPad(point, pad)) return true
+  if (
+    endpointCopperWidth === undefined ||
+    !Number.isFinite(endpointCopperWidth) ||
+    endpointCopperWidth <= 0 ||
+    !bounds
+  )
+    return false
+  const radius = endpointCopperWidth / 2
+  if (
+    point.x + radius <= bounds.minX ||
+    point.x - radius >= bounds.maxX ||
+    point.y + radius <= bounds.minY ||
+    point.y - radius >= bounds.maxY
+  )
+    return false
+  // The round copper cap can enter the pad while its center remains outside.
+  // Require actual overlap and use the adjacent segment's physical width.
+  const { gap } = getTraceObstacleClearance(
+    {
+      x1: point.x,
+      y1: point.y,
+      x2: point.x,
+      y2: point.y,
+      thickness: endpointCopperWidth,
+    },
+    pad,
+  )
+  return gap < -ENDPOINT_CONTACT_EPSILON
 }
 
 function getTraceWireSegmentsByNetAndLayer(
@@ -363,6 +401,9 @@ function checkTracesAreContiguous(
 
   const touchedPortIdsByTraceId = new Map<string, Set<PcbPortId>>()
   const traceIdsByTouchedPortId = new Map<PcbPortId, Set<string>>()
+  const padBounds = new Map(
+    [...padMap.values()].flat().map((pad) => [pad, getPadBounds(pad)] as const),
+  )
 
   // Route attribution can change when a logical net is converted into an MST.
   // Record the PCB ports each routed trace physically reaches so contiguity can
@@ -372,11 +413,19 @@ function checkTracesAreContiguous(
     const firstPoint = trace.route[0]
     const lastPoint = trace.route.at(-1)
 
-    for (const point of [firstPoint, lastPoint]) {
+    for (const [endpoint, point] of [
+      ["start", firstPoint],
+      ["end", lastPoint],
+    ] as const) {
       if (!point) continue
+      const copperWidth = getEndpointTraceCopperWidth(trace, endpoint)
 
       for (const [pcbPortId, pads] of padMap) {
-        if (pads.some((pad) => routePointTouchesPad(point, pad))) {
+        if (
+          pads.some((pad) =>
+            routePointTouchesPad(point, pad, copperWidth, padBounds.get(pad)),
+          )
+        ) {
           touchedPortIds.add(pcbPortId)
         }
       }
@@ -441,6 +490,8 @@ function checkTracesAreContiguous(
 
     const firstPoint = trace.route[0]
     const lastPoint = trace.route[trace.route.length - 1]
+    const startCopperWidth = getEndpointTraceCopperWidth(trace, "start")
+    const endCopperWidth = getEndpointTraceCopperWidth(trace, "end")
 
     const sourceTrace = sourceTraces.find(
       (st) => st.source_trace_id === trace.source_trace_id,
@@ -508,11 +559,21 @@ function checkTracesAreContiguous(
       if (!pads?.length) continue
 
       const isFirstPointConnected = pads.some((pad) =>
-        routePointTouchesPad(firstPoint, pad),
+        routePointTouchesPad(
+          firstPoint,
+          pad,
+          startCopperWidth,
+          padBounds.get(pad),
+        ),
       )
 
       const isLastPointConnected = pads.some((pad) =>
-        routePointTouchesPad(lastPoint, pad),
+        routePointTouchesPad(
+          lastPoint,
+          pad,
+          endCopperWidth,
+          padBounds.get(pad),
+        ),
       )
 
       // Direct endpoint contact already establishes this required port. Build
@@ -569,10 +630,28 @@ function checkTracesAreContiguous(
       let lastConnectsToAnyPad = false
 
       for (const pads of padMap.values()) {
-        if (pads.some((pad) => routePointTouchesPad(firstPoint, pad))) {
+        if (
+          pads.some((pad) =>
+            routePointTouchesPad(
+              firstPoint,
+              pad,
+              startCopperWidth,
+              padBounds.get(pad),
+            ),
+          )
+        ) {
           firstConnectsToAnyPad = true
         }
-        if (pads.some((pad) => routePointTouchesPad(lastPoint, pad))) {
+        if (
+          pads.some((pad) =>
+            routePointTouchesPad(
+              lastPoint,
+              pad,
+              endCopperWidth,
+              padBounds.get(pad),
+            ),
+          )
+        ) {
           lastConnectsToAnyPad = true
         }
       }
