@@ -7,7 +7,7 @@ import {
   source_component_misconfigured_error,
 } from "circuit-json"
 import { getSourcePortConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
-import { getReadableNameForElementId } from "./util/get-readable-names"
+import { getSwitchShortDiagnostic } from "./get-switch-short-diagnostic"
 
 type SwitchingComponent = SourceSimplePushButton | SourceSimpleSwitch
 type SubcircuitConnectivityKey = string
@@ -38,6 +38,9 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
         element.type === "source_component" ||
         element.type === "source_component_internal_connection",
     ),
+  )
+  const externalConnectivity = getSourcePortConnectivityMapFromCircuitJson(
+    circuitJson.filter((element) => element.type === "source_trace"),
   )
   const connectivity = getSourcePortConnectivityMapFromCircuitJson(circuitJson)
   const sourcePortIdsByConnectivityKey = new Map<
@@ -93,19 +96,19 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
     )
     if (!contactsAreConnected) continue
 
-    const switchName = getReadableNameForElementId(
+    const diagnostic = getSwitchShortDiagnostic(switchingComponent, {
       circuitJson,
-      switchingComponent.source_component_id,
-    )
+      sourcePorts,
+      contacts: schematicContactSourcePorts,
+      internalConnectivity,
+      externalConnectivity,
+    })
 
     errors.push(
       source_component_misconfigured_error.parse({
         type: "source_component_misconfigured_error",
-        message: `Switch ${switchName} has both schematic contacts connected to the same net. Check internallyConnectedPins and the footprint pin mapping.`,
+        ...diagnostic,
         source_component_ids: [switchingComponent.source_component_id],
-        source_port_ids: schematicContactSourcePorts.map(
-          (sourcePort) => sourcePort.source_port_id,
-        ),
         is_fatal: true,
       }),
     )

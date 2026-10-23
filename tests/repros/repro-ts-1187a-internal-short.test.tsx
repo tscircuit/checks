@@ -79,7 +79,7 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
             </Fragment>
           ))}
           <pcbnotetext
-            text="A-B: INTERNAL / ALWAYS CONNECTED"
+            text="A-B: DECLARED INTERNAL CONNECTION"
             pcbY={pcbY + 1.1}
             fontSize="0.3mm"
             color="#67e8f9"
@@ -91,7 +91,7 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
             color="#ffffff"
           />
           <pcbnotetext
-            text="C-D: INTERNAL / ALWAYS CONNECTED"
+            text="C-D: DECLARED INTERNAL CONNECTION"
             pcbY={pcbY - 1.1}
             fontSize="0.3mm"
             color="#67e8f9"
@@ -105,7 +105,7 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
         color="#67e8f9"
       />
       <pcbnotetext
-        text="SHORT EXISTS EVEN WHEN BUTTON IS RELEASED"
+        text="DECLARED INTERNAL CONNECTIONS JOIN SIGNAL AND GND"
         pcbY={-9}
         fontSize="0.35mm"
         color="#ffffff"
@@ -123,8 +123,8 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
 
   expect(errors.map((error) => error.message)).toMatchInlineSnapshot(`
     [
-      "Switch SW_RESET has both schematic contacts connected to the same net. Check internallyConnectedPins and the footprint pin mapping.",
-      "Switch SW_BOOT has both schematic contacts connected to the same net. Check internallyConnectedPins and the footprint pin mapping.",
+      "SW_RESET: SW_RESET.A (ESP_EN) and SW_RESET.B (GND) are declared internally connected, joining ESP_EN to GND. Check the pin connections and footprint mapping.",
+      "SW_BOOT: SW_BOOT.A (ESP_GPIO0) and SW_BOOT.B (GND) are declared internally connected, joining ESP_GPIO0 to GND. Check the pin connections and footprint mapping.",
     ]
   `)
   expect(
@@ -134,4 +134,58 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
       showErrorsInTextOverlay: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
+
+  const separateRecords = structuredClone(circuitJson)
+  for (const element of separateRecords) {
+    if (element.type !== "source_component") continue
+    const internalGroups = element.internally_connected_source_port_ids ?? []
+    element.internally_connected_source_port_ids = undefined
+    for (const [index, source_port_ids] of internalGroups.entries()) {
+      separateRecords.push({
+        type: "source_component_internal_connection",
+        source_component_internal_connection_id: `${element.source_component_id}_internal_${index}`,
+        source_component_id: element.source_component_id,
+        source_port_ids,
+      })
+    }
+  }
+  expect(
+    checkTwoTerminalSwitchContactsOnDifferentNets(separateRecords).map(
+      (error) => error.message,
+    ),
+  ).toEqual(errors.map((error) => error.message))
+
+  const aliasCircuit = structuredClone(circuitJson)
+  const sourceNetIds = aliasCircuit.flatMap((element) => {
+    if (element.type !== "source_net") return []
+    return [element.source_net_id]
+  })
+  aliasCircuit.push({
+    type: "source_trace",
+    source_trace_id: "source_trace_net_aliases",
+    connected_source_port_ids: [],
+    connected_source_net_ids: sourceNetIds,
+  })
+  expect(
+    checkTwoTerminalSwitchContactsOnDifferentNets(aliasCircuit).map(
+      (error) => error.message,
+    ),
+  ).toEqual([
+    "SW_RESET: contacts SW_RESET.A and SW_RESET.C are electrically connected. Check the wiring and internal pin mapping; the two switch contacts must be on separate nets.",
+    "SW_BOOT: contacts SW_BOOT.A and SW_BOOT.C are electrically connected. Check the wiring and internal pin mapping; the two switch contacts must be on separate nets.",
+  ])
+
+  const unnamedCircuit = structuredClone(circuitJson)
+  for (const element of unnamedCircuit) {
+    if (element.type === "source_component" || element.type === "source_net")
+      element.name = ""
+    if (element.type === "source_port") element.name = ""
+  }
+  const unnamedErrors =
+    checkTwoTerminalSwitchContactsOnDifferentNets(unnamedCircuit)
+  expect(unnamedErrors).toHaveLength(2)
+  for (const error of unnamedErrors) {
+    expect(error.message).toContain("unnamed net")
+    expect(error.message).not.toMatch(/source_(?:port|component|net)_/)
+  }
 })
