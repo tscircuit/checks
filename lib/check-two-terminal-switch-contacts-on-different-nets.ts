@@ -27,11 +27,11 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
   const sourcePorts = circuitJson.filter(
     (element): element is SourcePort => element.type === "source_port",
   )
-  const schematicSourcePortIds = new Set(
-    circuitJson.flatMap((element) =>
-      element.type === "schematic_port" ? [element.source_port_id] : [],
-    ),
-  )
+  const schematicSourcePortIds = new Set<SourcePortId>()
+  for (const element of circuitJson) {
+    if (element.type !== "schematic_port") continue
+    schematicSourcePortIds.add(element.source_port_id)
+  }
   const internalConnectivity = getSourcePortConnectivityMapFromCircuitJson(
     circuitJson.filter(
       (element) =>
@@ -40,7 +40,7 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
     ),
   )
   const connectivity = getSourcePortConnectivityMapFromCircuitJson(circuitJson)
-  const portsByConnectivityKey = new Map<
+  const sourcePortIdsByConnectivityKey = new Map<
     SubcircuitConnectivityKey,
     SourcePortId[]
   >()
@@ -50,11 +50,19 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
       port.subcircuit_id,
       port.subcircuit_connectivity_map_key,
     ])
-    const ports = portsByConnectivityKey.get(subcircuitConnectivityKey) ?? []
-    ports.push(port.source_port_id)
-    portsByConnectivityKey.set(subcircuitConnectivityKey, ports)
+    let sourcePortIds = sourcePortIdsByConnectivityKey.get(
+      subcircuitConnectivityKey,
+    )
+    if (!sourcePortIds) {
+      sourcePortIds = []
+      sourcePortIdsByConnectivityKey.set(
+        subcircuitConnectivityKey,
+        sourcePortIds,
+      )
+    }
+    sourcePortIds.push(port.source_port_id)
   }
-  connectivity.addConnections([...portsByConnectivityKey.values()])
+  connectivity.addConnections([...sourcePortIdsByConnectivityKey.values()])
   const errors: SourceComponentMisconfiguredError[] = []
 
   for (const switchingComponent of switchingComponents) {
@@ -63,32 +71,37 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
         port.source_component_id === switchingComponent.source_component_id &&
         schematicSourcePortIds.has(port.source_port_id),
     )
-    const schematicContactSourcePorts =
-      schematicSourcePorts.length === 2
-        ? schematicSourcePorts
-        : schematicSourcePorts.filter(
-            (sourcePort, index) =>
-              schematicSourcePorts.findIndex((otherSourcePort) =>
-                internalConnectivity.areIdsConnected(
-                  sourcePort.source_port_id,
-                  otherSourcePort.source_port_id,
-                ),
-              ) === index,
-          )
+    let schematicContactSourcePorts = schematicSourcePorts
+    if (schematicSourcePorts.length > 2) {
+      schematicContactSourcePorts = []
+      const internalContactIds = new Set<string>()
+      for (const sourcePort of schematicSourcePorts) {
+        const internalContactId =
+          internalConnectivity.getNetConnectedToId(sourcePort.source_port_id) ??
+          sourcePort.source_port_id
+        if (internalContactIds.has(internalContactId)) continue
+        internalContactIds.add(internalContactId)
+        schematicContactSourcePorts.push(sourcePort)
+      }
+    }
     if (schematicContactSourcePorts.length !== 2) continue
 
-    if (
-      !connectivity.areIdsConnected(
-        schematicContactSourcePorts[0].source_port_id,
-        schematicContactSourcePorts[1].source_port_id,
-      )
+    const [firstContact, secondContact] = schematicContactSourcePorts
+    const contactsAreConnected = connectivity.areIdsConnected(
+      firstContact.source_port_id,
+      secondContact.source_port_id,
     )
-      continue
+    if (!contactsAreConnected) continue
+
+    const switchName = getReadableNameForElementId(
+      circuitJson,
+      switchingComponent.source_component_id,
+    )
 
     errors.push(
       source_component_misconfigured_error.parse({
         type: "source_component_misconfigured_error",
-        message: `Switch ${getReadableNameForElementId(circuitJson, switchingComponent.source_component_id)} has both schematic contacts connected to the same net. Check internallyConnectedPins and the footprint pin mapping.`,
+        message: `Switch ${switchName} has both schematic contacts connected to the same net. Check internallyConnectedPins and the footprint pin mapping.`,
         source_component_ids: [switchingComponent.source_component_id],
         source_port_ids: schematicContactSourcePorts.map(
           (sourcePort) => sourcePort.source_port_id,
