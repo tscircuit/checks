@@ -193,7 +193,7 @@ export function checkPcbComponentOverlap(
 
           if (
             connMap.areIdsConnected(id1, id2) &&
-            canSameNetPadsOverlap({ elem1, elem2 }, circuitJson)
+            canSameNetPadsOverlap(elem1, elem2)
           ) {
             continue
           }
