@@ -8,7 +8,7 @@ import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-sourc
 test("TS-1187A internal connections short the webcam reset and boot switches", async () => {
   const circuit = new Circuit()
   circuit.add(
-    <board width="22mm" height="20mm" routingDisabled>
+    <board width="22mm" height="20mm" autorouter="auto-local">
       <TS_1187A_B_A_B
         name="SW_RESET"
         pcbY={4}
@@ -36,6 +36,10 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
   const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const errors = checkTwoTerminalSwitchContactsOnDifferentNets(circuitJson)
 
+  expect(
+    circuitJson.filter((element) => element.type === "pcb_trace").length,
+  ).toBeGreaterThan(0)
+
   expect(errors.map((error) => error.message)).toMatchInlineSnapshot(`
     [
       "Switch SW_RESET has both schematic contacts connected to the same net. Check internallyConnectedPins and the footprint pin mapping.",
@@ -47,7 +51,6 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
       width: 1400,
       height: 900,
       showErrorsInTextOverlay: true,
-      shouldDrawRatsNest: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
 })
