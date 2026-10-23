@@ -37,9 +37,6 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
     ),
   )
   const connectivity = getSourcePortConnectivityMapFromCircuitJson(circuitJson)
-  // Older circuits may describe external nets only through cached port keys.
-  // Join those ports as well, scoped to their subcircuit, without trusting the
-  // keys to already account for internally connected pins.
   const portsByConnectivityKey = new Map<string, string[]>()
   for (const port of sourcePorts) {
     if (!port.subcircuit_connectivity_map_key) continue
@@ -60,8 +57,6 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
         port.source_component_id === switchingComponent.source_component_id &&
         schematicSourcePortIds.has(port.source_port_id),
     )
-    // A terminal can have multiple schematic ports for its duplicated pads.
-    // Collapse only internal connections here, before checking external nets.
     const schematicContactSourcePorts =
       schematicSourcePorts.length === 2
         ? schematicSourcePorts
