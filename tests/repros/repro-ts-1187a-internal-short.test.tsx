@@ -132,7 +132,10 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
       width: 1400,
       height: 900,
       showErrorsInTextOverlay: true,
-    }),
+    }).replace(
+      "</svg>",
+      `<text x="10" y="60" fill="white" font-family="monospace" font-size="16">Checker diagnostics: ${errors.length}</text></svg>`,
+    ),
   ).toMatchSvgSnapshot(import.meta.path)
 
   const separateRecords = structuredClone(circuitJson)
