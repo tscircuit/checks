@@ -6,11 +6,12 @@ import {
   type SourceSimpleSwitch,
   source_component_misconfigured_error,
 } from "circuit-json"
-
 import { getSourcePortConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { getReadableNameForElementId } from "./util/get-readable-names"
 
 type SwitchingComponent = SourceSimplePushButton | SourceSimpleSwitch
+type SubcircuitConnectivityKey = string
+type SourcePortId = SourcePort["source_port_id"]
 
 export function checkTwoTerminalSwitchContactsOnDifferentNets(
   circuitJson: AnyCircuitElement[],
@@ -21,6 +22,8 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
       (element.ftype === "simple_push_button" ||
         element.ftype === "simple_switch"),
   )
+  if (switchingComponents.length === 0) return []
+
   const sourcePorts = circuitJson.filter(
     (element): element is SourcePort => element.type === "source_port",
   )
@@ -37,16 +40,19 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
     ),
   )
   const connectivity = getSourcePortConnectivityMapFromCircuitJson(circuitJson)
-  const portsByConnectivityKey = new Map<string, string[]>()
+  const portsByConnectivityKey = new Map<
+    SubcircuitConnectivityKey,
+    SourcePortId[]
+  >()
   for (const port of sourcePorts) {
     if (!port.subcircuit_connectivity_map_key) continue
-    const key = JSON.stringify([
+    const subcircuitConnectivityKey = JSON.stringify([
       port.subcircuit_id,
       port.subcircuit_connectivity_map_key,
     ])
-    const ports = portsByConnectivityKey.get(key) ?? []
+    const ports = portsByConnectivityKey.get(subcircuitConnectivityKey) ?? []
     ports.push(port.source_port_id)
-    portsByConnectivityKey.set(key, ports)
+    portsByConnectivityKey.set(subcircuitConnectivityKey, ports)
   }
   connectivity.addConnections([...portsByConnectivityKey.values()])
   const errors: SourceComponentMisconfiguredError[] = []
@@ -60,15 +66,15 @@ export function checkTwoTerminalSwitchContactsOnDifferentNets(
     const schematicContactSourcePorts =
       schematicSourcePorts.length === 2
         ? schematicSourcePorts
-        : [
-            ...new Map(
-              schematicSourcePorts.map((port) => [
-                internalConnectivity.getNetConnectedToId(port.source_port_id) ??
-                  port.source_port_id,
-                port,
-              ]),
-            ).values(),
-          ]
+        : schematicSourcePorts.filter(
+            (sourcePort, index) =>
+              schematicSourcePorts.findIndex((otherSourcePort) =>
+                internalConnectivity.areIdsConnected(
+                  sourcePort.source_port_id,
+                  otherSourcePort.source_port_id,
+                ),
+              ) === index,
+          )
     if (schematicContactSourcePorts.length !== 2) continue
 
     if (
