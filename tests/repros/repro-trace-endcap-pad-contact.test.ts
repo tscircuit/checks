@@ -80,22 +80,42 @@ test("round endcap touching a pad is connected even when its center is outside",
   const errors = checkTracesAreContiguous(circuitJson)
   expect(errors).toEqual([])
 
+  const statusColor = errors.length ? "#f87171" : "#4ade80"
   const annotations: AnyCircuitElement[] = [
     ...[
       { text: "U1.OUT", x: -0.8, y: 0.21 },
       { text: "U2.IN", x: 0, y: 0.21 },
       { text: "Endpoint center", x: endpointX, y: -0.21 },
+      {
+        text: `Connectivity errors: ${errors.length}`,
+        x: -0.4,
+        y: 0.35,
+        color: statusColor,
+      },
+      {
+        text: `Copper overlap: ${copperOverlap.toFixed(3)} mm (expected: connected)`,
+        x: -0.4,
+        y: -0.3,
+      },
+      {
+        text:
+          errors.map((error) => error.message).join("; ") ||
+          "No missing connections.",
+        x: -0.4,
+        y: -0.39,
+        color: statusColor,
+      },
     ].map(
-      ({ text, x, y }): AnyCircuitElement => ({
+      ({ text, x, y, color }): AnyCircuitElement => ({
         type: "pcb_note_text",
         pcb_note_text_id: text,
         text,
         anchor_position: { x, y },
         anchor_alignment: "center",
         font: "tscircuit2024",
-        font_size: 0.032,
+        font_size: 0.03,
         layer: "top",
-        color: "#1e3a8a",
+        color: color ?? "#fbbf24",
       }),
     ),
     {
@@ -107,7 +127,7 @@ test("round endcap touching a pad is connected even when its center is outside",
       y2: 0,
       stroke_width: 0.003,
       layer: "top",
-      color: "#1e3a8a",
+      color: "#fbbf24",
     },
     {
       type: "pcb_note_line",
@@ -118,41 +138,26 @@ test("round endcap touching a pad is connected even when its center is outside",
       y2: 0,
       stroke_width: 0.003,
       layer: "top",
-      color: "#1e3a8a",
+      color: "#fbbf24",
     },
   ]
-  const boardSvg = convertCircuitJsonToPcbSvg(
-    [...circuitJson, ...annotations],
-    {
-      width: 900,
-      height: 300,
-      viewport: { minX: -1.02, minY: -0.25, maxX: 0.25, maxY: 0.25 },
-      backgroundColor: "#ffffff",
-      colorOverrides: { copper: { top: "#c46a20" } },
-      includeVersion: false,
-    },
-  )
-  const color = errors.length ? "#b91c1c" : "#166534"
-  const message =
-    errors.map((error) => error.message).join("; ") || "No missing connections."
-  const escapedMessage = message
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-  // Render the real copper with circuit-to-svg; only the caption is added here.
-  // Both the count and diagnostic are derived from the checker's actual output.
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
-    <rect width="900" height="500" fill="white"/>
-    <g font-family="sans-serif" fill="#172033">
-      <text x="24" y="34" font-size="24" font-weight="bold">Trace endcap touching a pad</text>
-      <text x="24" y="70" font-size="22" font-weight="bold" fill="${color}">Connectivity errors: ${errors.length}</text>
-      <g transform="translate(0 85)">${boardSvg}</g>
-      <text x="24" y="405" font-size="18">Endpoint center: ${centerGap.toFixed(3)} mm outside pad. Copper overlap: ${copperOverlap.toFixed(3)} mm.</text>
-      <text x="24" y="435" font-size="18">Expected: connected. Both pads and the trace are on the top copper layer.</text>
-      <text x="24" y="476" font-size="18" fill="${color}">${escapedMessage}</text>
-    </g>
-  </svg>`
-  expect(svg).toMatchSvgSnapshot(import.meta.path)
+  // Keep the native error marker small; the full checker message is shown in
+  // the PCB note below the copper, so it does not cover the contact being tested.
+  const labeledErrors = errors.map((error, index) => ({
+    ...error,
+    message: `E${index + 1}`,
+  }))
+  expect(
+    convertCircuitJsonToPcbSvg(
+      [...circuitJson, ...labeledErrors, ...annotations],
+      {
+        width: 900,
+        height: 560,
+        viewport: { minX: -1.1, minY: -0.45, maxX: 0.3, maxY: 0.45 },
+        shouldDrawErrors: true,
+      },
+    ),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
 
 test("control: moving the same endcap away leaves a real copper gap", () => {
