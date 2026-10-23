@@ -74,12 +74,11 @@ const missingConnection = {
   message: "Trace [U1.OUT to U2.IN] is missing a connection to SMD pad U2.IN",
 }
 
-test("repro: round endcap touching a pad is reported as a missing connection", () => {
+test("round endcap touching a pad is connected even when its center is outside", () => {
   expect(centerGap).toBeGreaterThan(0)
   expect(copperOverlap).toBeCloseTo(0.029, 9)
   const errors = checkTracesAreContiguous(circuitJson)
-  // Capture the false positive on main; the stacked fix must change this to [].
-  expect(errors).toMatchObject([missingConnection])
+  expect(errors).toEqual([])
 
   const statusColor = errors.length ? "#f87171" : "#4ade80"
   const annotations: AnyCircuitElement[] = [
