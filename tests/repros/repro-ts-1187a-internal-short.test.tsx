@@ -3,8 +3,8 @@ import { Circuit } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { Fragment } from "react"
 import { checkTwoTerminalSwitchContactsOnDifferentNets } from "../../lib/check-two-terminal-switch-contacts-on-different-nets"
-import { TS_1187A_B_A_B } from "../fixtures/TS_1187A_B_A_B"
 import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
+import { TS_1187A_B_A_B } from "../fixtures/ts-1187a-b-a-b"
 
 test("TS-1187A internal connections short the webcam reset and boot switches", async () => {
   const circuit = new Circuit()
