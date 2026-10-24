@@ -31,7 +31,8 @@ export function checkNoGroundPinDefined(
   for (const component of sourceComponents) {
     const componentPorts =
       portsByComponent.get(component.source_component_id) ?? []
-    if (!shouldCheckChipPowerGroundPins(component, componentPorts)) continue
+    if (!shouldCheckChipPowerGroundPins(component, componentPorts, "ground"))
+      continue
 
     const hasRequiredGroundPin = componentPorts.some(
       (port) => port.requires_ground === true,
