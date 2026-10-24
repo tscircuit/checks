@@ -8,6 +8,49 @@ import type {
 import { getReadableNameForComponent } from "./util/get-readable-names"
 
 type FacingDirection = "x-" | "x+" | "y+" | "y-"
+type SourceComponentElement = Extract<
+  AnyCircuitElement,
+  { type: "source_component" }
+>
+
+const FLEX_SOCKET_PATTERN =
+  /(?:^|[^a-z0-9])(?:(?:fpc|ffc)(?:\d+|[^a-z0-9]|$)|fh\d{2}[a-z0-9-]*)/i
+
+function isFlexSocketIdentifier(value: string | undefined): boolean {
+  return Boolean(value && FLEX_SOCKET_PATTERN.test(value))
+}
+
+function isInternalOrFlexSocket(
+  component: PcbComponent,
+  sourceComponent: SourceComponentElement | undefined,
+): boolean {
+  if (
+    (component as { accessible_from_board_edge?: boolean })
+      .accessible_from_board_edge === false ||
+    (sourceComponent as { accessible_from_board_edge?: boolean } | undefined)
+      ?.accessible_from_board_edge === false
+  ) {
+    return true
+  }
+
+  const standard = (sourceComponent as { standard?: string } | undefined)
+    ?.standard
+  if (standard === "fpc" || standard === "ffc") {
+    return true
+  }
+
+  const kicadFootprint = component.metadata?.kicad_footprint
+  const identifiers = [
+    kicadFootprint?.footprintName,
+    kicadFootprint?.properties?.Value?.value,
+    kicadFootprint?.properties?.Description?.value,
+    sourceComponent?.manufacturer_part_number,
+    sourceComponent?.display_value,
+    sourceComponent?.display_name,
+  ]
+
+  return identifiers.some(isFlexSocketIdentifier)
+}
 
 function getFacingDirectionFromInsertionDirection(
   component: PcbComponent,
@@ -88,23 +131,27 @@ export function checkConnectorAccessibleOrientation(
     (el): el is PcbComponent => el.type === "pcb_component",
   )
 
-  const pinHeaderSourceIds = new Set(
-    circuitJson
-      .filter(
-        (el) =>
-          el.type === "source_component" && el.ftype === "simple_pin_header",
-      )
-      .map((el) => el.source_component_id),
-  )
+  const sourceComponentById = new Map<string, SourceComponentElement>()
+  for (const el of circuitJson) {
+    if (el.type === "source_component") {
+      sourceComponentById.set(el.source_component_id, el)
+    }
+  }
 
   for (const component of components) {
+    const sourceComponent = sourceComponentById.get(
+      component.source_component_id,
+    )
     // A pin header is normally accessed perpendicular to the PCB. Only an
     // explicit insertion direction can establish that it is a right-angle part.
     if (
       !component.insertion_direction &&
-      pinHeaderSourceIds.has(component.source_component_id)
+      sourceComponent?.ftype === "simple_pin_header"
     )
       continue
+
+    if (isInternalOrFlexSocket(component, sourceComponent)) continue
+
     const facingDirection = getFacingDirection(component)
     const recommendedFacingDirection = getRecommendedFacingDirection(
       component,
