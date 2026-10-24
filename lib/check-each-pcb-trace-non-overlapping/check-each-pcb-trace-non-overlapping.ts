@@ -22,6 +22,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "lib/add-start-and-end-port-ids-if-missing"
 import {
+  getPads,
   getTraceObstacleClearance,
   isTraceObstacleOverlap,
 } from "lib/check-pad-clearance/common"
@@ -111,8 +112,7 @@ export function checkEachPcbTraceNonOverlapping(
     }
     return segments
   })
-  const pcbSmtPads = cju(circuitJson).pcb_smtpad.list()
-  const pcbPlatedHoles = cju(circuitJson).pcb_plated_hole.list()
+  const pads = getPads(circuitJson)
   const pcbPorts = cju(circuitJson).pcb_port.list()
   const pcbHoles = cju(circuitJson).pcb_hole.list()
   const holeGeometryById = new Map(
@@ -128,8 +128,7 @@ export function checkEachPcbTraceNonOverlapping(
 
   const pcbComponentConnectionElements: PcbComponentConnectionElement[] = [
     ...pcbPorts,
-    ...pcbSmtPads,
-    ...pcbPlatedHoles,
+    ...pads,
   ]
   const excludedConnectionIdsByKeepoutId = new Map<string, string[]>()
   for (const keepout of pcbKeepouts) {
@@ -152,8 +151,7 @@ export function checkEachPcbTraceNonOverlapping(
 
   const allObjects: Collidable[] = [
     ...pcbTraceSegments,
-    ...pcbSmtPads,
-    ...pcbPlatedHoles,
+    ...pads,
     ...pcbHoles,
     ...pcbVias,
     ...pcbKeepouts,
