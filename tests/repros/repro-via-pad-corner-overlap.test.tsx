@@ -102,3 +102,26 @@ test("issue #241: routing reports GND via copper overlapping the R1.pin1 SMD pad
 
   expect(viaPadOverlapErrors).toHaveLength(1)
 })
+
+// Reproduces the placement-only gap in #241. The existing test and snapshot
+// above record the current result; this expected failure states the missing
+// behavior without changing the drill-in-pad rule or routing checks.
+test.failing(
+  "issue #241: placement should report the different-net via annulus overlapping an SMD pad corner",
+  async () => {
+    const circuit = new Circuit({
+      platform: {
+        placementDrcChecksDisabled: true,
+      },
+    })
+    circuit.add(<ManualViaPadCornerOverlap />)
+    await circuit.renderUntilSettled()
+
+    const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
+    const copperErrors = checkViaPadClearance(circuitJson)
+    expect(copperErrors).toHaveLength(1)
+
+    const placementErrors = await runAllPlacementChecks(circuitJson)
+    expect(placementErrors).toEqual(expect.arrayContaining(copperErrors))
+  },
+)
