@@ -57,6 +57,7 @@ export async function runAllPlacementChecks(
   const errors = [
     ...checkCopperToBoardEdgeClearance(circuitJson),
     ...checkViasInPads(circuitJson),
+    ...checkViaPadClearance(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverCutout(circuitJson),
     ...checkPcbCopperOverKeepout(circuitJson),
@@ -135,11 +136,21 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
 }
 
 export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
-  return [
+  const errors = [
     ...(await runAllPlacementChecks(circuitJson)),
     ...(await runAllSchematicChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
     ...(await runAllRoutingChecks(circuitJson)),
   ]
+  // Via-to-pad clearance belongs to both placement and routing validation.
+  // Preserve both public runners without reporting the same conflict twice.
+  const seenClearanceErrors = new Set<string>()
+  return errors.filter((error) => {
+    if (error.type !== "pcb_pad_pad_clearance_error") return true
+    const id = error.pcb_pad_pad_clearance_error_id
+    if (seenClearanceErrors.has(id)) return false
+    seenClearanceErrors.add(id)
+    return true
+  })
 }
