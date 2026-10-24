@@ -1,13 +1,101 @@
 import { getBoardBounds } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
+  CadComponent,
   PcbBoard,
   PcbComponent,
   PcbConnectorNotInAccessibleOrientationWarning,
+  SourceComponentBase,
 } from "circuit-json"
 import { getReadableNameForComponent } from "./util/get-readable-names"
 
 type FacingDirection = "x-" | "x+" | "y+" | "y-"
+
+type ConnectorAccessibilityFields = {
+  accessible_from_board_edge?: boolean
+  accessibleFromBoardEdge?: boolean
+  is_accessible_from_board_edge?: boolean
+  internal?: boolean
+  is_internal?: boolean
+  footprinter_string?: string
+  standard?: string
+}
+
+const FOOTPRINTER_FLEX_SOCKET_RE = /^(fpc|ffc)(?=\d|_|-|$)/i
+const FLEX_SOCKET_DESCRIPTOR_RE =
+  /\b(?:fpc\d*|ffc\d*|fh\d{2}[a-z]*|board[-_\s]+to[-_\s]+flex|flex[-_\s]+(?:socket|connector|receptacle))\b/i
+
+function getExplicitAccessibleFromBoardEdge(
+  record?: ConnectorAccessibilityFields,
+): boolean | undefined {
+  if (!record) return undefined
+  if (typeof record.accessible_from_board_edge === "boolean") {
+    return record.accessible_from_board_edge
+  }
+  if (typeof record.accessibleFromBoardEdge === "boolean") {
+    return record.accessibleFromBoardEdge
+  }
+  if (typeof record.is_accessible_from_board_edge === "boolean") {
+    return record.is_accessible_from_board_edge
+  }
+  if (typeof record.internal === "boolean") {
+    return !record.internal
+  }
+  if (typeof record.is_internal === "boolean") {
+    return !record.is_internal
+  }
+  return undefined
+}
+
+function isInternalOrFlexSocketConnector(
+  component: PcbComponent,
+  sourceComponent: SourceComponentBase | undefined,
+  cadComponents: CadComponent[],
+): boolean {
+  const pcbAccessible = getExplicitAccessibleFromBoardEdge(
+    component as PcbComponent & ConnectorAccessibilityFields,
+  )
+  if (pcbAccessible !== undefined) return !pcbAccessible
+
+  const sourceAccessible = getExplicitAccessibleFromBoardEdge(
+    sourceComponent as SourceComponentBase & ConnectorAccessibilityFields,
+  )
+  if (sourceAccessible !== undefined) return !sourceAccessible
+
+  if (sourceComponent?.ftype === "interconnect") return true
+
+  const footprinterStrings = [
+    (component as PcbComponent & ConnectorAccessibilityFields)
+      .footprinter_string,
+    ...cadComponents.map((cad) => cad.footprinter_string),
+  ]
+  for (const fp of footprinterStrings) {
+    if (fp && FOOTPRINTER_FLEX_SOCKET_RE.test(fp.trim())) {
+      return true
+    }
+  }
+
+  const kicad = component.metadata?.kicad_footprint
+  const descriptors = [
+    (
+      sourceComponent as
+        | (SourceComponentBase & ConnectorAccessibilityFields)
+        | undefined
+    )?.standard,
+    sourceComponent?.manufacturer_part_number,
+    sourceComponent?.display_name,
+    sourceComponent?.display_value,
+    kicad?.footprintName,
+    kicad?.model?.path,
+    kicad?.properties?.Value?.value,
+    kicad?.properties?.Description?.value,
+  ]
+
+  return descriptors.some(
+    (value) =>
+      typeof value === "string" && FLEX_SOCKET_DESCRIPTOR_RE.test(value),
+  )
+}
 
 function getFacingDirectionFromInsertionDirection(
   component: PcbComponent,
@@ -88,21 +176,46 @@ export function checkConnectorAccessibleOrientation(
     (el): el is PcbComponent => el.type === "pcb_component",
   )
 
-  const pinHeaderSourceIds = new Set(
-    circuitJson
-      .filter(
-        (el) =>
-          el.type === "source_component" && el.ftype === "simple_pin_header",
-      )
-      .map((el) => el.source_component_id),
-  )
+  const sourceComponentsById = new Map<string, SourceComponentBase>()
+  const cadComponentsByPcbId = new Map<string, CadComponent[]>()
+  const cadComponentsBySourceId = new Map<string, CadComponent[]>()
+
+  for (const el of circuitJson) {
+    if (el.type === "source_component") {
+      sourceComponentsById.set(el.source_component_id, el)
+    } else if (el.type === "cad_component") {
+      if (el.pcb_component_id) {
+        const list = cadComponentsByPcbId.get(el.pcb_component_id) ?? []
+        list.push(el)
+        cadComponentsByPcbId.set(el.pcb_component_id, list)
+      }
+      if (el.source_component_id) {
+        const list = cadComponentsBySourceId.get(el.source_component_id) ?? []
+        list.push(el)
+        cadComponentsBySourceId.set(el.source_component_id, list)
+      }
+    }
+  }
 
   for (const component of components) {
+    const sourceComponent = sourceComponentsById.get(
+      component.source_component_id,
+    )
+    const cadComponents = [
+      ...(cadComponentsByPcbId.get(component.pcb_component_id) ?? []),
+      ...(cadComponentsBySourceId.get(component.source_component_id) ?? []),
+    ]
+
+    if (
+      isInternalOrFlexSocketConnector(component, sourceComponent, cadComponents)
+    )
+      continue
+
     // A pin header is normally accessed perpendicular to the PCB. Only an
     // explicit insertion direction can establish that it is a right-angle part.
     if (
       !component.insertion_direction &&
-      pinHeaderSourceIds.has(component.source_component_id)
+      sourceComponent?.ftype === "simple_pin_header"
     )
       continue
     const facingDirection = getFacingDirection(component)
