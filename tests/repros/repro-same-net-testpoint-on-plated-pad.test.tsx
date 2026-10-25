@@ -4,7 +4,7 @@ import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectiv
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbComponentOverlap } from "lib/check-pcb-components-overlap/checkPcbComponentOverlap"
 
-test("repro: same-net testpoint on plated copper reports a footprint overlap", async () => {
+test("same-net testpoint on plated copper clears the drill without an overlap error", async () => {
   const circuit = new Circuit({
     platform: { placementDrcChecksDisabled: true },
   })
@@ -62,9 +62,7 @@ test("repro: same-net testpoint on plated copper reports a footprint overlap", a
   ).toBe(true)
 
   const errors = checkPcbComponentOverlap(circuitJson)
-  expect(errors).toHaveLength(1)
-  expect(errors[0].pcb_smtpad_ids).toEqual([pad.pcb_smtpad_id])
-  expect(errors[0].pcb_plated_hole_ids).toEqual([hole.pcb_plated_hole_id])
+  expect(errors).toHaveLength(0)
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       layer: "bottom",

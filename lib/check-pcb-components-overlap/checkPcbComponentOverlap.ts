@@ -17,6 +17,7 @@ import {
   getReadableNameForPort,
 } from "lib/util/get-readable-names"
 import type { PcbComponentOverlapError } from "../consolidate-pcb-overlap-errors"
+import { canSameNetPadsOverlap } from "./can-same-net-pads-overlap"
 import {
   type OverlappableElement,
   doPcbElementsOverlap,
@@ -190,12 +191,9 @@ export function checkPcbComponentOverlap(
             continue
           }
 
-          // Check if both are SMT pads and are electrically connected (same net) - if so, skip
-          // This allows pads with the same subcircuit connectivity to be in contact
           if (
-            elem1.type === "pcb_smtpad" &&
-            elem2.type === "pcb_smtpad" &&
-            connMap.areIdsConnected(id1, id2)
+            connMap.areIdsConnected(id1, id2) &&
+            canSameNetPadsOverlap({ elem1, elem2 }, circuitJson)
           ) {
             continue
           }
