@@ -1,0 +1,8 @@
+Detected 1 short in intentional-fault.circuit.json
+1. top/gerber short at x=5.317mm y=10.821mm
+   pcb_plated_hole_1, R1.pin1, source_net_3_0, pcb_via_3 <-> pcb_plated_hole_12, pcb_plated_hole_14, pcb_plated_hole_17, R3.pin2, R4.pin2, pcb_plated_hole_21, C2.pin2, C3.pin2, source_net_0_mst0_0, source_net_0_mst1_0, source_net_0_mst2_0, source_net_0_mst3_0, source_net_0_mst4_0, source_net_0_mst5_0, source_net_0_mst6_0, pcb_via_9, pcb_via_10, pcb_via_11, pcb_via_12, pcb_via_intentional_rc_car_fault
+   pixels=277
+Short debug artifact written to <repo>\dist\rc-car-via-pad-evidence\checks\check-shorts\bitmap.png
+Short debug artifact written to <repo>\dist\rc-car-via-pad-evidence\checks\check-shorts\pcb.svg
+
+EXIT_CODE=1

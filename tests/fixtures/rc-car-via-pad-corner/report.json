@@ -1,0 +1,74 @@
+{
+  "intentionallyIntroducedFault": true,
+  "description": "One added GND via and bottom spur; every original component and route is preserved. The original board is clean.",
+  "baselineChecker": "@tscircuit/checks@0.0.264",
+  "fixedChecker": "local PR source",
+  "cli": "tscircuit@0.0.3016",
+  "originalCanonicalSha256": "621429a16e5f9f15882f46cf1e7c64dc6604ca88641476a172037f91b9615346",
+  "placement": {
+    "originalBefore": [],
+    "originalAfter": [],
+    "faultyBefore": [],
+    "faultyAfter": [
+      {
+        "type": "pcb_pad_pad_clearance_error",
+        "pcb_pad_pad_clearance_error_id": "via_pad_clearance_pcb_via_intentional_rc_car_fault_pcb_smtpad_0",
+        "error_type": "pcb_pad_pad_clearance_error",
+        "message": "Via unnamed via and pad R1.pin1 are too close (clearance: 0mm, minimum: 0.1mm)",
+        "pcb_pad_ids": ["pcb_via_intentional_rc_car_fault", "pcb_smtpad_0"],
+        "minimum_clearance": 0.1,
+        "actual_clearance": 0,
+        "center": {
+          "x": 5.575,
+          "y": 10.7
+        }
+      }
+    ]
+  },
+  "gerber": [
+    {
+      "variant": "original",
+      "command": [
+        "bun",
+        "x",
+        "--bun",
+        "--package",
+        "tscircuit@0.0.3016",
+        "tsci",
+        "check",
+        "shorts",
+        "original.circuit.json",
+        "--mode",
+        "gerber",
+        "--layer",
+        "all",
+        "--pixels-per-mm",
+        "40"
+      ],
+      "exitCode": 0,
+      "shortCount": 0
+    },
+    {
+      "variant": "intentional-fault",
+      "command": [
+        "bun",
+        "x",
+        "--bun",
+        "--package",
+        "tscircuit@0.0.3016",
+        "tsci",
+        "check",
+        "shorts",
+        "intentional-fault.circuit.json",
+        "--mode",
+        "gerber",
+        "--layer",
+        "all",
+        "--pixels-per-mm",
+        "40"
+      ],
+      "exitCode": 1,
+      "shortCount": 1
+    }
+  ]
+}
