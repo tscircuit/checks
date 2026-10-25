@@ -291,25 +291,20 @@ test("rotated rectangular plated pads preserve slot rotation and offset", async 
   const errors = checkPcbComponentOverlap(circuitJson)
   expect(errors).toHaveLength(1)
   expect(errors[0].pcb_smtpad_ids).toEqual([drill.pcb_smtpad_id])
-  expect(
-    convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
-      layer: "bottom",
-      shouldDrawErrors: true,
-      showErrorsInTextOverlay: true,
-    }),
-  ).toMatchSvgSnapshot(import.meta.path)
 })
 
-test("clockwise polygon pads allow copper contact and preserve an offset circular drill", async () => {
+test("clockwise polygon pads allow same-net contact but reject drill intrusion and different-net edge contact", async () => {
   const circuit = new Circuit({
     platform: { placementDrcChecksDisabled: true },
   })
   circuit.add(
     <board name="B1" width={6} height={5} routingDisabled>
       <net name="GND" />
+      <net name="VCC" />
       <port name="PTH" connectsTo="net.GND" />
       <port name="SAFE" connectsTo="net.GND" />
       <port name="DRILL" connectsTo="net.GND" />
+      <port name="EDGE" connectsTo="net.VCC" />
       <platedhole
         portHints={["PTH"]}
         shape="hole_with_polygon_pad"
@@ -343,11 +338,19 @@ test("clockwise polygon pads allow copper contact and preserve an offset circula
         shape="circle"
         radius={0.1}
       />
+      <smtpad
+        portHints={["EDGE"]}
+        pcbX={1.95}
+        pcbY={0.8}
+        layer="bottom"
+        shape="circle"
+        radius={0.1}
+      />
     </board>,
   )
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
-  const [safe, drill] = circuit.db.pcb_smtpad.list()
+  const [safe, drill, edge] = circuit.db.pcb_smtpad.list()
   const hole = circuit.db.pcb_plated_hole.list()[0]
   expect(
     getFullConnectivityMapFromCircuitJson(circuitJson).areAllIdsConnected([
@@ -362,9 +365,29 @@ test("clockwise polygon pads allow copper contact and preserve an offset circula
   expect(
     canSameNetPadsOverlap({ elem1: drill, elem2: hole }, circuitJson),
   ).toBe(false)
+  expect(
+    getFullConnectivityMapFromCircuitJson(circuitJson).areIdsConnected(
+      edge.pcb_smtpad_id,
+      hole.pcb_plated_hole_id,
+    ),
+  ).toBe(false)
   const errors = checkPcbComponentOverlap(circuitJson)
-  expect(errors).toHaveLength(1)
-  expect(errors[0].pcb_smtpad_ids).toEqual([drill.pcb_smtpad_id])
+  expect(errors).toHaveLength(2)
+  expect(errors.flatMap((error) => error.pcb_smtpad_ids)).toEqual([
+    drill.pcb_smtpad_id,
+    edge.pcb_smtpad_id,
+  ])
+  await expect(
+    convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
+      layer: "bottom",
+      colorOverrides: {
+        copper: { top: "rgba(200, 52, 52, 0.35)" },
+        drill: "rgba(255, 38, 226, 0.35)",
+      },
+      shouldDrawErrors: true,
+      showErrorsInTextOverlay: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
 
 test("polygon plated pads distinguish an elliptical drill from a capsule slot", async () => {
