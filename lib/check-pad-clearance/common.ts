@@ -303,28 +303,11 @@ export const getPadToPadGap = (
   )
 }
 
-export const getPads = (circuitJson: AnyCircuitElement[]): PadElement[] => {
-  const db = cju(circuitJson)
-  const componentRotations = new Map(
-    db.pcb_component
-      .list()
-      .map((component) => [component.pcb_component_id, component.rotation]),
-  )
-  return [
-    ...db.pcb_smtpad.list(),
-    ...db.pcb_plated_hole.list().map((hole) => {
-      if (
-        hole.shape !== "hole_with_polygon_pad" ||
-        hole.ccw_rotation !== undefined
-      )
-        return hole
-      return {
-        ...hole,
-        ccw_rotation: componentRotations.get(hole.pcb_component_id ?? "") ?? 0,
-      }
-    }),
-  ]
-}
+export const getPads = (circuitJson: AnyCircuitElement[]) =>
+  [
+    ...cju(circuitJson).pcb_smtpad.list(),
+    ...cju(circuitJson).pcb_plated_hole.list(),
+  ] as PadElement[]
 
 export const getTraceSegments = (
   circuitJson: AnyCircuitElement[],

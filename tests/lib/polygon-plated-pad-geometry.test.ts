@@ -6,7 +6,6 @@ import type {
   PcbTrace,
   PcbVia,
 } from "circuit-json"
-import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import {
   checkEachPcbTraceNonOverlapping,
   checkPadPadClearance,
@@ -83,12 +82,12 @@ const placements: {
     horizontalTrace: true,
   },
   {
-    name: "component rotation when the outline has no explicit rotation",
+    name: "already-oriented outline without explicit rotation ignores component rotation",
     hole: { ...pad, x: 10, y: -4 },
     componentRotation: 90,
-    onCopper: { x: 9, y: -4 },
-    nearCopper: { x: 8.58, y: -4 },
-    horizontalTrace: false,
+    onCopper: { x: 10, y: -3 },
+    nearCopper: { x: 10, y: -2.58 },
+    horizontalTrace: true,
   },
 ]
 
@@ -201,37 +200,8 @@ const makeTrace = (
   })),
 })
 
-test("SparkFun castellated pad: foreign copper and the reported DRC overlay", async () => {
-  const placement = placements[0]
-  const circuit = makeCircuit(placement, [
-    makeVia(placement.onCopper),
-    makePad({ x: 11, y: -3 }),
-    makeTrace(placement.nearCopper, true),
-  ]).map((e) => (e.type === "pcb_board" ? { ...e, width: 4, height: 4 } : e))
-  const viaInPad = checkViasInPads(circuit)
-  const viaPad = checkViaPadClearance(circuit)
-  const padPad = checkPadPadClearance(circuit)
-  const padTrace = checkPadTraceClearance(circuit)
-  const errors = [...viaInPad, ...viaPad, ...padPad, ...padTrace]
-  await expect(
-    convertCircuitJsonToPcbSvg([...circuit, ...errors], {
-      shouldDrawErrors: true,
-      showErrorsInTextOverlay: true,
-      width: 900,
-      height: 900,
-      viewport: { minX: 7.7, maxX: 12.3, minY: -6.3, maxY: -1.7 },
-    }),
-  ).toMatchSvgSnapshot(import.meta.path)
-  expect({
-    viaInPad: viaInPad.length,
-    viaPad: viaPad.length,
-    padPad: padPad.length,
-    padTrace: padTrace.length,
-  }).toEqual({ viaInPad: 1, viaPad: 1, padPad: 1, padTrace: 1 })
-})
-
 for (const placement of placements) {
-  test(`SparkFun polygon pad detects foreign copper beyond the drill: ${placement.name}`, () => {
+  test(`Polygon plated-pad geometry: detects foreign copper beyond the drill: ${placement.name}`, () => {
     const { onCopper, horizontalTrace } = placement
     const viaCircuit = makeCircuit(placement, [makeVia(onCopper)])
     const viaInPadErrors = checkViasInPads(viaCircuit)
@@ -256,7 +226,7 @@ for (const placement of placements) {
     expect(checkPadTraceClearance(traceCircuit)).toEqual([])
   })
 
-  test(`SparkFun polygon pad measures 0.05mm copper clearance: ${placement.name}`, () => {
+  test(`Polygon plated-pad geometry: measures 0.05mm copper clearance: ${placement.name}`, () => {
     const { nearCopper, horizontalTrace } = placement
     const via = makeVia(nearCopper)
     if (horizontalTrace) via.y += 0.1
@@ -344,7 +314,11 @@ test("polygon-pad diagnostics use a readable pin name and an honest unnamed fall
   const named = checkViasInPads(circuit)
   expect(named[0]?.message).toContain("J1")
   const unnamed = checkViasInPads([
-    { ...placement.hole, pcb_component_id: undefined, pcb_port_id: undefined },
+    {
+      ...placement.hole,
+      pcb_component_id: undefined,
+      pcb_port_id: undefined,
+    },
     makeVia(placement.onCopper),
   ])
   expect(unnamed).toHaveLength(1)

@@ -222,7 +222,7 @@ describe("checkSourceTracesMatchPcbTraceThickness", () => {
       {
         type: "pcb_trace",
         pcb_trace_id: "source_trace_0_0",
-        source_trace_id: "some_other_trace_id",
+        source_trace_id: "source_trace_0",
         route: [
           {
             route_type: "wire",
@@ -324,7 +324,7 @@ describe("checkSourceTracesMatchPcbTraceThickness", () => {
       {
         type: "pcb_trace",
         pcb_trace_id: "source_trace_0_0",
-        source_trace_id: "some_other_trace_id",
+        source_trace_id: "source_trace_0",
         route: [
           {
             route_type: "wire",
@@ -368,7 +368,7 @@ describe("checkSourceTracesMatchPcbTraceThickness", () => {
       {
         type: "pcb_trace",
         pcb_trace_id: "source_trace_0_0",
-        source_trace_id: "some_other_trace_id",
+        source_trace_id: "source_trace_0",
         route: [
           {
             route_type: "wire",
