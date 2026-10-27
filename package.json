@@ -27,7 +27,7 @@
     "bun-match-svg": "^0.0.11",
     "circuit-json": "https://pkg.pr.new/circuit-json@39791fd",
     "circuit-json-to-connectivity-map": "^0.0.30",
-    "circuit-to-svg": "^0.0.453",
+    "circuit-to-svg": "git+https://github.com/tscircuit/circuit-to-svg.git#f50fdaae28d629c6768fd278818ea5a964fd16eb",
     "debug": "^4.3.5",
     "format-si-unit": "^0.0.12",
     "tscircuit": "^0.0.2861",
@@ -47,6 +47,7 @@
     "typescript": "^5.5.3",
     "@tscircuit/circuit-json-util": "*"
   },
+  "trustedDependencies": ["circuit-to-svg"],
   "overrides": {
     "circuit-json": "https://pkg.pr.new/circuit-json@39791fd"
   },
