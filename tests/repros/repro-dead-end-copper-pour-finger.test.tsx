@@ -3,7 +3,7 @@ import { Circuit } from "@tscircuit/core"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { runAllRoutingChecks } from "../../lib/run-all-checks"
 
-test("repro: routing checks miss a dead-end GND pour finger", async () => {
+test("routing checks report the dead-end GND pour finger on a UART adapter", async () => {
   const circuit = new Circuit()
   circuit.add(
     <board width={14} height={16} layers={2} schematicDisabled routingDisabled>
@@ -90,8 +90,15 @@ test("repro: routing checks miss a dead-end GND pour finger", async () => {
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
   const errors = await runAllRoutingChecks(circuitJson)
-  // The narrow top-layer tongue has no pad/via/trace at its tip, but passes DRC.
-  expect(errors).toEqual([])
+  // Bottom-layer connectivity does not terminate the unused top-layer finger.
+  expect(errors).toHaveLength(1)
+  expect(errors[0]).toMatchObject({
+    type: "pcb_placement_error",
+    is_fatal: false,
+  })
+  expect(errors[0].message).toMatchInlineSnapshot(
+    `"Copper pour (GND) on top has a possible dead-end finger near (-0.20mm, 2.10mm): approximately 4.49mm long, 0.96mm wide. Review the pour or add a same-net connection near the tip."`,
+  )
   await expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       layer: "top",
