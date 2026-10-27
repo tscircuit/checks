@@ -25,7 +25,7 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
-    "circuit-json": "^0.0.525",
+    "circuit-json": "https://pkg.pr.new/circuit-json@39791fd",
     "circuit-json-to-connectivity-map": "^0.0.30",
     "circuit-to-svg": "^0.0.453",
     "debug": "^4.3.5",
@@ -46,6 +46,9 @@
     "circuit-json-to-connectivity-map": "*",
     "typescript": "^5.5.3",
     "@tscircuit/circuit-json-util": "*"
+  },
+  "overrides": {
+    "circuit-json": "https://pkg.pr.new/circuit-json@39791fd"
   },
   "dependencies": {
     "flatbush": "^4.6.2"

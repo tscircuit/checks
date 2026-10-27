@@ -1,7 +1,12 @@
 import { expect, test } from "bun:test"
-import type { AnyCircuitElement } from "circuit-json"
+import {
+  pcb_copper_pour_style_warning,
+  any_circuit_element,
+  type AnyCircuitElement,
+} from "circuit-json"
 import { checkCopperPourIslands, runAllRoutingChecks } from "../../index"
 import am3352Island from "../fixtures/am3352-ground-pour-island.json"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 
 const square = (r: number) => [
   { x: -r, y: -r },
@@ -42,11 +47,20 @@ test("reports a net-assigned pour even when the net has no terminals", () => {
   const errors = check(pour)
   expect(errors).toHaveLength(1)
   expect(errors[0]).toMatchObject({
-    type: "pcb_placement_error",
-    pcb_placement_error_id: "copper_pour_island_pcb_copper_pour_island",
-    is_fatal: false,
+    type: "pcb_copper_pour_style_warning",
+    pcb_copper_pour_style_warning_id:
+      "pcb_copper_pour_style_warning_island_pcb_copper_pour_island",
+    warning_type: "pcb_copper_pour_style_warning",
+    styling_issue_type: "isolated_island",
+    pcb_copper_pour_id: pour.pcb_copper_pour_id,
+    source_net_id: net.source_net_id,
+    layer: "top",
+    center: { x: 0, y: 0 },
     subcircuit_id: "subcircuit_test",
   })
+  expect(pcb_copper_pour_style_warning.parse(errors[0])).toEqual(errors[0])
+  expect(any_circuit_element.parse(errors[0])).toEqual(errors[0])
+  expect(errors[0]).not.toHaveProperty("error_type")
   expect(errors[0].message).toContain("GND")
   expect(errors[0].message).toContain("top near (0.00 mm, 0.00 mm)")
   expect(errors[0].message).not.toContain(net.source_net_id)
@@ -86,8 +100,8 @@ test("one grounded island does not hide a separate island on the same net", () =
     height: 2,
   }
   const errors = check(pour, island, via)
-  expect(errors.map((e) => e.pcb_placement_error_id)).toEqual([
-    "copper_pour_island_pcb_copper_pour_remote",
+  expect(errors.map((e) => e.pcb_copper_pour_style_warning_id)).toEqual([
+    "pcb_copper_pour_style_warning_island_pcb_copper_pour_remote",
   ])
 })
 
@@ -235,9 +249,9 @@ test("routing checks include the island diagnostic", async () => {
   expect(
     errors.some(
       (error) =>
-        error.type === "pcb_placement_error" &&
-        error.pcb_placement_error_id ===
-          "copper_pour_island_pcb_copper_pour_island",
+        error.type === "pcb_copper_pour_style_warning" &&
+        error.pcb_copper_pour_style_warning_id ===
+          "pcb_copper_pour_style_warning_island_pcb_copper_pour_island",
     ),
   ).toBe(true)
 })
@@ -249,8 +263,8 @@ test("detects an isolated GND island from the AM3352 routing proof", () => {
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain("GND")
   expect(errors[0].message).toContain("inner1")
-  expect(errors[0].pcb_placement_error_id).toBe(
-    "copper_pour_island_plane_inner1_68",
+  expect(errors[0].pcb_copper_pour_style_warning_id).toBe(
+    "pcb_copper_pour_style_warning_island_plane_inner1_68",
   )
 })
 
@@ -288,4 +302,53 @@ test("wire-to-via route segments connect fill to emitted via copper", () => {
     ],
   }
   expect(check(pour, trace, { ...via, x: 4 }, padRecords(true)[1])).toEqual([])
+})
+
+test("visual snapshot highlights the real AM3352 island and clears after via contact", () => {
+  const original = structuredClone(am3352Island) as AnyCircuitElement[]
+  const fill = original.find((e) => e.type === "pcb_copper_pour")
+  if (fill?.shape !== "brep")
+    throw new Error("Expected the AM3352 BRep fixture")
+  const vertices = fill.brep_shape.outer_ring.vertices
+  const center = {
+    x: vertices.reduce((sum, vertex) => sum + vertex.x, 0) / vertices.length,
+    y: vertices.reduce((sum, vertex) => sum + vertex.y, 0) / vertices.length,
+  }
+  const anchored: AnyCircuitElement[] = [
+    ...original,
+    {
+      type: "pcb_via",
+      pcb_via_id: "pcb_via_ground_contact",
+      source_net_id: fill.source_net_id,
+      ...center,
+      outer_diameter: 0.4,
+      hole_diameter: 0.1,
+      layers: ["top", "inner1", "inner2", "inner3", "inner4", "bottom"],
+    },
+  ]
+  const panels = [original, anchored].map((circuit, index) => {
+    const warnings = checkCopperPourIslands(circuit)
+    expect(warnings).toHaveLength(index === 0 ? 1 : 0)
+    const drawing = convertCircuitJsonToPcbSvg(circuit, {
+      layer: "inner1",
+      width: 360,
+      height: 360,
+      viewport: { minX: 4.5, maxX: 6.3, minY: 1.4, maxY: 3.2 },
+    })
+    // The SVG renderer does not yet support the new warning type. Draw the
+    // advisory marker from its structured center, over the real copper render.
+    const markers = warnings.map((warning) => {
+      const x = (warning.center.x - 4.5) * 200
+      const y = (3.2 - warning.center.y) * 200
+      return `<g transform="translate(${x},${y})"><circle r="13" fill="none" stroke="#f59e0b" stroke-width="3"/><path d="M-19 0H19M0-19V19" stroke="#f59e0b" stroke-width="2"/></g>`
+    })
+    const title =
+      index === 0 ? "Isolated GND island" : "GND via contacts the island"
+    return `<g transform="translate(${index * 400 + 20},0)"><text x="180" y="32" text-anchor="middle" font-size="18">${title}</text><g transform="translate(0,55)">${drawing.replace("</svg>", `${markers.join("")}</svg>`)}</g><text x="180" y="445" text-anchor="middle" font-size="16" fill="${warnings.length ? "#92400e" : "#166534"}">${warnings.length} copper pour style warning${warnings.length === 1 ? "" : "s"}</text></g>`
+  })
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="510" viewBox="0 0 800 510"><rect width="800" height="510" fill="#f8fafc"/><g font-family="sans-serif" fill="#111827">${panels.join("")}<text x="400" y="480" text-anchor="middle" font-size="14">AM3352 original inner1 copper, board-world millimeters</text><text x="400" y="500" text-anchor="middle" font-size="12">Amber crosshair: warning.center · Connected copper has no warning</text></g></svg>`
+  expect(svg).toMatchSvgSnapshot(
+    import.meta.path,
+    "am3352-island-style-warning",
+  )
 })

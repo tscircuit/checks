@@ -1,4 +1,4 @@
-import type { AnyCircuitElement, PcbPlacementError } from "circuit-json"
+import type { AnyCircuitElement, PcbCopperPourStyleWarning } from "circuit-json"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
@@ -14,7 +14,7 @@ import { getReadableNameForElementId } from "./util/get-readable-names"
 export function checkCopperPourIslands(
   circuitJson: AnyCircuitElement[],
   { connMap }: { connMap?: ConnectivityMap } = {},
-): PcbPlacementError[] {
+): PcbCopperPourStyleWarning[] {
   if (!circuitJson.some((e) => e.type === "pcb_copper_pour" && e.source_net_id))
     return []
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
@@ -22,18 +22,24 @@ export function checkCopperPourIslands(
     .getIsolatedPours()
     .map((pour) => {
       const box = getPourPolygon(pour).box
-      const x = ((box.xmin + box.xmax) / 2).toFixed(2)
-      const y = ((box.ymin + box.ymax) / 2).toFixed(2)
+      const center = {
+        x: (box.xmin + box.xmax) / 2,
+        y: (box.ymin + box.ymax) / 2,
+      }
       const netName = getReadableNameForElementId(
         circuitJson,
         pour.source_net_id!,
       )
       return {
-        type: "pcb_placement_error",
-        pcb_placement_error_id: `copper_pour_island_${pour.pcb_copper_pour_id}`,
-        error_type: "pcb_placement_error",
-        is_fatal: false,
-        message: `Copper pour for ${netName} has an isolated island on ${pour.layer} near (${x} mm, ${y} mm) with no physical connection to a same-net pad or via`,
+        type: "pcb_copper_pour_style_warning",
+        pcb_copper_pour_style_warning_id: `pcb_copper_pour_style_warning_island_${pour.pcb_copper_pour_id}`,
+        warning_type: "pcb_copper_pour_style_warning",
+        styling_issue_type: "isolated_island",
+        pcb_copper_pour_id: pour.pcb_copper_pour_id,
+        source_net_id: pour.source_net_id,
+        layer: pour.layer,
+        center,
+        message: `Copper pour for ${netName} has an isolated island on ${pour.layer} near (${center.x.toFixed(2)} mm, ${center.y.toFixed(2)} mm) with no physical connection to a same-net pad or via`,
         subcircuit_id: pour.subcircuit_id,
       }
     })
