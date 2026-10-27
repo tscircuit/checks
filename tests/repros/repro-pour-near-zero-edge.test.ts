@@ -13,6 +13,7 @@ test.failing(
         pcb_copper_pour_id: "pour",
         layer: "bottom",
         shape: "brep",
+        covered_with_solder_mask: false,
         brep_shape: {
           outer_ring: {
             vertices: [
@@ -27,9 +28,9 @@ test.failing(
               vertices: [
                 { x: 2.0060000000000024, y: -7.0489999999999995 },
                 { x: 2.0060000000000024, y: -7.048999999999997 },
-                  { x: 2.005559999870567, y: -7.040043591610283 },
+                { x: 2.005559999870567, y: -7.040043591610283 },
                 { x: 3, y: -7 },
-                  ],
+              ],
             },
           ],
         },
