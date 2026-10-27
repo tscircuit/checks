@@ -41,9 +41,9 @@ test("full published AM3352 board: detect and natively render the GND island war
       height: 1160,
       shouldDrawWarnings: true,
     })
-    expect(svg.split('class="pcb-copper-pour-style-warning"').length - 1).toBe(
-      count,
-    )
+    expect(
+      svg.split('class="pcb-copper-pour-isolated-warning"').length - 1,
+    ).toBe(count)
     expect(svg).toContain(
       `Copper pour for GND has an isolated island on ${layer}`,
     )

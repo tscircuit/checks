@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import {
-  pcb_copper_pour_style_warning,
+  pcb_copper_pour_isolated_warning,
   any_circuit_element,
   type AnyCircuitElement,
 } from "circuit-json"
@@ -46,18 +46,17 @@ test("reports a net-assigned pour even when the net has no terminals", () => {
   const errors = check(pour)
   expect(errors).toHaveLength(1)
   expect(errors[0]).toMatchObject({
-    type: "pcb_copper_pour_style_warning",
-    pcb_copper_pour_style_warning_id:
-      "pcb_copper_pour_style_warning_island_pcb_copper_pour_island",
-    warning_type: "pcb_copper_pour_style_warning",
-    styling_issue_type: "isolated_island",
+    type: "pcb_copper_pour_isolated_warning",
+    pcb_copper_pour_isolated_warning_id:
+      "pcb_copper_pour_isolated_warning_pcb_copper_pour_island",
+    warning_type: "pcb_copper_pour_isolated_warning",
     pcb_copper_pour_id: pour.pcb_copper_pour_id,
     source_net_id: net.source_net_id,
     layer: "top",
     center: { x: 0, y: 0 },
     subcircuit_id: "subcircuit_test",
   })
-  expect(pcb_copper_pour_style_warning.parse(errors[0])).toEqual(errors[0])
+  expect(pcb_copper_pour_isolated_warning.parse(errors[0])).toEqual(errors[0])
   expect(any_circuit_element.parse(errors[0])).toEqual(errors[0])
   expect(errors[0]).not.toHaveProperty("error_type")
   expect(errors[0].message).toContain("GND")
@@ -99,8 +98,8 @@ test("one grounded island does not hide a separate island on the same net", () =
     height: 2,
   }
   const errors = check(pour, island, via)
-  expect(errors.map((e) => e.pcb_copper_pour_style_warning_id)).toEqual([
-    "pcb_copper_pour_style_warning_island_pcb_copper_pour_remote",
+  expect(errors.map((e) => e.pcb_copper_pour_isolated_warning_id)).toEqual([
+    "pcb_copper_pour_isolated_warning_pcb_copper_pour_remote",
   ])
 })
 
@@ -248,9 +247,9 @@ test("routing checks include the island diagnostic", async () => {
   expect(
     errors.some(
       (error) =>
-        error.type === "pcb_copper_pour_style_warning" &&
-        error.pcb_copper_pour_style_warning_id ===
-          "pcb_copper_pour_style_warning_island_pcb_copper_pour_island",
+        error.type === "pcb_copper_pour_isolated_warning" &&
+        error.pcb_copper_pour_isolated_warning_id ===
+          "pcb_copper_pour_isolated_warning_pcb_copper_pour_island",
     ),
   ).toBe(true)
 })
@@ -262,8 +261,8 @@ test("detects an isolated GND island from the AM3352 routing proof", () => {
   expect(errors).toHaveLength(1)
   expect(errors[0].message).toContain("GND")
   expect(errors[0].message).toContain("inner1")
-  expect(errors[0].pcb_copper_pour_style_warning_id).toBe(
-    "pcb_copper_pour_style_warning_island_plane_inner1_68",
+  expect(errors[0].pcb_copper_pour_isolated_warning_id).toBe(
+    "pcb_copper_pour_isolated_warning_plane_inner1_68",
   )
 })
 

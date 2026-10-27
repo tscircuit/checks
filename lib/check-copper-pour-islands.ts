@@ -1,4 +1,7 @@
-import type { AnyCircuitElement, PcbCopperPourStyleWarning } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbCopperPourIsolatedWarning,
+} from "circuit-json"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
@@ -14,7 +17,7 @@ import { getReadableNameForElementId } from "./util/get-readable-names"
 export function checkCopperPourIslands(
   circuitJson: AnyCircuitElement[],
   { connMap }: { connMap?: ConnectivityMap } = {},
-): PcbCopperPourStyleWarning[] {
+): PcbCopperPourIsolatedWarning[] {
   if (!circuitJson.some((e) => e.type === "pcb_copper_pour" && e.source_net_id))
     return []
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
@@ -31,10 +34,9 @@ export function checkCopperPourIslands(
         pour.source_net_id!,
       )
       return {
-        type: "pcb_copper_pour_style_warning",
-        pcb_copper_pour_style_warning_id: `pcb_copper_pour_style_warning_island_${pour.pcb_copper_pour_id}`,
-        warning_type: "pcb_copper_pour_style_warning",
-        styling_issue_type: "isolated_island",
+        type: "pcb_copper_pour_isolated_warning",
+        pcb_copper_pour_isolated_warning_id: `pcb_copper_pour_isolated_warning_${pour.pcb_copper_pour_id}`,
+        warning_type: "pcb_copper_pour_isolated_warning",
         pcb_copper_pour_id: pour.pcb_copper_pour_id,
         source_net_id: pour.source_net_id,
         layer: pour.layer,
