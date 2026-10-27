@@ -2,9 +2,9 @@
 
 [Reproduction PR #484](https://github.com/tscircuit/checks/pull/484) reduces a
 saved-board failure to one bottom-layer copper pour and one trace. Running
-`bun test tests/repros/repro-pour-near-zero-edge.test.ts` produces two passing
-visual snapshots and records the current checker crash with `test.failing`.
-The stacked fix must turn that assertion into a normal passing test.
+`bun test tests/repros/repro-pour-near-zero-edge.test.ts` produces two visual
+snapshots. The reproduction branch records the checker crash with `test.failing`;
+this stacked fix turns that assertion into a normal passing test.
 
 ## What fails
 
@@ -41,3 +41,12 @@ The independent [Flatten fix](https://github.com/alexbol99/flatten-js/pull/257)
 is in another repository. A checks-local fix can be stacked directly on #484
 without changing or waiting for that dependency. It must preserve holes, curved
 boundaries, layer-aware connectivity and real short/open findings.
+
+## Checks-local fix
+
+The contact tester rebuilds polygons with edges that Flatten considers zero
+length omitted. This uses Flatten's numeric zero predicate after the existing
+coordinate scaling, not the PCB contact-clearance tolerance. Nonzero edges,
+curved shapes and each face's winding remain; holes are not discarded. The
+original input polygon is not mutated, and exceptions are not swallowed.
+No dependency update or unpublished Flatten build is required.

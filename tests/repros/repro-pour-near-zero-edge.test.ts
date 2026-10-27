@@ -4,7 +4,6 @@ import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkEachPcbPortConnectedToPcbTraces } from "lib/check-each-pcb-port-connected-to-pcb-trace"
 
 // Saved-board geometry; a native TSX crash reproduction remains unestablished.
-// Keep snapshot assertions outside test.failing so visual failures remain failures.
 const circuit: AnyCircuitElement[] = [
   {
     type: "pcb_copper_pour",
@@ -80,9 +79,8 @@ test("near-zero pour cutout edge visual context", async () => {
   }
 })
 
-test.failing(
-  "required-port checking handles a pour with near-zero cutout edges",
-  () => {
-    expect(checkEachPcbPortConnectedToPcbTraces(circuit)).toEqual([])
-  },
-)
+test("required-port checking handles a pour with near-zero cutout edges", () => {
+  const before = structuredClone(circuit)
+  expect(checkEachPcbPortConnectedToPcbTraces(circuit)).toEqual([])
+  expect(circuit).toEqual(before)
+})

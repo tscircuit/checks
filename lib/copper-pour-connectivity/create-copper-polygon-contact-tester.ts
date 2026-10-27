@@ -1,10 +1,11 @@
 import {
-  Box,
   type Arc,
+  Box,
   type Point,
   Polygon,
   type PolygonEdge,
   type Segment,
+  Utils,
 } from "@flatten-js/core"
 
 interface PolygonGeometry {
@@ -21,14 +22,24 @@ export function createCopperPolygonContactTester(tolerance: number) {
   const getGeometry = (polygon: Polygon): PolygonGeometry => {
     let geometry = cache.get(polygon)
     if (!geometry) {
-      // Geometry producers may load another Flatten instance. Its shapes fail
-      // Flatten's instanceof dispatch, even if both copies have the same version.
-      // Reconstruct once using the supported JSON format, preserving curved
-      // edges and face winding; retain the original polygon as the cache key.
+      // Rebuild foreign Flatten shapes and discard only edges its predicates
+      // treat as zero length: ray shooting cannot normalize those directions.
+      // Keep face winding, holes and arcs; never mutate the input polygon.
       let localPolygon = polygon
-      if (polygon.constructor !== Polygon) {
+      if (
+        polygon.constructor !== Polygon ||
+        [...polygon.edges].some((edge) => Utils.EQ_0(edge.length))
+      ) {
         localPolygon = new Polygon(
-          polygon.toJSON() as ConstructorParameters<typeof Polygon>[0],
+          [...polygon.faces]
+            .map((face) =>
+              [...face]
+                .filter((edge) => !Utils.EQ_0(edge.length))
+                .map((edge) => edge.shape.toJSON()),
+            )
+            .filter((face) => face.length > 0) as ConstructorParameters<
+            typeof Polygon
+          >[0],
         )
       }
       geometry = {
