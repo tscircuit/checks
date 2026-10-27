@@ -61,6 +61,19 @@ export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
     }
   }
 
+  if (pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad") {
+    const points = getPolygonPointsForPad(pad)
+    if (points.length === 0) {
+      return { minX: pad.x, minY: pad.y, maxX: pad.x, maxY: pad.y }
+    }
+    return {
+      minX: Math.min(...points.map((point) => point.x)),
+      minY: Math.min(...points.map((point) => point.y)),
+      maxX: Math.max(...points.map((point) => point.x)),
+      maxY: Math.max(...points.map((point) => point.y)),
+    }
+  }
+
   return getBoundsOfPcbElements([pad])
 }
 
@@ -150,8 +163,8 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
 
   if (
     pad.type === "pcb_plated_hole" &&
-    "rect_pad_width" in pad &&
-    "rect_pad_height" in pad
+    (("rect_pad_width" in pad && "rect_pad_height" in pad) ||
+      pad.shape === "hole_with_polygon_pad")
   ) {
     return {
       kind: "polygon" as const,
