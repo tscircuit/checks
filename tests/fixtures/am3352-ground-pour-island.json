@@ -1,0 +1,40 @@
+[
+  {
+    "type": "source_net",
+    "source_net_id": "source_net_56",
+    "name": "GND",
+    "member_source_group_ids": [],
+    "is_ground": true,
+    "is_power": false,
+    "is_positive_voltage_source": false,
+    "subcircuit_id": "subcircuit_source_group_0",
+    "subcircuit_connectivity_map_key": "unnamedsubcircuitsubcircuit_source_group_0_connectivity_net47"
+  },
+  {
+    "type": "pcb_copper_pour",
+    "pcb_copper_pour_id": "plane_inner1_68",
+    "layer": "inner1",
+    "source_net_id": "source_net_56",
+    "subcircuit_id": "subcircuit_source_group_0",
+    "shape": "brep",
+    "brep_shape": {
+      "outer_ring": {
+        "vertices": [
+          {
+            "x": 5.793590383943251,
+            "y": 1.8102585384535541
+          },
+          {
+            "x": 5.051542534180132,
+            "y": 2.743802607510383
+          },
+          {
+            "x": 5.245911196763249,
+            "y": 2.563317420826061
+          }
+        ]
+      },
+      "inner_rings": []
+    }
+  }
+]

@@ -4,6 +4,8 @@ import type {
   AnyCircuitElement,
   LayerRef,
   PcbPort,
+  PcbCopperPour,
+  PcbTraceRoutePoint,
   SourceNet,
 } from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
@@ -24,13 +26,28 @@ interface Conductor {
   netId: NetId
   portIds?: PcbPortId[]
   isPour?: boolean
+  pour?: PcbCopperPour
+  isTerminal?: boolean
+}
+
+const getRouteEndpoint = (point: PcbTraceRoutePoint, side: "start" | "end") => {
+  if (point.route_type === "wire") return { point, layer: point.layer }
+  if (point.route_type === "via")
+    return {
+      point,
+      layer: side === "start" ? point.from_layer : point.to_layer,
+    }
+  return {
+    point: point[side],
+    layer: side === "start" ? point.start_layer : point.end_layer,
+  }
 }
 
 /** Physical pour connectivity in board-world mm (+X right, +Y up).
  * Only touching copper on a common layer forms an edge. Plated pads and vias
  * bridge their emitted layers; logical net membership never joins islands.
- * Constant-width wire copper can connect pours. Interpolated traces and inline
- * via inference are left to the existing trace checks; emitted barrels bridge layers.
+ * Trace segments, including interpolated widths, can connect pours. Only
+ * emitted plated barrels bridge layers; logical route IDs never join islands.
  */
 export function getCopperPourConnectivity(
   circuitJson: AnyCircuitElement[],
@@ -53,14 +70,14 @@ export function getCopperPourConnectivity(
   }
   for (const pour of circuitJson) {
     if (pour.type !== "pcb_copper_pour" || !pour.source_net_id) continue
-    const netId = netForId(pour.source_net_id)
-    if (!netId) continue
+    const netId = netForId(pour.source_net_id) ?? pour.source_net_id
     pouredNets.add(netId)
     add({
       polygon: getPourPolygon(pour),
       layers: [pour.layer],
       netId,
       isPour: true,
+      pour,
     })
   }
   const components = new Map(
@@ -72,24 +89,33 @@ export function getCopperPourConnectivity(
     for (const copper of circuitJson) {
       if (copper.type === "pcb_trace") {
         const netId = netForId(copper.pcb_trace_id)
-        if (
-          !netId ||
-          !pouredNets.has(netId) ||
-          copper.route_thickness_mode === "interpolated"
-        )
-          continue
+        if (!netId || !pouredNets.has(netId)) continue
         for (let i = 0; i < copper.route.length - 1; i++) {
           const start = copper.route[i]
           const end = copper.route[i + 1]
-          if (
-            start.route_type !== "wire" ||
-            end.route_type !== "wire" ||
-            start.layer !== end.layer
-          )
-            continue
+          const from = getRouteEndpoint(start, "end")
+          const to = getRouteEndpoint(end, "start")
+          if (from.layer !== to.layer) continue
+          const width =
+            start.route_type === "via"
+              ? end.route_type === "via"
+                ? undefined
+                : end.width
+              : start.width
+          if (width === undefined) continue
+          const endWidth =
+            copper.route_thickness_mode === "interpolated" &&
+            end.route_type !== "via"
+              ? end.width
+              : width
           add({
-            polygon: getTraceSegmentPolygon(start, end, start.width),
-            layers: [start.layer],
+            polygon: getTraceSegmentPolygon(
+              from.point,
+              to.point,
+              width,
+              endWidth,
+            ),
+            layers: [from.layer],
             netId,
           })
         }
@@ -109,6 +135,7 @@ export function getCopperPourConnectivity(
           layers: [copper.layer],
           netId,
           portIds: copper.pcb_port_id ? [copper.pcb_port_id] : [],
+          isTerminal: !!copper.pcb_port_id,
         })
       } else if (copper.type === "pcb_plated_hole") {
         add({
@@ -121,6 +148,7 @@ export function getCopperPourConnectivity(
           layers: copper.layers,
           netId,
           portIds: copper.pcb_port_id ? [copper.pcb_port_id] : [],
+          isTerminal: !!copper.pcb_port_id,
         })
       } else {
         add({
@@ -132,6 +160,7 @@ export function getCopperPourConnectivity(
           layers: copper.layers,
           netId,
           portIds: copper.pcb_port_ids,
+          isTerminal: true,
         })
       }
     }
@@ -192,7 +221,17 @@ export function getCopperPourConnectivity(
     ports.push(port.pcb_port_id)
     portsByNet.set(netId, ports)
   }
+  const terminalRoots = new Set(
+    conductors.flatMap((conductor, i) =>
+      conductor.isTerminal ? [find(i)] : [],
+    ),
+  )
   return {
+    getIsolatedPours(): PcbCopperPour[] {
+      return conductors.flatMap((conductor, i) =>
+        conductor.pour && !terminalRoots.has(find(i)) ? [conductor.pour] : [],
+      )
+    },
     isPortConnectedToNet(
       portId: PcbPortId,
       sourceNetIds: SourceNet["source_net_id"][],
