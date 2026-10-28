@@ -1,4 +1,5 @@
 import { getBoardBounds } from "@tscircuit/circuit-json-util"
+import { getBoundsFromPoints } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
   PcbBoard,
@@ -75,7 +76,8 @@ export function checkConnectorAccessibleOrientation(
 
   const bounds = (() => {
     try {
-      return getBoardBounds(board)
+      // An explicit outline may be offset from the nominal center/width/height.
+      return getBoundsFromPoints(board.outline ?? []) ?? getBoardBounds(board)
     } catch {
       return null
     }
