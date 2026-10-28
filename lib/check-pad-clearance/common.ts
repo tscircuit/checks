@@ -19,7 +19,10 @@ import type {
   PcbTrace,
   PcbVia,
 } from "circuit-json"
-import type { PcbTraceSegment } from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
+import {
+  getCollidableBounds,
+  type PcbTraceSegment,
+} from "lib/check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import {
   getPillCenterLineForPad,
   getPolygonPointsForPad,
@@ -59,6 +62,10 @@ export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
       maxX: pad.center.x + pad.width / 2,
       maxY: pad.center.y + pad.height / 2,
     }
+  }
+
+  if (pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad") {
+    return getCollidableBounds(pad)
   }
 
   return getBoundsOfPcbElements([pad])
@@ -150,8 +157,8 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
 
   if (
     pad.type === "pcb_plated_hole" &&
-    "rect_pad_width" in pad &&
-    "rect_pad_height" in pad
+    (pad.shape === "hole_with_polygon_pad" ||
+      ("rect_pad_width" in pad && "rect_pad_height" in pad))
   ) {
     return {
       kind: "polygon" as const,
