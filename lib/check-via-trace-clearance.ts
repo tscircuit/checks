@@ -1,4 +1,8 @@
-import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
+import {
+  createReadableNameContext,
+  getReadableNameForElementId as getReadableNameForElement,
+  type ReadableNameContext,
+} from "lib/util/get-readable-names"
 
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
@@ -53,6 +57,16 @@ export function checkViaTraceClearance(
     { error: PcbViaTraceClearanceError; gap: number }
   >()
   const overlappingPairIds = new Set<string>()
+  const readableNameById = new Map<string, string>()
+  let readableNameContext: ReadableNameContext | undefined
+  const getReadableName = (id: string): string => {
+    const cached = readableNameById.get(id)
+    if (cached !== undefined) return cached
+    readableNameContext ??= createReadableNameContext(circuitJson)
+    const name = getReadableNameForElement(circuitJson, id, readableNameContext)
+    readableNameById.set(id, name)
+    return name
+  }
 
   for (const via of vias) {
     const layers = getLayersOfPcbElement(via)
@@ -89,20 +103,19 @@ export function checkViaTraceClearance(
       if (overlappingPairIds.has(pairId)) continue
       if (gap + EPSILON >= minClearance!) continue
 
-      const nextError: PcbViaTraceClearanceError = {
-        type: "pcb_via_trace_clearance_error",
-        pcb_via_trace_clearance_error_id: `via_trace_clearance_${pairId}`,
-        error_type: "pcb_via_trace_clearance_error",
-        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
-        pcb_via_id: via.pcb_via_id,
-        pcb_trace_id: segment.pcb_trace_id,
-        minimum_clearance: minClearance,
-        actual_clearance: gap,
-        center,
-      }
-
       const current = errors.get(pairId)
       if (!current || gap < current.gap) {
+        const nextError: PcbViaTraceClearanceError = {
+          type: "pcb_via_trace_clearance_error",
+          pcb_via_trace_clearance_error_id: `via_trace_clearance_${pairId}`,
+          error_type: "pcb_via_trace_clearance_error",
+          message: `Via ${getReadableName(via.pcb_via_id)} and trace ${getReadableName(segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
+          pcb_via_id: via.pcb_via_id,
+          pcb_trace_id: segment.pcb_trace_id,
+          minimum_clearance: minClearance,
+          actual_clearance: gap,
+          center,
+        }
         errors.set(pairId, { error: nextError, gap })
       }
     }

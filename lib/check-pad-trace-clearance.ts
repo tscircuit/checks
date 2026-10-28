@@ -1,4 +1,8 @@
-import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
+import {
+  createReadableNameContext,
+  getReadableNameForElementId as getReadableNameForElement,
+  type ReadableNameContext,
+} from "lib/util/get-readable-names"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { AnyCircuitElement, PcbPadTraceClearanceError } from "circuit-json"
@@ -47,6 +51,16 @@ export function checkPadTraceClearance(
     { error: PcbPadTraceClearanceError; gap: number }
   >()
   const overlappingPairIds = new Set<string>()
+  const readableNameById = new Map<string, string>()
+  let readableNameContext: ReadableNameContext | undefined
+  const getReadableName = (id: string): string => {
+    const cached = readableNameById.get(id)
+    if (cached !== undefined) return cached
+    readableNameContext ??= createReadableNameContext(circuitJson)
+    const name = getReadableNameForElement(circuitJson, id, readableNameContext)
+    readableNameById.set(id, name)
+    return name
+  }
 
   for (const segment of segments) {
     const nearbyPads = spatialIndex.getObjectsInBounds(
@@ -68,20 +82,19 @@ export function checkPadTraceClearance(
       if (overlappingPairIds.has(pairId)) continue
       if (gap + EPSILON >= minClearance!) continue
 
-      const nextError: PcbPadTraceClearanceError = {
-        type: "pcb_pad_trace_clearance_error" as const,
-        pcb_pad_trace_clearance_error_id: `pad_trace_clearance_${pairId}`,
-        error_type: "pcb_pad_trace_clearance_error",
-        message: `Pad ${getReadableNameForElement(circuitJson, padId)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
-        pcb_pad_id: padId,
-        pcb_trace_id: segment.pcb_trace_id,
-        minimum_clearance: minClearance,
-        actual_clearance: gap,
-        center,
-      }
-
       const current = errors.get(pairId)
       if (!current || gap < current.gap) {
+        const nextError: PcbPadTraceClearanceError = {
+          type: "pcb_pad_trace_clearance_error" as const,
+          pcb_pad_trace_clearance_error_id: `pad_trace_clearance_${pairId}`,
+          error_type: "pcb_pad_trace_clearance_error",
+          message: `Pad ${getReadableName(padId)} and trace ${getReadableName(segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
+          pcb_pad_id: padId,
+          pcb_trace_id: segment.pcb_trace_id,
+          minimum_clearance: minClearance,
+          actual_clearance: gap,
+          center,
+        }
         errors.set(pairId, { error: nextError, gap })
       }
     }

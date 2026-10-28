@@ -1,4 +1,8 @@
-import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
+import {
+  createReadableNameContext,
+  getReadableNameForElementId as getReadableNameForElement,
+  type ReadableNameContext,
+} from "lib/util/get-readable-names"
 import {
   getHoleGeometries,
   getTraceHoleClearance,
@@ -164,8 +168,16 @@ export function checkEachPcbTraceNonOverlapping(
     getBounds: getCollidableBounds,
   })
 
-  const getReadableName = (id: string) =>
-    getReadableNameForElement(circuitJson, id)
+  const readableNameById = new Map<string, string>()
+  let readableNameContext: ReadableNameContext | undefined
+  const getReadableName = (id: string): string => {
+    const cached = readableNameById.get(id)
+    if (cached !== undefined) return cached
+    readableNameContext ??= createReadableNameContext(circuitJson)
+    const name = getReadableNameForElement(circuitJson, id, readableNameContext)
+    readableNameById.set(id, name)
+    return name
+  }
 
   const constructErrorMessage = (
     traceName: string,
