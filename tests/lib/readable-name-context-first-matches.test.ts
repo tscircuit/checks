@@ -98,6 +98,47 @@ test("readable name indexes preserve first matching typed IDs and source-port ma
       outer_diameter: 0.4,
       layers: ["top", "bottom"],
     },
+    {
+      type: "pcb_port",
+      pcb_port_id: "unlinked",
+      source_port_id: "missing_source_port",
+      x: 0,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "source_component",
+      source_component_id: "",
+      ftype: "simple_chip",
+      name: "U0",
+    },
+    {
+      type: "source_port",
+      source_port_id: "empty_component_port",
+      source_component_id: "",
+      name: "ZERO",
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "empty_parent_pin",
+      source_port_id: "empty_component_port",
+      x: 0,
+      y: 0,
+      layers: ["top"],
+    },
+    {
+      type: "source_port",
+      source_port_id: "ownerless",
+      name: "TEST",
+    },
+    {
+      type: "pcb_port",
+      pcb_port_id: "ownerless_pin",
+      source_port_id: "ownerless",
+      x: 0,
+      y: 0,
+      layers: ["top"],
+    },
   ]
   const context = createReadableNameContext(circuit)
   for (const id of [
@@ -108,6 +149,10 @@ test("readable name indexes preserve first matching typed IDs and source-port ma
     "second",
     "trace",
     "missing",
+    "unlinked",
+    "empty_parent_pin",
+    "ownerless_pin",
+    "",
   ]) {
     expect(getReadableNameForElementId(circuit, id, context)).toBe(
       getReadableNameForElementId(circuit, id),
@@ -126,5 +171,12 @@ test("readable name indexes preserve first matching typed IDs and source-port ma
       getReadableNameForSourceTrace(circuit, sourceTrace),
     )
   }
+  expect(getReadableNameForPort(circuit, "ownerless_pin", context)).toBe("TEST")
   expect(getReadableNameForPort(circuit, "shared", context)).toBe("U1.A")
+  expect(getReadableNameForPort(circuit, "unlinked", context)).toBe(
+    "unnamed port",
+  )
+  expect(getReadableNameForPort(circuit, "empty_parent_pin", context)).toBe(
+    "U0.ZERO",
+  )
 })
