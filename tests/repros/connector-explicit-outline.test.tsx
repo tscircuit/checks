@@ -15,7 +15,7 @@ test("offset outline exposes a false microSD warning independently of HDMI metad
         process.execPath,
         resolve(
           import.meta.dir,
-          "../fixtures/build-connector-outline-repro.ts",
+          "../fixtures/build-connector-explicit-outline.ts",
         ),
         outdir,
       ],
