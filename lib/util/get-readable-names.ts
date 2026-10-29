@@ -1,6 +1,7 @@
 import type {
   AnyCircuitElement,
   PcbPlatedHole,
+  PcbPort,
   PcbSmtPad,
   SourceTrace,
   SourcePort,
@@ -19,7 +20,7 @@ export type ReadableNameContext = {
     AnyCircuitElement["type"],
     ReadableElementIndex
   >
-  pcbPortsBySourcePortId: ReadableElementIndex
+  pcbPortsBySourcePortId: ReadonlyMap<string | undefined, PcbPort>
 }
 
 /**
@@ -34,10 +35,7 @@ export const createReadableNameContext = (
     AnyCircuitElement["type"],
     Map<string | undefined, AnyCircuitElement>
   >()
-  const pcbPortsBySourcePortId = new Map<
-    string | undefined,
-    AnyCircuitElement
-  >()
+  const pcbPortsBySourcePortId = new Map<string | undefined, PcbPort>()
   for (const element of circuitJson) {
     const id = getPrimaryId(element)
     if (!elementsById.has(id)) elementsById.set(id, element)

@@ -111,7 +111,7 @@ export function checkEachPcbTraceNonOverlapping(
         y1: p1.y,
         x2: p2.x,
         y2: p2.y,
-      } as PcbTraceSegment)
+      })
     }
     return segments
   })
@@ -266,7 +266,7 @@ export function checkEachPcbTraceNonOverlapping(
         continue
       }
 
-      const primaryObjId = getPrimaryId(obj as any)
+      const primaryObjId = getPrimaryId(obj)
       if (
         connMap.areIdsConnected(
           segmentA.pcb_trace_id,

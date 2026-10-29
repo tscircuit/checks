@@ -70,7 +70,7 @@ export function checkPadTraceClearance(
 
     for (const pad of nearbyPads) {
       const padId = getPrimaryId(pad)
-      if (!getLayersOfPcbElement(pad as any).includes(segment.layer)) continue
+      if (!getLayersOfPcbElement(pad).includes(segment.layer)) continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, padId)) continue
       const pairId = `${padId}_${segment.pcb_trace_id}`
       const { gap, center } = getTraceObstacleClearance(segment, pad)
@@ -85,7 +85,7 @@ export function checkPadTraceClearance(
       const current = errors.get(pairId)
       if (!current || gap < current.gap) {
         const nextError: PcbPadTraceClearanceError = {
-          type: "pcb_pad_trace_clearance_error" as const,
+          type: "pcb_pad_trace_clearance_error",
           pcb_pad_trace_clearance_error_id: `pad_trace_clearance_${pairId}`,
           error_type: "pcb_pad_trace_clearance_error",
           message: `Pad ${getReadableName(padId)} and trace ${getReadableName(segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,

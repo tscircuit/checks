@@ -5,11 +5,7 @@ import {
 } from "lib/util/get-readable-names"
 
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
-import type {
-  AnyCircuitElement,
-  PcbVia,
-  PcbViaTraceClearanceError,
-} from "circuit-json"
+import type { AnyCircuitElement, PcbViaTraceClearanceError } from "circuit-json"
 import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
@@ -30,7 +26,7 @@ export function checkViaTraceClearance(
     minClearance,
   }: { connMap?: ConnectivityMap; minClearance?: number } = {},
 ): PcbViaTraceClearanceError[] {
-  const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
+  const vias = circuitJson.filter((el) => el.type === "pcb_via")
   const segments = getTraceSegments(circuitJson).map((segment) => ({
     ...segment,
     minX: Math.min(segment.x1, segment.x2),
