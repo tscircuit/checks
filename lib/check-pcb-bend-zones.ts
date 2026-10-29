@@ -153,7 +153,7 @@ export function checkPcbBendZonePlacement(
       type: "pcb_placement_error",
       pcb_placement_error_id: `bend_zone_${bend.pcb_bend_id}_${elementId}`,
       error_type: "pcb_placement_error",
-      message: `${getReadableNameForElementId({ circuitJson, elementId })} overlaps PCB bend zone ${getReadableNameForElementId({ circuitJson, elementId: bend.pcb_bend_id })}`,
+      message: `${getReadableNameForElementId(circuitJson, elementId)} overlaps PCB bend zone ${getReadableNameForElementId(circuitJson, bend.pcb_bend_id)}`,
       subcircuit_id: subcircuitId ?? bend.subcircuit_id,
     })
   }
@@ -320,7 +320,7 @@ export function checkPcbBendZoneTraces(
         type: "pcb_trace_error",
         pcb_trace_error_id: `bend_zone_${bend.pcb_bend_id}_${trace.pcb_trace_id}`,
         error_type: "pcb_trace_error",
-        message: `${violation.reason} for ${getReadableNameForTrace({ circuitJson, pcbTraceId: trace.pcb_trace_id })} overlaps PCB bend zone ${getReadableNameForElementId({ circuitJson, elementId: bend.pcb_bend_id })}`,
+        message: `${violation.reason} for ${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)} overlaps PCB bend zone ${getReadableNameForElementId(circuitJson, bend.pcb_bend_id)}`,
         center: violation.center,
         pcb_trace_id: trace.pcb_trace_id,
         source_trace_id: trace.source_trace_id ?? "",

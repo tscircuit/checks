@@ -131,10 +131,10 @@ export function checkSchematicComponentPortsOutsideBody(
       )
     }
 
-    const componentName = getReadableNameForElementId({
+    const componentName = getReadableNameForElementId(
       circuitJson,
-      elementId: component.schematic_component_id,
-    })
+      component.schematic_component_id,
+    )
     const portLabels = portsOutsideBody.map(getPortLabel).join(", ")
 
     warnings.push({

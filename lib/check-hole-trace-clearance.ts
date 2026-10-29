@@ -101,7 +101,7 @@ export function checkHoleTraceClearance(
               : [],
             pcb_port_ids: [],
             center,
-            message: `Trace ${getReadableNameForTrace({ circuitJson, pcbTraceId: trace.pcb_trace_id })} is too close to non-plated hole ${getReadableNameForElementId({ circuitJson, elementId: hole.pcb_hole_id })} (gap: ${gap.toFixed(6)}mm, required: ${required}mm)`,
+            message: `Trace ${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)} is too close to non-plated hole ${getReadableNameForElementId(circuitJson, hole.pcb_hole_id)} (gap: ${gap.toFixed(6)}mm, required: ${required}mm)`,
           },
         })
       }

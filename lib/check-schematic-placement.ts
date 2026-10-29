@@ -32,10 +32,10 @@ export function checkSchematicPlacement(
       switch (issue.lineItemType) {
         case "TwoPinComponentHasInvertedRails": {
           schematicComponentId = issue.schematicBox.schematicComponentId
-          const componentName = getReadableNameForElementId({
+          const componentName = getReadableNameForElementId(
             circuitJson,
-            elementId: schematicComponentId ?? "",
-          })
+            schematicComponentId ?? "",
+          )
           stylingIssueType = "inverted_rails"
           message = `${componentName} has its positive-supply pin facing down. Rotate ${componentName} by 180° so that pin faces up, preserving pin connections, and reroute attached traces.`
           break
@@ -43,20 +43,18 @@ export function checkSchematicPlacement(
         case "RegulatorCapacitorsOnWrongSides": {
           schematicComponentId =
             issue.regulatorSchematicBox.schematicComponentId
-          const regulatorName = getReadableNameForElementId({
+          const regulatorName = getReadableNameForElementId(
             circuitJson,
-            elementId: schematicComponentId ?? "",
-          })
-          const inputCapacitorName = getReadableNameForElementId({
+            schematicComponentId ?? "",
+          )
+          const inputCapacitorName = getReadableNameForElementId(
             circuitJson,
-            elementId:
-              issue.inputCapacitorSchematicBox.schematicComponentId ?? "",
-          })
-          const outputCapacitorName = getReadableNameForElementId({
+            issue.inputCapacitorSchematicBox.schematicComponentId ?? "",
+          )
+          const outputCapacitorName = getReadableNameForElementId(
             circuitJson,
-            elementId:
-              issue.outputCapacitorSchematicBox.schematicComponentId ?? "",
-          })
+            issue.outputCapacitorSchematicBox.schematicComponentId ?? "",
+          )
           stylingIssueType = "regulator_capacitors_on_wrong_sides"
           message = `${inputCapacitorName} and ${outputCapacitorName} are on the wrong sides of ${regulatorName}. Move them beside their connected regulator pins, preserving connections and rerouting traces.`
           break
@@ -64,20 +62,19 @@ export function checkSchematicPlacement(
         case "PullResistorOnWrongSide":
           schematicComponentId = issue.resistorSchematicBox.schematicComponentId
           stylingIssueType = "pull_resistor_on_wrong_side"
-          message = `consider placing ${getReadableNameForElementId({ circuitJson, elementId: schematicComponentId ?? "" })} ${issue.preferredSide} ${getReadableNameForElementId({ circuitJson, elementId: issue.hostSchematicBox.schematicComponentId ?? "" })}.${getReadableNameForElementId({ circuitJson, elementId: issue.signalSourcePortId })} so the pull-${issue.pullDirection} branch reads toward ${issue.pullDirection === "up" ? "power" : "ground"}`
+          message = `consider placing ${getReadableNameForElementId(circuitJson, schematicComponentId ?? "")} ${issue.preferredSide} ${getReadableNameForElementId(circuitJson, issue.hostSchematicBox.schematicComponentId ?? "")}.${getReadableNameForElementId(circuitJson, issue.signalSourcePortId)} so the pull-${issue.pullDirection} branch reads toward ${issue.pullDirection === "up" ? "power" : "ground"}`
           break
         case "VoltageDividerSupplyResistorBelowGroundResistor": {
           schematicComponentId =
             issue.supplyResistorSchematicBox.schematicComponentId
-          const supplyResistorName = getReadableNameForElementId({
+          const supplyResistorName = getReadableNameForElementId(
             circuitJson,
-            elementId: schematicComponentId ?? "",
-          })
-          const groundResistorName = getReadableNameForElementId({
+            schematicComponentId ?? "",
+          )
+          const groundResistorName = getReadableNameForElementId(
             circuitJson,
-            elementId:
-              issue.groundResistorSchematicBox.schematicComponentId ?? "",
-          })
+            issue.groundResistorSchematicBox.schematicComponentId ?? "",
+          )
           stylingIssueType =
             "voltage_divider_supply_resistor_below_ground_resistor"
           message = `${supplyResistorName}, connected to the supply, is below ${groundResistorName}, connected to ground. Place ${supplyResistorName} above ${groundResistorName} so their shared divider tap is easy to follow. Preserve pin connections and reroute affected traces; exact alignment is not required.`
@@ -88,10 +85,10 @@ export function checkSchematicPlacement(
             issue.ledSchematicBoxes[0]?.schematicComponentId
           const ledNames = issue.ledSchematicBoxes
             .map((box) =>
-              getReadableNameForElementId({
+              getReadableNameForElementId(
                 circuitJson,
-                elementId: box.schematicComponentId ?? "",
-              }),
+                box.schematicComponentId ?? "",
+              ),
             )
             .join(", ")
           stylingIssueType = "series_led_chain_not_ordered"
@@ -100,14 +97,14 @@ export function checkSchematicPlacement(
         }
         case "ParallelRcNotAligned": {
           schematicComponentId = issue.resistorSchematicBox.schematicComponentId
-          const resistorName = getReadableNameForElementId({
+          const resistorName = getReadableNameForElementId(
             circuitJson,
-            elementId: schematicComponentId ?? "",
-          })
-          const capacitorName = getReadableNameForElementId({
+            schematicComponentId ?? "",
+          )
+          const capacitorName = getReadableNameForElementId(
             circuitJson,
-            elementId: issue.capacitorSchematicBox.schematicComponentId ?? "",
-          })
+            issue.capacitorSchematicBox.schematicComponentId ?? "",
+          )
           stylingIssueType = "parallel_rc_not_aligned"
           message = `${resistorName} and ${capacitorName} share chip-pin and ground connections but are not drawn as adjacent parallel branches. Place their shared connections at matching ends, preserving pin connections and capacitor polarity, and reroute affected traces.`
           break

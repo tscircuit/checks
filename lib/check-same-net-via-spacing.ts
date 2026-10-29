@@ -47,7 +47,13 @@ export function checkSameNetViaSpacing(
       errors.push({
         type: "pcb_via_clearance_error",
         pcb_error_id: `same_net_vias_close_${pairId}`,
-        message: `Vias ${getReadableNameForElement({ circuitJson, elementId: viaA.pcb_via_id })} and ${getReadableNameForElement({ circuitJson, elementId: viaB.pcb_via_id })} are too close together (gap: ${gap.toFixed(3)}mm)`,
+        message: `Vias ${getReadableNameForElement(
+          circuitJson,
+          viaA.pcb_via_id,
+        )} and ${getReadableNameForElement(
+          circuitJson,
+          viaB.pcb_via_id,
+        )} are too close together (gap: ${gap.toFixed(3)}mm)`,
         error_type: "pcb_via_clearance_error",
         pcb_via_ids: [viaA.pcb_via_id, viaB.pcb_via_id],
         minimum_clearance: minClearance,

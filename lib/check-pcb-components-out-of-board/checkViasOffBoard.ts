@@ -25,10 +25,7 @@ export function checkViasOffBoard(
     const violation = violationsById.get(via.pcb_via_id)
     if (!violation) return []
 
-    const viaName = getReadableNameForElement({
-      circuitJson,
-      elementId: via.pcb_via_id,
-    })
+    const viaName = getReadableNameForElement(circuitJson, via.pcb_via_id)
     return [
       {
         ...violation,

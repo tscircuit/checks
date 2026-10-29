@@ -29,10 +29,10 @@ export function checkCopperPourIslands(
         x: (box.xmin + box.xmax) / 2,
         y: (box.ymin + box.ymax) / 2,
       }
-      const netName = getReadableNameForElementId({
+      const netName = getReadableNameForElementId(
         circuitJson,
-        elementId: pour.source_net_id!,
-      })
+        pour.source_net_id!,
+      )
       return {
         type: "pcb_copper_pour_isolated_warning",
         pcb_copper_pour_isolated_warning_id: `pcb_copper_pour_isolated_warning_${pour.pcb_copper_pour_id}`,

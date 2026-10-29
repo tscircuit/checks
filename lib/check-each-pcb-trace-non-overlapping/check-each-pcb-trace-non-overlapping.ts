@@ -2,7 +2,6 @@ import {
   createReadableNameContext,
   getReadableNameForElementId as getReadableNameForElement,
   type ReadableNameContext,
-  type CircuitElementId,
 } from "lib/util/get-readable-names"
 import {
   getHoleGeometries,
@@ -169,25 +168,22 @@ export function checkEachPcbTraceNonOverlapping(
     getBounds: getCollidableBounds,
   })
 
-  const readableNameById = new Map<CircuitElementId, string>()
+  const readableNameById = new Map<string, string>()
   let readableNameContext: ReadableNameContext | undefined
   const getReadableName = (id: string): string => {
     const cached = readableNameById.get(id)
     if (cached !== undefined) return cached
     readableNameContext ??= createReadableNameContext(circuitJson)
-    const name = getReadableNameForElement(
-      { circuitJson, elementId: id },
-      readableNameContext,
-    )
+    const name = getReadableNameForElement(circuitJson, id, readableNameContext)
     readableNameById.set(id, name)
     return name
   }
 
-  const constructErrorMessage = ({
-    traceName,
-    otherName,
-    gap,
-  }: { traceName: string; otherName: string; gap: number }): string => {
+  const constructErrorMessage = (
+    traceName: string,
+    otherName: string,
+    gap: number,
+  ) => {
     if (isTraceObstacleOverlap(gap)) {
       return `PCB trace ${traceName} overlaps with ${otherName} (accidental contact)`
     }
@@ -252,11 +248,11 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: constructErrorMessage({
-            traceName: getReadableName(segmentA.pcb_trace_id),
-            otherName: getReadableName(segmentB.pcb_trace_id),
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            getReadableName(segmentB.pcb_trace_id),
             gap,
-          }),
+          ),
           pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
           pcb_trace_error_id,
@@ -293,11 +289,11 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: constructErrorMessage({
-            traceName: getReadableName(segmentA.pcb_trace_id),
-            otherName: `${obj.type} "${getReadableName(primaryObjId)}"`,
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            `${obj.type} "${getReadableName(primaryObjId)}"`,
             gap,
-          }),
+          ),
           pcb_trace_id: segmentA.pcb_trace_id,
           center,
           source_trace_id: "",
@@ -327,11 +323,11 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: constructErrorMessage({
-            traceName: getReadableName(segmentA.pcb_trace_id),
-            otherName: `${obj.type} "${getReadableName(primaryObjId)}"`,
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            `${obj.type} "${getReadableName(primaryObjId)}"`,
             gap,
-          }),
+          ),
           pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: segmentA._pcbTrace.source_trace_id ?? "",
           pcb_trace_error_id,
@@ -362,7 +358,7 @@ export function checkEachPcbTraceNonOverlapping(
             pcb_keepout_overlap_warning_id: `pcb_keepout_overlap_warning_${pcb_trace_error_id}`,
             pcb_keepout_id: obj.pcb_keepout_id,
             pcb_trace_ids: [segmentA.pcb_trace_id],
-            message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} violates advisory PCB keepout "${getReadableNameForElement({ circuitJson, elementId: obj.pcb_keepout_id })}"`,
+            message: `PCB trace ${getReadableName(segmentA.pcb_trace_id)} violates advisory PCB keepout "${getReadableNameForElement(circuitJson, obj.pcb_keepout_id)}"`,
             center: getClosestPointBetweenSegmentAndBounds(
               segmentA,
               getCollidableBounds(obj),
@@ -375,11 +371,11 @@ export function checkEachPcbTraceNonOverlapping(
         errors.push({
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
-          message: constructErrorMessage({
-            traceName: getReadableName(segmentA.pcb_trace_id),
-            otherName: `${obj.type} "${getReadableName(getPrimaryId(obj))}"`,
+          message: constructErrorMessage(
+            getReadableName(segmentA.pcb_trace_id),
+            `${obj.type} "${getReadableName(getPrimaryId(obj))}"`,
             gap,
-          }),
+          ),
           pcb_trace_id: segmentA.pcb_trace_id,
           source_trace_id: "",
           pcb_trace_error_id,

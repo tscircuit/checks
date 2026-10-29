@@ -345,7 +345,7 @@ function checkTracesAreContiguous(
       pcb_port_ids: [port.pcb_port_id],
       pcb_component_ids: port.pcb_component_id ? [port.pcb_component_id] : [],
       center: { x: point.x, y: point.y },
-      message: `Trace [${getReadableNameForPcbTrace({ circuitJson, pcbTraceId: trace.pcb_trace_id })}] on ${point.layer} is missing a via connection to port [${getReadableNameForPcbPort({ circuitJson, pcbPortId: port.pcb_port_id })}] on ${padLayers.join(", ")}.`,
+      message: `Trace [${getReadableNameForPcbTrace(circuitJson, trace.pcb_trace_id)}] on ${point.layer} is missing a via connection to port [${getReadableNameForPcbPort(circuitJson, port.pcb_port_id)}] on ${padLayers.join(", ")}.`,
     }),
   )
 
@@ -533,10 +533,10 @@ function checkTracesAreContiguous(
               context: routeViaContext,
             })
           ) {
-            traceName ??= getReadableNameForPcbTrace({
+            traceName ??= getReadableNameForPcbTrace(
               circuitJson,
-              pcbTraceId: trace.pcb_trace_id,
-            })
+              trace.pcb_trace_id,
+            )
             errors.push({
               type: "pcb_trace_error",
               message: `Via in trace [${traceName}] does not connect its adjacent wire layers at position {x: ${currentPoint.x}, y: ${currentPoint.y}}.`,
@@ -600,14 +600,14 @@ function checkTracesAreContiguous(
       if (isConnectedByRoutedSourceTrace) continue
 
       if (!isFirstPointConnected && !isLastPointConnected) {
-        traceName ??= getReadableNameForPcbTrace({
+        traceName ??= getReadableNameForPcbTrace(
           circuitJson,
-          pcbTraceId: trace.pcb_trace_id,
-        })
-        const portName = getReadableNameForPcbPort({
+          trace.pcb_trace_id,
+        )
+        const portName = getReadableNameForPcbPort(
           circuitJson,
-          pcbPortId: port.pcb_port_id,
-        })
+          port.pcb_port_id,
+        )
         const padType =
           pads[0].type === "pcb_smtpad" ? "SMD pad" : "through-hole pad"
         const errorCenter = getMissingConnectionErrorCenter({
@@ -720,10 +720,10 @@ function checkTracesAreContiguous(
           ENDPOINT_CONTACT_EPSILON
 
       if (!firstIsConnected && firstPoint.route_type === "wire") {
-        traceName ??= getReadableNameForPcbTrace({
+        traceName ??= getReadableNameForPcbTrace(
           circuitJson,
-          pcbTraceId: trace.pcb_trace_id,
-        })
+          trace.pcb_trace_id,
+        )
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] has disconnected endpoint at (${firstPoint.x.toFixed(2)}, ${firstPoint.y.toFixed(2)})`,
@@ -744,10 +744,10 @@ function checkTracesAreContiguous(
         lastPoint.route_type === "wire" &&
         !(endpointsAreSame && !firstIsConnected)
       ) {
-        traceName ??= getReadableNameForPcbTrace({
+        traceName ??= getReadableNameForPcbTrace(
           circuitJson,
-          pcbTraceId: trace.pcb_trace_id,
-        })
+          trace.pcb_trace_id,
+        )
         errors.push({
           type: "pcb_trace_error",
           message: `Trace [${traceName}] has disconnected endpoint at (${lastPoint.x.toFixed(2)}, ${lastPoint.y.toFixed(2)})`,

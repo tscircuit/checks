@@ -32,6 +32,6 @@ export function checkPcbTraceStyle(
       angle_deviation_degrees: issue.deviationDegrees,
       angle_tolerance_degrees: issue.angleToleranceDegrees,
       // Analyzer messages include IDs; format readable circuit names instead.
-      message: `${getReadableNameForTrace({ circuitJson, pcbTraceId: issue.pcbTraceId })} has a ${issue.lengthMm.toFixed(2)} mm segment on ${issue.layer} at ${issue.angleDegrees.toFixed(2)}°, ${issue.deviationDegrees.toFixed(2)}° from the nearest allowed direction (${issue.nearestAllowedAngleDegrees}°). Prefer a multiple of 45° for segments longer than ${issue.maxSegmentLengthMm} mm (tolerance ${issue.angleToleranceDegrees}°).`,
+      message: `${getReadableNameForTrace(circuitJson, issue.pcbTraceId)} has a ${issue.lengthMm.toFixed(2)} mm segment on ${issue.layer} at ${issue.angleDegrees.toFixed(2)}°, ${issue.deviationDegrees.toFixed(2)}° from the nearest allowed direction (${issue.nearestAllowedAngleDegrees}°). Prefer a multiple of 45° for segments longer than ${issue.maxSegmentLengthMm} mm (tolerance ${issue.angleToleranceDegrees}°).`,
     }))
 }

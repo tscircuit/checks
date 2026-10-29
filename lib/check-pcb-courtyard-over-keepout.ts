@@ -44,14 +44,11 @@ export function checkPcbCourtyardOverKeepout(
       const id = `courtyard_over_keepout_${componentId}_${keepout.pcb_keepout_id}`
       if (errors.has(id)) continue
       if (getPadToPadGap(geometry, keepout) > EPSILON) continue
-      const name = getReadableNameForElementId({
+      const name = getReadableNameForElementId(circuitJson, componentId)
+      const description = getReadableNameForElementId(
         circuitJson,
-        elementId: componentId,
-      })
-      const description = getReadableNameForElementId({
-        circuitJson,
-        elementId: keepout.pcb_keepout_id,
-      })
+        keepout.pcb_keepout_id,
+      )
       const subcircuit_id = component?.subcircuit_id ?? keepout.subcircuit_id
       if (keepout.warning_only) {
         errors.set(id, {

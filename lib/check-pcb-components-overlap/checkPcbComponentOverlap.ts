@@ -55,17 +55,11 @@ const formatOverlapElementDescription = (
   element: OverlappableElement,
 ): string => {
   if ("pcb_port_id" in element && element.pcb_port_id) {
-    return getReadableNameForPort({
-      circuitJson,
-      pcbPortId: element.pcb_port_id,
-    })
+    return getReadableNameForPort(circuitJson, element.pcb_port_id)
   }
 
   const id = getPrimaryId(element)
-  const readableName = getReadableNameForElementId({
-    circuitJson,
-    elementId: id,
-  })
+  const readableName = getReadableNameForElementId(circuitJson, id)
   return readableName
 }
 

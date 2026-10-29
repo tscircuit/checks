@@ -55,7 +55,13 @@ export function checkDifferentNetViaSpacing(
       errors.push({
         type: "pcb_via_clearance_error",
         pcb_error_id: `different_net_vias_close_${pairId}`,
-        message: `Vias ${getReadableNameForElement({ circuitJson, elementId: viaA.pcb_via_id })} and ${getReadableNameForElement({ circuitJson, elementId: viaB.pcb_via_id })} from different nets are too close together (gap: ${gap.toFixed(
+        message: `Vias ${getReadableNameForElement(
+          circuitJson,
+          viaA.pcb_via_id,
+        )} and ${getReadableNameForElement(
+          circuitJson,
+          viaB.pcb_via_id,
+        )} from different nets are too close together (gap: ${gap.toFixed(
           3,
         )}mm)`,
         error_type: "pcb_via_clearance_error",

@@ -73,7 +73,7 @@ export function checkViaPadClearance(
         type: "pcb_pad_pad_clearance_error",
         pcb_pad_pad_clearance_error_id: `via_pad_clearance_${via.pcb_via_id}_${padId}`,
         error_type: "pcb_pad_pad_clearance_error",
-        message: `Via ${getReadableNameForElement({ circuitJson, elementId: via.pcb_via_id })} and pad ${getReadableNameForElement({ circuitJson, elementId: padId })} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(requiredClearance)})`,
+        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and pad ${getReadableNameForElement(circuitJson, padId)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(requiredClearance)})`,
         pcb_pad_ids: [via.pcb_via_id, padId],
         minimum_clearance: requiredClearance,
         actual_clearance: gap,
