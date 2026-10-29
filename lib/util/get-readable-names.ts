@@ -12,17 +12,20 @@ import {
   getPrimaryId,
 } from "@tscircuit/circuit-json-util"
 
+export type CircuitElementId = ReturnType<typeof getPrimaryId>
+type SourcePortId = SourcePort["source_port_id"]
+
 export type ReadableNameContext = {
-  elementsById: ReadonlyMap<string, AnyCircuitElement>
-  pcbPortsBySourcePortId: ReadonlyMap<string, PcbPort>
+  elementsById: ReadonlyMap<CircuitElementId, AnyCircuitElement>
+  pcbPortsBySourcePortId: ReadonlyMap<SourcePortId, PcbPort>
 }
 
 /** Scope this snapshot to one validation; rebuild after membership or ID edits. */
 export const createReadableNameContext = (
   circuitJson: AnyCircuitElement[],
 ): ReadableNameContext => {
-  const elementsById = new Map<string, AnyCircuitElement>()
-  const pcbPortsBySourcePortId = new Map<string, PcbPort>()
+  const elementsById = new Map<CircuitElementId, AnyCircuitElement>()
+  const pcbPortsBySourcePortId = new Map<SourcePortId, PcbPort>()
   for (const element of circuitJson) {
     const id = getPrimaryId(element)
     // Keep the first match, as Array.find does.
@@ -38,9 +41,15 @@ export const createReadableNameContext = (
 }
 
 const findElementByType = (
-  circuitJson: AnyCircuitElement[],
-  id: string | undefined,
-  type: AnyCircuitElement["type"],
+  {
+    circuitJson,
+    id,
+    type,
+  }: {
+    circuitJson: AnyCircuitElement[]
+    id: CircuitElementId | undefined
+    type: AnyCircuitElement["type"]
+  },
   context?: ReadableNameContext,
 ): AnyCircuitElement | undefined => {
   if (id === undefined) return undefined
@@ -57,11 +66,15 @@ const findElementByType = (
 const CIRCUIT_JSON_ID_PATTERN =
   /\b(?:pcb|source|schematic|subcircuit)_[a-z0-9_]+\b/i
 
-const sanitizeReadableName = (
-  candidate: string | null | undefined,
-  id: string,
-  fallbackLabel: string,
-): string => {
+const sanitizeReadableName = ({
+  candidate,
+  id,
+  fallbackLabel,
+}: {
+  candidate: string | null | undefined
+  id: string
+  fallbackLabel: string
+}): string => {
   if (
     !candidate ||
     candidate === id ||
@@ -78,7 +91,11 @@ const firstReadableName = (
   id: string,
 ): string => {
   for (const candidate of candidates) {
-    const readableName = sanitizeReadableName(candidate, id, "")
+    const readableName = sanitizeReadableName({
+      candidate,
+      id,
+      fallbackLabel: "",
+    })
     if (readableName) return readableName
   }
   return ""
@@ -87,7 +104,8 @@ const firstReadableName = (
 export const getReadableNameForComponent = (
   circuitJson: AnyCircuitElement[],
   pcbComponentId: string,
-): string => getReadableNameForElementId(circuitJson, pcbComponentId)
+): string =>
+  getReadableNameForElementId({ circuitJson, elementId: pcbComponentId })
 
 export const getReadableNameForSourcePort = (
   circuitJson: AnyCircuitElement[],
@@ -117,25 +135,30 @@ export const getReadableNameForSourcePort = (
 }
 
 export const getReadableNameForPort = (
-  circuitJson: AnyCircuitElement[],
-  pcbPortId: string,
+  {
+    circuitJson,
+    pcbPortId,
+  }: { circuitJson: AnyCircuitElement[]; pcbPortId: string },
   context?: ReadableNameContext,
 ): string => {
-  const pcbPort = findElementByType(circuitJson, pcbPortId, "pcb_port", context)
+  const pcbPort = findElementByType(
+    { circuitJson, id: pcbPortId, type: "pcb_port" },
+    context,
+  )
 
   if (pcbPort?.type === "pcb_port") {
     const sourcePort = findElementByType(
-      circuitJson,
-      pcbPort.source_port_id,
-      "source_port",
+      { circuitJson, id: pcbPort.source_port_id, type: "source_port" },
       context,
     )
     const sourceComponent =
       sourcePort?.type === "source_port"
         ? findElementByType(
-            circuitJson,
-            sourcePort.source_component_id,
-            "source_component",
+            {
+              circuitJson,
+              id: sourcePort.source_component_id,
+              type: "source_component",
+            },
             context,
           )
         : null
@@ -174,15 +197,17 @@ export const getReadableNameForPort = (
 }
 
 export const getReadableNameForSourceTrace = (
-  circuitJson: AnyCircuitElement[],
-  sourceTrace: SourceTrace,
+  {
+    circuitJson,
+    sourceTrace,
+  }: { circuitJson: AnyCircuitElement[]; sourceTrace: SourceTrace },
   context?: ReadableNameContext,
 ): string => {
-  const displayName = sanitizeReadableName(
-    sourceTrace.display_name,
-    sourceTrace.source_trace_id,
-    "",
-  )
+  const displayName = sanitizeReadableName({
+    candidate: sourceTrace.display_name,
+    id: sourceTrace.source_trace_id,
+    fallbackLabel: "",
+  })
   if (displayName) return displayName
 
   const connectedPortNames: string[] = []
@@ -197,34 +222,33 @@ export const getReadableNameForSourceTrace = (
 
     if (pcbPort?.type === "pcb_port") {
       const name = getReadableNameForPort(
-        circuitJson,
-        pcbPort.pcb_port_id,
+        { circuitJson, pcbPortId: pcbPort.pcb_port_id },
         context,
       )
       if (name !== "unnamed port") connectedPortNames.push(name)
     } else {
       const sourcePort = findElementByType(
-        circuitJson,
-        sourcePortId,
-        "source_port",
+        { circuitJson, id: sourcePortId, type: "source_port" },
         context,
       )
       if (sourcePort?.type !== "source_port") continue
 
       const sourceComponent = findElementByType(
-        circuitJson,
-        sourcePort.source_component_id,
-        "source_component",
+        {
+          circuitJson,
+          id: sourcePort.source_component_id,
+          type: "source_component",
+        },
         context,
       )
 
       const sourceComponentName =
         sourceComponent?.type === "source_component"
-          ? sanitizeReadableName(
-              sourceComponent.name,
-              sourceComponent.source_component_id,
-              "",
-            )
+          ? sanitizeReadableName({
+              candidate: sourceComponent.name,
+              id: sourceComponent.source_component_id,
+              fallbackLabel: "",
+            })
           : ""
 
       const sourcePortName = firstReadableName(
@@ -257,8 +281,10 @@ export const getReadableNameForSourceTrace = (
 /** User-facing names never fall back to database identifiers. IDs belong in
  * diagnostic reference fields; unnamed geometry uses a readable type label. */
 export const getReadableNameForElementId = (
-  circuitJson: AnyCircuitElement[],
-  elementId: string,
+  {
+    circuitJson,
+    elementId,
+  }: { circuitJson: AnyCircuitElement[]; elementId: string },
   context?: ReadableNameContext,
 ): string => {
   const element = context
@@ -270,31 +296,35 @@ export const getReadableNameForElementId = (
     element.type === "schematic_component"
   ) {
     const component = findElementByType(
-      circuitJson,
-      element.source_component_id,
-      "source_component",
+      {
+        circuitJson,
+        id: element.source_component_id,
+        type: "source_component",
+      },
       context,
     )
     if (component?.type === "source_component")
-      return sanitizeReadableName(
-        component.name,
-        component.source_component_id,
-        "unnamed component",
-      )
+      return sanitizeReadableName({
+        candidate: component.name,
+        id: component.source_component_id,
+        fallbackLabel: "unnamed component",
+      })
   }
   if (
     (element.type === "pcb_smtpad" || element.type === "pcb_plated_hole") &&
     element.pcb_port_id
   ) {
     const portName = getReadableNameForPort(
-      circuitJson,
-      element.pcb_port_id,
+      { circuitJson, pcbPortId: element.pcb_port_id },
       context,
     )
     if (portName !== "unnamed port") return portName
   }
   if (element.type === "pcb_trace")
-    return getReadableNameForTrace(circuitJson, elementId, context)
+    return getReadableNameForTrace(
+      { circuitJson, pcbTraceId: elementId },
+      context,
+    )
   const labels: Partial<Record<AnyCircuitElement["type"], string>> = {
     pcb_smtpad: "SMD pad",
     pcb_plated_hole: "through-hole pad",
@@ -324,20 +354,26 @@ export const getReadableNameForElementId = (
 }
 
 export const getReadableNameForTrace = (
-  circuitJson: AnyCircuitElement[],
-  pcbTraceId: string,
+  {
+    circuitJson,
+    pcbTraceId,
+  }: { circuitJson: AnyCircuitElement[]; pcbTraceId: string },
   context?: ReadableNameContext,
 ): string => {
-  const trace = findElementByType(circuitJson, pcbTraceId, "pcb_trace", context)
+  const trace = findElementByType(
+    { circuitJson, id: pcbTraceId, type: "pcb_trace" },
+    context,
+  )
   if (trace?.type === "pcb_trace" && trace.source_trace_id) {
     const sourceTrace = findElementByType(
-      circuitJson,
-      trace.source_trace_id,
-      "source_trace",
+      { circuitJson, id: trace.source_trace_id, type: "source_trace" },
       context,
     )
     if (sourceTrace?.type === "source_trace")
-      return getReadableNameForSourceTrace(circuitJson, sourceTrace, context)
+      return getReadableNameForSourceTrace(
+        { circuitJson, sourceTrace },
+        context,
+      )
   }
   if (trace?.type !== "pcb_trace") return "unnamed trace"
   const portIds = [
@@ -352,7 +388,9 @@ export const getReadableNameForTrace = (
     ),
   ]
   const portNames = portIds
-    .map((id) => getReadableNameForPort(circuitJson, id, context))
+    .map((id) =>
+      getReadableNameForPort({ circuitJson, pcbPortId: id }, context),
+    )
     .filter((name) => name !== "unnamed port")
   if (portNames.length >= 2) return `${portNames[0]} to ${portNames[1]}`
   if (portNames.length === 1) return `trace connected to ${portNames[0]}`
@@ -363,23 +401,27 @@ export const getReadableNameForGroup = (
   circuitJson: AnyCircuitElement[],
   groupId: string,
 ): string =>
-  sanitizeReadableName(
-    getReadableNameForElement(circuitJson, groupId),
-    groupId,
-    "group",
-  )
+  sanitizeReadableName({
+    candidate: getReadableNameForElement(circuitJson, groupId),
+    id: groupId,
+    fallbackLabel: "group",
+  })
 
 export const containsCircuitJsonId = (message: string): boolean =>
   CIRCUIT_JSON_ID_PATTERN.test(message)
 
-export function getReadableNameForFootprintPad(
-  circuitJson: AnyCircuitElement[],
-  pad: PcbSmtPad | PcbPlatedHole,
-  ordinal: number,
-): string {
+export function getReadableNameForFootprintPad({
+  circuitJson,
+  pad,
+  ordinal,
+}: {
+  circuitJson: AnyCircuitElement[]
+  pad: PcbSmtPad | PcbPlatedHole
+  ordinal: number
+}): string {
   const padKind = pad.type === "pcb_smtpad" ? "SMD pad" : "through-hole pad"
   const portRef = pad.pcb_port_id
-    ? getReadableNameForPort(circuitJson, pad.pcb_port_id)
+    ? getReadableNameForPort({ circuitJson, pcbPortId: pad.pcb_port_id })
     : null
   const bounds = getBoundsOfPcbElements([pad])
   const centerX = (bounds.minX + bounds.maxX) / 2

@@ -2,6 +2,7 @@ import {
   createReadableNameContext,
   getReadableNameForElementId as getReadableNameForElement,
   type ReadableNameContext,
+  type CircuitElementId,
 } from "lib/util/get-readable-names"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
@@ -51,13 +52,16 @@ export function checkPadTraceClearance(
     { error: PcbPadTraceClearanceError; gap: number }
   >()
   const overlappingPairIds = new Set<string>()
-  const readableNameById = new Map<string, string>()
+  const readableNameById = new Map<CircuitElementId, string>()
   let readableNameContext: ReadableNameContext | undefined
   const getReadableName = (id: string): string => {
     const cached = readableNameById.get(id)
     if (cached !== undefined) return cached
     readableNameContext ??= createReadableNameContext(circuitJson)
-    const name = getReadableNameForElement(circuitJson, id, readableNameContext)
+    const name = getReadableNameForElement(
+      { circuitJson, elementId: id },
+      readableNameContext,
+    )
     readableNameById.set(id, name)
     return name
   }

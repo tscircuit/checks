@@ -154,29 +154,54 @@ test("readable name indexes preserve first matching typed IDs and source-port ma
     "ownerless_pin",
     "",
   ]) {
-    expect(getReadableNameForElementId(circuit, id, context)).toBe(
-      getReadableNameForElementId(circuit, id),
-    )
-    expect(getReadableNameForPort(circuit, id, context)).toBe(
-      getReadableNameForPort(circuit, id),
-    )
-    expect(getReadableNameForTrace(circuit, id, context)).toBe(
-      getReadableNameForTrace(circuit, id),
-    )
+    expect(
+      getReadableNameForElementId(
+        { circuitJson: circuit, elementId: id },
+        context,
+      ),
+    ).toBe(getReadableNameForElementId({ circuitJson: circuit, elementId: id }))
+    expect(
+      getReadableNameForPort({ circuitJson: circuit, pcbPortId: id }, context),
+    ).toBe(getReadableNameForPort({ circuitJson: circuit, pcbPortId: id }))
+    expect(
+      getReadableNameForTrace(
+        { circuitJson: circuit, pcbTraceId: id },
+        context,
+      ),
+    ).toBe(getReadableNameForTrace({ circuitJson: circuit, pcbTraceId: id }))
   }
   for (const sourceTrace of circuit.filter(
     (element) => element.type === "source_trace",
   )) {
-    expect(getReadableNameForSourceTrace(circuit, sourceTrace, context)).toBe(
-      getReadableNameForSourceTrace(circuit, sourceTrace),
-    )
+    expect(
+      getReadableNameForSourceTrace(
+        { circuitJson: circuit, sourceTrace },
+        context,
+      ),
+    ).toBe(getReadableNameForSourceTrace({ circuitJson: circuit, sourceTrace }))
   }
-  expect(getReadableNameForPort(circuit, "ownerless_pin", context)).toBe("TEST")
-  expect(getReadableNameForPort(circuit, "shared", context)).toBe("U1.A")
-  expect(getReadableNameForPort(circuit, "unlinked", context)).toBe(
-    "unnamed port",
-  )
-  expect(getReadableNameForPort(circuit, "empty_parent_pin", context)).toBe(
-    "U0.ZERO",
-  )
+  expect(
+    getReadableNameForPort(
+      { circuitJson: circuit, pcbPortId: "ownerless_pin" },
+      context,
+    ),
+  ).toBe("TEST")
+  expect(
+    getReadableNameForPort(
+      { circuitJson: circuit, pcbPortId: "shared" },
+      context,
+    ),
+  ).toBe("U1.A")
+  expect(
+    getReadableNameForPort(
+      { circuitJson: circuit, pcbPortId: "unlinked" },
+      context,
+    ),
+  ).toBe("unnamed port")
+  expect(
+    getReadableNameForPort(
+      { circuitJson: circuit, pcbPortId: "empty_parent_pin" },
+      context,
+    ),
+  ).toBe("U0.ZERO")
 })

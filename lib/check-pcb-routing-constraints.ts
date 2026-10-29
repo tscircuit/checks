@@ -129,7 +129,7 @@ export function checkPcbRoutingConstraints(
       ...new Set([...members, ...(bus.length_match_source_trace_ids ?? [])]),
     ]
     const context = (ids: string[], warning: boolean, message: string) => ({
-      message: `${warning ? "Unverified " : ""}bus ${getReadableNameForElementId(circuit, bus.source_bus_id)}: ${message}`,
+      message: `${warning ? "Unverified " : ""}bus ${getReadableNameForElementId({ circuitJson: circuit, elementId: bus.source_bus_id })}: ${message}`,
       source_bus_id: bus.source_bus_id,
       source_trace_ids: ids,
       pcb_trace_ids: ids.flatMap((id) =>
@@ -333,7 +333,7 @@ export function checkPcbRoutingConstraints(
                   actual_centerline_spacing: segmentSeparation(a, b),
                   minimum_centerline_spacing: required,
                 },
-                `${getReadableNameForElementId(circuit, id)} falls below declared centreline spacing`,
+                `${getReadableNameForElementId({ circuitJson: circuit, elementId: id })} falls below declared centreline spacing`,
                 id,
               )
             failed.add(rule)

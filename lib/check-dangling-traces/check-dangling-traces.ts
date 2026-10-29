@@ -114,10 +114,10 @@ export function checkDanglingTraces(
       { trace, hasExpectedPorts },
       ctx,
     )) {
-      const traceName = getReadableNameForPcbTrace(
+      const traceName = getReadableNameForPcbTrace({
         circuitJson,
-        trace.pcb_trace_id,
-      )
+        pcbTraceId: trace.pcb_trace_id,
+      })
       errors.push({
         type: "pcb_trace_error",
         error_type: "pcb_trace_error",

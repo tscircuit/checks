@@ -65,10 +65,10 @@ export function checkSchematicComponentExcessiveVerticalPadding(
       bottom: lowestPinY - componentBottomY,
     }
 
-    const componentName = getReadableNameForElementId(
+    const componentName = getReadableNameForElementId({
       circuitJson,
-      component.schematic_component_id,
-    )
+      elementId: component.schematic_component_id,
+    })
 
     for (const side of ["top", "bottom"] as const) {
       const padding = paddingBySide[side]

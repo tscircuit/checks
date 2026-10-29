@@ -70,7 +70,7 @@ export function checkPadPadClearance(
         type: "pcb_pad_pad_clearance_error",
         pcb_pad_pad_clearance_error_id: `pad_pad_clearance_${pairId}`,
         error_type: "pcb_pad_pad_clearance_error",
-        message: `Pads ${getReadableNameForElement(circuitJson, padAId)} and ${getReadableNameForElement(circuitJson, padBId)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
+        message: `Pads ${getReadableNameForElement({ circuitJson, elementId: padAId })} and ${getReadableNameForElement({ circuitJson, elementId: padBId })} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
         pcb_pad_ids: [padAId, padBId] as [string, string],
         minimum_clearance: minClearance,
         actual_clearance: gap,

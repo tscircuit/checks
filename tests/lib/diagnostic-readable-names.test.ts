@@ -69,13 +69,19 @@ test("check messages use names or unnamed labels while keeping diagnostic IDs", 
           error.pcb_trace_id === "pcb_trace_private_96",
       ),
     ).toBe(true)
-    expect(getReadableNameForElementId(circuit, "pcb_via_private_93")).toBe(
-      "unnamed via",
-    )
+    expect(
+      getReadableNameForElementId({
+        circuitJson: circuit,
+        elementId: "pcb_via_private_93",
+      }),
+    ).toBe("unnamed via")
   }
   const customPad = pad("private-pad-token", 0, 0)
   expect(
-    getReadableNameForElementId([customPad], customPad.pcb_smtpad_id),
+    getReadableNameForElementId({
+      circuitJson: [customPad],
+      elementId: customPad.pcb_smtpad_id,
+    }),
   ).toBe("unnamed SMD pad")
   const danglingTrace = trace("private-trace-token", [
     [0, 0],
@@ -84,7 +90,10 @@ test("check messages use names or unnamed labels while keeping diagnostic IDs", 
   if (danglingTrace.route[0].route_type === "wire")
     danglingTrace.route[0].start_pcb_port_id = "private-missing-port-token"
   expect(
-    getReadableNameForTrace([danglingTrace], danglingTrace.pcb_trace_id),
+    getReadableNameForTrace({
+      circuitJson: [danglingTrace],
+      pcbTraceId: danglingTrace.pcb_trace_id,
+    }),
   ).toBe("unnamed trace")
   const sourceTrace = {
     type: "source_trace",
@@ -93,10 +102,13 @@ test("check messages use names or unnamed labels while keeping diagnostic IDs", 
     connected_source_net_ids: [],
   } as const
   expect(
-    getReadableNameForSourceTrace([], {
-      ...sourceTrace,
-      connected_source_port_ids: [],
-      connected_source_net_ids: [],
+    getReadableNameForSourceTrace({
+      circuitJson: [],
+      sourceTrace: {
+        ...sourceTrace,
+        connected_source_port_ids: [],
+        connected_source_net_ids: [],
+      },
     }),
   ).toBe("unnamed trace")
 })

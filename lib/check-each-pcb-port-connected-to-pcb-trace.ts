@@ -48,7 +48,7 @@ function checkEachPcbPortConnectedToPcbTraces(
     pcb_port_ids: [port.pcb_port_id],
     pcb_component_ids: port.pcb_component_id ? [port.pcb_component_id] : [],
     center: { x: point.x, y: point.y },
-    message: `Port [${getReadableNameForPort(circuitJson, port.pcb_port_id)}] on ${padLayers.join(", ")} is not connected to trace [${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)}] on ${point.layer}: missing via connection.`,
+    message: `Port [${getReadableNameForPort({ circuitJson, pcbPortId: port.pcb_port_id })}] on ${padLayers.join(", ")} is not connected to trace [${getReadableNameForTrace({ circuitJson, pcbTraceId: trace.pcb_trace_id })}] on ${point.layer}: missing via connection.`,
   }))
 
   // Generate the connectivity map from the circuit
@@ -104,7 +104,7 @@ function checkEachPcbPortConnectedToPcbTraces(
 
         errors.push({
           type: "pcb_port_not_connected_error",
-          message: `Port [${getReadableNameForPort(circuitJson, pcbPort.pcb_port_id)}] is not connected to ${netDescription} by a PCB trace.`,
+          message: `Port [${getReadableNameForPort({ circuitJson, pcbPortId: pcbPort.pcb_port_id })}] is not connected to ${netDescription} by a PCB trace.`,
           error_type: "pcb_port_not_connected_error",
           pcb_port_ids: [pcbPort.pcb_port_id],
           pcb_component_ids: pcbPort.pcb_component_id
@@ -171,7 +171,7 @@ function checkEachPcbPortConnectedToPcbTraces(
         // Ports are on different components but no PCB traces connect them
         errors.push({
           type: "pcb_port_not_connected_error",
-          message: `Ports [${pcbPortsInTrace.map((p) => getReadableNameForPort(circuitJson, p.pcb_port_id)).join(", ")}] are not connected together through the same net.`,
+          message: `Ports [${pcbPortsInTrace.map((p) => getReadableNameForPort({ circuitJson, pcbPortId: p.pcb_port_id })).join(", ")}] are not connected together through the same net.`,
           error_type: "pcb_port_not_connected_error",
           pcb_port_ids: pcbPortsInTrace.map((p) => p.pcb_port_id),
           pcb_component_ids: pcbPortsInTrace

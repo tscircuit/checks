@@ -134,7 +134,7 @@ export function checkSourceTracesMatchPcbTraceThickness(
       type: "pcb_trace_warning",
       pcb_trace_warning_id: `pcb_trace_warning_${sourceTrace.source_trace_id}`,
       warning_type: "pcb_trace_warning",
-      message: `Trace [${getReadableNameForSourceTrace(circuitJson, sourceTrace)}] is routed thinner than requested (requested: ${requestedThickness}mm, actual: ${undersizedSegment.width}mm).`,
+      message: `Trace [${getReadableNameForSourceTrace({ circuitJson, sourceTrace })}] is routed thinner than requested (requested: ${requestedThickness}mm, actual: ${undersizedSegment.width}mm).`,
       center: undersizedSegment.center,
       source_trace_id: sourceTrace.source_trace_id,
       pcb_trace_id: undersizedSegment.pcb_trace_id,

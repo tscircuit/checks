@@ -72,42 +72,54 @@ test("trace names use the first two readable ports without looking up the rest",
   }
   const findCalls = spyOn(circuit, "find")
   try {
-    expect(getReadableNameForSourceTrace(circuit, sourceTrace)).toBe(
-      "R1.OUT to U1.IN",
-    )
+    expect(
+      getReadableNameForSourceTrace({ circuitJson: circuit, sourceTrace }),
+    ).toBe("R1.OUT to U1.IN")
     const lookupsForTwoNames = findCalls.mock.calls.length
     findCalls.mockClear()
     expect(
-      getReadableNameForSourceTrace(circuit, {
-        ...sourceTrace,
-        connected_source_port_ids: [
-          ...sourceTrace.connected_source_port_ids,
-          ...Array.from({ length: 500 }, (_, index) => `unused_${index}`),
-        ],
+      getReadableNameForSourceTrace({
+        circuitJson: circuit,
+        sourceTrace: {
+          ...sourceTrace,
+          connected_source_port_ids: [
+            ...sourceTrace.connected_source_port_ids,
+            ...Array.from({ length: 500 }, (_, index) => `unused_${index}`),
+          ],
+        },
       }),
     ).toBe("R1.OUT to U1.IN")
     expect(findCalls.mock.calls.length).toBe(lookupsForTwoNames)
 
     expect(
-      getReadableNameForSourceTrace(circuit, {
-        ...sourceTrace,
-        connected_source_port_ids: ["source_port_missing", "source_port_a"],
+      getReadableNameForSourceTrace({
+        circuitJson: circuit,
+        sourceTrace: {
+          ...sourceTrace,
+          connected_source_port_ids: ["source_port_missing", "source_port_a"],
+        },
       }),
     ).toBe("trace connected to R1.OUT")
     expect(
-      getReadableNameForSourceTrace(circuit, {
-        ...sourceTrace,
-        connected_source_port_ids: [
-          "source_port_missing",
-          "source_port_hidden",
-        ],
+      getReadableNameForSourceTrace({
+        circuitJson: circuit,
+        sourceTrace: {
+          ...sourceTrace,
+          connected_source_port_ids: [
+            "source_port_missing",
+            "source_port_hidden",
+          ],
+        },
       }),
     ).toBe("unnamed trace")
     findCalls.mockClear()
     expect(
-      getReadableNameForSourceTrace(circuit, {
-        ...sourceTrace,
-        display_name: "Clock",
+      getReadableNameForSourceTrace({
+        circuitJson: circuit,
+        sourceTrace: {
+          ...sourceTrace,
+          display_name: "Clock",
+        },
       }),
     ).toBe("Clock")
     expect(findCalls).not.toHaveBeenCalled()

@@ -133,7 +133,7 @@ export function checkCopperPourShorts(
         type: "pcb_placement_error",
         pcb_placement_error_id: id,
         error_type: "pcb_placement_error",
-        message: `Copper pour ${getReadableNameForElement(circuitJson, pour.elementId)} (${netId ? getReadableNameForElement(circuitJson, netId) : "unassigned net"}) shorts to ${getReadableNameForElement(circuitJson, other.elementId)} on ${pour.layer} (accidental copper contact)`,
+        message: `Copper pour ${getReadableNameForElement({ circuitJson, elementId: pour.elementId })} (${netId ? getReadableNameForElement({ circuitJson, elementId: netId }) : "unassigned net"}) shorts to ${getReadableNameForElement({ circuitJson, elementId: other.elementId })} on ${pour.layer} (accidental copper contact)`,
         subcircuit_id: element.subcircuit_id,
       })
     }

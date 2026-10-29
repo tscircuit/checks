@@ -50,11 +50,11 @@ export function checkViasInPads(
       if (!doesViaHoleOverlapPad(via, pad)) continue
 
       const padOrdinal = padOrdinals.get(padId) ?? 0
-      const padName = getReadableNameForFootprintPad(
+      const padName = getReadableNameForFootprintPad({
         circuitJson,
         pad,
-        padOrdinal,
-      )
+        ordinal: padOrdinal,
+      })
 
       errors.push({
         type: "pcb_placement_error",

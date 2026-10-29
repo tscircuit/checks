@@ -48,8 +48,11 @@ const getReadableCopperName = (
   }
 
   return copper.type === "pcb_via"
-    ? `via ${getReadableNameForElementId(circuitJson, copper.pcb_via_id)}`
-    : getReadableNameForElementId(circuitJson, getPrimaryId(copper))
+    ? `via ${getReadableNameForElementId({ circuitJson, elementId: copper.pcb_via_id })}`
+    : getReadableNameForElementId({
+        circuitJson,
+        elementId: getPrimaryId(copper),
+      })
 }
 
 export function checkPcbCopperOverKeepout(
@@ -110,7 +113,7 @@ export function checkPcbCopperOverKeepout(
             warning_type: "pcb_keepout_overlap_warning",
             pcb_keepout_overlap_warning_id: `pcb_keepout_overlap_warning_${errorId}`,
             pcb_keepout_id: keepout.pcb_keepout_id,
-            message: `Copper for ${getReadableCopperName(circuitJson, copperElement)} overlaps advisory PCB keepout "${getReadableNameForElementId(circuitJson, keepout.pcb_keepout_id)}"`,
+            message: `Copper for ${getReadableCopperName(circuitJson, copperElement)} overlaps advisory PCB keepout "${getReadableNameForElementId({ circuitJson, elementId: keepout.pcb_keepout_id })}"`,
             ...(copperComponentId
               ? { pcb_component_ids: [copperComponentId] }
               : {}),
