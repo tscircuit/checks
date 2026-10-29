@@ -11,8 +11,20 @@ import { getLayersOfPcbElement } from "./util/getLayersOfPcbElement"
 import { getReadableNameForFootprintPad } from "./util/get-readable-names"
 import { doesViaHoleOverlapPad } from "./check-vias-in-pads/does-via-hole-overlap-pad"
 
+function isExposedThermalPad(pad: PadElement): boolean {
+  if (pad.type !== "pcb_smtpad" || !pad.port_hints) return false
+  return pad.port_hints.some((hint) =>
+    /^(?:thermalpad|ep|epad)$/i.test(String(hint)),
+  )
+}
+
 export function checkViasInPads(
   circuitJson: AnyCircuitElement[],
+  {
+    allowThermalPadVias = true,
+  }: {
+    allowThermalPadVias?: boolean
+  } = {},
 ): PcbPlacementError[] {
   const board = getPcbBoard(circuitJson)
   if (
@@ -43,6 +55,7 @@ export function checkViasInPads(
     const nearbyPads = padIndex.getObjectsInBounds(getPadBounds(via))
 
     for (const pad of nearbyPads) {
+      if (allowThermalPadVias && isExposedThermalPad(pad)) continue
       const padId = getPrimaryId(pad)
       const viaLayers = getLayersOfPcbElement(via)
       const padLayers = getLayersOfPcbElement(pad)
