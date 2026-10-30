@@ -1,4 +1,5 @@
 import { Relations } from "@flatten-js/core"
+import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import {
   convertCircuitJsonToFlattenJs,
   type FlattenElement,
@@ -11,6 +12,7 @@ import type {
 } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "./drc-defaults"
 import { getReadableNameForElementId } from "./util/get-readable-names"
+import { getConservativeCutoutClearanceBounds } from "./util/get-conservative-cutout-clearance-bounds"
 
 type CopperElementType =
   | "pcb_trace"
@@ -62,7 +64,40 @@ export function checkCopperToCutoutClearance(
   })
   const cutouts = elements.filter((element) => element.role === "cutout")
   const copper = elements.filter((element) => element.role === "copper")
-  const errors: PcbPlacementError[] = warnings.map((warning) => ({
+  const unconverted = warnings.map((warning) => {
+    const element = circuitJson.find(
+      (candidate) => getPrimaryId(candidate) === warning.elementId,
+    )
+    return {
+      warning,
+      bounds: element
+        ? getConservativeCutoutClearanceBounds(element, circuitJson)
+        : undefined,
+    }
+  })
+  const cutoutBounds = [
+    ...cutouts.map((cutout) => cutout.bounds),
+    ...unconverted
+      .filter(({ warning }) => warning.elementType === "pcb_cutout")
+      .map(({ bounds }) => bounds),
+  ]
+  const copperBounds = [
+    ...copper.map((geometry) => geometry.bounds),
+    ...unconverted
+      .filter(({ warning }) => warning.elementType !== "pcb_cutout")
+      .map(({ bounds }) => bounds),
+  ]
+  const relevantWarnings = unconverted.filter(({ warning, bounds }) => {
+    const counterparts =
+      warning.elementType === "pcb_cutout" ? copperBounds : cutoutBounds
+    return counterparts.some(
+      (counterpart) =>
+        !bounds ||
+        !counterpart ||
+        bounds.clone().extend(requiredClearance).intersect(counterpart),
+    )
+  })
+  const errors: PcbPlacementError[] = relevantWarnings.map(({ warning }) => ({
     type: "pcb_placement_error",
     error_type: "pcb_placement_error",
     pcb_placement_error_id: `unverified_cutout_clearance_${warning.elementId}`,
