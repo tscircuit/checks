@@ -64,4 +64,4 @@ export { checkPcbRoutingConstraints } from "./lib/check-pcb-routing-constraints"
 
 export * from "./lib/check-pcb-trace-style"
 
-export { addStartAndEndPortIdsIfMissing } from "./lib/check-each-pcb-trace-non-overlapping/addStartAndEndPortIdsIfMissing"
+export { addStartAndEndPortIdsIfMissing } from "./lib/add-start-and-end-port-ids-if-missing"
