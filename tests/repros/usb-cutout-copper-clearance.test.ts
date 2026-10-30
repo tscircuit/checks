@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement, LayerRef } from "circuit-json"
-import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { runAllPlacementChecks, runAllRoutingChecks } from "../../index"
+import { renderCutoutClearanceProof } from "../fixtures/render-cutout-clearance-proof"
 
 // A milled slot removes FR4 and copper on every layer. This is the USB4145
 // supplier footprint's capsule polygon, translated to the center of the board.
@@ -107,14 +107,14 @@ for (const named of [true, false]) {
       // Same copper inside the external board boundary is valid without a slot.
       expect(await runCopperChecks(makeCircuit(copper, false))).toEqual([])
       const circuitJson = makeCircuit(copper)
+      const errors = await runCopperChecks(circuitJson)
 
       if (named && layer === "top") {
-        expect(convertCircuitJsonToPcbSvg(circuitJson)).toMatchSvgSnapshot(
-          import.meta.path,
-        )
+        expect(
+          renderCutoutClearanceProof(circuitJson, errors),
+        ).toMatchSvgSnapshot(import.meta.path)
       }
 
-      const errors = await runCopperChecks(circuitJson)
       expect(errors.some((error) => /cutout|slot/i.test(error.message))).toBe(
         true,
       )
