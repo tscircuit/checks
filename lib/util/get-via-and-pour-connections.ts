@@ -205,6 +205,15 @@ export function getViaAndPourConnections(
     }
   }
   if (!conductors.length) return connections
+  // Already established direct contacts need no repeated polygon test.
+  // Seed explicit via ownership edges in their original insertion order.
+  const connectedPairs = new Map<string, Set<string>>()
+  const remember = (a: string, b: string) => {
+    let neighbors = connectedPairs.get(a)
+    if (!neighbors) connectedPairs.set(a, neighbors = new Set())
+    neighbors.add(b)
+  }
+  for (const [a, b] of connections) remember(a!, b!)
   const index = new Flatbush(conductors.length)
   for (const { box: b } of conductors) {
     index.add(b.xmin, b.ymin, b.xmax, b.ymax)
@@ -225,11 +234,16 @@ export function getViaAndPourConnections(
         (b.platedPort && a.bridges) ||
         i === j ||
         a.id === b.id ||
+        connectedPairs.get(a.id)?.has(b.id) ||
+        connectedPairs.get(b.id)?.has(a.id) ||
         (b.bridges && j < i) ||
         !a.layers.some((l) => b.layers.includes(l))
       )
         continue
-      if (touches(getPolygon(a), getPolygon(b))) connections.push([a.id, b.id])
+      if (touches(getPolygon(a), getPolygon(b))) {
+        connections.push([a.id, b.id])
+        remember(a.id, b.id)
+      }
     }
   }
   return connections
