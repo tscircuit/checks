@@ -13,6 +13,7 @@ import type { AnyCircuitElement } from "circuit-json"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkCopperToBoardEdgeClearance } from "./check-copper-to-board-edge-clearance"
+import { checkCopperToCutoutClearance } from "./check-copper-to-cutout-clearance"
 import { checkCourtyardOverlap } from "./check-courtyard-overlap/checkCourtyardOverlap"
 import { checkDanglingTraces } from "./check-dangling-traces/check-dangling-traces"
 import { checkDifferentNetViaSpacing } from "./check-different-net-via-spacing"
@@ -60,6 +61,14 @@ export async function runAllPlacementChecks(
     ...checkViasInPads(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverCutout(circuitJson),
+    ...checkCopperToCutoutClearance(circuitJson, {
+      elementTypes: [
+        "pcb_via",
+        "pcb_smtpad",
+        "pcb_plated_hole",
+        "pcb_copper_pour",
+      ],
+    }),
     ...checkPcbCopperOverKeepout(circuitJson),
     ...checkPcbBendZonePlacement(circuitJson),
     ...checkPcbCourtyardOverKeepout(circuitJson),
@@ -116,6 +125,9 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
     ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
     ...checkPcbBendZoneTraces(circuitJson),
+    ...checkCopperToCutoutClearance(circuitJson, {
+      elementTypes: ["pcb_trace"],
+    }),
     ...checkPcbTraceLengths(circuitJson),
     ...checkPcbTraceStyle(circuitJson),
     ...checkPcbBusLengthSkew(circuitJson),

@@ -120,17 +120,12 @@ for (const named of [true, false]) {
       )
     })
 
-    // Expected failure until the cutout check lands. Fixture and snapshot
-    // failures above remain ordinary failures and cannot satisfy this test.
-    test.failing(
-      `reports ${named ? "named" : "unnamed"} ${layer} trace crossing a milled slot`,
-      async () => {
-        const errors = await runCopperChecks(makeCircuit(copper))
-        expect(errors.some((error) => /cutout|slot/i.test(error.message))).toBe(
-          true,
-        )
-      },
-    )
+    test(`reports ${named ? "named" : "unnamed"} ${layer} trace crossing a milled slot`, async () => {
+      const errors = await runCopperChecks(makeCircuit(copper))
+      expect(errors.some((error) => /cutout|slot/i.test(error.message))).toBe(
+        true,
+      )
+    })
   }
 }
 
@@ -176,7 +171,7 @@ for (const { name, copper } of [
     )
   })
 
-  test.failing(`reports a ${name} inside a milled slot`, async () => {
+  test(`reports a ${name} inside a milled slot`, async () => {
     const errors = await runCopperChecks(makeCircuit(copper))
     expect(errors.some((error) => /cutout|slot/i.test(error.message))).toBe(
       true,
