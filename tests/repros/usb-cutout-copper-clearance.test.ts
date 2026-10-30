@@ -55,55 +55,55 @@ const runCopperChecks = async (circuitJson: AnyCircuitElement[]) => [
 
 for (const named of [true, false]) {
   for (const layer of ["top", "inner1", "inner2", "bottom"] as LayerRef[]) {
-    test(`reports ${named ? "named" : "unnamed"} ${layer} trace crossing a milled slot`, async () => {
-      const copper: AnyCircuitElement[] = [
-        ...(named
-          ? [
-              {
-                type: "source_trace" as const,
-                source_trace_id: "sense_trace",
-                display_name: "VM_TO_ADC_DIVIDER",
-                connected_source_port_ids: [],
-                connected_source_net_ids: [],
-              },
-            ]
-          : []),
-        ...([-2, 2] as const).map((x) => ({
-          type: "pcb_plated_hole" as const,
-          pcb_plated_hole_id: `terminal_hole_${x}`,
-          pcb_port_id: `terminal_port_${x}`,
-          shape: "circle" as const,
-          x,
-          y: 0,
-          hole_diameter: 0.3,
-          outer_diameter: 0.8,
-          layers: ["top", "inner1", "inner2", "bottom"] as LayerRef[],
-        })),
-        {
-          type: "pcb_trace",
-          pcb_trace_id: "trace_across_slot",
-          ...(named ? { source_trace_id: "sense_trace" } : {}),
-          route: [
+    const copper: AnyCircuitElement[] = [
+      ...(named
+        ? [
             {
-              route_type: "wire",
-              x: -2,
-              y: 0,
-              width: 0.56,
-              layer,
-              start_pcb_port_id: "terminal_port_-2",
+              type: "source_trace" as const,
+              source_trace_id: "sense_trace",
+              display_name: "VM_TO_ADC_DIVIDER",
+              connected_source_port_ids: [],
+              connected_source_net_ids: [],
             },
-            {
-              route_type: "wire",
-              x: 2,
-              y: 0,
-              width: 0.56,
-              layer,
-              end_pcb_port_id: "terminal_port_2",
-            },
-          ],
-        },
-      ]
+          ]
+        : []),
+      ...([-2, 2] as const).map((x) => ({
+        type: "pcb_plated_hole" as const,
+        pcb_plated_hole_id: `terminal_hole_${x}`,
+        pcb_port_id: `terminal_port_${x}`,
+        shape: "circle" as const,
+        x,
+        y: 0,
+        hole_diameter: 0.3,
+        outer_diameter: 0.8,
+        layers: ["top", "inner1", "inner2", "bottom"] as LayerRef[],
+      })),
+      {
+        type: "pcb_trace",
+        pcb_trace_id: "trace_across_slot",
+        ...(named ? { source_trace_id: "sense_trace" } : {}),
+        route: [
+          {
+            route_type: "wire",
+            x: -2,
+            y: 0,
+            width: 0.56,
+            layer,
+            start_pcb_port_id: "terminal_port_-2",
+          },
+          {
+            route_type: "wire",
+            x: 2,
+            y: 0,
+            width: 0.56,
+            layer,
+            end_pcb_port_id: "terminal_port_2",
+          },
+        ],
+      },
+    ]
 
+    test(`${named ? "named" : "unnamed"} ${layer} trace fixture runs and renders`, async () => {
       // Same copper inside the external board boundary is valid without a slot.
       expect(await runCopperChecks(makeCircuit(copper, false))).toEqual([])
       const circuitJson = makeCircuit(copper)
@@ -115,6 +115,13 @@ for (const named of [true, false]) {
         ).toMatchSvgSnapshot(import.meta.path)
       }
 
+      expect(errors.every((error) => /cutout|slot/i.test(error.message))).toBe(
+        true,
+      )
+    })
+
+    test(`reports ${named ? "named" : "unnamed"} ${layer} trace crossing a milled slot`, async () => {
+      const errors = await runCopperChecks(makeCircuit(copper))
       expect(errors.some((error) => /cutout|slot/i.test(error.message))).toBe(
         true,
       )
@@ -122,42 +129,52 @@ for (const named of [true, false]) {
   }
 }
 
-test("reports a standalone through-via drilled inside a milled slot", async () => {
-  const copper: AnyCircuitElement[] = [
-    {
-      type: "pcb_via",
-      pcb_via_id: "via_inside_slot",
-      x: 0,
-      y: 0,
-      hole_diameter: 0.3,
-      outer_diameter: 0.45,
-      layers: ["top", "inner1", "inner2", "bottom"],
-    },
-  ]
-  expect(await runCopperChecks(makeCircuit(copper, false))).toEqual([])
-  const errors = await runCopperChecks(makeCircuit(copper))
-  expect(errors.some((error) => /cutout|slot/i.test(error.message))).toBe(true)
-})
+const standaloneVia: AnyCircuitElement[] = [
+  {
+    type: "pcb_via",
+    pcb_via_id: "via_inside_slot",
+    x: 0,
+    y: 0,
+    hole_diameter: 0.3,
+    outer_diameter: 0.45,
+    layers: ["top", "inner1", "inner2", "bottom"],
+  },
+]
 
-test("reports a route-embedded via inside a milled slot", async () => {
-  const copper: AnyCircuitElement[] = [
-    {
-      type: "pcb_trace",
-      pcb_trace_id: "via_only_trace",
-      route: [
-        {
-          route_type: "via",
-          x: 0,
-          y: 0,
-          from_layer: "top",
-          to_layer: "bottom",
-          hole_diameter: 0.3,
-          outer_diameter: 0.45,
-        },
-      ],
-    },
-  ]
-  expect(await runCopperChecks(makeCircuit(copper, false))).toEqual([])
-  const errors = await runCopperChecks(makeCircuit(copper))
-  expect(errors.some((error) => /cutout|slot/i.test(error.message))).toBe(true)
-})
+const routeEmbeddedVia: AnyCircuitElement[] = [
+  {
+    type: "pcb_trace",
+    pcb_trace_id: "via_only_trace",
+    route: [
+      {
+        route_type: "via",
+        x: 0,
+        y: 0,
+        from_layer: "top",
+        to_layer: "bottom",
+        hole_diameter: 0.3,
+        outer_diameter: 0.45,
+      },
+    ],
+  },
+]
+
+for (const { name, copper } of [
+  { name: "standalone through-via", copper: standaloneVia },
+  { name: "route-embedded via", copper: routeEmbeddedVia },
+]) {
+  test(`${name} fixture runs with and without a milled slot`, async () => {
+    expect(await runCopperChecks(makeCircuit(copper, false))).toEqual([])
+    const errors = await runCopperChecks(makeCircuit(copper))
+    expect(errors.every((error) => /cutout|slot/i.test(error.message))).toBe(
+      true,
+    )
+  })
+
+  test(`reports a ${name} inside a milled slot`, async () => {
+    const errors = await runCopperChecks(makeCircuit(copper))
+    expect(errors.some((error) => /cutout|slot/i.test(error.message))).toBe(
+      true,
+    )
+  })
+}
