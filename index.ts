@@ -7,6 +7,10 @@ export { checkEachPcbTraceNonOverlapping } from "./lib/check-each-pcb-trace-non-
 export { NetManager } from "./lib/net-manager"
 export { checkViasOffBoard } from "./lib/check-pcb-components-out-of-board/checkViasOffBoard"
 export { checkCopperToBoardEdgeClearance } from "./lib/check-copper-to-board-edge-clearance"
+export {
+  checkCopperToCutoutClearance,
+  type PcbCopperCutoutClearanceError,
+} from "./lib/check-copper-to-cutout-clearance"
 export { checkPcbComponentsOutOfBoard } from "./lib/check-pcb-components-out-of-board/checkPcbComponentsOutOfBoard"
 export { checkPcbComponentOverCutout } from "./lib/check-pcb-component-over-cutout"
 export { checkPcbCourtyardOverKeepout } from "./lib/check-pcb-courtyard-over-keepout"
