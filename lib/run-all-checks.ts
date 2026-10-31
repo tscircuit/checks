@@ -1,4 +1,5 @@
 import { checkPcbTraceStyle } from "./check-pcb-trace-style"
+import { checkPcbTraceMinWidth } from "./check-pcb-trace-min-width"
 import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
 import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
@@ -145,6 +146,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkTracesAreContiguous(circuitJson, connectivity),
     ...checkDanglingTraces(circuitJson, connectivity),
     ...checkPcbTracesOutOfBoard(circuitJson),
+    ...checkPcbTraceMinWidth(circuitJson),
   ]
 }
 
