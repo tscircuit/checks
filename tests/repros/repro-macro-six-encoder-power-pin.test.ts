@@ -57,7 +57,7 @@ const MacroSixEncoder = ({ warning }: { warning?: string }) =>
       }),
   )
 
-test("repro: macro-six passive encoder receives a power-pin warning", async () => {
+test("repro: macro-six passive encoder does not require a power pin", async () => {
   const circuit = new Circuit()
   circuit.pcbDisabled = true
   circuit.add(createElement(MacroSixEncoder, {}))
@@ -79,14 +79,9 @@ test("repro: macro-six passive encoder receives a power-pin warning", async () =
     ),
   ).toBe(true)
 
-  // Capture the current false positive. The expected corrected result is [].
-  // Related fix: https://github.com/tscircuit/checks/pull/477
+  // Regression for https://github.com/tscircuit/checks/pull/500.
   const warnings = checkNoPowerPinDefined(circuitJson)
-  expect(warnings.map((warning) => warning.message)).toMatchInlineSnapshot(`
-    [
-      "ENC1 has no pin with requires_power=true",
-    ]
-  `)
+  expect(warnings).toEqual([])
 
   const annotatedCircuit = new Circuit()
   annotatedCircuit.pcbDisabled = true
