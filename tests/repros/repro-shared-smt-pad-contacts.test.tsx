@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "tscircuit"
-import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { getLabeledPcbSvg } from "tests/fixtures/get-labeled-pcb-svg"
 import { checkEachPcbPortConnectedToPcbTraces } from "lib/check-each-pcb-port-connected-to-pcb-trace"
 
 test("shared USB-C power lands connect both source contacts", async () => {
@@ -66,15 +66,15 @@ test("shared USB-C power lands connect both source contacts", async () => {
   await circuit.renderUntilSettled()
   const circuitJson = circuit.getCircuitJson()
   const errors = checkEachPcbPortConnectedToPcbTraces(circuitJson)
-  expect(
-    convertCircuitJsonToPcbSvg(
+  await expect(
+    getLabeledPcbSvg(
       [...circuitJson.filter((e) => !e.type.endsWith("_error")), ...errors],
-      {
-        width: 1200,
-        height: 600,
-        showPcbNotes: true,
-        shouldDrawErrors: true,
-      },
+      "SHARED USB-C POWER LAND",
+      [
+        "A9 and B4 occupy the same top copper. Only A9 is named by the VBUS trace.",
+        `Observed: ${errors.length} unconnected contact error(s). Expected: both contacts connected.`,
+        ...errors.map((error) => error.message),
+      ],
     ),
   ).toMatchSvgSnapshot(import.meta.path)
   expect(errors).toEqual([])

@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { getLabeledPcbSvg } from "tests/fixtures/get-labeled-pcb-svg"
 import type { AnyCircuitElement, PcbSmtPad } from "circuit-json"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 
@@ -21,8 +22,12 @@ const pad = (
   layer,
 })
 
-test("SMT contact chains require actual copper contact on a shared layer", () => {
-  const cases: { label: string; pads: Extract<PcbSmtPad, { x: number }>[]; connected: boolean }[] = [
+test("SMT contact chains require actual copper contact on a shared layer", async () => {
+  const cases: {
+    label: string
+    pads: Extract<PcbSmtPad, { x: number }>[]
+    connected: boolean
+  }[] = [
     {
       label: "coincident",
       pads: [pad("A", 0, 0), pad("B", 0, 0)],
@@ -99,9 +104,24 @@ test("SMT contact chains require actual copper contact on a shared layer", () =>
     ]
     const before = structuredClone(circuit)
     const map = createIndexedPcbConnectivityMap(circuit)
-    expect(map.getAllTracesConnectedToPort("B").length > 0, label).toBe(
-      connected,
+    const actuallyConnected = map.getAllTracesConnectedToPort("B").length > 0
+    await expect(
+      getLabeledPcbSvg(circuit, `SMT CONTACT: ${label}`, [
+        "The trace names contact A only; physical copper determines whether B connects.",
+        `Expected B: ${connected ? "connected" : "disconnected"}; observed B: ${actuallyConnected ? "connected" : "disconnected"}.`,
+        ...pads.map(
+          (p) =>
+            `Contact ${p.pcb_port_id}: center (${p.x}, ${p.y}) mm, ${p.layer} layer, ${p.shape}.`,
+        ),
+        label === "gap"
+          ? "1 mm square lands have a 0.001 mm positive gap (below overview scale)."
+          : "Red = top copper; blue = bottom copper. Same XY alone does not connect layers.",
+      ]),
+    ).toMatchSvgSnapshot(
+      import.meta.path,
+      `smt-contact-${label.replaceAll(" ", "-")}`,
     )
+    expect(actuallyConnected, label).toBe(connected)
     expect(circuit).toEqual(before)
   }
 })
