@@ -48,7 +48,7 @@ test("trace-to-via-hole clearance flags via drill holes like pcb_hole", async ()
       (error) =>
         error.type === "pcb_trace_error" &&
         error.pcb_trace_id === "close" &&
-        error.message.includes("too close to hole"),
+        error.message.includes("too close to via hole"),
     ),
   ).toHaveLength(1)
 })
