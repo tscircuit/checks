@@ -1,3 +1,10 @@
+export { checkScopedCopperClearance } from "./lib/check-scoped-copper-clearance"
+export {
+  resolveCopperClearance,
+  matchesClearanceScope,
+  UnverifiedClearanceRuleError,
+  type ClearanceCopper,
+} from "./lib/scoped-clearance/resolve-copper-clearance"
 export { checkCopperPourIslands } from "./lib/check-copper-pour-islands"
 export { checkDanglingTraces } from "./lib/check-dangling-traces/check-dangling-traces"
 export { checkPcbTraceSelfShorts } from "./lib/check-pcb-trace-self-shorts"
