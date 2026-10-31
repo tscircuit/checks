@@ -93,6 +93,7 @@ test("repro: macro-six passive encoder receives a power-pin warning", () => {
       type: "schematic_text",
       schematic_text_id: "passive_pin_annotation",
       text: "All seven ENC1 pins are marked passive; no supply pin is required.",
+      color: "#006464",
       position: { x: -10.75, y: 2.9 },
       anchor: "center",
       rotation: 0,
