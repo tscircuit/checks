@@ -77,6 +77,5 @@ test("shared USB-C power lands connect both source contacts", async () => {
       ],
     ),
   ).toMatchSvgSnapshot(import.meta.path)
-  expect(errors).toHaveLength(1)
-  expect(errors[0]!.message).toContain("J_USB_C.B4")
+  expect(errors).toEqual([])
 })
