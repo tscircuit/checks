@@ -1,10 +1,10 @@
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
+  SourceComponentBase,
   SourceComponentPinsUnderspecifiedWarning,
   SourcePinAttributes,
   SourcePort,
-  SourceComponentBase,
 } from "circuit-json"
 
 const PIN_ATTRIBUTE_KEYS = [
@@ -48,7 +48,10 @@ const PIN_ATTRIBUTE_KEYS = [
 ] as const satisfies readonly (keyof SourcePinAttributes)[]
 
 function hasAnyPinAttribute(port: SourcePort): boolean {
-  return PIN_ATTRIBUTE_KEYS.some((key) => port[key] !== undefined)
+  return (
+    port.is_passive !== undefined ||
+    PIN_ATTRIBUTE_KEYS.some((key) => port[key] !== undefined)
+  )
 }
 
 /**

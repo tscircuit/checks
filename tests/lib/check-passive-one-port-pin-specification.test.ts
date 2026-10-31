@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { checkAllPinsInComponentAreUnderspecified } from "lib/check-all-pins-in-component-are-underspecified"
 import { checkNoGroundPinDefined } from "lib/check-no-ground-pin-defined"
 import { checkNoPowerPinDefined } from "lib/check-no-power-pin-defined"
 
@@ -45,6 +46,73 @@ describe("passive one-port pin specification", () => {
     expect(
       getPowerAndGroundWarningsByComponent(circuitJson)("antenna"),
     ).toEqual([])
+  })
+
+  test("does not require power or ground roles for a passive-only multi-port chip such as a rotary encoder", () => {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "source_component",
+        source_component_id: "encoder",
+        name: "ENC1",
+        ftype: "simple_chip",
+      },
+      {
+        type: "source_port",
+        source_port_id: "enc_pin6",
+        source_component_id: "encoder",
+        name: "pin6",
+        is_passive: true,
+      },
+      {
+        type: "source_port",
+        source_port_id: "enc_pin7",
+        source_component_id: "encoder",
+        name: "pin7",
+        is_passive: true,
+      },
+      {
+        type: "source_port",
+        source_port_id: "enc_a",
+        source_component_id: "encoder",
+        name: "A",
+        is_passive: true,
+      },
+      {
+        type: "source_port",
+        source_port_id: "enc_c",
+        source_component_id: "encoder",
+        name: "C",
+        is_passive: true,
+        requires_ground: true,
+      },
+      {
+        type: "source_port",
+        source_port_id: "enc_b",
+        source_component_id: "encoder",
+        name: "B",
+        is_passive: true,
+      },
+      {
+        type: "source_port",
+        source_port_id: "enc_d",
+        source_component_id: "encoder",
+        name: "D",
+        is_passive: true,
+      },
+      {
+        type: "source_port",
+        source_port_id: "enc_e",
+        source_component_id: "encoder",
+        name: "E",
+        is_passive: true,
+        requires_ground: true,
+      },
+    ]
+
+    expect(
+      getPowerAndGroundWarningsByComponent(circuitJson)("encoder"),
+    ).toEqual([])
+    expect(checkAllPinsInComponentAreUnderspecified(circuitJson)).toEqual([])
   })
 
   test("keeps checking active chips with multiple connectable ports", () => {
