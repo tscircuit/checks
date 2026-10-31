@@ -74,12 +74,20 @@ export function checkHoleTraceClearance(
       )
       for (const geometry of candidates) {
         const hole = geometry.sourceElement
-        if (hole.type !== "pcb_hole") continue
+        if (hole.type !== "pcb_hole" && hole.type !== "pcb_via") continue
         const { gap, center } = getTraceHoleClearance(
           { x1: a.x, y1: a.y, x2: b.x, y2: b.y, thickness: halfWidth * 2 },
           geometry,
         )
-        const pairId = `${trace.pcb_trace_id}_${hole.pcb_hole_id}`
+        const holeId =
+          hole.type === "pcb_via" ? hole.pcb_via_id : hole.pcb_hole_id
+        const pairId = `${trace.pcb_trace_id}_${holeId}`
+        // NB: pcb_hole keeps the historical `overlap_` prefix (asserted in
+        // tests/snapshots); pcb_via uses `hole_` so a clearance error can
+        // never share its id with an overlap error for the same pair
+        // (checkEachPcbTraceNonOverlapping emits `overlap_<trace>_<via>`).
+        const pcbTraceErrorId =
+          hole.type === "pcb_via" ? `hole_${pairId}` : `overlap_${pairId}`
         if (isTraceObstacleOverlap(gap)) {
           errors.delete(pairId)
           overlappingPairIds.add(pairId)
@@ -93,7 +101,7 @@ export function checkHoleTraceClearance(
           error: {
             type: "pcb_trace_error",
             error_type: "pcb_trace_error",
-            pcb_trace_error_id: `overlap_${pairId}`,
+            pcb_trace_error_id: pcbTraceErrorId,
             pcb_trace_id: trace.pcb_trace_id,
             source_trace_id: trace.source_trace_id ?? "",
             pcb_component_ids: hole.pcb_component_id
@@ -101,7 +109,7 @@ export function checkHoleTraceClearance(
               : [],
             pcb_port_ids: [],
             center,
-            message: `Trace ${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)} is too close to non-plated hole ${getReadableNameForElementId(circuitJson, hole.pcb_hole_id)} (gap: ${gap.toFixed(6)}mm, required: ${required}mm)`,
+            message: `Trace ${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)} is too close to ${hole.type === "pcb_via" ? "via hole" : "non-plated hole"} ${getReadableNameForElementId(circuitJson, holeId)} (gap: ${gap.toFixed(6)}mm, required: ${required}mm)`,
           },
         })
       }

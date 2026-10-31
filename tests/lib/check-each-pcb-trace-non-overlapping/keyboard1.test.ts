@@ -16,8 +16,10 @@ test("keyboard1", () => {
   ]
 
   expect(overlapErrors).toHaveLength(27)
-  expect(clearanceErrors).toHaveLength(21)
-  expect(overlapErrors.length + clearanceErrors.length).toBe(48)
+  // 21 → 26: checkHoleTraceClearance now covers pcb_via drill holes
+  // (5 real via↔track violations on this keyboard, gaps 0.05–0.15 < 0.2).
+  expect(clearanceErrors).toHaveLength(26)
+  expect(overlapErrors.length + clearanceErrors.length).toBe(53)
   expect(
     clearanceErrors.some((error) => {
       const overlapId =
