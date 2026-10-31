@@ -1,10 +1,13 @@
 import { expect, test } from "bun:test"
 import type { AnyCircuitElement } from "circuit-json"
+import { convertCircuitJsonToSchematicSvg } from "circuit-to-svg"
+import encoderSchematic from "../assets/macro-six-encoder-schematic.json"
 import { checkNoPowerPinDefined } from "lib/check-no-power-pin-defined"
 
 // Reduced from ENC1 in https://tscircuit.com/gokul/macro-six-usbc (open-assembly.tsx).
 // EC11E18244AU is a passive mechanical encoder with a push switch, not a powered IC.
 // Preserve the exported pin roles; omit unrelated PCB/CAD geometry and connectivity.
+// The schematic fixture retains ENC1’s exported symbol, ports and labels.
 test("repro: macro-six passive encoder receives a power-pin warning", () => {
   const circuitJson: AnyCircuitElement[] = [
     {
@@ -76,11 +79,39 @@ test("repro: macro-six passive encoder receives a power-pin warning", () => {
 
   // Capture the current false positive. The expected corrected result is [].
   // Related fix: https://github.com/tscircuit/checks/pull/477
-  expect(
-    checkNoPowerPinDefined(circuitJson).map((warning) => warning.message),
-  ).toMatchInlineSnapshot(`
+  const warnings = checkNoPowerPinDefined(circuitJson)
+  expect(warnings.map((warning) => warning.message)).toMatchInlineSnapshot(`
       [
         "ENC1 has no pin with requires_power=true",
       ]
     `)
+
+  const annotatedCircuitJson: AnyCircuitElement[] = [
+    ...circuitJson,
+    ...(encoderSchematic as AnyCircuitElement[]),
+    {
+      type: "schematic_text",
+      schematic_text_id: "passive_pin_annotation",
+      text: "All seven ENC1 pins are marked passive; no supply pin is required.",
+      position: { x: -10.75, y: 2.9 },
+      anchor: "center",
+      rotation: 0,
+      font_size: 0.16,
+    },
+    ...warnings.map(
+      (warning): AnyCircuitElement => ({
+        type: "schematic_text",
+        schematic_text_id: "power_warning_annotation",
+        text: warning.message,
+        position: { x: -10.75, y: 2.5 },
+        anchor: "center",
+        rotation: 0,
+        font_size: 0.16,
+        color: "red",
+      }),
+    ),
+  ]
+  expect(
+    convertCircuitJsonToSchematicSvg(annotatedCircuitJson),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
