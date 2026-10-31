@@ -7,6 +7,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import Flatbush from "flatbush"
 import { getViaAndPourConnections } from "./get-via-and-pour-connections"
+import { getTouchingSmtPadConnections } from "./get-touching-smt-pad-connections"
 
 type TraceSegmentBounds = {
   traceIndex: number
@@ -113,6 +114,7 @@ export function createIndexedPcbConnectivityMap(
       connections.push(connection)
   }
   connections.push(...getViaAndPourConnections(circuitJson))
+  connections.push(...getTouchingSmtPadConnections(circuitJson))
   map.connMap = new ConnectivityMap(findConnectedNetworks(connections))
   return map
 }
