@@ -1,3 +1,4 @@
+import { checkScopedCopperClearance } from "./check-scoped-copper-clearance"
 import { checkPcbTraceStyle } from "./check-pcb-trace-style"
 import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
 import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
@@ -137,6 +138,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkCopperPourShorts(circuitJson, connectivity),
     ...checkCopperPourIslands(circuitJson, connectivity),
     ...checkPadTraceClearance(circuitJson, connectivity),
+    ...checkScopedCopperClearance(circuitJson, connectivity),
     ...checkHoleTraceClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson, connectivity),
     ...checkViaPadClearance(circuitJson, connectivity),

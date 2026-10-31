@@ -25,7 +25,7 @@
     "@types/bun": "^1.2.8",
     "@types/debug": "^4.1.12",
     "bun-match-svg": "^0.0.11",
-    "circuit-json": "^0.0.537",
+    "circuit-json": "https://pkg.pr.new/circuit-json@ec60213",
     "circuit-json-to-connectivity-map": "^0.0.30",
     "circuit-to-svg": "^0.0.454",
     "debug": "^4.3.5",
@@ -49,5 +49,8 @@
   },
   "dependencies": {
     "flatbush": "^4.6.2"
+  },
+  "overrides": {
+    "circuit-json": "https://pkg.pr.new/circuit-json@ec60213"
   }
 }
