@@ -31,7 +31,8 @@ export function checkNoPowerPinDefined(
   for (const component of sourceComponents) {
     const componentPorts =
       portsByComponent.get(component.source_component_id) ?? []
-    if (!shouldCheckChipPowerGroundPins(component, componentPorts)) continue
+    if (!shouldCheckChipPowerGroundPins(component, componentPorts, "power"))
+      continue
 
     const hasRequiredPowerPin = componentPorts.some(
       (port) => port.requires_power === true,

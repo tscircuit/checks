@@ -88,3 +88,43 @@ describe("checkNoGroundPinDefined", () => {
     expect(warnings).toHaveLength(0)
   })
 })
+
+const chip = (
+  ports: Partial<Record<"is_passive" | "requires_power", boolean>>[],
+): AnyCircuitElement[] => [
+  {
+    type: "source_component",
+    source_component_id: "component_1",
+    name: "D1",
+    ftype: "simple_chip",
+  },
+  ...ports.map((attributes, i) => ({
+    type: "source_port" as const,
+    source_port_id: `port_${i + 1}`,
+    source_component_id: "component_1",
+    name: `P${i + 1}`,
+    ...attributes,
+  })),
+]
+
+describe("checkNoGroundPinDefined on passive chips", () => {
+  test("skips a chip whose connected pins are all passive, such as a diode pair", () => {
+    expect(
+      checkNoGroundPinDefined(
+        chip([
+          { is_passive: true },
+          { is_passive: true },
+          { is_passive: true },
+        ]),
+      ),
+    ).toHaveLength(0)
+  })
+
+  test("still warns when a pin is not passive and none is ground", () => {
+    expect(
+      checkNoGroundPinDefined(
+        chip([{ is_passive: true }, { requires_power: true }]),
+      ),
+    ).toHaveLength(1)
+  })
+})
