@@ -86,3 +86,43 @@ describe("checkNoPowerPinDefined", () => {
     expect(warnings).toHaveLength(0)
   })
 })
+
+test.each([
+  { isPassive: true, expectedWarnings: 0 },
+  { isPassive: false, expectedWarnings: 1 },
+  { isPassive: undefined, expectedWarnings: 1 },
+])(
+  "only skips explicitly passive connectable pins: %j",
+  ({ isPassive, expectedWarnings }) => {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "source_component",
+        source_component_id: "component_1",
+        name: "U1",
+        ftype: "simple_chip",
+      },
+      {
+        type: "source_port",
+        source_port_id: "port_1",
+        source_component_id: "component_1",
+        name: "P1",
+        is_passive: true,
+      },
+      {
+        type: "source_port",
+        source_port_id: "port_2",
+        source_component_id: "component_1",
+        name: "P2",
+        is_passive: isPassive,
+      },
+      {
+        type: "source_port",
+        source_port_id: "port_3",
+        source_component_id: "component_1",
+        name: "NC",
+        do_not_connect: true,
+      },
+    ]
+    expect(checkNoPowerPinDefined(circuitJson)).toHaveLength(expectedWarnings)
+  },
+)
