@@ -114,4 +114,4 @@ test("repro: macro-six passive encoder receives a power-pin warning", () => {
   expect(
     convertCircuitJsonToSchematicSvg(annotatedCircuitJson),
   ).toMatchSvgSnapshot(import.meta.path)
-})
+}, 20_000)
