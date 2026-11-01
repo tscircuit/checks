@@ -12,15 +12,30 @@ import type { PcbTraceSegment } from "../check-each-pcb-trace-non-overlapping/ge
 
 export const getHoleGeometries = (
   circuitJson: AnyCircuitElement[],
-): FlattenElement[] =>
-  convertCircuitJsonToFlattenJs(
-    circuitJson.filter((e) => e.type === "pcb_hole"),
+): FlattenElement[] => {
+  const elements = convertCircuitJsonToFlattenJs(
+    circuitJson.filter(
+      (e) =>
+        e.type === "pcb_hole" ||
+        (e.type === "pcb_via" &&
+          Number.isFinite(e.hole_diameter) &&
+          e.hole_diameter > 0 &&
+          Number.isFinite(e.outer_diameter) &&
+          e.outer_diameter > 0),
+    ),
     {
-      elementTypes: ["pcb_hole"],
+      elementTypes: ["pcb_hole", "pcb_via"],
       strict: true,
       curveTolerance: 1e-6,
     },
   ).elements
+  const seenIds = new Set<string>()
+  return elements.filter((el) => {
+    if (seenIds.has(el.elementId)) return false
+    seenIds.add(el.elementId)
+    return true
+  })
+}
 
 /** Uses the same physical hole boundary for overlap and clearance checks. */
 export const getTraceHoleClearance = (
@@ -28,14 +43,14 @@ export const getTraceHoleClearance = (
   geometry: FlattenElement,
 ): { gap: number; center: { x: number; y: number } } => {
   const hole = geometry.sourceElement
-  if (hole.type !== "pcb_hole") {
+  if (hole.type !== "pcb_hole" && hole.type !== "pcb_via") {
     throw new Error(`Expected hole geometry`)
   }
   const a = new Point(trace.x1, trace.y1)
   const b = new Point(trace.x2, trace.y2)
   let distance = Infinity
   let center = pointToSegmentClosestPoint(hole, a, b)
-  if (hole.hole_shape === "circle") {
+  if (hole.type === "pcb_via" || hole.hole_shape === "circle") {
     distance = pointToSegmentDistance(hole, a, b) - hole.hole_diameter / 2
   } else {
     const segment = new Segment(a, b)

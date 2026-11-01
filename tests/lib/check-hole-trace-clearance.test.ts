@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import type { AnyCircuitElement, PcbHole, PcbTrace } from "circuit-json"
-import { checkHoleTraceClearance } from "../../index"
+import type { AnyCircuitElement, PcbHole, PcbTrace, PcbVia } from "circuit-json"
 import {
   checkEachPcbTraceNonOverlapping,
+  checkHoleTraceClearance,
+  checkViaTraceClearance,
   runAllRoutingChecks,
 } from "../../index"
 
@@ -213,4 +214,60 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
+})
+
+test("checkHoleTraceClearance checks pcb_via drill hole to trace clearance", async () => {
+  const via: PcbVia = {
+    type: "pcb_via",
+    pcb_via_id: "via_1",
+    x: 0,
+    y: 0,
+    outer_diameter: 0.3,
+    hole_diameter: 0.2,
+    layers: ["top", "bottom"],
+  }
+  // Trace at y = 0.36 has width 0.2 (half-width 0.1):
+  // - copper-to-copper gap = 0.36 - 0.15 - 0.10 = 0.11 mm (>= 0.10 mm pad rule)
+  // - drill-hole-to-copper gap = 0.36 - 0.10 - 0.10 = 0.16 mm (< 0.20 mm hole rule)
+  const unrelatedTrace: PcbTrace = {
+    type: "pcb_trace",
+    pcb_trace_id: "trace_unrelated",
+    route: [
+      { route_type: "wire", x: -2, y: 0.36, width: 0.2, layer: "top" },
+      { route_type: "wire", x: 2, y: 0.36, width: 0.2, layer: "top" },
+    ],
+  }
+  const safeTrace: PcbTrace = {
+    type: "pcb_trace",
+    pcb_trace_id: "trace_safe",
+    route: [
+      { route_type: "wire", x: -2, y: -0.4, width: 0.2, layer: "top" },
+      { route_type: "wire", x: 2, y: -0.4, width: 0.2, layer: "top" },
+    ],
+  }
+  const ownTrace: PcbTrace = {
+    type: "pcb_trace",
+    pcb_trace_id: "trace_own",
+    route: [
+      { route_type: "wire", x: 0, y: 0, width: 0.2, layer: "top" },
+      { route_type: "wire", x: 0, y: 0.28, width: 0.2, layer: "top" },
+    ],
+  }
+
+  const circuit: AnyCircuitElement[] = [
+    { ...via, pcb_trace_id: "trace_own" },
+    unrelatedTrace,
+    safeTrace,
+    ownTrace,
+  ]
+
+  expect(checkViaTraceClearance(circuit)).toHaveLength(0)
+  const holeErrors = checkHoleTraceClearance(circuit)
+  expect(holeErrors).toHaveLength(1)
+  expect(holeErrors[0]).toMatchObject({
+    type: "pcb_trace_error",
+    pcb_trace_error_id: "overlap_trace_unrelated_via_1",
+    pcb_trace_id: "trace_unrelated",
+  })
+  expect(holeErrors[0]?.message).toContain("via hole")
 })

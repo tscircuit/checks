@@ -137,7 +137,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkCopperPourShorts(circuitJson, connectivity),
     ...checkCopperPourIslands(circuitJson, connectivity),
     ...checkPadTraceClearance(circuitJson, connectivity),
-    ...checkHoleTraceClearance(circuitJson),
+    ...checkHoleTraceClearance(circuitJson, connectivity),
     ...checkViaTraceClearance(circuitJson, connectivity),
     ...checkViaPadClearance(circuitJson, connectivity),
     ...checkSameNetViaSpacing(circuitJson, connectivity),
