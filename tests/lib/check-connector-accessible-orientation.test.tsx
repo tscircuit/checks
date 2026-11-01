@@ -314,3 +314,72 @@ test("pin headers ignore inferred side entry but retain explicit right-angle war
   ])
   expect(warnings).toHaveLength(1)
 })
+
+test("internal flex sockets and explicit internal connector opt-outs skip accessible orientation warnings", () => {
+  const board: AnyCircuitElement = {
+    type: "pcb_board",
+    pcb_board_id: "board",
+    center: { x: 0, y: 0 },
+    width: 30,
+    height: 20,
+    thickness: 1.6,
+    num_layers: 2,
+    material: "fr4",
+  }
+  const fpcSource: AnyCircuitElement = {
+    type: "source_component",
+    source_component_id: "fpc_source",
+    name: "J1",
+    ftype: "simple_connector",
+    manufacturer_part_number: "FH19SC-24S-0.5SH",
+  }
+  const fpcPcb: Extract<AnyCircuitElement, { type: "pcb_component" }> = {
+    type: "pcb_component",
+    pcb_component_id: "fpc_pcb",
+    source_component_id: "fpc_source",
+    center: { x: -13, y: 0 },
+    cable_insertion_center: { x: -13, y: 2 },
+    width: 14,
+    height: 3.5,
+    layer: "top",
+    rotation: 0,
+    obstructs_within_bounds: true,
+  }
+
+  expect(
+    checkConnectorAccessibleOrientation([board, fpcSource, fpcPcb]),
+  ).toHaveLength(0)
+
+  const genericSource: AnyCircuitElement = {
+    type: "source_component",
+    source_component_id: "generic_source",
+    name: "J2",
+    ftype: "simple_connector",
+  }
+  const genericPcb: Extract<AnyCircuitElement, { type: "pcb_component" }> = {
+    ...fpcPcb,
+    pcb_component_id: "generic_pcb",
+    source_component_id: "generic_source",
+    insertion_direction: "from_top",
+  }
+
+  expect(
+    checkConnectorAccessibleOrientation([board, genericSource, genericPcb]),
+  ).toHaveLength(1)
+
+  expect(
+    checkConnectorAccessibleOrientation([
+      board,
+      genericSource,
+      { ...genericPcb, is_internal_connector: true } as any,
+    ]),
+  ).toHaveLength(0)
+
+  expect(
+    checkConnectorAccessibleOrientation([
+      board,
+      { ...genericSource, accessible_from_board_edge: false } as any,
+      genericPcb,
+    ]),
+  ).toHaveLength(0)
+})
