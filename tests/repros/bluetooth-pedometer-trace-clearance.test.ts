@@ -36,8 +36,14 @@ test("Bluetooth pedometer reports all nine declared trace clearance violations",
     layer: "top",
     color: "#ffffff",
   }))
+  // Short visual labels keep the real routing legible; full diagnostics are
+  // compared with the explicit-rule result above. Native error markers remain.
+  const markedErrors = actual.map((error, index) => ({
+    ...error,
+    message: `Gap ${index + 1}`,
+  }))
   expect(
-    convertCircuitJsonToPcbSvg([...circuit, ...actual, ...notes], {
+    convertCircuitJsonToPcbSvg([...circuit, ...markedErrors, ...notes], {
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
