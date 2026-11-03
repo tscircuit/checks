@@ -7,7 +7,7 @@ import { checkPadTraceClearance } from "lib/check-pad-trace-clearance"
 test("reproduce a trace clearance rule being replaced by the pad clearance", () => {
   const board: PcbBoard = {
     type: "pcb_board", pcb_board_id: "board", center: { x: 0, y: 0 },
-    width: 4, height: 2, num_layers: 2, thickness: 1.6,
+    width: 4, height: 2, num_layers: 2, thickness: 1.6, material: "fr4",
     min_trace_to_pad_edge_clearance: 0.05,
     min_different_net_trace_edge_to_trace_edge_clearance: 0.1,
   }
