@@ -71,6 +71,11 @@ export function checkEachPcbTraceNonOverlapping(
   addStartAndEndPortIdsIfMissing(circuitJson)
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const board = getPcbBoard(circuitJson)
+  const tracePairClearance =
+    minClearance ??
+    getBoardDrcValue(board, "min_different_net_trace_edge_to_trace_edge_clearance") ??
+    getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
+    DEFAULT_TRACE_MARGIN
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     DEFAULT_TRACE_MARGIN
@@ -187,7 +192,7 @@ export function checkEachPcbTraceNonOverlapping(
     const bounds = getCollidableBounds(segmentA)
     const nearbyObjects = spatialIndex.getObjectsInBounds(
       bounds,
-      requiredMargin + segmentA.thickness / 2,
+      Math.max(requiredMargin, tracePairClearance) + segmentA.thickness / 2,
     )
     if (segmentA.x1 === segmentA.x2 && segmentA.y1 === segmentA.y2) continue
 
@@ -225,7 +230,7 @@ export function checkEachPcbTraceNonOverlapping(
           ) -
           segmentA.thickness / 2 -
           segmentB.thickness / 2
-        if (gap > minClearance - EPSILON) continue
+        if (gap > tracePairClearance - EPSILON) continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`
         const pcb_trace_error_id_reverse = `overlap_${segmentB.pcb_trace_id}_${segmentA.pcb_trace_id}`
