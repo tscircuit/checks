@@ -1,3 +1,4 @@
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { getPcbTraceLength } from "./util/get-pcb-trace-length"
 import type {
   AnyCircuitElement,
@@ -52,6 +53,32 @@ export const getPcbTracesBySourceTraceId = (
       pcbTracesBySourceTraceId.get(pcbTrace.source_trace_id) ?? []
     matchingPcbTraces.push(pcbTrace)
     pcbTracesBySourceTraceId.set(pcbTrace.source_trace_id, matchingPcbTraces)
+  }
+
+  // Net-owned routing can belong to a different source_trace than the trace
+  // carrying the rule. Match only copper touching the constrained terminal(s),
+  // rather than summing unrelated branches of the same electrical net.
+  const netAttachedRules = sourceTraces.filter((trace) =>
+    trace.connected_source_net_ids.length > 0 &&
+    (trace.max_length != null || trace.max_via_count != null) &&
+    !pcbTracesBySourceTraceId.has(trace.source_trace_id),
+  )
+  if (netAttachedRules.length > 0) {
+    const connectivity = getFullConnectivityMapFromCircuitJson(circuitJson)
+    for (const sourceTrace of netAttachedRules) {
+      const net = connectivity.getNetConnectedToId(sourceTrace.source_trace_id)
+      if (!net) continue
+      const endpointSets = sourceTrace.connected_source_port_ids.map(
+        (sourcePortId) => pcbPortIdsBySourcePortId.get(sourcePortId),
+      )
+      if (endpointSets.length === 0 || endpointSets.some((ports) => !ports?.size)) continue
+      const attachedTraces = pcbTraces.filter((pcbTrace) => {
+        if (connectivity.getNetConnectedToId(pcbTrace.pcb_trace_id) !== net) return false
+        const referencedPorts = getReferencedPcbPortIds(pcbTrace)
+        return endpointSets.every((ports) => [...ports!].some((port) => referencedPorts.has(port)))
+      })
+      if (attachedTraces.length > 0) pcbTracesBySourceTraceId.set(sourceTrace.source_trace_id, attachedTraces)
+    }
   }
 
   const exactEndpointPcbTraceIdsBySourceTraceId = new Map<string, Set<string>>()

@@ -6,7 +6,7 @@ import { checkPcbTraceLengths } from "lib/check-pcb-trace-lengths"
 import { getPcbTraceLength } from "lib/util/get-pcb-trace-length"
 import fixture from "../assets/bluetooth-pedometer-clock.circuit.json"
 
-test("real pedometer clock violations are missed when copper belongs to the net", () => {
+test("real pedometer clock violations are reported when copper belongs to the net", () => {
   // https://tscircuit.com/techmannih/Bluetooth-pedometer @ ebe6cfad63786434183a4ec6709409ade261dfff.
   // Automatic output from autorouter a4fa6d48887e95abe9b11332b939d0a170aa8af0.
   // Original source/PCB geometry plus SRJ-converted copper; source-port references
@@ -19,7 +19,7 @@ test("real pedometer clock violations are missed when copper belongs to the net"
   expect(length).toBeCloseTo(10.6106, 4)
   const errors = [...checkPcbTraceViaCounts(circuit), ...checkPcbTraceLengths(circuit)]
     .filter((error) => error.source_trace_id === "source_trace_217")
-  expect(errors).toHaveLength(0)
+  expect(errors).toHaveLength(2)
   const note: AnyCircuitElement = {
     type: "pcb_note_text", pcb_note_text_id: "clock_rule_caption",
     text: `X48_N: ${vias} vias / ${length.toFixed(2)} mm including vias; allowed 0 / 6; reported errors ${errors.length}`,

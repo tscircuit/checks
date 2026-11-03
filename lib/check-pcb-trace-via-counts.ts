@@ -1,7 +1,7 @@
+import { getPcbTracesBySourceTraceId } from "./check-pcb-trace-lengths"
 import type {
   AnyCircuitElement,
   PcbPort,
-  PcbTrace,
   PcbTraceError,
   SourceTrace,
 } from "circuit-json"
@@ -13,9 +13,7 @@ export const checkPcbTraceViaCounts = (
   const sourceTraces = circuitJson.filter(
     (element): element is SourceTrace => element.type === "source_trace",
   )
-  const pcbTraces = circuitJson.filter(
-    (element): element is PcbTrace => element.type === "pcb_trace",
-  )
+  const pcbTracesBySourceTraceId = getPcbTracesBySourceTraceId(circuitJson)
   const pcbPorts = circuitJson.filter(
     (element): element is PcbPort => element.type === "pcb_port",
   )
@@ -25,9 +23,7 @@ export const checkPcbTraceViaCounts = (
     const maximumViaCount = sourceTrace.max_via_count
     if (typeof maximumViaCount !== "number") continue
 
-    const routedPcbTraces = pcbTraces.filter(
-      (pcbTrace) => pcbTrace.source_trace_id === sourceTrace.source_trace_id,
-    )
+    const routedPcbTraces = pcbTracesBySourceTraceId.get(sourceTrace.source_trace_id) ?? []
     if (routedPcbTraces.length === 0) continue
 
     const actualViaCount = routedPcbTraces.reduce(
