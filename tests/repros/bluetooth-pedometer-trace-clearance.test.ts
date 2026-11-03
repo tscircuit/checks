@@ -6,7 +6,7 @@ import { checkPadTraceClearance } from "lib/check-pad-trace-clearance"
 import { checkViaTraceClearance } from "lib/check-via-trace-clearance"
 import fixture from "../assets/bluetooth-pedometer.routed.circuit.json"
 
-test("Bluetooth pedometer misses nine declared trace clearance violations", () => {
+test("Bluetooth pedometer reports all nine declared trace clearance violations", () => {
   // Real board: https://tscircuit.com/techmannih/Bluetooth-pedometer
   // Source: ebe6cfad63786434183a4ec6709409ade261dfff, manual routing removed.
   // Frozen automatic output: autorouter a4fa6d48887e95abe9b11332b939d0a170aa8af0.
@@ -17,7 +17,8 @@ test("Bluetooth pedometer misses nine declared trace clearance violations", () =
     minClearance: 0.1,
   })
   expect(circuit.filter((element) => element.type === "pcb_trace")).toHaveLength(165)
-  expect(actual).toHaveLength(0)
+  expect(actual).toHaveLength(9)
+  expect(actual).toEqual(requested)
   expect(requested).toHaveLength(9)
   expect(checkPadTraceClearance(circuit)).toHaveLength(0)
   expect(checkViaTraceClearance(circuit)).toHaveLength(0)
@@ -35,8 +36,14 @@ test("Bluetooth pedometer misses nine declared trace clearance violations", () =
     layer: "top",
     color: "#ffffff",
   }))
+  // Short visual labels keep the real routing legible; full diagnostics are
+  // compared with the explicit-rule result above. Native error markers remain.
+  const markedErrors = actual.map((error, index) => ({
+    ...error,
+    message: `Gap ${index + 1}`,
+  }))
   expect(
-    convertCircuitJsonToPcbSvg([...circuit, ...actual, ...notes], {
+    convertCircuitJsonToPcbSvg([...circuit, ...markedErrors, ...notes], {
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
