@@ -121,7 +121,12 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
     circuitJson.filter((element) => element.type === "pcb_trace").length,
   ).toBeGreaterThan(0)
 
-  expect(errors.map((error) => error.message)).toMatchInlineSnapshot("[]")
+  expect(errors.map((error) => error.message)).toMatchInlineSnapshot(`
+    [
+      "SW_RESET: SW_RESET.A (ESP_EN) and SW_RESET.B (GND) are declared internally connected, joining ESP_EN to GND. Check the pin connections and footprint mapping.",
+      "SW_BOOT: SW_BOOT.A (ESP_GPIO0) and SW_BOOT.B (GND) are declared internally connected, joining ESP_GPIO0 to GND. Check the pin connections and footprint mapping.",
+    ]
+  `)
   expect(
     convertCircuitJsonToPcbSvg([...circuitJson, ...errors], {
       width: 1400,
@@ -132,4 +137,58 @@ test("TS-1187A internal connections short the webcam reset and boot switches", a
       `<text x="10" y="60" fill="white" font-family="monospace" font-size="16">Checker diagnostics: ${errors.length}</text></svg>`,
     ),
   ).toMatchSvgSnapshot(import.meta.path)
+
+  const separateRecords = structuredClone(circuitJson)
+  for (const element of separateRecords) {
+    if (element.type !== "source_component") continue
+    const internalGroups = element.internally_connected_source_port_ids ?? []
+    element.internally_connected_source_port_ids = undefined
+    for (const [index, source_port_ids] of internalGroups.entries()) {
+      separateRecords.push({
+        type: "source_component_internal_connection",
+        source_component_internal_connection_id: `${element.source_component_id}_internal_${index}`,
+        source_component_id: element.source_component_id,
+        source_port_ids,
+      })
+    }
+  }
+  expect(
+    checkTwoTerminalSwitchContactsOnDifferentNets(separateRecords).map(
+      (error) => error.message,
+    ),
+  ).toEqual(errors.map((error) => error.message))
+
+  const aliasCircuit = structuredClone(circuitJson)
+  const sourceNetIds = aliasCircuit.flatMap((element) => {
+    if (element.type !== "source_net") return []
+    return [element.source_net_id]
+  })
+  aliasCircuit.push({
+    type: "source_trace",
+    source_trace_id: "source_trace_net_aliases",
+    connected_source_port_ids: [],
+    connected_source_net_ids: sourceNetIds,
+  })
+  expect(
+    checkTwoTerminalSwitchContactsOnDifferentNets(aliasCircuit).map(
+      (error) => error.message,
+    ),
+  ).toEqual([
+    "SW_RESET: contacts SW_RESET.A and SW_RESET.C are electrically connected. Check the wiring and internal pin mapping; the two switch contacts must be on separate nets.",
+    "SW_BOOT: contacts SW_BOOT.A and SW_BOOT.C are electrically connected. Check the wiring and internal pin mapping; the two switch contacts must be on separate nets.",
+  ])
+
+  const unnamedCircuit = structuredClone(circuitJson)
+  for (const element of unnamedCircuit) {
+    if (element.type === "source_component" || element.type === "source_net")
+      element.name = ""
+    if (element.type === "source_port") element.name = ""
+  }
+  const unnamedErrors =
+    checkTwoTerminalSwitchContactsOnDifferentNets(unnamedCircuit)
+  expect(unnamedErrors).toHaveLength(2)
+  for (const error of unnamedErrors) {
+    expect(error.message).toContain("unnamed net")
+    expect(error.message).not.toMatch(/source_(?:port|component|net)_/)
+  }
 })
