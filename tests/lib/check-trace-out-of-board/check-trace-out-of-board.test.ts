@@ -9,7 +9,7 @@ test("traces outside board comprehensive test with visual snapshot", () => {
   const errors = checkPcbTracesOutOfBoard(circuitJson)
 
   // Should find multiple traces outside board
-  expect(errors.length).toBeGreaterThanOrEqual(3)
+  expect(errors).toHaveLength(3)
 
   // Verify specific traces are detected
   const traceIds = errors.map((e) => e.pcb_trace_id)
