@@ -140,24 +140,21 @@ function checkEachPcbPortConnectedToPcbTraces(
       continue
     }
 
-    // Get the net ID for the first PCB port as reference
-    const firstPcbPort = pcbPortsInTrace[0]
-    const referenceNetId = connectivityMap.getNetConnectedToId(
-      firstPcbPort.pcb_port_id,
+    // Source-net membership describes required connectivity, not copper.
+    // One routed branch must not hide another isolated port or routed stub.
+    const referencePhysicalNet = pcbConnectivityMap.connMap.getNetConnectedToId(
+      pcbPortsInTrace[0]!.pcb_port_id,
     )
-
-    const netElementIds = connectivityMap.getIdsConnectedToNet(referenceNetId!)
-    const pcbTraceIds = netElementIds.filter((id) =>
-      circuitJson.some(
-        (element) =>
-          element.type === "pcb_trace" &&
-          (("pcb_trace_id" in element && element.pcb_trace_id === id) ||
-            ("route_id" in element && element.route_id === id)),
-      ),
-    )
+    const physicallyJoined =
+      referencePhysicalNet !== undefined &&
+      pcbPortsInTrace.every(
+        (port) =>
+          pcbConnectivityMap.connMap.getNetConnectedToId(port.pcb_port_id) ===
+          referencePhysicalNet,
+      )
 
     if (
-      pcbTraceIds.length === 0 &&
+      !physicallyJoined &&
       !getPourConnectivity().arePortsConnected(
         pcbPortsInTrace.map((port) => port.pcb_port_id),
       )
@@ -168,7 +165,7 @@ function checkEachPcbPortConnectedToPcbTraces(
       )
 
       if (uniqueComponentIds.size > 1) {
-        // Ports are on different components but no PCB traces connect them
+        // At least one required port is outside the connected copper network.
         errors.push({
           type: "pcb_port_not_connected_error",
           message: `Ports [${pcbPortsInTrace.map((p) => getReadableNameForPort(circuitJson, p.pcb_port_id)).join(", ")}] are not connected together through the same net.`,
