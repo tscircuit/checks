@@ -38,7 +38,7 @@ export function checkViaPadClearance(
   const board = getPcbBoard(circuitJson)
   const requiredClearance =
     minClearance ??
-    getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
+    getBoardDrcValue(board, "min_via_edge_to_pad_edge_clearance") ??
     jlcMinTolerances.min_pad_edge_to_pad_edge_clearance!
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
 
