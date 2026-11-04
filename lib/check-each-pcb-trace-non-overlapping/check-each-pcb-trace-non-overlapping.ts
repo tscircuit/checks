@@ -258,7 +258,9 @@ export function checkEachPcbTraceNonOverlapping(
       if (
         connMap.areIdsConnected(
           segmentA.pcb_trace_id,
-          "pcb_trace_id" in obj ? (obj.pcb_trace_id as string) : primaryObjId,
+          "pcb_trace_id" in obj
+            ? (obj.pcb_trace_id ?? primaryObjId)
+            : primaryObjId,
         )
       )
         continue
