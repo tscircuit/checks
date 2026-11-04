@@ -6,6 +6,7 @@ type SourceComponent = Extract<
 >
 
 type SourcePort = Extract<AnyCircuitElement, { type: "source_port" }>
+type SourcePortId = SourcePort["source_port_id"]
 type SourceTrace = Extract<AnyCircuitElement, { type: "source_trace" }>
 
 type SourcePinMustBeConnectedError = {
@@ -42,35 +43,48 @@ export function checkPinMustBeConnected(
   )
 
   // Build a set of connected source port IDs
-  const connectedPortIds = new Set<string>()
+  const connectedPortIds = new Set<SourcePortId>()
   for (const trace of sourceTraces) {
     for (const portId of trace.connected_source_port_ids ?? []) {
       connectedPortIds.add(portId)
     }
   }
 
-  // Build a map of internally connected port groups for each component
-  const componentInternalConnections = new Map<string, string[][]>()
-  for (const component of sourceComponents) {
-    if (
-      "internally_connected_source_port_ids" in component &&
-      component.internally_connected_source_port_ids
-    ) {
-      componentInternalConnections.set(
-        component.source_component_id,
-        component.internally_connected_source_port_ids,
-      )
+  // Both internal-connection representations describe the same electrical links.
+  const internalGroups = circuitJson.flatMap((element) => {
+    if (element.type === "source_component") {
+      return element.internally_connected_source_port_ids ?? []
+    }
+    if (element.type === "source_component_internal_connection") {
+      return [element.source_port_ids]
+    }
+    return []
+  })
+  const internallyConnectedPorts = new Map<SourcePortId, Set<SourcePortId>>()
+  for (const group of internalGroups) {
+    const firstPortId = group[0]
+    if (!firstPortId) continue
+    const firstPortNeighbors =
+      internallyConnectedPorts.get(firstPortId) ?? new Set<SourcePortId>()
+    internallyConnectedPorts.set(firstPortId, firstPortNeighbors)
+    for (const portId of group.slice(1)) {
+      firstPortNeighbors.add(portId)
+      const neighbors =
+        internallyConnectedPorts.get(portId) ?? new Set<SourcePortId>()
+      neighbors.add(firstPortId)
+      internallyConnectedPorts.set(portId, neighbors)
     }
   }
 
-  // For each internal group, if any port is connected, mark all ports in the group as connected
-  for (const internalGroups of componentInternalConnections.values()) {
-    for (const group of internalGroups) {
-      if (group.some((portId) => connectedPortIds.has(portId))) {
-        for (const portId of group) {
-          connectedPortIds.add(portId)
-        }
-      }
+  // Traverse from traced ports so overlapping groups work in either order,
+  // while internal connections alone cannot satisfy a required connection.
+  const pendingPortIds = [...connectedPortIds]
+  for (let index = 0; index < pendingPortIds.length; index++) {
+    for (const portId of internallyConnectedPorts.get(pendingPortIds[index]) ??
+      []) {
+      if (connectedPortIds.has(portId)) continue
+      connectedPortIds.add(portId)
+      pendingPortIds.push(portId)
     }
   }
 
