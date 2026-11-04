@@ -1,3 +1,4 @@
+import { getTerminalViaContactWidth } from "../util/get-terminal-via-contact-width"
 import { getReadableNameForTrace as getReadableNameForPcbTrace } from "lib/util/get-readable-names"
 import type {
   AnyCircuitElement,
@@ -13,6 +14,7 @@ import {
   createEndpointContactContext,
   endpointTouchesNetCopper,
   getTerminalWireSegment,
+  terminalLandingTouchesVia,
   type EndpointContactContext,
   type PcbTraceWireRoutePoint,
   type TraceEndpoint,
@@ -42,6 +44,12 @@ function isEndpointDangling(
   const terminalSegment = getTerminalWireSegment(trace, endpoint)
   if (!terminalSegment) {
     // Port-connected via-only fragments have no lateral wire end to inspect.
+    const viaWidth = getTerminalViaContactWidth(trace, endpoint)
+    if (
+      viaWidth !== undefined &&
+      terminalLandingTouchesVia(trace, point, viaWidth, ctx)
+    )
+      return false
     return !hasExpectedPorts
   }
   return !endpointTouchesNetCopper({ trace, point, terminalSegment }, ctx)
