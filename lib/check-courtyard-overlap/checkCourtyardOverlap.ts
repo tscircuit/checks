@@ -8,6 +8,8 @@ import type {
   PcbCourtyardCircle,
   PcbCourtyardOutline,
   PcbCourtyardOverlapError,
+  PcbCourtyardPill,
+  PcbCourtyardPolygon,
   PcbCourtyardRect,
 } from "circuit-json"
 
@@ -15,6 +17,8 @@ type CourtyardElement =
   | PcbCourtyardRect
   | PcbCourtyardCircle
   | PcbCourtyardOutline
+  | PcbCourtyardPolygon
+  | PcbCourtyardPill
 
 function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
   if (el.type === "pcb_courtyard_rect") {
@@ -43,6 +47,60 @@ function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
         y: el.center.y + el.radius * Math.sin(a),
       }
     })
+  }
+  if (el.type === "pcb_courtyard_pill") {
+    const r = Math.min(el.radius, Math.min(el.width, el.height) / 2)
+    const halfArcSegments = 16
+    const localPoints: { x: number; y: number }[] = []
+
+    if (el.width >= el.height) {
+      const halfSpan = Math.max(0, el.width / 2 - r)
+      for (let i = 0; i <= halfArcSegments; i++) {
+        const a = -Math.PI / 2 + (Math.PI * i) / halfArcSegments
+        localPoints.push({
+          x: halfSpan + r * Math.cos(a),
+          y: r * Math.sin(a),
+        })
+      }
+      for (let i = 0; i <= halfArcSegments; i++) {
+        const a = Math.PI / 2 + (Math.PI * i) / halfArcSegments
+        localPoints.push({
+          x: -halfSpan + r * Math.cos(a),
+          y: r * Math.sin(a),
+        })
+      }
+    } else {
+      const halfSpan = Math.max(0, el.height / 2 - r)
+      for (let i = 0; i <= halfArcSegments; i++) {
+        const a = (Math.PI * i) / halfArcSegments
+        localPoints.push({
+          x: r * Math.cos(a),
+          y: halfSpan + r * Math.sin(a),
+        })
+      }
+      for (let i = 0; i <= halfArcSegments; i++) {
+        const a = Math.PI + (Math.PI * i) / halfArcSegments
+        localPoints.push({
+          x: r * Math.cos(a),
+          y: -halfSpan + r * Math.sin(a),
+        })
+      }
+    }
+
+    const ccwRotation =
+      "ccw_rotation" in el && typeof el.ccw_rotation === "number"
+        ? el.ccw_rotation
+        : 0
+    const angle = (ccwRotation * Math.PI) / 180
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    return localPoints.map(({ x, y }) => ({
+      x: el.center.x + x * cos - y * sin,
+      y: el.center.y + x * sin + y * cos,
+    }))
+  }
+  if (el.type === "pcb_courtyard_polygon") {
+    return el.points
   }
   return el.outline
 }
@@ -93,7 +151,9 @@ export function checkCourtyardOverlap(
       (el): el is CourtyardElement =>
         el.type === "pcb_courtyard_rect" ||
         el.type === "pcb_courtyard_circle" ||
-        el.type === "pcb_courtyard_outline",
+        el.type === "pcb_courtyard_outline" ||
+        el.type === "pcb_courtyard_polygon" ||
+        el.type === "pcb_courtyard_pill",
     )
     .filter((el) => !doNotPlaceComponentIds.has(el.pcb_component_id))
 
