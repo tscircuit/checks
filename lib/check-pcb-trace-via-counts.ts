@@ -23,7 +23,8 @@ export const checkPcbTraceViaCounts = (
     const maximumViaCount = sourceTrace.max_via_count
     if (typeof maximumViaCount !== "number") continue
 
-    const routedPcbTraces = pcbTracesBySourceTraceId.get(sourceTrace.source_trace_id) ?? []
+    const routedPcbTraces =
+      pcbTracesBySourceTraceId.get(sourceTrace.source_trace_id) ?? []
     if (routedPcbTraces.length === 0) continue
 
     const actualViaCount = routedPcbTraces.reduce(

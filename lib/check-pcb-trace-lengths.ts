@@ -1,5 +1,6 @@
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { getPcbTraceLength } from "./util/get-pcb-trace-length"
+import { getNetOwnedConstraintPath } from "./util/get-net-owned-constraint-path"
 import type {
   AnyCircuitElement,
   PcbPort,
@@ -58,10 +59,11 @@ export const getPcbTracesBySourceTraceId = (
   // Net-owned routing can belong to a different source_trace than the trace
   // carrying the rule. Match only copper touching the constrained terminal(s),
   // rather than summing unrelated branches of the same electrical net.
-  const netAttachedRules = sourceTraces.filter((trace) =>
-    trace.connected_source_net_ids.length > 0 &&
-    (trace.max_length != null || trace.max_via_count != null) &&
-    !pcbTracesBySourceTraceId.has(trace.source_trace_id),
+  const netAttachedRules = sourceTraces.filter(
+    (trace) =>
+      trace.connected_source_net_ids.length > 0 &&
+      (trace.max_length != null || trace.max_via_count != null) &&
+      !pcbTracesBySourceTraceId.has(trace.source_trace_id),
   )
   if (netAttachedRules.length > 0) {
     const connectivity = getFullConnectivityMapFromCircuitJson(circuitJson)
@@ -71,13 +73,23 @@ export const getPcbTracesBySourceTraceId = (
       const endpointSets = sourceTrace.connected_source_port_ids.map(
         (sourcePortId) => pcbPortIdsBySourcePortId.get(sourcePortId),
       )
-      if (endpointSets.length === 0 || endpointSets.some((ports) => !ports?.size)) continue
-      const attachedTraces = pcbTraces.filter((pcbTrace) => {
-        if (connectivity.getNetConnectedToId(pcbTrace.pcb_trace_id) !== net) return false
-        const referencedPorts = getReferencedPcbPortIds(pcbTrace)
-        return endpointSets.every((ports) => [...ports!].some((port) => referencedPorts.has(port)))
-      })
-      if (attachedTraces.length > 0) pcbTracesBySourceTraceId.set(sourceTrace.source_trace_id, attachedTraces)
+      if (
+        endpointSets.length === 0 ||
+        endpointSets.some((ports) => !ports?.size)
+      )
+        continue
+      const attachedTraces = getNetOwnedConstraintPath(
+        pcbTraces.filter(
+          (pcbTrace) =>
+            connectivity.getNetConnectedToId(pcbTrace.pcb_trace_id) === net,
+        ),
+        endpointSets as Set<string>[],
+      )
+      if (attachedTraces.length > 0)
+        pcbTracesBySourceTraceId.set(
+          sourceTrace.source_trace_id,
+          attachedTraces,
+        )
     }
   }
 
@@ -150,7 +162,7 @@ export const checkPcbTraceLengths = (
 
     errors.push({
       type: "pcb_trace_too_long_error",
-      pcb_trace_too_long_error_id: `pcb_trace_too_long_error_${pcbTrace.pcb_trace_id}`,
+      pcb_trace_too_long_error_id: `pcb_trace_too_long_error_${sourceTraceId}_${pcbTrace.pcb_trace_id}`,
       error_type: "pcb_trace_too_long_error",
       message: `PCB trace is ${actualTraceLength.toFixed(2)}mm long, exceeding the ${maximumTraceLength}mm maximum`,
       pcb_trace_id: pcbTrace.pcb_trace_id,
