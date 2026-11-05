@@ -61,6 +61,22 @@ export const getPadBounds = (pad: CopperClearanceElement): Bounds => {
     }
   }
 
+  if (
+    pad.type === "pcb_plated_hole" &&
+    (("rect_pad_width" in pad && "rect_pad_height" in pad) ||
+      pad.shape === "hole_with_polygon_pad")
+  ) {
+    const points = getPolygonPointsForPad(pad)
+    if (points.length > 0) {
+      return {
+        minX: Math.min(...points.map((point) => point.x)),
+        minY: Math.min(...points.map((point) => point.y)),
+        maxX: Math.max(...points.map((point) => point.x)),
+        maxY: Math.max(...points.map((point) => point.y)),
+      }
+    }
+  }
+
   return getBoundsOfPcbElements([pad])
 }
 
@@ -150,8 +166,8 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
 
   if (
     pad.type === "pcb_plated_hole" &&
-    "rect_pad_width" in pad &&
-    "rect_pad_height" in pad
+    (("rect_pad_width" in pad && "rect_pad_height" in pad) ||
+      pad.shape === "hole_with_polygon_pad")
   ) {
     return {
       kind: "polygon" as const,
@@ -175,32 +191,78 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
 // At the maximum radius its inset collapses, so use the existing pill geometry.
 const getRoundedPadCore = (pad: CopperClearanceElement) => {
   if (
-    pad.type !== "pcb_smtpad" ||
-    (pad.shape !== "rect" && pad.shape !== "rotated_rect") ||
-    !pad.corner_radius ||
-    pad.corner_radius <= 0
-  )
-    return null
-
-  const radius = Math.min(pad.corner_radius, pad.width / 2, pad.height / 2)
-  if (radius === Math.min(pad.width, pad.height) / 2) {
-    const core: PcbSmtPad = {
-      ...pad,
-      shape: "rotated_pill",
-      radius,
-      ccw_rotation: pad.shape === "rotated_rect" ? pad.ccw_rotation : 0,
+    pad.type === "pcb_smtpad" &&
+    (pad.shape === "rect" || pad.shape === "rotated_rect") &&
+    pad.corner_radius &&
+    pad.corner_radius > 0
+  ) {
+    const radius = Math.min(pad.corner_radius, pad.width / 2, pad.height / 2)
+    if (radius === Math.min(pad.width, pad.height) / 2) {
+      const core: PcbSmtPad = {
+        ...pad,
+        shape: "rotated_pill",
+        radius,
+        ccw_rotation: pad.shape === "rotated_rect" ? pad.ccw_rotation : 0,
+      }
+      return { core, radius: 0 }
     }
-    return { core, radius: 0 }
+    return {
+      core: {
+        ...pad,
+        width: pad.width - 2 * radius,
+        height: pad.height - 2 * radius,
+        corner_radius: 0,
+      },
+      radius,
+    }
   }
-  return {
-    core: {
-      ...pad,
-      width: pad.width - 2 * radius,
-      height: pad.height - 2 * radius,
-      corner_radius: 0,
-    },
-    radius,
+
+  if (
+    pad.type === "pcb_plated_hole" &&
+    "rect_pad_width" in pad &&
+    "rect_pad_height" in pad &&
+    pad.rect_border_radius &&
+    pad.rect_border_radius > 0
+  ) {
+    const radius = Math.min(
+      pad.rect_border_radius,
+      pad.rect_pad_width / 2,
+      pad.rect_pad_height / 2,
+    )
+    const ccwRotation =
+      "rect_ccw_rotation" in pad && typeof pad.rect_ccw_rotation === "number"
+        ? pad.rect_ccw_rotation
+        : 0
+    if (radius === Math.min(pad.rect_pad_width, pad.rect_pad_height) / 2) {
+      const core: PcbPlatedHole = {
+        type: "pcb_plated_hole",
+        pcb_plated_hole_id: pad.pcb_plated_hole_id,
+        pcb_component_id: pad.pcb_component_id,
+        pcb_port_id: pad.pcb_port_id,
+        shape: "pill",
+        x: pad.x,
+        y: pad.y,
+        outer_width: pad.rect_pad_width,
+        outer_height: pad.rect_pad_height,
+        hole_width: "hole_width" in pad ? pad.hole_width : pad.hole_diameter,
+        hole_height: "hole_height" in pad ? pad.hole_height : pad.hole_diameter,
+        ccw_rotation: ccwRotation,
+        layers: pad.layers,
+      }
+      return { core, radius: 0 }
+    }
+    return {
+      core: {
+        ...pad,
+        rect_pad_width: pad.rect_pad_width - 2 * radius,
+        rect_pad_height: pad.rect_pad_height - 2 * radius,
+        rect_border_radius: 0,
+      },
+      radius,
+    }
   }
+
+  return null
 }
 
 export const getPadToPadGap = (

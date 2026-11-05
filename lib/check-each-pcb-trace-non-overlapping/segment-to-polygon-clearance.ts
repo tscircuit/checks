@@ -115,6 +115,20 @@ export const getPolygonPointsForPad = (pad: PolygonalPad): Point[] => {
     })
   }
 
+  if (pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad") {
+    const ccwRotation =
+      "ccw_rotation" in pad && typeof pad.ccw_rotation === "number"
+        ? pad.ccw_rotation
+        : 0
+    return pad.pad_outline.map((point) => {
+      const rotated = ccwRotation ? rotatePoint(point, ccwRotation) : point
+      return {
+        x: pad.x + rotated.x,
+        y: pad.y + rotated.y,
+      }
+    })
+  }
+
   throw new Error(
     `Expected polygonal pad geometry, got ${pad.type} with shape "${pad.shape}"`,
   )
