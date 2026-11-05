@@ -132,16 +132,46 @@ export function isPointInPad(
     }
 
     if ("rect_pad_width" in pad && "rect_pad_height" in pad) {
-      return isPointInPolygon(point, getPolygonPointsForPad(pad))
+      const offsetPoint = {
+        x:
+          point.x -
+          ((pad as { rect_pad_offset_x?: number }).rect_pad_offset_x ?? 0),
+        y:
+          point.y -
+          ((pad as { rect_pad_offset_y?: number }).rect_pad_offset_y ?? 0),
+      }
+      return isPointInPolygon(offsetPoint, getPolygonPointsForPad(pad))
     }
 
-    if (pad.shape === "oval" || pad.shape === "pill") {
+    if (pad.shape === "hole_with_polygon_pad") {
+      if (pad.pad_outline.length < 3) return false
+      const polygonPoints = pad.pad_outline.map((pt) => ({
+        x: pad.x + pt.x,
+        y: pad.y + pt.y,
+      }))
+      return isPointInPolygon(point, polygonPoints)
+    }
+
+    if (pad.shape === "pill") {
+      const pill = getPillCenterLineForPad(pad)
       return (
-        Math.abs(point.x - pad.x) <=
-          pad.outer_width / 2 + POINT_IN_PAD_TOLERANCE_MM &&
-        Math.abs(point.y - pad.y) <=
-          pad.outer_height / 2 + POINT_IN_PAD_TOLERANCE_MM
+        pointToSegmentDistance(point, pill.start, pill.end) <=
+        pill.radius + POINT_IN_PAD_TOLERANCE_MM
       )
+    }
+
+    if (pad.shape === "oval") {
+      const rx = pad.outer_width / 2 + POINT_IN_PAD_TOLERANCE_MM
+      const ry = pad.outer_height / 2 + POINT_IN_PAD_TOLERANCE_MM
+      if (rx <= 0 || ry <= 0) return false
+      const angleRad = ((pad.ccw_rotation ?? 0) * Math.PI) / 180
+      const cos = Math.cos(angleRad)
+      const sin = Math.sin(angleRad)
+      const dx = point.x - pad.x
+      const dy = point.y - pad.y
+      const localX = dx * cos + dy * sin
+      const localY = -dx * sin + dy * cos
+      return (localX * localX) / (rx * rx) + (localY * localY) / (ry * ry) <= 1
     }
   }
 
