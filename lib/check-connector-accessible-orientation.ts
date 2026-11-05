@@ -9,6 +9,26 @@ import { getReadableNameForComponent } from "./util/get-readable-names"
 
 type FacingDirection = "x-" | "x+" | "y+" | "y-"
 
+const RIGHT_ANGLE_HEADER_PATTERN =
+  /right[\s_-]*angle|\b90\s*(?:deg|°)|\br\/a\b|-ra\b/i
+
+function isThroughHolePinHeaderSource(el: AnyCircuitElement): boolean {
+  if (el.type !== "source_component") return false
+  if (el.ftype === "simple_pin_header") return true
+  const mpn =
+    "manufacturer_part_number" in el &&
+    typeof el.manufacturer_part_number === "string"
+      ? el.manufacturer_part_number
+      : ""
+  if (
+    /\b(?:pin[\s_-]*)?header/i.test(mpn) &&
+    !RIGHT_ANGLE_HEADER_PATTERN.test(mpn)
+  ) {
+    return true
+  }
+  return false
+}
+
 function getFacingDirectionFromInsertionDirection(
   component: PcbComponent,
 ): FacingDirection | null {
@@ -88,21 +108,63 @@ export function checkConnectorAccessibleOrientation(
     (el): el is PcbComponent => el.type === "pcb_component",
   )
 
-  const pinHeaderSourceIds = new Set(
+  const sourceComponentById = new Map(
     circuitJson
-      .filter(
-        (el) =>
-          el.type === "source_component" && el.ftype === "simple_pin_header",
-      )
-      .map((el) => el.source_component_id),
+      .filter((el) => el.type === "source_component")
+      .map((el) => [el.source_component_id, el]),
   )
+
+  const platedHoleComponentIds = new Set(
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_plated_hole" &&
+      "pcb_component_id" in el &&
+      typeof el.pcb_component_id === "string"
+        ? [el.pcb_component_id]
+        : [],
+    ),
+  )
+  const smtPadComponentIds = new Set(
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_smtpad" &&
+      "pcb_component_id" in el &&
+      typeof el.pcb_component_id === "string"
+        ? [el.pcb_component_id]
+        : [],
+    ),
+  )
+
+  const isPerpendicularHeaderWithoutExplicitDirection = (
+    component: PcbComponent,
+  ): boolean => {
+    const source = component.source_component_id
+      ? sourceComponentById.get(component.source_component_id)
+      : undefined
+    if (source && isThroughHolePinHeaderSource(source)) {
+      return true
+    }
+    if (
+      source?.ftype === "simple_chip" &&
+      platedHoleComponentIds.has(component.pcb_component_id) &&
+      !smtPadComponentIds.has(component.pcb_component_id)
+    ) {
+      const mpn =
+        "manufacturer_part_number" in source &&
+        typeof source.manufacturer_part_number === "string"
+          ? source.manufacturer_part_number
+          : ""
+      if (!RIGHT_ANGLE_HEADER_PATTERN.test(mpn)) {
+        return true
+      }
+    }
+    return false
+  }
 
   for (const component of components) {
     // A pin header is normally accessed perpendicular to the PCB. Only an
     // explicit insertion direction can establish that it is a right-angle part.
     if (
       !component.insertion_direction &&
-      pinHeaderSourceIds.has(component.source_component_id)
+      isPerpendicularHeaderWithoutExplicitDirection(component)
     )
       continue
     const facingDirection = getFacingDirection(component)
