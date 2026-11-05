@@ -7,10 +7,13 @@ import {
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,
+  PcbBoard,
   PcbCutout,
   PcbPlacementError,
+  PcbTrace,
 } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "./drc-defaults"
+import { getBoardOwnerResolver } from "./util/get-board-owner-resolver"
 import { getReadableNameForElementId } from "./util/get-readable-names"
 import { getConservativeCutoutClearanceBounds } from "./util/get-conservative-cutout-clearance-bounds"
 
@@ -55,10 +58,35 @@ export function checkCopperToCutoutClearance(
   )
     return []
 
-  const requiredClearance =
-    getBoardDrcValue(getPcbBoard(circuitJson), "min_board_edge_clearance") ??
+  const defaultBoard = getPcbBoard(circuitJson)
+  const boardsById = new Map<string, PcbBoard>(
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_board" ? [[el.pcb_board_id, el] as const] : [],
+    ),
+  )
+  const tracesById = new Map<string, PcbTrace>(
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_trace" ? [[el.pcb_trace_id, el] as const] : [],
+    ),
+  )
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
+  const resolveBoardId = (
+    element: AnyCircuitElement | undefined,
+  ): string | undefined => {
+    if (!element) return undefined
+    const directBoardId = getBoardOwner(element)
+    if (directBoardId) return directBoardId
+    if ("pcb_trace_id" in element && element.pcb_trace_id) {
+      const trace = tracesById.get(element.pcb_trace_id)
+      if (trace) return getBoardOwner(trace)
+    }
+    return undefined
+  }
+  const getRequiredClearance = (board: PcbBoard | undefined): number =>
+    getBoardDrcValue(board, "min_board_edge_clearance") ??
     jlcMinTolerances.min_board_edge_clearance ??
     0
+
   const { elements, warnings } = convertCircuitJsonToFlattenJs(circuitJson, {
     elementTypes: [...elementTypes, "pcb_cutout"],
   })
@@ -70,33 +98,52 @@ export function checkCopperToCutoutClearance(
     )
     return {
       warning,
+      element,
+      boardId: resolveBoardId(element),
       bounds: element
         ? getConservativeCutoutClearanceBounds(element, circuitJson)
         : undefined,
     }
   })
   const cutoutBounds = [
-    ...cutouts.map((cutout) => cutout.bounds),
+    ...cutouts.map((cutout) => ({
+      bounds: cutout.bounds,
+      boardId: resolveBoardId(cutout.sourceElement),
+    })),
     ...unconverted
       .filter(({ warning }) => warning.elementType === "pcb_cutout")
-      .map(({ bounds }) => bounds),
+      .map(({ bounds, boardId }) => ({ bounds, boardId })),
   ]
   const copperBounds = [
-    ...copper.map((geometry) => geometry.bounds),
+    ...copper.map((geometry) => ({
+      bounds: geometry.bounds,
+      boardId: resolveBoardId(geometry.sourceElement),
+    })),
     ...unconverted
       .filter(({ warning }) => warning.elementType !== "pcb_cutout")
-      .map(({ bounds }) => bounds),
+      .map(({ bounds, boardId }) => ({ bounds, boardId })),
   ]
-  const relevantWarnings = unconverted.filter(({ warning, bounds }) => {
-    const counterparts =
-      warning.elementType === "pcb_cutout" ? copperBounds : cutoutBounds
-    return counterparts.some(
-      (counterpart) =>
-        !bounds ||
-        !counterpart ||
-        bounds.clone().extend(requiredClearance).intersect(counterpart),
-    )
-  })
+  const relevantWarnings = unconverted.filter(
+    ({ warning, bounds, boardId }) => {
+      const counterparts =
+        warning.elementType === "pcb_cutout" ? copperBounds : cutoutBounds
+      return counterparts.some((counterpart) => {
+        if (boardId && counterpart.boardId && boardId !== counterpart.boardId) {
+          return false
+        }
+        const ownerBoardId = boardId ?? counterpart.boardId
+        const owningBoard =
+          (ownerBoardId ? boardsById.get(ownerBoardId) : undefined) ??
+          defaultBoard
+        const requiredClearance = getRequiredClearance(owningBoard)
+        return (
+          !bounds ||
+          !counterpart.bounds ||
+          bounds.clone().extend(requiredClearance).intersect(counterpart.bounds)
+        )
+      })
+    },
+  )
   const errors: PcbPlacementError[] = relevantWarnings.map(({ warning }) => ({
     type: "pcb_placement_error",
     error_type: "pcb_placement_error",
@@ -105,10 +152,20 @@ export function checkCopperToCutoutClearance(
   }))
 
   for (const cutout of cutouts) {
+    const cutoutBoardId = resolveBoardId(cutout.sourceElement)
     const reportedCopperIds = new Set<FlattenElement["elementId"]>()
-    const clearanceBounds = cutout.bounds.clone().extend(requiredClearance)
     for (const copperGeometry of copper) {
       if (reportedCopperIds.has(copperGeometry.elementId)) continue
+      const copperBoardId = resolveBoardId(copperGeometry.sourceElement)
+      if (cutoutBoardId && copperBoardId && cutoutBoardId !== copperBoardId) {
+        continue
+      }
+      const ownerBoardId = cutoutBoardId ?? copperBoardId
+      const owningBoard =
+        (ownerBoardId ? boardsById.get(ownerBoardId) : undefined) ??
+        defaultBoard
+      const requiredClearance = getRequiredClearance(owningBoard)
+      const clearanceBounds = cutout.bounds.clone().extend(requiredClearance)
       if (!copperGeometry.bounds.intersect(clearanceBounds)) continue
       let clearance = Infinity
       let intersects = false
