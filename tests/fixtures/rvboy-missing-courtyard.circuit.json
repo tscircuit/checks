@@ -14,9 +14,7 @@
     "name": "SW_L",
     "manufacturer_part_number": "B3F-3152",
     "supplier_part_numbers": {
-      "jlcpcb": [
-        "C231320"
-      ]
+      "jlcpcb": ["C231320"]
     },
     "source_group_id": "source_group_0"
   },
@@ -82,9 +80,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin1"
-    ],
+    "port_hints": ["pin1"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 29.755000000000003,
@@ -99,9 +95,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin2"
-    ],
+    "port_hints": ["pin2"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 28.485,
@@ -116,9 +110,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin3"
-    ],
+    "port_hints": ["pin3"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 27.215,
@@ -133,9 +125,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin4"
-    ],
+    "port_hints": ["pin4"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 25.945,
@@ -150,9 +140,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin5"
-    ],
+    "port_hints": ["pin5"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 24.675,
@@ -167,9 +155,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin6"
-    ],
+    "port_hints": ["pin6"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 23.405,
@@ -184,9 +170,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin7"
-    ],
+    "port_hints": ["pin7"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 22.135,
@@ -201,9 +185,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin8"
-    ],
+    "port_hints": ["pin8"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 20.865000000000002,
@@ -218,9 +200,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin9"
-    ],
+    "port_hints": ["pin9"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 19.595,
@@ -235,9 +215,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin10"
-    ],
+    "port_hints": ["pin10"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 18.325000000000003,
@@ -252,9 +230,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin11"
-    ],
+    "port_hints": ["pin11"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 17.055,
@@ -269,9 +245,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin12"
-    ],
+    "port_hints": ["pin12"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 15.785,
@@ -286,9 +260,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin13"
-    ],
+    "port_hints": ["pin13"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 14.515,
@@ -303,9 +275,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin14"
-    ],
+    "port_hints": ["pin14"],
     "is_covered_with_solder_mask": false,
     "x": -50.8,
     "y": 13.245,
@@ -320,9 +290,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin15"
-    ],
+    "port_hints": ["pin15"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 13.245,
@@ -337,9 +305,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin16"
-    ],
+    "port_hints": ["pin16"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 14.514999999999999,
@@ -354,9 +320,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin17"
-    ],
+    "port_hints": ["pin17"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 15.785,
@@ -371,9 +335,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin18"
-    ],
+    "port_hints": ["pin18"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 17.055,
@@ -388,9 +350,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin19"
-    ],
+    "port_hints": ["pin19"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 18.325,
@@ -405,9 +365,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin20"
-    ],
+    "port_hints": ["pin20"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 19.595,
@@ -422,9 +380,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin21"
-    ],
+    "port_hints": ["pin21"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 20.865,
@@ -439,9 +395,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin22"
-    ],
+    "port_hints": ["pin22"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 22.134999999999998,
@@ -456,9 +410,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin23"
-    ],
+    "port_hints": ["pin23"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 23.405,
@@ -473,9 +425,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin24"
-    ],
+    "port_hints": ["pin24"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 24.674999999999997,
@@ -490,9 +440,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin25"
-    ],
+    "port_hints": ["pin25"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 25.945,
@@ -507,9 +455,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin26"
-    ],
+    "port_hints": ["pin26"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 27.215,
@@ -524,9 +470,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin27"
-    ],
+    "port_hints": ["pin27"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 28.485,
@@ -541,9 +485,7 @@
     "shape": "rect",
     "width": 1.55,
     "height": 0.6,
-    "port_hints": [
-      "pin28"
-    ],
+    "port_hints": ["pin28"],
     "is_covered_with_solder_mask": false,
     "x": -41.2,
     "y": 29.755000000000003,
