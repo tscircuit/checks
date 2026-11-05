@@ -12,9 +12,12 @@ import { routePointTouchesPad } from "../util/route-point-touches-pad"
 import {
   createEndpointContactContext,
   endpointTouchesNetCopper,
+  getTerminalVia,
   getTerminalWireSegment,
+  routeHasLateralWire,
+  terminalViaReachesNetCopper,
   type EndpointContactContext,
-  type PcbTraceWireRoutePoint,
+  type PcbTraceEndpointPoint,
   type TraceEndpoint,
 } from "./endpoint-contact"
 import { CONTACT_EPSILON_MM } from "./types"
@@ -24,7 +27,7 @@ type SourcePortId = PcbPort["source_port_id"]
 
 interface DanglingEndpoint {
   endpoint: TraceEndpoint
-  point: PcbTraceWireRoutePoint
+  point: PcbTraceEndpointPoint
 }
 
 function isEndpointDangling(
@@ -39,6 +42,12 @@ function isEndpointDangling(
   if (ctx.portPads.some((pad) => routePointTouchesPad(point, pad))) {
     return false
   }
+  const terminalVia = getTerminalVia(trace, endpoint)
+  if (terminalVia && routeHasLateralWire(trace)) {
+    return !terminalViaReachesNetCopper({ trace, via: terminalVia }, ctx)
+  }
+  // A route that is only a via is equivalent to a standalone via.
+  if (point.route_type !== "wire") return false
   const terminalSegment = getTerminalWireSegment(trace, endpoint)
   if (!terminalSegment) {
     // Port-connected via-only fragments have no lateral wire end to inspect.
@@ -57,18 +66,21 @@ function getDanglingEndpoints(
   ]
   const danglingEndpoints: DanglingEndpoint[] = []
   for (const { endpoint, point } of routeEndpoints) {
-    if (point.route_type !== "wire") continue
+    if (point.route_type !== "wire" && point.route_type !== "via") continue
     if (isEndpointDangling({ trace, endpoint, point, hasExpectedPorts }, ctx)) {
       danglingEndpoints.push({ endpoint, point })
     }
   }
 
-  // A closed loop's shared start and end point is reported once.
+  // A closed loop's shared start and end point is reported once. A via spans
+  // layers, so it matches an end on any of them.
   const [start, end] = danglingEndpoints
   if (
     start &&
     end &&
-    start.point.layer === end.point.layer &&
+    (start.point.route_type !== "wire" ||
+      end.point.route_type !== "wire" ||
+      start.point.layer === end.point.layer) &&
     Math.hypot(start.point.x - end.point.x, start.point.y - end.point.y) <=
       CONTACT_EPSILON_MM
   ) {

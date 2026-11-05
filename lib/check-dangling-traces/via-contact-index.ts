@@ -236,6 +236,42 @@ export function getViaContactIndex(ctx: ViaContactContext): ViaContactIndex {
   return viaContactIndex
 }
 
+function viaContactHasOnwardConnection(contact: ViaContact, trace: PcbTrace) {
+  return (
+    contact.touchesPadOrPour ||
+    [...contact.touchingTraceIds].some(
+      (traceId) => traceId !== trace.pcb_trace_id,
+    )
+  )
+}
+
+/** A route that stops at a via needs that via to reach copper beyond the route. */
+export function terminalViaHasOnwardCopper(
+  {
+    trace,
+    via,
+  }: {
+    trace: PcbTrace
+    via: Extract<PcbTraceRoutePoint, { route_type: "via" }>
+  },
+  {
+    connMap,
+    viaContactIndex,
+  }: { connMap: ConnectivityMap; viaContactIndex: ViaContactIndex },
+): boolean {
+  const netId = connMap.getNetConnectedToId(trace.pcb_trace_id)
+  if (!netId) return false
+  const contactsByLayer = viaContactIndex.get(netId)
+  const contacts = [via.from_layer, via.to_layer].flatMap(
+    (layer) => contactsByLayer?.get(layer as PcbCopperLayer) ?? [],
+  )
+  return contacts.some(
+    (contact) =>
+      Math.hypot(via.x - contact.viaCopper.x, via.y - contact.viaCopper.y) <=
+        CONTACT_EPSILON_MM && viaContactHasOnwardConnection(contact, trace),
+  )
+}
+
 /** A via connects an endpoint only when it also reaches other copper. */
 export function endpointTouchesVia(
   {
@@ -256,20 +292,16 @@ export function endpointTouchesVia(
   const netId = connMap.getNetConnectedToId(trace.pcb_trace_id)
   if (!netId) return false
   const viaContacts = viaContactIndex.get(netId)?.get(point.layer) ?? []
-  return viaContacts.some(
-    ({ viaCopper, touchesPadOrPour, touchingTraceIds }) => {
-      const hasOnwardConnection =
-        touchesPadOrPour ||
-        [...touchingTraceIds].some((traceId) => traceId !== trace.pcb_trace_id)
-      if (!hasOnwardConnection) return false
-      let contactDistance = 0
-      if (viaCopper.radius !== undefined) {
-        contactDistance = viaCopper.radius + width / 2
-      }
-      return (
-        Math.hypot(point.x - viaCopper.x, point.y - viaCopper.y) <=
-        contactDistance + CONTACT_EPSILON_MM
-      )
-    },
-  )
+  return viaContacts.some((contact) => {
+    if (!viaContactHasOnwardConnection(contact, trace)) return false
+    const { viaCopper } = contact
+    let contactDistance = 0
+    if (viaCopper.radius !== undefined) {
+      contactDistance = viaCopper.radius + width / 2
+    }
+    return (
+      Math.hypot(point.x - viaCopper.x, point.y - viaCopper.y) <=
+      contactDistance + CONTACT_EPSILON_MM
+    )
+  })
 }
