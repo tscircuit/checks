@@ -6,6 +6,7 @@ import {
   type PolygonEdge,
   type Segment,
 } from "@flatten-js/core"
+import { polygonContainsPoint } from "../util/polygon-contains-point"
 
 interface PolygonGeometry {
   polygon: Polygon
@@ -56,13 +57,16 @@ export function createCopperPolygonContactTester(tolerance: number) {
 
     // With disjoint boundaries, one point per face determines containment.
     // If boundaries cross elsewhere, the edge tests below detect the contact.
-    // Polygon.contains retains the polygon's holes and separate faces.
+    // polygonContainsPoint retains the polygon's holes and separate faces
+    // without Flatten's fuzzy endpoint double-counting on collinear vertices.
     if (
       ga.facePoints.some(
-        (point) => gb.box.contains(point) && gb.polygon.contains(point),
+        (point) =>
+          gb.box.contains(point) && polygonContainsPoint(gb.polygon, point),
       ) ||
       gb.facePoints.some(
-        (point) => ga.box.contains(point) && ga.polygon.contains(point),
+        (point) =>
+          ga.box.contains(point) && polygonContainsPoint(ga.polygon, point),
       )
     )
       return true
