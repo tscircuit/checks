@@ -45,7 +45,10 @@ export function doPcbElementsOverlap(
   const layers2 = getElementLayers(elem2)
   if (!doLayersOverlap(layers1, layers2)) return false
 
-  if (elem1.type === "pcb_smtpad" && elem2.type === "pcb_smtpad") {
+  if (
+    (elem1.type === "pcb_smtpad" || elem1.type === "pcb_plated_hole") &&
+    (elem2.type === "pcb_smtpad" || elem2.type === "pcb_plated_hole")
+  ) {
     return getPadToPadGap(elem1, elem2) <= 0
   }
 

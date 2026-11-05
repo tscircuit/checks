@@ -12,6 +12,7 @@ import type {
   PcbCourtyardRect,
 } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import { getPadBounds } from "lib/check-pad-clearance/common"
 import {
   getReadableNameForElementId,
   getReadableNameForPort,
@@ -142,9 +143,19 @@ export function checkPcbComponentOverlap(
   }
 
   // Compute bounds for each component
-  for (const [componentId, componentData] of componentMap) {
+  for (const [, componentData] of componentMap) {
     if (componentData.elements.length > 0) {
-      componentData.bounds = getBoundsOfPcbElements(componentData.elements)
+      const elementBounds = componentData.elements.map((el) =>
+        el.type === "pcb_smtpad" || el.type === "pcb_plated_hole"
+          ? getPadBounds(el)
+          : getBoundsOfPcbElements([el]),
+      )
+      componentData.bounds = {
+        minX: Math.min(...elementBounds.map((b) => b.minX)),
+        minY: Math.min(...elementBounds.map((b) => b.minY)),
+        maxX: Math.max(...elementBounds.map((b) => b.maxX)),
+        maxY: Math.max(...elementBounds.map((b) => b.maxY)),
+      }
     }
   }
 
