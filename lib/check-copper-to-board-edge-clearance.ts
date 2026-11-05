@@ -1,11 +1,14 @@
 import { getReadableNameForElementId } from "lib/util/get-readable-names"
+import { getBoardOwnerResolver } from "lib/util/get-board-owner-resolver"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
+import type * as Flatten from "@flatten-js/core"
 import type {
   AnyCircuitElement,
+  PcbBoard,
   PcbComponent,
   PcbPlacementError,
 } from "circuit-json"
-import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import { getBoardDrcValue } from "lib/drc-defaults"
 import { convertCircuitJsonToFlattenJs } from "@tscircuit/circuit-json-to-flattenjs"
 type CopperElement = Extract<
   AnyCircuitElement,
@@ -34,8 +37,10 @@ const getCopperElementLabel = (element: CopperElement): string => {
 export function checkCopperToBoardEdgeClearance(
   circuitJson: AnyCircuitElement[],
 ): PcbPlacementError[] {
-  const board = getPcbBoard(circuitJson)
-  if (!board) return []
+  const boards = circuitJson.filter(
+    (element): element is PcbBoard => element.type === "pcb_board",
+  )
+  if (boards.length === 0) return []
 
   // Schematic-only/empty boards may have no dimensions yet. There is no
   // copper-to-edge distance to measure until copper geometry exists.
@@ -50,14 +55,11 @@ export function checkCopperToBoardEdgeClearance(
   )
     return []
 
-  const boardPolygon = convertCircuitJsonToFlattenJs([board], { strict: true })
-    .elements[0]?.shapes[0]
-  if (!boardPolygon) return []
-
-  const requiredClearance =
-    getBoardDrcValue(board, "min_board_edge_clearance") ??
-    jlcMinTolerances.min_board_edge_clearance
-  if (requiredClearance === undefined) return []
+  const boardsById = new Map(
+    boards.map((board) => [board.pcb_board_id, board] as const),
+  )
+  const boardPolygons = new Map<string, Flatten.Polygon | null>()
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
 
   const allowedOffBoardComponentIds = new Set<string>(
     circuitJson
@@ -94,6 +96,29 @@ export function checkCopperToBoardEdgeClearance(
     ) {
       continue
     }
+
+    const boardId = getBoardOwner(element)
+    const board = boardId
+      ? boardsById.get(boardId)
+      : boards.length === 1
+        ? boards[0]
+        : undefined
+    if (!board) continue
+
+    if (!boardPolygons.has(board.pcb_board_id)) {
+      boardPolygons.set(
+        board.pcb_board_id,
+        convertCircuitJsonToFlattenJs([board], { strict: true }).elements[0]
+          ?.shapes[0] ?? null,
+      )
+    }
+    const boardPolygon = boardPolygons.get(board.pcb_board_id)
+    if (!boardPolygon) continue
+
+    const requiredClearance =
+      getBoardDrcValue(board, "min_board_edge_clearance") ??
+      jlcMinTolerances.min_board_edge_clearance
+    if (requiredClearance === undefined) continue
 
     const isInside = geometry.shapes.every((shape) =>
       boardPolygon.contains(shape),

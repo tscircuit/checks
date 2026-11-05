@@ -558,3 +558,97 @@ test("does not convert an empty schematic-only board into edge geometry", async 
   expect(checkCopperToBoardEdgeClearance(emptyBoard)).toEqual([])
   expect(await runAllPlacementChecks(emptyBoard)).toEqual([])
 })
+
+test("checks copper-to-board-edge clearance and checkViasOffBoard against each element's owning board regardless of board order", () => {
+  const relaxedBoard: AnyCircuitElement = {
+    ...rectangularBoard,
+    pcb_board_id: "board_relaxed",
+    subcircuit_id: "sub_relaxed",
+    center: { x: 0, y: 0 },
+    min_board_edge_clearance: 0.2,
+  }
+  const strictBoard: AnyCircuitElement = {
+    ...rectangularBoard,
+    pcb_board_id: "board_strict",
+    subcircuit_id: "sub_strict",
+    center: { x: 30, y: 0 },
+    min_board_edge_clearance: 0.5,
+  }
+  const nestedStrictGroup: AnyCircuitElement = {
+    type: "source_group",
+    source_group_id: "sg_strict_child",
+    name: "strict_child",
+    is_subcircuit: true,
+    subcircuit_id: "sub_strict_child",
+    parent_subcircuit_id: "sub_strict",
+  }
+  // 0.3mm from right edge (x = 5 on relaxed, x = 35 on strict): passes 0.2mm, fails 0.5mm
+  const relaxedPad: PcbSmtPad = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "pad_relaxed",
+    subcircuit_id: "sub_relaxed",
+    shape: "rect",
+    x: 4.2,
+    y: 0,
+    width: 1,
+    height: 1,
+    layer: "top",
+  }
+  const strictPad: PcbSmtPad = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "pad_strict",
+    subcircuit_id: "sub_strict",
+    shape: "rect",
+    x: 34.2,
+    y: 0,
+    width: 1,
+    height: 1,
+    layer: "top",
+  }
+  const relaxedVia: AnyCircuitElement = {
+    type: "pcb_via",
+    pcb_via_id: "via_relaxed",
+    subcircuit_id: "sub_relaxed",
+    x: 4.4,
+    y: 2,
+    outer_diameter: 0.6,
+    hole_diameter: 0.3,
+    layers: ["top", "bottom"],
+  }
+  const strictVia: AnyCircuitElement = {
+    type: "pcb_via",
+    pcb_via_id: "via_strict",
+    subcircuit_id: "sub_strict_child",
+    x: 34.4,
+    y: 2,
+    outer_diameter: 0.6,
+    hole_diameter: 0.3,
+    layers: ["top", "bottom"],
+  }
+
+  for (const boards of [
+    [relaxedBoard, strictBoard],
+    [strictBoard, relaxedBoard],
+  ]) {
+    const circuitJson: AnyCircuitElement[] = [
+      ...boards,
+      nestedStrictGroup,
+      relaxedPad,
+      strictPad,
+      relaxedVia,
+      strictVia,
+    ]
+    const edgeErrors = checkCopperToBoardEdgeClearance(circuitJson)
+    expect(edgeErrors.map((e) => e.pcb_placement_error_id)).toEqual([
+      "copper_too_close_to_board_edge_pad_strict",
+      "copper_too_close_to_board_edge_via_strict",
+    ])
+    expect(edgeErrors[0].message).toContain("measured 0.300mm")
+    expect(edgeErrors[0].message).toContain("required 0.500mm")
+
+    const viaErrors = checkViasOffBoard(circuitJson)
+    expect(viaErrors.map((e) => e.pcb_placement_error_id)).toEqual([
+      "out_of_board_via_strict",
+    ])
+  }
+})
