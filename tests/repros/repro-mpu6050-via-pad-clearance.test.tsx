@@ -399,6 +399,7 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
   ).toEqual([[via.pcb_via_id, c3GndPad.pcb_smtpad_id]])
   const annotatedCircuitJson: AnyCircuitElement[] = [
     ...circuitJson,
+    ...errors,
     {
       type: "pcb_note_text",
       pcb_note_text_id: "mpu6050_clearance_note",
@@ -411,12 +412,15 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
       color: "#fbbf24",
     },
   ]
-  expect(convertCircuitJsonToPcbSvg(annotatedCircuitJson)).toMatchSvgSnapshot(
-    import.meta.path,
-  )
+  expect(
+    convertCircuitJsonToPcbSvg(annotatedCircuitJson, {
+      shouldDrawErrors: true,
+      showErrorsInTextOverlay: true,
+    }),
+  ).toMatchSvgSnapshot(import.meta.path)
 })
 
-test.failing("MPU-6050 via-to-pad clearance should be reported", () => {
+test("MPU-6050 via-to-pad clearance should be reported", () => {
   const { via, c3GndPad } = getViaAndC3GndPad()
   const errors = checkViaPadClearance(getFocusedCircuitJson(), { minClearance })
   expect(errors).toHaveLength(1)
