@@ -4,9 +4,14 @@ import { readFileSync } from "node:fs"
 import { gunzipSync } from "node:zlib"
 import type { AnyCircuitElement } from "circuit-json"
 import { checkDanglingTraces } from "../../lib/check-dangling-traces/check-dangling-traces"
+import {
+  getTerminalVia,
+  routeHasLateralWire,
+} from "../../lib/check-dangling-traces/endpoint-contact"
 import { checkTracesAreContiguous } from "../../lib/check-traces-are-contiguous/check-traces-are-contiguous"
 import { isPointInPad } from "../../lib/check-traces-are-contiguous/is-point-in-pad"
 import {
+  getViaReach,
   type PcbWindow,
   renderDanglingEndpoints,
   renderDanglingOverview,
@@ -84,6 +89,73 @@ test("rvboy-advance fixture has the polygon pads that used to hide its dead ends
     expect(isPointInPad({ x: 1000, y: 1000 }, pad as any)).toBe(false)
   }
 })
+
+test(
+  "rvboy-advance: via ends are judged by the copper on every layer they span",
+  () => {
+    const errors = checkDanglingTraces(circuit)
+    const reportedEnds = new Set(
+      errors.map(({ pcb_trace_id, center }) =>
+        [pcb_trace_id, center!.x, center!.y].join(),
+      ),
+    )
+    const viaEnds = circuit
+      .filter((element) => element.type === "pcb_trace")
+      .filter(routeHasLateralWire)
+      .flatMap((trace) =>
+        (["start", "end"] as const).flatMap((endpoint) => {
+          const via = getTerminalVia(trace, endpoint)
+          if (!via) return []
+          const reach = getViaReach(circuit, {
+            pcb_trace_id: trace.pcb_trace_id,
+            center: via,
+          })
+          const wireLayers: string[] = trace.route.flatMap((point) =>
+            point.route_type === "wire" &&
+            Math.hypot(point.x - via.x, point.y - via.y) < 1e-6
+              ? [point.layer]
+              : [],
+          )
+          return [
+            {
+              reach,
+              wireLayers,
+              isReported: reportedEnds.has(
+                [trace.pcb_trace_id, via.x, via.y].join(),
+              ),
+            },
+          ]
+        }),
+      )
+
+    // Copper on another layer counts: these reach only a pour their wire is not on.
+    const reachOnlyAnotherLayersPour = viaEnds.filter(
+      ({ reach, wireLayers }) => {
+        const touching = reach.sameNetPours.filter(
+          ({ clearance }) => clearance <= 0,
+        )
+        return (
+          touching.length > 0 &&
+          touching.every(({ layer }) => !wireLayers.includes(layer))
+        )
+      },
+    )
+    expect(reachOnlyAnotherLayersPour).toHaveLength(162)
+    expect(
+      reachOnlyAnotherLayersPour.filter(({ isReported }) => isReported),
+    ).toEqual([])
+
+    // Each reported via has a measurable gap to everything off its route.
+    const reportedVias = viaEnds.filter(({ isReported }) => isReported)
+    expect(reportedVias).toHaveLength(6)
+    for (const { reach } of reportedVias) {
+      for (const { clearance } of reach.clearanceByLayer) {
+        expect(clearance).toBeGreaterThan(0)
+      }
+    }
+  },
+  TEST_TIMEOUT_MS,
+)
 
 test(
   "rvboy-advance: reports every dead end and no false opens",

@@ -1,5 +1,12 @@
+import { Point } from "@flatten-js/core"
+import { getPourPolygon } from "@tscircuit/circuit-json-util"
+import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import type { AnyCircuitElement, PcbTrace, PcbTraceError } from "circuit-json"
+import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { getPads, getPadToPadGap } from "lib/check-pad-clearance/common"
+import { isPointInPad } from "lib/check-traces-are-contiguous/is-point-in-pad"
+import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 
 export type PcbWindow = {
   minX: number
@@ -129,21 +136,164 @@ const getEndpointLayer = (
   return end?.layer ?? "via"
 }
 
+export type ViaReach = {
+  /** Gap in mm from the via's ring to the nearest copper off its own route,
+   * pours included. Zero or less means contact. */
+  clearanceByLayer: { layer: string; clearance: number }[]
+  /** Same-net pours on the layers the via spans, nearest first. */
+  sameNetPours: { layer: string; clearance: number }[]
+}
+
+const buildViaReachContext = (circuit: AnyCircuitElement[]) => {
+  const connMap = getFullConnectivityMapFromCircuitJson(circuit)
+  const pads = getPads(circuit).map((pad) => ({
+    pad,
+    layers: getLayersOfPcbElement(pad),
+  }))
+  const pours = circuit.flatMap((element) =>
+    element.type === "pcb_copper_pour"
+      ? [
+          {
+            layer: element.layer as string,
+            polygon: getPourPolygon(element),
+            netId: element.source_net_id
+              ? connMap.getNetConnectedToId(element.source_net_id)
+              : undefined,
+          },
+        ]
+      : [],
+  )
+  const traces = circuit.filter((element) => element.type === "pcb_trace")
+  const vias = circuit.filter((element) => element.type === "pcb_via")
+  return { connMap, pads, pours, traces, vias }
+}
+
+const viaReachContexts = new WeakMap<
+  AnyCircuitElement[],
+  ReturnType<typeof buildViaReachContext>
+>()
+
+/** Measures the copper around a via without using the check's contact code. */
+export function getViaReach(
+  circuit: AnyCircuitElement[],
+  { pcb_trace_id, center }: Pick<PcbTraceError, "pcb_trace_id" | "center">,
+): ViaReach {
+  let ctx = viaReachContexts.get(circuit)
+  if (!ctx) {
+    ctx = buildViaReachContext(circuit)
+    viaReachContexts.set(circuit, ctx)
+  }
+  const { connMap, pads, pours, traces, vias } = ctx
+  const via = vias.find(
+    ({ x, y }) => Math.hypot(x - center!.x, y - center!.y) < 1e-6,
+  )
+  if (!via) throw new Error("Expected a via at this end")
+  const ownTrace = traces.find((trace) => trace.pcb_trace_id === pcb_trace_id)!
+  const radius = via.outer_diameter / 2
+  const viaLayers = getLayersOfPcbElement(via)
+  const netId = connMap.getNetConnectedToId(ownTrace.pcb_trace_id)
+  const viaCenter = new Point(via.x, via.y)
+
+  const nearestGapByLayer = new Map<string, number>()
+  const addGap = (layer: string, gap: number) => {
+    const nearest = nearestGapByLayer.get(layer)
+    if (nearest === undefined || gap < nearest) {
+      nearestGapByLayer.set(layer, gap)
+    }
+  }
+  for (const trace of traces) {
+    if (trace === ownTrace) continue
+    for (let i = 1; i < trace.route.length; i++) {
+      const start = trace.route[i - 1]!
+      const end = trace.route[i]!
+      if (start.route_type !== "wire" || end.route_type !== "wire") continue
+      if (start.layer !== end.layer) continue
+      addGap(
+        start.layer,
+        pointToSegmentDistance(via, start, end) - radius - start.width / 2,
+      )
+    }
+  }
+  for (const other of vias) {
+    if (other === via) continue
+    const gap =
+      Math.hypot(other.x - via.x, other.y - via.y) -
+      radius -
+      other.outer_diameter / 2
+    for (const layer of getLayersOfPcbElement(other)) addGap(layer, gap)
+  }
+  for (const { pad, layers } of pads) {
+    // The pad a route leaves from is where its copper came from, not onward copper.
+    const isOwnPad = ownTrace.route.some(
+      (point) => "x" in point && isPointInPad(point, pad),
+    )
+    if (isOwnPad) continue
+    const gap = getPadToPadGap(via, pad)
+    for (const layer of layers) addGap(layer, gap)
+  }
+
+  const sameNetPours: ViaReach["sameNetPours"] = []
+  for (const { layer, polygon, netId: pourNetId } of pours) {
+    if (!viaLayers.includes(layer)) continue
+    const clearance = polygon.contains(viaCenter)
+      ? -radius
+      : polygon.distanceTo(viaCenter)[0] - radius
+    addGap(layer, clearance)
+    if (pourNetId && pourNetId === netId) {
+      sameNetPours.push({ layer, clearance })
+    }
+  }
+
+  return {
+    clearanceByLayer: viaLayers.map((layer) => ({
+      layer,
+      clearance: nearestGapByLayer.get(layer) ?? Number.POSITIVE_INFINITY,
+    })),
+    sameNetPours: sameNetPours.sort((a, b) => a.clearance - b.clearance),
+  }
+}
+
+const LEGEND_LINE_HEIGHT = 17
+const LEGEND_ENTRY_GAP = 5
+
 const legendEntry = (
   { number, error }: NumberedError,
-  layer: string,
+  description: string[],
   y: number,
 ) => {
   const name = error.message.match(/\[(.*)\]/)?.[1] ?? error.pcb_trace_id
-  const location = `(${error.center!.x.toFixed(2)}, ${error.center!.y.toFixed(2)})`
-  const description =
-    layer === "via"
-      ? `via going nowhere at ${location}`
-      : `free end on ${layer} at ${location}`
   return (
     `<text x="20" y="${y}" ${FONT} font-size="15" fill="#e8ecf1"><tspan fill="${MARKER_COLOR}" font-weight="bold">${number}</tspan> ${escapeXml(name ?? "")}</text>` +
-    `<text x="20" y="${y + 17}" ${FONT} font-size="13" fill="#8b949e">${description}</text>`
+    description
+      .map(
+        (line, index) =>
+          `<text x="20" y="${y + (index + 1) * LEGEND_LINE_HEIGHT}" ${FONT} font-size="13" fill="#8b949e">${line}</text>`,
+      )
+      .join("")
   )
+}
+
+const describeEndpoint = (
+  circuit: AnyCircuitElement[],
+  error: PcbTraceError,
+  layer: string,
+) => {
+  const location = `(${error.center!.x.toFixed(2)}, ${error.center!.y.toFixed(2)})`
+  if (layer !== "via") return [`free end on ${layer} at ${location}`]
+  const { clearanceByLayer, sameNetPours } = getViaReach(circuit, error)
+  const nearestPour = sameNetPours[0]
+  return [
+    `via going nowhere at ${location}`,
+    `clearance (mm): ${clearanceByLayer
+      .map(
+        ({ layer, clearance }) =>
+          `${layer} ${clearance <= 0 ? "touching" : clearance.toFixed(2)}`,
+      )
+      .join(", ")}`,
+    nearestPour
+      ? `same-net pour: ${nearestPour.clearance.toFixed(2)} mm away on ${nearestPour.layer}`
+      : "same-net pour: none on this net",
+  ]
 }
 
 /** Yellow rings show error.center exactly. Numbers are the error's position in
@@ -190,13 +340,32 @@ export function renderDanglingEndpoints(
       `<text x="${x + 15}" y="${y - 9}" ${FONT} font-size="17" font-weight="bold" fill="${MARKER_COLOR}" stroke="black" stroke-width="3.5" paint-order="stroke">${numbers.join(",")}</text>`,
   )
   const scaleBarMm = scale > 200 ? 0.5 : 1
+  const count = `${visible.length} dangling endpoint${visible.length === 1 ? "" : "s"}.`
+  // A via spans every layer, so a view with a via end dims none of them.
+  const caption = [...layers.values()].includes("via")
+    ? [
+        `${count} Pours hidden, all layers at full strength.`,
+        "Via rings are drawn in the top-layer color on every layer.",
+        "Clearance: ring to copper off the via's route, hidden pours included.",
+      ]
+    : [`${count} Pours hidden, other layers dimmed.`]
   const legend = [
     `<text x="20" y="36" ${FONT} font-size="20" font-weight="bold" fill="#e8ecf1">${escapeXml(title)}</text>`,
-    `<text x="20" y="58" ${FONT} font-size="13" fill="#8b949e">${visible.length} dangling endpoint${visible.length === 1 ? "" : "s"}. Pours hidden, other layers dimmed.</text>`,
-    ...visible.map((entry, index) =>
-      legendEntry(entry, layers.get(entry.number)!, 88 + index * 39),
+    ...caption.map(
+      (line, index) =>
+        `<text x="20" y="${58 + index * LEGEND_LINE_HEIGHT}" ${FONT} font-size="13" fill="#8b949e">${line}</text>`,
     ),
   ]
+  let entryY = 88 + (caption.length - 1) * LEGEND_LINE_HEIGHT
+  for (const entry of visible) {
+    const description = describeEndpoint(
+      circuit,
+      entry.error,
+      layers.get(entry.number)!,
+    )
+    legend.push(legendEntry(entry, description, entryY))
+    entryY += (description.length + 1) * LEGEND_LINE_HEIGHT + LEGEND_ENTRY_GAP
+  }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${PANEL_WIDTH + LEGEND_WIDTH}" height="${PANEL_HEIGHT}" viewBox="0 0 ${PANEL_WIDTH + LEGEND_WIDTH} ${PANEL_HEIGHT}"><rect width="100%" height="100%" fill="#161b22"/>${svg}${rings.join("")}${labelText.join("")}<g transform="translate(24 ${PANEL_HEIGHT - 24})"><path d="M0-6V0H${scaleBarMm * scale}V-6" fill="none" stroke="white" stroke-width="2"/><text y="-12" ${FONT} font-size="14" fill="white">${scaleBarMm} mm</text></g><g transform="translate(${PANEL_WIDTH} 0)">${legend.join("")}</g></svg>`
 }
 
