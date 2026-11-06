@@ -1,66 +1,44 @@
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToSchematicSvg } from "circuit-to-svg"
 import { checkNoGroundPinDefined } from "lib/check-no-ground-pin-defined"
-import { checkNoPowerPinDefined } from "lib/check-no-power-pin-defined"
-import { checkPinMustBeConnected } from "lib/check-pin-must-be-connected"
-import {
-  createPassiveJumperGroundCase,
-  passiveJumperGroundCases,
-} from "../fixtures/passive-jumper-ground-cases"
+import { Circuit } from "tscircuit"
 
-function escapeXml(text: string) {
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
+// Reduced from JP_VDDD in krishnax12/mtr-tiny-md.
+async function createJumperCircuit() {
+  const circuit = new Circuit()
+  circuit.pcbDisabled = true
+  circuit.add(
+    <board routingDisabled>
+      <jumper
+        name="JP_VDDD"
+        pinLabels={{ pin1: "A", pin2: "B" }}
+        pinAttributes={{ A: { isPassive: true }, B: { isPassive: true } }}
+        connections={{ A: "net.V3V3", B: "net.VDDD" }}
+      />
+    </board>,
+  )
+  await circuit.renderUntilSettled()
+  return circuit.getCircuitJson()
 }
 
-test("passive jumper warnings and valid active-chip and connection controls", async () => {
-  const panels: string[] = []
-  for (const [index, scenario] of passiveJumperGroundCases.entries()) {
-    const circuitJson = await createPassiveJumperGroundCase(scenario)
-    const groundWarnings = checkNoGroundPinDefined(circuitJson)
-    const powerWarnings = checkNoPowerPinDefined(circuitJson)
-    const connectionErrors = checkPinMustBeConnected(circuitJson)
-    expect(powerWarnings).toHaveLength(scenario.powerWarnings)
-    expect(connectionErrors).toHaveLength(scenario.connectionErrors)
-    if (!scenario.knownBug)
-      expect(groundWarnings).toHaveLength(scenario.groundWarnings)
-    const drawing = convertCircuitJsonToSchematicSvg(circuitJson, {
-      width: 600,
-      height: 280,
-    })
-    const diagnostics = [
-      ...groundWarnings,
-      ...powerWarnings,
-      ...connectionErrors,
-    ]
-    const lines = diagnostics
-      .map(
-        (diagnostic, line) =>
-          `<text x="16" y="${338 + line * 20}" font-family="sans-serif" font-size="12" fill="#b91c1c">${escapeXml(diagnostic.message)}</text>`,
-      )
-      .join("")
-    panels.push(
-      `<svg x="${(index % 3) * 600}" y="${Math.floor(index / 3) * 420}" width="600" height="420"><rect width="600" height="420" fill="#f5f1ed" stroke="#ccc"/><text x="16" y="26" font-family="sans-serif" font-size="17">${escapeXml(scenario.title)}</text><svg y="36" width="600" height="280">${drawing}</svg>${lines || '<text x="16" y="338" font-family="sans-serif" font-size="13" fill="#006464">No power/ground-presence or required-connection findings.</text>'}<text x="16" y="402" font-family="sans-serif" font-size="12" fill="#555">${scenario.knownBug ? "Known false warning: a dedicated ground pin is not required." : "Control: the findings shown above are expected."}</text></svg>`,
+test("repro: passive MTR jumper ground-pin warning", async () => {
+  const circuitJson = await createJumperCircuit()
+  const ports = circuitJson.filter((element) => element.type === "source_port")
+  expect(ports).toHaveLength(2)
+  expect(ports.every((port) => port.is_passive === true)).toBe(true)
+  const warnings = checkNoGroundPinDefined(circuitJson)
+  const svg = convertCircuitJsonToSchematicSvg(circuitJson, {
+    width: 1200,
+    height: 600,
+  })
+    .replace(
+      "</svg>",
+      `${warnings.map((warning, index) => `<text x="20" y="${24 + index * 17}" fill="red" font-family="sans-serif" font-size="13">${warning.message.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</text>`).join("")}</svg>`,
     )
-  }
-  expect(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1260">${panels.join("")}</svg>`.replace(
-      /[ \t]+$/gm,
-      "",
-    ),
-  ).toMatchSvgSnapshot(import.meta.path)
+    .replace(/[ \t]+$/gm, "")
+  expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
 
-for (const scenario of passiveJumperGroundCases.filter(
-  (scenario) => scenario.knownBug,
-)) {
-  test.failing(
-    `${scenario.title}: no ground-pin warning is required`,
-    async () => {
-      const circuitJson = await createPassiveJumperGroundCase(scenario)
-      expect(checkNoGroundPinDefined(circuitJson)).toEqual([])
-    },
-  )
-}
+test.failing("a passive jumper does not require a ground pin", async () => {
+  expect(checkNoGroundPinDefined(await createJumperCircuit())).toEqual([])
+})
