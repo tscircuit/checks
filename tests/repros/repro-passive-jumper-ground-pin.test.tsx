@@ -4,7 +4,7 @@ import { checkNoGroundPinDefined } from "lib/check-no-ground-pin-defined"
 import { Circuit } from "tscircuit"
 
 // Reduced from JP_VDDD in krishnax12/mtr-tiny-md.
-async function createJumperCircuit() {
+async function createJumperCircuit(warning?: string) {
   const circuit = new Circuit()
   circuit.pcbDisabled = true
   circuit.add(
@@ -15,6 +15,9 @@ async function createJumperCircuit() {
         pinAttributes={{ A: { isPassive: true }, B: { isPassive: true } }}
         connections={{ A: "net.V3V3", B: "net.VDDD" }}
       />
+      {warning && (
+        <schematictext text={warning} schY={1.4} fontSize={0.16} color="red" />
+      )}
     </board>,
   )
   await circuit.renderUntilSettled()
@@ -27,15 +30,11 @@ test("repro: passive MTR jumper ground-pin warning", async () => {
   expect(ports).toHaveLength(2)
   expect(ports.every((port) => port.is_passive === true)).toBe(true)
   const warnings = checkNoGroundPinDefined(circuitJson)
-  const svg = convertCircuitJsonToSchematicSvg(circuitJson, {
+  const annotatedCircuitJson = await createJumperCircuit(warnings[0]?.message)
+  const svg = convertCircuitJsonToSchematicSvg(annotatedCircuitJson, {
     width: 1200,
     height: 600,
-  })
-    .replace(
-      "</svg>",
-      `${warnings.map((warning, index) => `<text x="20" y="${24 + index * 17}" fill="red" font-family="sans-serif" font-size="13">${warning.message.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</text>`).join("")}</svg>`,
-    )
-    .replace(/[ \t]+$/gm, "")
+  }).replace(/[ \t]+$/gm, "")
   expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
 
