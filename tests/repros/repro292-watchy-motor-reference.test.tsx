@@ -170,7 +170,7 @@ test("Watchy motor M1 renders REFDES literally and keeps the missing-reference w
       source_component_id: motor.source_component_id,
       styling_issue_type: "missing_reference_designator_text",
       message:
-        'M1 is missing schematic reference designator text. For a custom symbol, add name="{REFDES}" inside the symbol.',
+        'M1 is missing schematic reference designator text. For a custom symbol, add <schematictext text="{REF}" /> inside the symbol.',
     },
   ])
   for (const referenceText of [undefined, "{REF}", "{NAME}"]) {
