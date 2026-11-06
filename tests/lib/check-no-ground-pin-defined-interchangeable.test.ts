@@ -3,15 +3,15 @@ import type { AnyCircuitElement } from "circuit-json"
 import { checkNoGroundPinDefined } from "lib/check-no-ground-pin-defined"
 import { checkPinMustBeConnected } from "lib/check-pin-must-be-connected"
 
-test("only interchangeable contacts skip ground presence; required connections remain checked", () => {
-  for (const interchangeable of [undefined, false, true]) {
+test("checkNoGroundPinDefined skips interchangeable contacts without disabling connection checks", () => {
+  for (const arePinsInterchangeable of [undefined, false, true]) {
     const circuitJson: AnyCircuitElement[] = [
       {
         type: "source_component",
         source_component_id: "component",
         name: "U1",
         ftype: "simple_chip",
-        are_pins_interchangeable: interchangeable,
+        are_pins_interchangeable: arePinsInterchangeable,
       },
       {
         type: "source_port",
@@ -27,10 +27,11 @@ test("only interchangeable contacts skip ground presence; required connections r
         must_be_connected: true,
       },
     ]
-    expect(checkNoGroundPinDefined(circuitJson)).toHaveLength(
-      interchangeable === true ? 0 : 1,
-    )
-    expect(checkPinMustBeConnected(circuitJson)).toEqual([
+    const warnings = checkNoGroundPinDefined(circuitJson)
+    const errors = checkPinMustBeConnected(circuitJson)
+
+    expect(warnings).toHaveLength(arePinsInterchangeable === true ? 0 : 1)
+    expect(errors).toEqual([
       expect.objectContaining({
         message: "Port B on U1 must be connected but is floating",
       }),
