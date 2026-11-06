@@ -29,15 +29,22 @@ test("repro: passive MTR jumper ground-pin warning", async () => {
   const ports = circuitJson.filter((element) => element.type === "source_port")
   expect(ports).toHaveLength(2)
   expect(ports.every((port) => port.is_passive === true)).toBe(true)
+  const traces = circuitJson.filter(
+    (element) => element.type === "source_trace",
+  )
+  expect(
+    ports.every((port) =>
+      traces.some((trace) =>
+        trace.connected_source_port_ids.includes(port.source_port_id),
+      ),
+    ),
+  ).toBe(true)
   const warnings = checkNoGroundPinDefined(circuitJson)
+  expect(warnings).toEqual([])
   const annotatedCircuitJson = await createJumperCircuit(warnings[0]?.message)
   const svg = convertCircuitJsonToSchematicSvg(annotatedCircuitJson, {
     width: 1200,
     height: 600,
   }).replace(/[ \t]+$/gm, "")
   expect(svg).toMatchSvgSnapshot(import.meta.path)
-})
-
-test.failing("a passive jumper does not require a ground pin", async () => {
-  expect(checkNoGroundPinDefined(await createJumperCircuit())).toEqual([])
 })
