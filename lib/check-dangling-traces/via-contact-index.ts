@@ -18,6 +18,7 @@ import { getPads, getPadToPadGap } from "../check-pad-clearance/common"
 import type { getPourContactTester } from "./pour-contact-index"
 import { isPointInPad } from "../check-traces-are-contiguous/is-point-in-pad"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import { getViaBarrelLayers } from "../util/get-via-barrel-layers"
 import type { PcbTraceRoutePoint } from "../util/route-point-touches-pad"
 
 /** Via copper in board XY coordinates (mm). */
@@ -58,14 +59,17 @@ function getBoardLayerStack(circuitJson: AnyCircuitElement[]) {
   return boardLayerStack
 }
 
-function getPcbViaCoppers(vias: PcbVia[]): ViaCopper[] {
+function getPcbViaCoppers(
+  vias: PcbVia[],
+  boardLayerStack: string[],
+): ViaCopper[] {
   return vias
     .filter(
       (via) => Number.isFinite(via.outer_diameter) && via.outer_diameter > 0,
     )
     .map((via) => ({
       id: via.pcb_via_id,
-      layers: getLayersOfPcbElement(via),
+      layers: getViaBarrelLayers(via, boardLayerStack),
       x: via.x,
       y: via.y,
       radius: via.outer_diameter / 2,
@@ -184,7 +188,7 @@ export function getViaContactIndex(ctx: ViaContactContext): ViaContactIndex {
   const traces = circuitJson.filter((element) => element.type === "pcb_trace")
   const vias = circuitJson.filter((element) => element.type === "pcb_via")
   const viaCoppers = [
-    ...getPcbViaCoppers(vias),
+    ...getPcbViaCoppers(vias, getBoardLayerStack(circuitJson)),
     ...getRouteViaCoppers({ traces, vias }, ctx),
   ]
   const viaContactIndex: ViaContactIndex = new Map()

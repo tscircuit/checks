@@ -225,6 +225,66 @@ test("rejects a via in a pour on another net", () => {
   expect(errorIds(fanoutToVia([pour]))).toEqual([FANOUT_END])
 })
 
+// A 4-layer board where a pour is the only copper beyond the fanout via.
+function fanoutOverInnerPour({
+  viaLayers = ["top", "inner1", "inner2", "bottom"],
+  source_net_id = "net_a",
+}: {
+  viaLayers?: PcbVia["layers"]
+  source_net_id?: string
+} = {}): AnyCircuitElement[] {
+  const pour: PcbCopperPour = {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "pour",
+    source_net_id,
+    layer: "inner2",
+    covered_with_solder_mask: true,
+    shape: "rect",
+    center: { x: 2, y: 0 },
+    width: 3,
+    height: 3,
+    rotation: 0,
+  }
+  const circuitJson = fanoutToVia([pour])
+  for (const element of circuitJson) {
+    if (element.type === "pcb_board") element.num_layers = 4
+    if (element.type === "pcb_via") element.layers = viaLayers
+  }
+  return circuitJson
+}
+
+test("accepts a via whose only onward copper is a same-net inner pour", () => {
+  expect(errorIds(fanoutOverInnerPour())).toEqual([])
+})
+
+test("accepts a through via over an inner pour when its record lists only end layers", () => {
+  expect(
+    errorIds(fanoutOverInnerPour({ viaLayers: ["top", "bottom"] })),
+  ).toEqual([])
+  expect(
+    errorIds(fanoutOverInnerPour({ viaLayers: ["bottom", "top"] })),
+  ).toEqual([])
+})
+
+test("rejects a via over an inner pour on another net", () => {
+  expect(errorIds(fanoutOverInnerPour({ source_net_id: "net_b" }))).toEqual([
+    FANOUT_END,
+  ])
+})
+
+test("rejects a blind via that stops above an inner pour", () => {
+  const circuitJson = fanoutOverInnerPour({ viaLayers: ["top", "inner1"] })
+  const fanout = circuitJson.find(
+    (element): element is PcbTrace => element.type === "pcb_trace",
+  )!
+  fanout.route = [
+    wire(0, 0),
+    wire(2, 0),
+    { ...viaPoint(2, 0), to_layer: "inner1" } as RoutePoint,
+  ]
+  expect(errorIds(circuitJson)).toEqual([FANOUT_END])
+})
+
 test("accepts a via that lands on a same-net pad", () => {
   const circuitJson = fanoutToVia([
     {
