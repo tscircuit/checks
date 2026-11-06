@@ -1,25 +1,27 @@
-import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,
+  PcbBoard,
   PcbPadPadClearanceError,
   PcbVia,
 } from "circuit-json"
-import { formatMm } from "format-si-unit"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
+import { formatMm } from "format-si-unit"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import { getBoardOwnerResolver } from "lib/util/get-board-owner-resolver"
+import { getReadableNameForElementId as getReadableNameForElement } from "lib/util/get-readable-names"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   type PadElement,
   getPadBounds,
-  getViaPadClearanceCenter,
   getPadToPadGap,
   getPads,
+  getViaPadClearanceCenter,
 } from "./check-pad-clearance/common"
 
 export function checkViaPadClearance(
@@ -35,11 +37,24 @@ export function checkViaPadClearance(
   const pads = getPads(circuitJson)
   if (vias.length === 0 || pads.length === 0) return []
 
-  const board = getPcbBoard(circuitJson)
-  const requiredClearance =
+  const defaultBoard = getPcbBoard(circuitJson)
+  const boardsById = new Map<string, PcbBoard>(
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_board" ? [[el.pcb_board_id, el] as const] : [],
+    ),
+  )
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
+  const getRequiredClearance = (board: PcbBoard | undefined): number =>
     minClearance ??
     getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
     jlcMinTolerances.min_pad_edge_to_pad_edge_clearance!
+  let maxRequiredClearance = getRequiredClearance(defaultBoard)
+  for (const board of boardsById.values()) {
+    maxRequiredClearance = Math.max(
+      maxRequiredClearance,
+      getRequiredClearance(board),
+    )
+  }
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
 
   const padIndex = new SpatialObjectIndex<PadElement>({
@@ -50,13 +65,19 @@ export function checkViaPadClearance(
   const errors: PcbPadPadClearanceError[] = []
 
   for (const via of vias) {
+    const viaBoardId = getBoardOwner(via)
+    const searchClearance = viaBoardId
+      ? getRequiredClearance(boardsById.get(viaBoardId) ?? defaultBoard)
+      : maxRequiredClearance
     const nearbyPads = padIndex.getObjectsInBounds(
       getPadBounds(via),
-      requiredClearance,
+      searchClearance,
     )
 
     for (const pad of nearbyPads) {
       const padId = getPrimaryId(pad)
+      const padBoardId = getBoardOwner(pad)
+      if (viaBoardId && padBoardId && viaBoardId !== padBoardId) continue
       if (
         !getLayersOfPcbElement(via).some((layer) =>
           getLayersOfPcbElement(pad).includes(layer),
@@ -65,6 +86,12 @@ export function checkViaPadClearance(
         continue
       }
       if (connMap.areIdsConnected(via.pcb_via_id, padId)) continue
+
+      const ownerBoardId = viaBoardId ?? padBoardId
+      const owningBoard =
+        (ownerBoardId ? boardsById.get(ownerBoardId) : undefined) ??
+        defaultBoard
+      const requiredClearance = getRequiredClearance(owningBoard)
 
       const gap = getPadToPadGap(via, pad)
       if (gap + EPSILON >= requiredClearance) continue
