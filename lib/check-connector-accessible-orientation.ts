@@ -88,6 +88,12 @@ export function checkConnectorAccessibleOrientation(
     (el): el is PcbComponent => el.type === "pcb_component",
   )
 
+  const sourceComponentById = new Map(
+    circuitJson
+      .filter((el) => el.type === "source_component")
+      .map((el) => [el.source_component_id, el]),
+  )
+
   const pinHeaderSourceIds = new Set(
     circuitJson
       .filter(
@@ -98,6 +104,38 @@ export function checkConnectorAccessibleOrientation(
   )
 
   for (const component of components) {
+    if (
+      (
+        component as PcbComponent & {
+          accessible_from_board_edge?: boolean
+          is_accessible_from_board_edge?: boolean
+        }
+      ).accessible_from_board_edge === false ||
+      (
+        component as PcbComponent & {
+          accessible_from_board_edge?: boolean
+          is_accessible_from_board_edge?: boolean
+        }
+      ).is_accessible_from_board_edge === false
+    ) {
+      continue
+    }
+
+    const sourceComponent = sourceComponentById.get(
+      component.source_component_id,
+    ) as
+      | {
+          accessible_from_board_edge?: boolean
+          is_accessible_from_board_edge?: boolean
+        }
+      | undefined
+    if (
+      sourceComponent?.accessible_from_board_edge === false ||
+      sourceComponent?.is_accessible_from_board_edge === false
+    ) {
+      continue
+    }
+
     // A pin header is normally accessed perpendicular to the PCB. Only an
     // explicit insertion direction can establish that it is a right-angle part.
     if (
