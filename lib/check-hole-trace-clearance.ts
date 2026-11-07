@@ -6,29 +6,54 @@ import {
   getHoleGeometries,
   getTraceHoleClearance,
 } from "./check-hole-clearance/common"
-import { isTraceObstacleOverlap } from "./check-pad-clearance/common"
+import {
+  getTraceObstacleClearance,
+  isTraceObstacleOverlap,
+} from "./check-pad-clearance/common"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
+import {
+  type ConnectivityMap,
+  getFullConnectivityMapFromCircuitJson,
+} from "circuit-json-to-connectivity-map"
+import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { getBoardDrcValue, getPcbBoard } from "./drc-defaults"
 import { SpatialObjectIndex } from "./data-structures/SpatialIndex"
 
 /** Checks trace copper against physical non-plated holes and via drill holes on every copper layer. */
 export function checkHoleTraceClearance(
   circuitJson: AnyCircuitElement[],
-  { minClearance }: { minClearance?: number } = {},
+  {
+    minClearance,
+    connMap,
+  }: { minClearance?: number; connMap?: ConnectivityMap } = {},
 ): PcbTraceError[] {
+  const board = getPcbBoard(circuitJson)
+  const boardHoleClearance = getBoardDrcValue(
+    board,
+    "min_trace_to_hole_edge_clearance",
+  )
   const required =
     minClearance ??
-    getBoardDrcValue(
-      getPcbBoard(circuitJson),
-      "min_trace_to_hole_edge_clearance",
-    ) ??
+    boardHoleClearance ??
     jlcMinTolerances.min_trace_to_hole_edge_clearance!
   if (!Number.isFinite(required) || required < 0) {
     throw new Error("Trace-to-hole clearance must be finite and non-negative")
   }
+  const minPadClearance =
+    getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
+    jlcMinTolerances.min_trace_to_pad_edge_clearance!
+  const checkVias = minClearance !== undefined || boardHoleClearance !== undefined
   const holes = getHoleGeometries(circuitJson)
   if (holes.length === 0) return []
+  let resolvedConnMap = connMap
+  const getConnMap = () => {
+    if (!resolvedConnMap) {
+      addStartAndEndPortIdsIfMissing(circuitJson)
+      resolvedConnMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+    }
+    return resolvedConnMap
+  }
   const index = new SpatialObjectIndex({
     objects: holes,
     getId: (hole) => hole.elementId,
@@ -75,8 +100,17 @@ export function checkHoleTraceClearance(
       for (const geometry of candidates) {
         const hole = geometry.sourceElement
         if (hole.type !== "pcb_hole" && hole.type !== "pcb_via") continue
-        if (hole.type === "pcb_via" && hole.pcb_trace_id === trace.pcb_trace_id)
-          continue
+        if (hole.type === "pcb_via") {
+          if (!checkVias) continue
+          if (hole.pcb_trace_id === trace.pcb_trace_id) continue
+          if (getConnMap().areIdsConnected(trace.pcb_trace_id, hole.pcb_via_id))
+            continue
+          const { gap: padGap } = getTraceObstacleClearance(
+            { x1: a.x, y1: a.y, x2: b.x, y2: b.y, thickness: halfWidth * 2 },
+            hole,
+          )
+          if (padGap < minPadClearance) continue
+        }
         const holeId =
           hole.type === "pcb_hole" ? hole.pcb_hole_id : hole.pcb_via_id
         const { gap, center } = getTraceHoleClearance(
