@@ -29,7 +29,7 @@ test("RP2040 simplified board has no false overlap before a power width transiti
     ["before", [...circuit, ...beforeErrors]],
     ["after", circuit],
   ] as const) {
-    const svg = convertCircuitJsonToPcbSvg(elements, {
+    const svg = convertCircuitJsonToPcbSvg([...elements], {
       width: 1000,
       height: 650,
       backgroundColor: "white",
