@@ -43,7 +43,8 @@ export function checkHoleTraceClearance(
   const minPadClearance =
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     jlcMinTolerances.min_trace_to_pad_edge_clearance!
-  const checkVias = minClearance !== undefined || boardHoleClearance !== undefined
+  const checkVias =
+    minClearance !== undefined || boardHoleClearance !== undefined
   const holes = getHoleGeometries(circuitJson)
   if (holes.length === 0) return []
   let resolvedConnMap = connMap
@@ -83,10 +84,11 @@ export function checkHoleTraceClearance(
         a.layer !== b.layer
       )
         continue
-      const wire = a.route_type === "wire" ? a : b
-      if (wire.route_type !== "wire") continue
       const halfWidth =
-        Math.max(wire.width, wire.start_width ?? 0, wire.end_width ?? 0) / 2
+        Math.max(
+          a.route_type === "wire" ? a.width : 0,
+          b.route_type === "wire" ? b.width : 0,
+        ) / 2
       const candidates = index.getObjectsInBounds(
         {
           minX: Math.min(a.x, b.x),
