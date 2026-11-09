@@ -14,6 +14,14 @@ import supportedJson from "../fixtures/panel-support/supported.json"
 
 const unsupported = unsupportedJson as AnyCircuitElement[]
 const supported = supportedJson as AnyCircuitElement[]
+const visualOptions = {
+  shouldDrawErrors: true,
+  showSolderMask: true,
+  backgroundColor: "white",
+  colorOverrides: { drill: "white" },
+  width: 900,
+  height: 1050,
+}
 
 test("manual TSX panel: detect four boards hanging from one side", () => {
   const errors = checkPcbBoardSupport(unsupported)
@@ -35,14 +43,20 @@ test("manual TSX panel: detect four boards hanging from one side", () => {
     )
     expect(error.message).not.toContain("pcb_board_panel")
   }
-  expect(
-    convertCircuitJsonToPcbSvg([...unsupported, ...errors]),
-  ).toMatchSvgSnapshot(import.meta.path)
+  const svg = convertCircuitJsonToPcbSvg(
+    [...unsupported, ...errors],
+    visualOptions,
+  )
+  expect(svg.match(/data-error-region="true"/g)).toHaveLength(4)
+  expect(svg).toContain("Support error")
+  expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
 
 test("corrected carrier panel passes", () => {
   expect(checkPcbBoardSupport(supported)).toEqual([])
-  expect(convertCircuitJsonToPcbSvg(supported)).toMatchSvgSnapshot(
+  const svg = convertCircuitJsonToPcbSvg(supported, visualOptions)
+  expect(svg).not.toContain('data-type="pcb_placement_error"')
+  expect(svg).toMatchSvgSnapshot(
     import.meta.path,
     "check-pcb-board-support-supported",
   )

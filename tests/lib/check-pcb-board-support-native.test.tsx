@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { Circuit } from "tscircuit"
+import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbBoardSupport } from "../../lib/check-pcb-board-support"
 
 test("native TSX panel reports tabs consumed by staggered neighboring routes", async () => {
@@ -27,4 +28,17 @@ test("native TSX panel reports tabs consumed by staggered neighboring routes", a
         error.support_count === 0,
     ),
   ).toBe(true)
+  const svg = convertCircuitJsonToPcbSvg(
+    [...circuit.getCircuitJson(), ...errors],
+    {
+      shouldDrawErrors: true,
+      showSolderMask: true,
+      backgroundColor: "white",
+      colorOverrides: { drill: "white" },
+      width: 650,
+      height: 650,
+    },
+  )
+  expect(svg).toContain("0 surviving tabs")
+  expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
