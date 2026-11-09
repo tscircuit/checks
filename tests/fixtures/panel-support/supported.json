@@ -1,1 +1,3369 @@
-[{"type":"pcb_board","pcb_board_id":"pcb_board_panel","source_board_id":"limit_source_board_0","center":{"x":0,"y":0},"thickness":1.6,"num_layers":2,"width":111,"height":183,"material":"fr4","min_trace_width":0.1,"min_via_hole_diameter":0.3,"min_via_pad_diameter":0.6,"min_via_hole_edge_to_via_hole_edge_clearance":0.3,"min_via_edge_to_pad_edge_clearance":0.1,"min_trace_to_hole_edge_clearance":0.2,"min_trace_to_pad_edge_clearance":0.1,"min_pad_edge_to_pad_edge_clearance":0.1,"min_plated_hole_drill_edge_to_drill_edge_clearance":0.15,"min_board_edge_clearance":0.2},{"type":"pcb_hole","pcb_hole_id":"limit_pcb_hole_0","pcb_component_id":"limit_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-38.399918,"y":60.205567200000004,"is_covered_with_solder_mask":false,"subcircuit_id":"limit_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"limit_pcb_hole_1","pcb_component_id":"limit_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-32.600082,"y":60.205567200000004,"is_covered_with_solder_mask":false,"subcircuit_id":"limit_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"limit_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-45,"y":56,"is_covered_with_solder_mask":false,"subcircuit_id":"limit_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"limit_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-45,"y":81,"is_covered_with_solder_mask":false,"subcircuit_id":"limit_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"limit_pcb_hole_4","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-26,"y":56,"is_covered_with_solder_mask":false,"subcircuit_id":"limit_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"limit_pcb_hole_5","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-26,"y":81,"is_covered_with_solder_mask":false,"subcircuit_id":"limit_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"button_pcb_hole_0","pcb_component_id":"button_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-3.399918,"y":60.205567200000004,"is_covered_with_solder_mask":false,"subcircuit_id":"button_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"button_pcb_hole_1","pcb_component_id":"button_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":2.399918,"y":60.205567200000004,"is_covered_with_solder_mask":false,"subcircuit_id":"button_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"button_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-10,"y":56,"is_covered_with_solder_mask":false,"subcircuit_id":"button_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"button_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-10,"y":81,"is_covered_with_solder_mask":false,"subcircuit_id":"button_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"button_pcb_hole_4","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":9,"y":56,"is_covered_with_solder_mask":false,"subcircuit_id":"button_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"button_pcb_hole_5","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":9,"y":81,"is_covered_with_solder_mask":false,"subcircuit_id":"button_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"toggle_pcb_hole_0","pcb_component_id":"toggle_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-24.2055672,"y":-33.399918,"is_covered_with_solder_mask":false,"subcircuit_id":"toggle_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"toggle_pcb_hole_1","pcb_component_id":"toggle_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-24.2055672,"y":-27.600082,"is_covered_with_solder_mask":false,"subcircuit_id":"toggle_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"toggle_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-20,"y":-40,"is_covered_with_solder_mask":false,"subcircuit_id":"toggle_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"toggle_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-45,"y":-40,"is_covered_with_solder_mask":false,"subcircuit_id":"toggle_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"toggle_pcb_hole_4","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-20,"y":-21,"is_covered_with_solder_mask":false,"subcircuit_id":"toggle_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"toggle_pcb_hole_5","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-45,"y":-21,"is_covered_with_solder_mask":false,"subcircuit_id":"toggle_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"dial_pcb_hole_0","pcb_component_id":"dial_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-38.399918,"y":-76.7944328,"is_covered_with_solder_mask":false,"subcircuit_id":"dial_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"dial_pcb_hole_1","pcb_component_id":"dial_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-32.600082,"y":-76.7944328,"is_covered_with_solder_mask":false,"subcircuit_id":"dial_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"dial_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-45,"y":-81,"is_covered_with_solder_mask":false,"subcircuit_id":"dial_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"dial_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-45,"y":-56,"is_covered_with_solder_mask":false,"subcircuit_id":"dial_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"dial_pcb_hole_4","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-26,"y":-81,"is_covered_with_solder_mask":false,"subcircuit_id":"dial_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"dial_pcb_hole_5","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-26,"y":-56,"is_covered_with_solder_mask":false,"subcircuit_id":"dial_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"position_pcb_hole_0","pcb_component_id":"position_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-3.399918,"y":-76.7944328,"is_covered_with_solder_mask":false,"subcircuit_id":"position_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"position_pcb_hole_1","pcb_component_id":"position_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":2.399918,"y":-76.7944328,"is_covered_with_solder_mask":false,"subcircuit_id":"position_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"position_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-10,"y":-81,"is_covered_with_solder_mask":false,"subcircuit_id":"position_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"position_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-10,"y":-56,"is_covered_with_solder_mask":false,"subcircuit_id":"position_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"position_pcb_hole_4","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":9,"y":-81,"is_covered_with_solder_mask":false,"subcircuit_id":"position_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"position_pcb_hole_5","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":9,"y":-56,"is_covered_with_solder_mask":false,"subcircuit_id":"position_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"distance_pcb_hole_0","pcb_component_id":"distance_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":31.600082,"y":-76.7944328,"is_covered_with_solder_mask":false,"subcircuit_id":"distance_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"distance_pcb_hole_1","pcb_component_id":"distance_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":37.399918,"y":-76.7944328,"is_covered_with_solder_mask":false,"subcircuit_id":"distance_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"distance_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":25,"y":-81,"is_covered_with_solder_mask":false,"subcircuit_id":"distance_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"distance_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":25,"y":-56,"is_covered_with_solder_mask":false,"subcircuit_id":"distance_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"distance_pcb_hole_4","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":44,"y":-81,"is_covered_with_solder_mask":false,"subcircuit_id":"distance_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"distance_pcb_hole_5","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":44,"y":-56,"is_covered_with_solder_mask":false,"subcircuit_id":"distance_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_0","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-21.5,"y":-4.5,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_1","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-31.5,"y":-4.5,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-21.5,"y":33.5,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":-31.5,"y":33.5,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_4","pcb_component_id":"hub_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-12.2055672,"y":11.600081999999999,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_5","pcb_component_id":"hub_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":-12.2055672,"y":17.399918,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_6","pcb_component_id":"hub_pcb_component_18","hole_shape":"circle","hole_diameter":0.5999988,"x":-40.794432799999996,"y":1.1999180000000003,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_7","pcb_component_id":"hub_pcb_component_18","hole_shape":"circle","hole_diameter":0.5999988,"x":-40.7944328,"y":-4.599917999999999,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_8","pcb_component_id":"hub_pcb_component_31","hole_shape":"circle","hole_diameter":0.5999988,"x":-40.794432799999996,"y":11.999918000000001,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_9","pcb_component_id":"hub_pcb_component_31","hole_shape":"circle","hole_diameter":0.5999988,"x":-40.794432799999996,"y":6.200082,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_10","pcb_component_id":"hub_pcb_component_44","hole_shape":"circle","hole_diameter":0.5999988,"x":-40.794432799999996,"y":22.799917999999998,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_11","pcb_component_id":"hub_pcb_component_44","hole_shape":"circle","hole_diameter":0.5999988,"x":-40.794432799999996,"y":17.000082000000003,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_12","pcb_component_id":"hub_pcb_component_57","hole_shape":"circle","hole_diameter":0.5999988,"x":-40.794432799999996,"y":33.599918,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"hub_pcb_hole_13","pcb_component_id":"hub_pcb_component_57","hole_shape":"circle","hole_diameter":0.5999988,"x":-40.794432799999996,"y":27.800082,"is_covered_with_solder_mask":false,"subcircuit_id":"hub_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"display_pcb_hole_0","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":39,"y":-36,"is_covered_with_solder_mask":false,"subcircuit_id":"display_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"display_pcb_hole_1","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":14,"y":-36,"is_covered_with_solder_mask":false,"subcircuit_id":"display_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"display_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":39,"y":-17,"is_covered_with_solder_mask":false,"subcircuit_id":"display_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"display_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":14,"y":-17,"is_covered_with_solder_mask":false,"subcircuit_id":"display_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"display_pcb_hole_4","pcb_component_id":"display_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":40.794432799999996,"y":-29.399918,"is_covered_with_solder_mask":false,"subcircuit_id":"display_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"display_pcb_hole_5","pcb_component_id":"display_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":40.794432799999996,"y":-23.600082,"is_covered_with_solder_mask":false,"subcircuit_id":"display_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_pcb_hole_0","pcb_component_id":null,"hole_shape":"circle","hole_diameter":3.2,"x":23,"y":4,"is_covered_with_solder_mask":false,"subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_pcb_hole_1","pcb_component_id":null,"hole_shape":"circle","hole_diameter":3.2,"x":23,"y":39,"is_covered_with_solder_mask":false,"subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_pcb_hole_2","pcb_component_id":"resetter_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999987999999999,"x":12.10556719999995,"y":28.39991800000007,"is_covered_with_solder_mask":false,"subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_pcb_hole_3","pcb_component_id":"resetter_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999987999999999,"x":12.10556719999995,"y":22.60008199999993,"is_covered_with_solder_mask":false,"subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_pcb_hole_4","pcb_component_id":"resetter_pcb_component_26","hole_shape":"circle","hole_diameter":0.5999987999999999,"x":36.39991800000007,"y":35.89443280000005,"is_covered_with_solder_mask":false,"subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_pcb_hole_5","pcb_component_id":"resetter_pcb_component_26","hole_shape":"circle","hole_diameter":0.5999987999999999,"x":30.60008199999993,"y":35.89443280000005,"is_covered_with_solder_mask":false,"subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_pcb_hole_6","pcb_component_id":"resetter_pcb_component_29","hole_shape":"circle","hole_diameter":0.5999987999999999,"x":30.60008199999993,"y":7.10556719999995,"is_covered_with_solder_mask":false,"subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_pcb_hole_7","pcb_component_id":"resetter_pcb_component_29","hole_shape":"circle","hole_diameter":0.5999987999999999,"x":36.39991800000007,"y":7.10556719999995,"is_covered_with_solder_mask":false,"subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_resetter_extra_hole_-17.5","x":44,"y":4,"hole_diameter":3.2,"hole_shape":"circle","subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"resetter_resetter_extra_hole_17.5","x":44,"y":39,"hole_diameter":3.2,"hole_shape":"circle","subcircuit_id":"resetter_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"buzzer_pcb_hole_0","pcb_component_id":"buzzer_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":31.600082,"y":60.205567200000004,"is_covered_with_solder_mask":false,"subcircuit_id":"buzzer_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"buzzer_pcb_hole_1","pcb_component_id":"buzzer_pcb_component_0","hole_shape":"circle","hole_diameter":0.5999988,"x":37.399918,"y":60.205567200000004,"is_covered_with_solder_mask":false,"subcircuit_id":"buzzer_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"buzzer_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":25,"y":56,"is_covered_with_solder_mask":false,"subcircuit_id":"buzzer_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"buzzer_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":25,"y":81,"is_covered_with_solder_mask":false,"subcircuit_id":"buzzer_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"buzzer_pcb_hole_4","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":44,"y":56,"is_covered_with_solder_mask":false,"subcircuit_id":"buzzer_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"buzzer_pcb_hole_5","pcb_component_id":null,"hole_shape":"circle","hole_diameter":2.2,"x":44,"y":81,"is_covered_with_solder_mask":false,"subcircuit_id":"buzzer_subcircuit_source_group_0"},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_0","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_1","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_2","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_3","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_4","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_5","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_6","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_7","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_8","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_9","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_10","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_11","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_12","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_13","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_14","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_15","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_16","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_17","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_18","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_19","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_20","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_21","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_22","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_23","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_24","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_25","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_26","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_27","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_28","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_29","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_30","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_31","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_32","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_33","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_34","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_35","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_36","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_37","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_38","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_39","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_40","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.9,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_41","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-24.7,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_42","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-25.5,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_43","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-26.3,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_44","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-27.1,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_45","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-37.9,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_46","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-38.7,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_47","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-39.5,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_48","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-40.3,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_49","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-41.1,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_50","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.9,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_51","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-24.7,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_52","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-25.5,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_53","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-26.3,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_54","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-27.1,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_55","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-37.9,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_56","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-38.7,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_57","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-39.5,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_58","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-40.3,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_59","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-41.1,"y":-18.35,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_60","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_61","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_62","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_63","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_64","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_65","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_66","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_67","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_68","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_69","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-47.65,"y":-59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_70","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_71","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_72","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_73","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_74","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_75","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_76","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_77","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_78","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_79","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-23.35,"y":-59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_80","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_81","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_82","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_83","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_84","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_85","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_86","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_87","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_88","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_89","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-12.65,"y":-59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_90","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_91","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_92","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_93","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_94","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_95","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_96","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_97","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_98","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_99","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":11.65,"y":-59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_100","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_101","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_102","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_103","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_104","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_105","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_106","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_107","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_108","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_109","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":-59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_110","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_111","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_112","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_113","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_114","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_115","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_116","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_117","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_118","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_119","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":-59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_120","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-13.9,"y":-7.6499999999999995,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_121","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-14.7,"y":-7.6499999999999995,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_122","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-15.5,"y":-7.6499999999999995,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_123","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-16.3,"y":-7.6499999999999995,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_124","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-17.1,"y":-7.6499999999999995,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_125","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-35.9,"y":-7.649999999999998,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_126","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-36.7,"y":-7.649999999999998,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_127","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-37.5,"y":-7.649999999999998,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_128","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-38.3,"y":-7.649999999999998,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_129","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-39.1,"y":-7.649999999999998,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_130","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-13.9,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_131","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-14.7,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_132","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-15.5,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_133","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-16.3,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_134","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-17.1,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_135","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-35.9,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_136","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-36.7,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_137","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-37.5,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_138","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-38.3,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_139","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":-39.1,"y":36.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_140","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":38.1,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_141","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":37.3,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_142","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":36.5,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_143","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":35.7,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_144","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":34.9,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_145","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":18.1,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_146","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":17.3,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_147","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":16.5,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_148","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":15.7,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_149","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":14.9,"y":-42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_150","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":38.1,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_151","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":37.3,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_152","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":36.5,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_153","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":35.7,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_154","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":34.9,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_155","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":18.1,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_156","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":17.3,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_157","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":16.5,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_158","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":15.7,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_159","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":14.9,"y":-10.350000000000001,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_160","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":44.1,"y":0.35000000000000037,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_161","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":43.3,"y":0.35000000000000037,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_162","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":42.5,"y":0.3500000000000004,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_163","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":41.7,"y":0.3500000000000005,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_164","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":40.9,"y":0.35000000000000053,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_165","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":18.1,"y":0.3500000000000019,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_166","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":17.3,"y":0.350000000000002,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_167","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":16.5,"y":0.35000000000000203,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_168","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":15.7,"y":0.3500000000000021,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_169","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":14.9,"y":0.35000000000000214,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_170","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":44.1,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_171","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":43.3,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_172","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":42.5,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_173","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":41.7,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_174","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":40.9,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_175","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":18.1,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_176","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":17.3,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_177","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":16.5,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_178","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":15.7,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_179","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":14.9,"y":42.65,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_180","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_181","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_182","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_183","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_184","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_185","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_186","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_187","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_188","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_189","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":22.35,"y":77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_190","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":59.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_191","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":60.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_192","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":61.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_193","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":62.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_194","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":63.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_195","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":73.9,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_196","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":74.7,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_197","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":75.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_198","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":76.3,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_199","pcb_component_id":null,"hole_shape":"circle","hole_diameter":0.5,"x":46.65,"y":77.1,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_200","pcb_component_id":null,"hole_shape":"circle","hole_diameter":3,"x":-52.5,"y":88.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_201","pcb_component_id":null,"hole_shape":"circle","hole_diameter":3,"x":52.5,"y":88.5,"is_covered_with_solder_mask":false},{"type":"pcb_hole","pcb_hole_id":"panel_pcb_hole_202","pcb_component_id":null,"hole_shape":"circle","hole_diameter":3,"x":-52.5,"y":-88.5,"is_covered_with_solder_mask":false},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_0","shape":"polygon","points":[{"x":-50.5,"y":-86.5},{"x":-20.5,"y":-86.5},{"x":-20.5,"y":-77.5},{"x":-23.5,"y":-77.5},{"x":-23.5,"y":-83.5},{"x":-47.5,"y":-83.5},{"x":-47.5,"y":-77.5},{"x":-50.5,"y":-77.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_1","shape":"polygon","points":[{"x":-50.5,"y":-73.5},{"x":-47.5,"y":-73.5},{"x":-47.5,"y":-63.5},{"x":-50.5,"y":-63.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_2","shape":"polygon","points":[{"x":-50.5,"y":-59.5},{"x":-47.5,"y":-59.5},{"x":-47.5,"y":-53.5},{"x":-23.5,"y":-53.5},{"x":-23.5,"y":-59.5},{"x":-20.5,"y":-59.5},{"x":-20.5,"y":-50.5},{"x":-50.5,"y":-50.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_3","shape":"polygon","points":[{"x":-50.5,"y":-45.5},{"x":-41.5,"y":-45.5},{"x":-41.5,"y":-42.5},{"x":-47.5,"y":-42.5},{"x":-47.5,"y":-18.5},{"x":-41.5,"y":-18.5},{"x":-41.5,"y":-15.5},{"x":-50.5,"y":-15.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_4","shape":"polygon","points":[{"x":-50.5,"y":-10.499999999999998},{"x":-39.5,"y":-10.499999999999998},{"x":-39.5,"y":-7.499999999999998},{"x":-47.5,"y":-7.499999999999998},{"x":-47.5,"y":36.5},{"x":-39.5,"y":36.5},{"x":-39.5,"y":39.5},{"x":-50.5,"y":39.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_5","shape":"polygon","points":[{"x":-50.5,"y":50.5},{"x":-20.5,"y":50.5},{"x":-20.5,"y":59.5},{"x":-23.5,"y":59.5},{"x":-23.5,"y":53.5},{"x":-47.5,"y":53.5},{"x":-47.5,"y":59.5},{"x":-50.5,"y":59.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_6","shape":"polygon","points":[{"x":-50.5,"y":63.5},{"x":-47.5,"y":63.5},{"x":-47.5,"y":73.5},{"x":-50.5,"y":73.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_7","shape":"polygon","points":[{"x":-50.5,"y":77.5},{"x":-47.5,"y":77.5},{"x":-47.5,"y":83.5},{"x":-23.5,"y":83.5},{"x":-23.5,"y":77.5},{"x":-20.5,"y":77.5},{"x":-20.5,"y":86.5},{"x":-50.5,"y":86.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_8","shape":"polygon","points":[{"x":-37.5,"y":-45.5},{"x":-27.5,"y":-45.5},{"x":-27.5,"y":-42.5},{"x":-37.5,"y":-42.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_9","shape":"polygon","points":[{"x":-37.5,"y":-18.5},{"x":-27.5,"y":-18.5},{"x":-27.5,"y":-15.5},{"x":-37.5,"y":-15.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_10","shape":"polygon","points":[{"x":-35.5,"y":-10.500000000000002},{"x":-17.5,"y":-10.500000000000002},{"x":-17.5,"y":-7.5},{"x":-35.5,"y":-7.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_11","shape":"polygon","points":[{"x":-35.5,"y":36.5},{"x":-17.5,"y":36.5},{"x":-17.5,"y":39.5},{"x":-35.5,"y":39.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_12","shape":"polygon","points":[{"x":-23.5,"y":-73.5},{"x":-20.5,"y":-73.5},{"x":-20.5,"y":-63.5},{"x":-23.5,"y":-63.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_13","shape":"polygon","points":[{"x":-23.5,"y":-45.5},{"x":-14.5,"y":-45.5},{"x":-14.5,"y":-15.5},{"x":-23.5,"y":-15.5},{"x":-23.5,"y":-18.5},{"x":-17.5,"y":-18.5},{"x":-17.5,"y":-42.5},{"x":-23.5,"y":-42.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_14","shape":"polygon","points":[{"x":-23.5,"y":63.5},{"x":-20.5,"y":63.5},{"x":-20.5,"y":73.5},{"x":-23.5,"y":73.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_15","shape":"polygon","points":[{"x":-15.5,"y":-86.5},{"x":14.5,"y":-86.5},{"x":14.5,"y":-77.5},{"x":11.5,"y":-77.5},{"x":11.5,"y":-83.5},{"x":-12.5,"y":-83.5},{"x":-12.5,"y":-77.5},{"x":-15.5,"y":-77.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_16","shape":"polygon","points":[{"x":-15.5,"y":-73.5},{"x":-12.5,"y":-73.5},{"x":-12.5,"y":-63.5},{"x":-15.5,"y":-63.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_17","shape":"polygon","points":[{"x":-15.5,"y":-59.5},{"x":-12.5,"y":-59.5},{"x":-12.5,"y":-53.5},{"x":11.5,"y":-53.5},{"x":11.5,"y":-59.5},{"x":14.5,"y":-59.5},{"x":14.5,"y":-50.5},{"x":-15.5,"y":-50.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_18","shape":"polygon","points":[{"x":-15.5,"y":50.5},{"x":14.5,"y":50.5},{"x":14.5,"y":59.5},{"x":11.5,"y":59.5},{"x":11.5,"y":53.5},{"x":-12.5,"y":53.5},{"x":-12.5,"y":59.5},{"x":-15.5,"y":59.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_19","shape":"polygon","points":[{"x":-15.5,"y":63.5},{"x":-12.5,"y":63.5},{"x":-12.5,"y":73.5},{"x":-15.5,"y":73.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_20","shape":"polygon","points":[{"x":-15.5,"y":77.5},{"x":-12.5,"y":77.5},{"x":-12.5,"y":83.5},{"x":11.5,"y":83.5},{"x":11.5,"y":77.5},{"x":14.5,"y":77.5},{"x":14.5,"y":86.5},{"x":-15.5,"y":86.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_21","shape":"polygon","points":[{"x":-13.5,"y":-10.500000000000002},{"x":-2.5,"y":-10.500000000000002},{"x":-2.5,"y":39.5},{"x":-13.5,"y":39.5},{"x":-13.5,"y":36.5},{"x":-5.5,"y":36.5},{"x":-5.5,"y":-7.500000000000002},{"x":-13.5,"y":-7.500000000000002}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_22","shape":"polygon","points":[{"x":2.5,"y":-45.5},{"x":14.5,"y":-45.5},{"x":14.5,"y":-42.5},{"x":5.5,"y":-42.5},{"x":5.5,"y":-10.499999999999998},{"x":14.5,"y":-10.499999999999998},{"x":14.5,"y":-7.499999999999998},{"x":5.5,"y":-7.499999999999998},{"x":5.5,"y":-7.5},{"x":2.5,"y":-7.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_23","shape":"polygon","points":[{"x":2.5,"y":-2.5},{"x":5.5,"y":-2.5},{"x":5.5,"y":-2.499999999999999},{"x":14.5,"y":-2.499999999999999},{"x":14.5,"y":0.500000000000001},{"x":5.5,"y":0.500000000000001},{"x":5.5,"y":42.5},{"x":14.5,"y":42.5},{"x":14.5,"y":45.5},{"x":2.5,"y":45.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_24","shape":"polygon","points":[{"x":11.5,"y":-73.5},{"x":14.5,"y":-73.5},{"x":14.5,"y":-63.5},{"x":11.5,"y":-63.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_25","shape":"polygon","points":[{"x":11.5,"y":63.5},{"x":14.5,"y":63.5},{"x":14.5,"y":73.5},{"x":11.5,"y":73.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_26","shape":"polygon","points":[{"x":18.5,"y":-45.5},{"x":34.5,"y":-45.5},{"x":34.5,"y":-42.5},{"x":18.5,"y":-42.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_27","shape":"polygon","points":[{"x":18.5,"y":-10.500000000000002},{"x":34.5,"y":-10.500000000000002},{"x":34.5,"y":-7.5},{"x":18.5,"y":-7.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_28","shape":"polygon","points":[{"x":18.5,"y":-2.5},{"x":40.5,"y":-2.5},{"x":40.5,"y":0.4999999999999998},{"x":18.5,"y":0.4999999999999998}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_29","shape":"polygon","points":[{"x":18.5,"y":42.5},{"x":40.5,"y":42.5},{"x":40.5,"y":45.5},{"x":18.5,"y":45.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_30","shape":"polygon","points":[{"x":19.5,"y":-86.5},{"x":49.5,"y":-86.5},{"x":49.5,"y":-77.5},{"x":46.5,"y":-77.5},{"x":46.5,"y":-83.5},{"x":22.5,"y":-83.5},{"x":22.5,"y":-77.5},{"x":19.5,"y":-77.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_31","shape":"polygon","points":[{"x":19.5,"y":-73.5},{"x":22.5,"y":-73.5},{"x":22.5,"y":-63.5},{"x":19.5,"y":-63.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_32","shape":"polygon","points":[{"x":19.5,"y":-59.5},{"x":22.5,"y":-59.5},{"x":22.5,"y":-53.5},{"x":46.5,"y":-53.5},{"x":46.5,"y":-59.5},{"x":49.5,"y":-59.5},{"x":49.5,"y":-50.5},{"x":19.5,"y":-50.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_33","shape":"polygon","points":[{"x":19.5,"y":50.5},{"x":49.5,"y":50.5},{"x":49.5,"y":59.5},{"x":46.5,"y":59.5},{"x":46.5,"y":53.5},{"x":22.5,"y":53.5},{"x":22.5,"y":59.5},{"x":19.5,"y":59.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_34","shape":"polygon","points":[{"x":19.5,"y":63.5},{"x":22.5,"y":63.5},{"x":22.5,"y":73.5},{"x":19.5,"y":73.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_35","shape":"polygon","points":[{"x":19.5,"y":77.5},{"x":22.5,"y":77.5},{"x":22.5,"y":83.5},{"x":46.5,"y":83.5},{"x":46.5,"y":77.5},{"x":49.5,"y":77.5},{"x":49.5,"y":86.5},{"x":19.5,"y":86.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_36","shape":"polygon","points":[{"x":38.5,"y":-45.5},{"x":50.5,"y":-45.5},{"x":50.5,"y":-7.5},{"x":47.5,"y":-7.5},{"x":47.5,"y":-7.500000000000002},{"x":38.5,"y":-7.500000000000002},{"x":38.5,"y":-10.500000000000002},{"x":47.5,"y":-10.500000000000002},{"x":47.5,"y":-42.5},{"x":38.5,"y":-42.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_37","shape":"polygon","points":[{"x":44.5,"y":-2.500000000000001},{"x":47.5,"y":-2.500000000000001},{"x":47.5,"y":-2.5},{"x":50.5,"y":-2.5},{"x":50.5,"y":45.5},{"x":44.5,"y":45.5},{"x":44.5,"y":42.5},{"x":47.5,"y":42.5},{"x":47.5,"y":0.4999999999999989},{"x":44.5,"y":0.4999999999999989}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_38","shape":"polygon","points":[{"x":46.5,"y":-73.5},{"x":49.5,"y":-73.5},{"x":49.5,"y":-63.5},{"x":46.5,"y":-63.5}]},{"type":"pcb_cutout","pcb_cutout_id":"panel_slot_39","shape":"polygon","points":[{"x":46.5,"y":63.5},{"x":49.5,"y":63.5},{"x":49.5,"y":73.5},{"x":46.5,"y":73.5}]}]
+[
+  {
+    "type": "pcb_board",
+    "pcb_board_id": "pcb_board_panel",
+    "source_board_id": "limit_source_board_0",
+    "center": { "x": 0, "y": 0 },
+    "thickness": 1.6,
+    "num_layers": 2,
+    "width": 111,
+    "height": 183,
+    "material": "fr4",
+    "min_trace_width": 0.1,
+    "min_via_hole_diameter": 0.3,
+    "min_via_pad_diameter": 0.6,
+    "min_via_hole_edge_to_via_hole_edge_clearance": 0.3,
+    "min_via_edge_to_pad_edge_clearance": 0.1,
+    "min_trace_to_hole_edge_clearance": 0.2,
+    "min_trace_to_pad_edge_clearance": 0.1,
+    "min_pad_edge_to_pad_edge_clearance": 0.1,
+    "min_plated_hole_drill_edge_to_drill_edge_clearance": 0.15,
+    "min_board_edge_clearance": 0.2
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "limit_pcb_hole_0",
+    "pcb_component_id": "limit_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -38.399918,
+    "y": 60.205567200000004,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "limit_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "limit_pcb_hole_1",
+    "pcb_component_id": "limit_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -32.600082,
+    "y": 60.205567200000004,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "limit_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "limit_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -45,
+    "y": 56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "limit_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "limit_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -45,
+    "y": 81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "limit_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "limit_pcb_hole_4",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -26,
+    "y": 56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "limit_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "limit_pcb_hole_5",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -26,
+    "y": 81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "limit_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "button_pcb_hole_0",
+    "pcb_component_id": "button_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -3.399918,
+    "y": 60.205567200000004,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "button_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "button_pcb_hole_1",
+    "pcb_component_id": "button_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": 2.399918,
+    "y": 60.205567200000004,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "button_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "button_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -10,
+    "y": 56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "button_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "button_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -10,
+    "y": 81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "button_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "button_pcb_hole_4",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 9,
+    "y": 56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "button_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "button_pcb_hole_5",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 9,
+    "y": 81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "button_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "toggle_pcb_hole_0",
+    "pcb_component_id": "toggle_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -24.2055672,
+    "y": -33.399918,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "toggle_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "toggle_pcb_hole_1",
+    "pcb_component_id": "toggle_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -24.2055672,
+    "y": -27.600082,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "toggle_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "toggle_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -20,
+    "y": -40,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "toggle_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "toggle_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -45,
+    "y": -40,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "toggle_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "toggle_pcb_hole_4",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -20,
+    "y": -21,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "toggle_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "toggle_pcb_hole_5",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -45,
+    "y": -21,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "toggle_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "dial_pcb_hole_0",
+    "pcb_component_id": "dial_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -38.399918,
+    "y": -76.7944328,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "dial_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "dial_pcb_hole_1",
+    "pcb_component_id": "dial_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -32.600082,
+    "y": -76.7944328,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "dial_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "dial_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -45,
+    "y": -81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "dial_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "dial_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -45,
+    "y": -56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "dial_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "dial_pcb_hole_4",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -26,
+    "y": -81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "dial_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "dial_pcb_hole_5",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -26,
+    "y": -56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "dial_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "position_pcb_hole_0",
+    "pcb_component_id": "position_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -3.399918,
+    "y": -76.7944328,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "position_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "position_pcb_hole_1",
+    "pcb_component_id": "position_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": 2.399918,
+    "y": -76.7944328,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "position_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "position_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -10,
+    "y": -81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "position_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "position_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -10,
+    "y": -56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "position_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "position_pcb_hole_4",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 9,
+    "y": -81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "position_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "position_pcb_hole_5",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 9,
+    "y": -56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "position_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "distance_pcb_hole_0",
+    "pcb_component_id": "distance_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": 31.600082,
+    "y": -76.7944328,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "distance_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "distance_pcb_hole_1",
+    "pcb_component_id": "distance_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": 37.399918,
+    "y": -76.7944328,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "distance_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "distance_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 25,
+    "y": -81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "distance_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "distance_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 25,
+    "y": -56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "distance_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "distance_pcb_hole_4",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 44,
+    "y": -81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "distance_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "distance_pcb_hole_5",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 44,
+    "y": -56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "distance_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_0",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -21.5,
+    "y": -4.5,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_1",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -31.5,
+    "y": -4.5,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -21.5,
+    "y": 33.5,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": -31.5,
+    "y": 33.5,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_4",
+    "pcb_component_id": "hub_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -12.2055672,
+    "y": 11.600081999999999,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_5",
+    "pcb_component_id": "hub_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -12.2055672,
+    "y": 17.399918,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_6",
+    "pcb_component_id": "hub_pcb_component_18",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -40.794432799999996,
+    "y": 1.1999180000000003,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_7",
+    "pcb_component_id": "hub_pcb_component_18",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -40.7944328,
+    "y": -4.599917999999999,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_8",
+    "pcb_component_id": "hub_pcb_component_31",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -40.794432799999996,
+    "y": 11.999918000000001,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_9",
+    "pcb_component_id": "hub_pcb_component_31",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -40.794432799999996,
+    "y": 6.200082,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_10",
+    "pcb_component_id": "hub_pcb_component_44",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -40.794432799999996,
+    "y": 22.799917999999998,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_11",
+    "pcb_component_id": "hub_pcb_component_44",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -40.794432799999996,
+    "y": 17.000082000000003,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_12",
+    "pcb_component_id": "hub_pcb_component_57",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -40.794432799999996,
+    "y": 33.599918,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "hub_pcb_hole_13",
+    "pcb_component_id": "hub_pcb_component_57",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": -40.794432799999996,
+    "y": 27.800082,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "hub_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "display_pcb_hole_0",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 39,
+    "y": -36,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "display_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "display_pcb_hole_1",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 14,
+    "y": -36,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "display_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "display_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 39,
+    "y": -17,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "display_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "display_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 14,
+    "y": -17,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "display_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "display_pcb_hole_4",
+    "pcb_component_id": "display_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": 40.794432799999996,
+    "y": -29.399918,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "display_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "display_pcb_hole_5",
+    "pcb_component_id": "display_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": 40.794432799999996,
+    "y": -23.600082,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "display_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_pcb_hole_0",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 3.2,
+    "x": 23,
+    "y": 4,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_pcb_hole_1",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 3.2,
+    "x": 23,
+    "y": 39,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_pcb_hole_2",
+    "pcb_component_id": "resetter_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999987999999999,
+    "x": 12.10556719999995,
+    "y": 28.39991800000007,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_pcb_hole_3",
+    "pcb_component_id": "resetter_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999987999999999,
+    "x": 12.10556719999995,
+    "y": 22.60008199999993,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_pcb_hole_4",
+    "pcb_component_id": "resetter_pcb_component_26",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999987999999999,
+    "x": 36.39991800000007,
+    "y": 35.89443280000005,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_pcb_hole_5",
+    "pcb_component_id": "resetter_pcb_component_26",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999987999999999,
+    "x": 30.60008199999993,
+    "y": 35.89443280000005,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_pcb_hole_6",
+    "pcb_component_id": "resetter_pcb_component_29",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999987999999999,
+    "x": 30.60008199999993,
+    "y": 7.10556719999995,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_pcb_hole_7",
+    "pcb_component_id": "resetter_pcb_component_29",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999987999999999,
+    "x": 36.39991800000007,
+    "y": 7.10556719999995,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_resetter_extra_hole_-17.5",
+    "x": 44,
+    "y": 4,
+    "hole_diameter": 3.2,
+    "hole_shape": "circle",
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "resetter_resetter_extra_hole_17.5",
+    "x": 44,
+    "y": 39,
+    "hole_diameter": 3.2,
+    "hole_shape": "circle",
+    "subcircuit_id": "resetter_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "buzzer_pcb_hole_0",
+    "pcb_component_id": "buzzer_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": 31.600082,
+    "y": 60.205567200000004,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "buzzer_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "buzzer_pcb_hole_1",
+    "pcb_component_id": "buzzer_pcb_component_0",
+    "hole_shape": "circle",
+    "hole_diameter": 0.5999988,
+    "x": 37.399918,
+    "y": 60.205567200000004,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "buzzer_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "buzzer_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 25,
+    "y": 56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "buzzer_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "buzzer_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 25,
+    "y": 81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "buzzer_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "buzzer_pcb_hole_4",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 44,
+    "y": 56,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "buzzer_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "buzzer_pcb_hole_5",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 2.2,
+    "x": 44,
+    "y": 81,
+    "is_covered_with_solder_mask": false,
+    "subcircuit_id": "buzzer_subcircuit_source_group_0"
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_0",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_1",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_2",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_3",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_4",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_5",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_6",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_7",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_8",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_9",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": 77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_10",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_11",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_12",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_13",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_14",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_15",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_16",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_17",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_18",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_19",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": 77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_20",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_21",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_22",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_23",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_24",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_25",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_26",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_27",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_28",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_29",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": 77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_30",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_31",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_32",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_33",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_34",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_35",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_36",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_37",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_38",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_39",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": 77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_40",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.9,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_41",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -24.7,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_42",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -25.5,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_43",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -26.3,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_44",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -27.1,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_45",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -37.9,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_46",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -38.7,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_47",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -39.5,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_48",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -40.3,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_49",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -41.1,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_50",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.9,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_51",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -24.7,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_52",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -25.5,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_53",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -26.3,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_54",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -27.1,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_55",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -37.9,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_56",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -38.7,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_57",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -39.5,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_58",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -40.3,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_59",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -41.1,
+    "y": -18.35,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_60",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_61",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_62",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_63",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_64",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_65",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_66",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_67",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_68",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_69",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -47.65,
+    "y": -59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_70",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_71",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_72",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_73",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_74",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_75",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_76",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_77",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_78",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_79",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -23.35,
+    "y": -59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_80",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_81",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_82",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_83",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_84",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_85",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_86",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_87",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_88",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_89",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -12.65,
+    "y": -59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_90",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_91",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_92",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_93",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_94",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_95",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_96",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_97",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_98",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_99",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 11.65,
+    "y": -59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_100",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_101",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_102",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_103",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_104",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_105",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_106",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_107",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_108",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_109",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": -59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_110",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_111",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_112",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_113",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_114",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_115",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_116",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_117",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_118",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_119",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": -59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_120",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -13.9,
+    "y": -7.6499999999999995,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_121",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -14.7,
+    "y": -7.6499999999999995,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_122",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -15.5,
+    "y": -7.6499999999999995,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_123",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -16.3,
+    "y": -7.6499999999999995,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_124",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -17.1,
+    "y": -7.6499999999999995,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_125",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -35.9,
+    "y": -7.649999999999998,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_126",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -36.7,
+    "y": -7.649999999999998,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_127",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -37.5,
+    "y": -7.649999999999998,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_128",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -38.3,
+    "y": -7.649999999999998,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_129",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -39.1,
+    "y": -7.649999999999998,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_130",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -13.9,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_131",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -14.7,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_132",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -15.5,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_133",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -16.3,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_134",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -17.1,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_135",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -35.9,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_136",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -36.7,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_137",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -37.5,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_138",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -38.3,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_139",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": -39.1,
+    "y": 36.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_140",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 38.1,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_141",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 37.3,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_142",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 36.5,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_143",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 35.7,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_144",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 34.9,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_145",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 18.1,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_146",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 17.3,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_147",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 16.5,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_148",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 15.7,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_149",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 14.9,
+    "y": -42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_150",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 38.1,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_151",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 37.3,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_152",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 36.5,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_153",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 35.7,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_154",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 34.9,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_155",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 18.1,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_156",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 17.3,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_157",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 16.5,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_158",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 15.7,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_159",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 14.9,
+    "y": -10.350000000000001,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_160",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 44.1,
+    "y": 0.35000000000000037,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_161",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 43.3,
+    "y": 0.35000000000000037,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_162",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 42.5,
+    "y": 0.3500000000000004,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_163",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 41.7,
+    "y": 0.3500000000000005,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_164",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 40.9,
+    "y": 0.35000000000000053,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_165",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 18.1,
+    "y": 0.3500000000000019,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_166",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 17.3,
+    "y": 0.350000000000002,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_167",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 16.5,
+    "y": 0.35000000000000203,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_168",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 15.7,
+    "y": 0.3500000000000021,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_169",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 14.9,
+    "y": 0.35000000000000214,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_170",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 44.1,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_171",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 43.3,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_172",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 42.5,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_173",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 41.7,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_174",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 40.9,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_175",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 18.1,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_176",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 17.3,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_177",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 16.5,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_178",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 15.7,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_179",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 14.9,
+    "y": 42.65,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_180",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_181",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_182",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_183",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_184",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_185",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_186",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_187",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_188",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_189",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 22.35,
+    "y": 77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_190",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 59.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_191",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 60.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_192",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 61.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_193",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 62.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_194",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 63.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_195",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 73.9,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_196",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 74.7,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_197",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 75.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_198",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 76.3,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_199",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 0.5,
+    "x": 46.65,
+    "y": 77.1,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_200",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 3,
+    "x": -52.5,
+    "y": 88.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_201",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 3,
+    "x": 52.5,
+    "y": 88.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_hole",
+    "pcb_hole_id": "panel_pcb_hole_202",
+    "pcb_component_id": null,
+    "hole_shape": "circle",
+    "hole_diameter": 3,
+    "x": -52.5,
+    "y": -88.5,
+    "is_covered_with_solder_mask": false
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_0",
+    "shape": "polygon",
+    "points": [
+      { "x": -50.5, "y": -86.5 },
+      { "x": -20.5, "y": -86.5 },
+      { "x": -20.5, "y": -77.5 },
+      { "x": -23.5, "y": -77.5 },
+      { "x": -23.5, "y": -83.5 },
+      { "x": -47.5, "y": -83.5 },
+      { "x": -47.5, "y": -77.5 },
+      { "x": -50.5, "y": -77.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_1",
+    "shape": "polygon",
+    "points": [
+      { "x": -50.5, "y": -73.5 },
+      { "x": -47.5, "y": -73.5 },
+      { "x": -47.5, "y": -63.5 },
+      { "x": -50.5, "y": -63.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_2",
+    "shape": "polygon",
+    "points": [
+      { "x": -50.5, "y": -59.5 },
+      { "x": -47.5, "y": -59.5 },
+      { "x": -47.5, "y": -53.5 },
+      { "x": -23.5, "y": -53.5 },
+      { "x": -23.5, "y": -59.5 },
+      { "x": -20.5, "y": -59.5 },
+      { "x": -20.5, "y": -50.5 },
+      { "x": -50.5, "y": -50.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_3",
+    "shape": "polygon",
+    "points": [
+      { "x": -50.5, "y": -45.5 },
+      { "x": -41.5, "y": -45.5 },
+      { "x": -41.5, "y": -42.5 },
+      { "x": -47.5, "y": -42.5 },
+      { "x": -47.5, "y": -18.5 },
+      { "x": -41.5, "y": -18.5 },
+      { "x": -41.5, "y": -15.5 },
+      { "x": -50.5, "y": -15.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_4",
+    "shape": "polygon",
+    "points": [
+      { "x": -50.5, "y": -10.499999999999998 },
+      { "x": -39.5, "y": -10.499999999999998 },
+      { "x": -39.5, "y": -7.499999999999998 },
+      { "x": -47.5, "y": -7.499999999999998 },
+      { "x": -47.5, "y": 36.5 },
+      { "x": -39.5, "y": 36.5 },
+      { "x": -39.5, "y": 39.5 },
+      { "x": -50.5, "y": 39.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_5",
+    "shape": "polygon",
+    "points": [
+      { "x": -50.5, "y": 50.5 },
+      { "x": -20.5, "y": 50.5 },
+      { "x": -20.5, "y": 59.5 },
+      { "x": -23.5, "y": 59.5 },
+      { "x": -23.5, "y": 53.5 },
+      { "x": -47.5, "y": 53.5 },
+      { "x": -47.5, "y": 59.5 },
+      { "x": -50.5, "y": 59.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_6",
+    "shape": "polygon",
+    "points": [
+      { "x": -50.5, "y": 63.5 },
+      { "x": -47.5, "y": 63.5 },
+      { "x": -47.5, "y": 73.5 },
+      { "x": -50.5, "y": 73.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_7",
+    "shape": "polygon",
+    "points": [
+      { "x": -50.5, "y": 77.5 },
+      { "x": -47.5, "y": 77.5 },
+      { "x": -47.5, "y": 83.5 },
+      { "x": -23.5, "y": 83.5 },
+      { "x": -23.5, "y": 77.5 },
+      { "x": -20.5, "y": 77.5 },
+      { "x": -20.5, "y": 86.5 },
+      { "x": -50.5, "y": 86.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_8",
+    "shape": "polygon",
+    "points": [
+      { "x": -37.5, "y": -45.5 },
+      { "x": -27.5, "y": -45.5 },
+      { "x": -27.5, "y": -42.5 },
+      { "x": -37.5, "y": -42.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_9",
+    "shape": "polygon",
+    "points": [
+      { "x": -37.5, "y": -18.5 },
+      { "x": -27.5, "y": -18.5 },
+      { "x": -27.5, "y": -15.5 },
+      { "x": -37.5, "y": -15.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_10",
+    "shape": "polygon",
+    "points": [
+      { "x": -35.5, "y": -10.500000000000002 },
+      { "x": -17.5, "y": -10.500000000000002 },
+      { "x": -17.5, "y": -7.5 },
+      { "x": -35.5, "y": -7.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_11",
+    "shape": "polygon",
+    "points": [
+      { "x": -35.5, "y": 36.5 },
+      { "x": -17.5, "y": 36.5 },
+      { "x": -17.5, "y": 39.5 },
+      { "x": -35.5, "y": 39.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_12",
+    "shape": "polygon",
+    "points": [
+      { "x": -23.5, "y": -73.5 },
+      { "x": -20.5, "y": -73.5 },
+      { "x": -20.5, "y": -63.5 },
+      { "x": -23.5, "y": -63.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_13",
+    "shape": "polygon",
+    "points": [
+      { "x": -23.5, "y": -45.5 },
+      { "x": -14.5, "y": -45.5 },
+      { "x": -14.5, "y": -15.5 },
+      { "x": -23.5, "y": -15.5 },
+      { "x": -23.5, "y": -18.5 },
+      { "x": -17.5, "y": -18.5 },
+      { "x": -17.5, "y": -42.5 },
+      { "x": -23.5, "y": -42.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_14",
+    "shape": "polygon",
+    "points": [
+      { "x": -23.5, "y": 63.5 },
+      { "x": -20.5, "y": 63.5 },
+      { "x": -20.5, "y": 73.5 },
+      { "x": -23.5, "y": 73.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_15",
+    "shape": "polygon",
+    "points": [
+      { "x": -15.5, "y": -86.5 },
+      { "x": 14.5, "y": -86.5 },
+      { "x": 14.5, "y": -77.5 },
+      { "x": 11.5, "y": -77.5 },
+      { "x": 11.5, "y": -83.5 },
+      { "x": -12.5, "y": -83.5 },
+      { "x": -12.5, "y": -77.5 },
+      { "x": -15.5, "y": -77.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_16",
+    "shape": "polygon",
+    "points": [
+      { "x": -15.5, "y": -73.5 },
+      { "x": -12.5, "y": -73.5 },
+      { "x": -12.5, "y": -63.5 },
+      { "x": -15.5, "y": -63.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_17",
+    "shape": "polygon",
+    "points": [
+      { "x": -15.5, "y": -59.5 },
+      { "x": -12.5, "y": -59.5 },
+      { "x": -12.5, "y": -53.5 },
+      { "x": 11.5, "y": -53.5 },
+      { "x": 11.5, "y": -59.5 },
+      { "x": 14.5, "y": -59.5 },
+      { "x": 14.5, "y": -50.5 },
+      { "x": -15.5, "y": -50.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_18",
+    "shape": "polygon",
+    "points": [
+      { "x": -15.5, "y": 50.5 },
+      { "x": 14.5, "y": 50.5 },
+      { "x": 14.5, "y": 59.5 },
+      { "x": 11.5, "y": 59.5 },
+      { "x": 11.5, "y": 53.5 },
+      { "x": -12.5, "y": 53.5 },
+      { "x": -12.5, "y": 59.5 },
+      { "x": -15.5, "y": 59.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_19",
+    "shape": "polygon",
+    "points": [
+      { "x": -15.5, "y": 63.5 },
+      { "x": -12.5, "y": 63.5 },
+      { "x": -12.5, "y": 73.5 },
+      { "x": -15.5, "y": 73.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_20",
+    "shape": "polygon",
+    "points": [
+      { "x": -15.5, "y": 77.5 },
+      { "x": -12.5, "y": 77.5 },
+      { "x": -12.5, "y": 83.5 },
+      { "x": 11.5, "y": 83.5 },
+      { "x": 11.5, "y": 77.5 },
+      { "x": 14.5, "y": 77.5 },
+      { "x": 14.5, "y": 86.5 },
+      { "x": -15.5, "y": 86.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_21",
+    "shape": "polygon",
+    "points": [
+      { "x": -13.5, "y": -10.500000000000002 },
+      { "x": -2.5, "y": -10.500000000000002 },
+      { "x": -2.5, "y": 39.5 },
+      { "x": -13.5, "y": 39.5 },
+      { "x": -13.5, "y": 36.5 },
+      { "x": -5.5, "y": 36.5 },
+      { "x": -5.5, "y": -7.500000000000002 },
+      { "x": -13.5, "y": -7.500000000000002 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_22",
+    "shape": "polygon",
+    "points": [
+      { "x": 2.5, "y": -45.5 },
+      { "x": 14.5, "y": -45.5 },
+      { "x": 14.5, "y": -42.5 },
+      { "x": 5.5, "y": -42.5 },
+      { "x": 5.5, "y": -10.499999999999998 },
+      { "x": 14.5, "y": -10.499999999999998 },
+      { "x": 14.5, "y": -7.499999999999998 },
+      { "x": 5.5, "y": -7.499999999999998 },
+      { "x": 5.5, "y": -7.5 },
+      { "x": 2.5, "y": -7.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_23",
+    "shape": "polygon",
+    "points": [
+      { "x": 2.5, "y": -2.5 },
+      { "x": 5.5, "y": -2.5 },
+      { "x": 5.5, "y": -2.499999999999999 },
+      { "x": 14.5, "y": -2.499999999999999 },
+      { "x": 14.5, "y": 0.500000000000001 },
+      { "x": 5.5, "y": 0.500000000000001 },
+      { "x": 5.5, "y": 42.5 },
+      { "x": 14.5, "y": 42.5 },
+      { "x": 14.5, "y": 45.5 },
+      { "x": 2.5, "y": 45.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_24",
+    "shape": "polygon",
+    "points": [
+      { "x": 11.5, "y": -73.5 },
+      { "x": 14.5, "y": -73.5 },
+      { "x": 14.5, "y": -63.5 },
+      { "x": 11.5, "y": -63.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_25",
+    "shape": "polygon",
+    "points": [
+      { "x": 11.5, "y": 63.5 },
+      { "x": 14.5, "y": 63.5 },
+      { "x": 14.5, "y": 73.5 },
+      { "x": 11.5, "y": 73.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_26",
+    "shape": "polygon",
+    "points": [
+      { "x": 18.5, "y": -45.5 },
+      { "x": 34.5, "y": -45.5 },
+      { "x": 34.5, "y": -42.5 },
+      { "x": 18.5, "y": -42.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_27",
+    "shape": "polygon",
+    "points": [
+      { "x": 18.5, "y": -10.500000000000002 },
+      { "x": 34.5, "y": -10.500000000000002 },
+      { "x": 34.5, "y": -7.5 },
+      { "x": 18.5, "y": -7.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_28",
+    "shape": "polygon",
+    "points": [
+      { "x": 18.5, "y": -2.5 },
+      { "x": 40.5, "y": -2.5 },
+      { "x": 40.5, "y": 0.4999999999999998 },
+      { "x": 18.5, "y": 0.4999999999999998 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_29",
+    "shape": "polygon",
+    "points": [
+      { "x": 18.5, "y": 42.5 },
+      { "x": 40.5, "y": 42.5 },
+      { "x": 40.5, "y": 45.5 },
+      { "x": 18.5, "y": 45.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_30",
+    "shape": "polygon",
+    "points": [
+      { "x": 19.5, "y": -86.5 },
+      { "x": 49.5, "y": -86.5 },
+      { "x": 49.5, "y": -77.5 },
+      { "x": 46.5, "y": -77.5 },
+      { "x": 46.5, "y": -83.5 },
+      { "x": 22.5, "y": -83.5 },
+      { "x": 22.5, "y": -77.5 },
+      { "x": 19.5, "y": -77.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_31",
+    "shape": "polygon",
+    "points": [
+      { "x": 19.5, "y": -73.5 },
+      { "x": 22.5, "y": -73.5 },
+      { "x": 22.5, "y": -63.5 },
+      { "x": 19.5, "y": -63.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_32",
+    "shape": "polygon",
+    "points": [
+      { "x": 19.5, "y": -59.5 },
+      { "x": 22.5, "y": -59.5 },
+      { "x": 22.5, "y": -53.5 },
+      { "x": 46.5, "y": -53.5 },
+      { "x": 46.5, "y": -59.5 },
+      { "x": 49.5, "y": -59.5 },
+      { "x": 49.5, "y": -50.5 },
+      { "x": 19.5, "y": -50.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_33",
+    "shape": "polygon",
+    "points": [
+      { "x": 19.5, "y": 50.5 },
+      { "x": 49.5, "y": 50.5 },
+      { "x": 49.5, "y": 59.5 },
+      { "x": 46.5, "y": 59.5 },
+      { "x": 46.5, "y": 53.5 },
+      { "x": 22.5, "y": 53.5 },
+      { "x": 22.5, "y": 59.5 },
+      { "x": 19.5, "y": 59.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_34",
+    "shape": "polygon",
+    "points": [
+      { "x": 19.5, "y": 63.5 },
+      { "x": 22.5, "y": 63.5 },
+      { "x": 22.5, "y": 73.5 },
+      { "x": 19.5, "y": 73.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_35",
+    "shape": "polygon",
+    "points": [
+      { "x": 19.5, "y": 77.5 },
+      { "x": 22.5, "y": 77.5 },
+      { "x": 22.5, "y": 83.5 },
+      { "x": 46.5, "y": 83.5 },
+      { "x": 46.5, "y": 77.5 },
+      { "x": 49.5, "y": 77.5 },
+      { "x": 49.5, "y": 86.5 },
+      { "x": 19.5, "y": 86.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_36",
+    "shape": "polygon",
+    "points": [
+      { "x": 38.5, "y": -45.5 },
+      { "x": 50.5, "y": -45.5 },
+      { "x": 50.5, "y": -7.5 },
+      { "x": 47.5, "y": -7.5 },
+      { "x": 47.5, "y": -7.500000000000002 },
+      { "x": 38.5, "y": -7.500000000000002 },
+      { "x": 38.5, "y": -10.500000000000002 },
+      { "x": 47.5, "y": -10.500000000000002 },
+      { "x": 47.5, "y": -42.5 },
+      { "x": 38.5, "y": -42.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_37",
+    "shape": "polygon",
+    "points": [
+      { "x": 44.5, "y": -2.500000000000001 },
+      { "x": 47.5, "y": -2.500000000000001 },
+      { "x": 47.5, "y": -2.5 },
+      { "x": 50.5, "y": -2.5 },
+      { "x": 50.5, "y": 45.5 },
+      { "x": 44.5, "y": 45.5 },
+      { "x": 44.5, "y": 42.5 },
+      { "x": 47.5, "y": 42.5 },
+      { "x": 47.5, "y": 0.4999999999999989 },
+      { "x": 44.5, "y": 0.4999999999999989 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_38",
+    "shape": "polygon",
+    "points": [
+      { "x": 46.5, "y": -73.5 },
+      { "x": 49.5, "y": -73.5 },
+      { "x": 49.5, "y": -63.5 },
+      { "x": 46.5, "y": -63.5 }
+    ]
+  },
+  {
+    "type": "pcb_cutout",
+    "pcb_cutout_id": "panel_slot_39",
+    "shape": "polygon",
+    "points": [
+      { "x": 46.5, "y": 63.5 },
+      { "x": 49.5, "y": 63.5 },
+      { "x": 49.5, "y": 73.5 },
+      { "x": 46.5, "y": 73.5 }
+    ]
+  }
+]
