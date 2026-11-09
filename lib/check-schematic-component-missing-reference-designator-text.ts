@@ -7,12 +7,7 @@ import type {
 
 type SourceComponent = Extract<AnyCircuitElement, { type: "source_component" }>
 
-const REFDES_PLACEHOLDERS = new Set([
-  "{REF}",
-  "{NAME}",
-  "{REFERENCE}",
-  "{REFDES}",
-])
+const REFDES_PLACEHOLDERS = new Set(["{REF}", "{NAME}", "{REFERENCE}"])
 
 const isFallbackReferenceDesignator = (name: string) =>
   /^unnamed_[a-z0-9_-]+\d+$/i.test(name)
