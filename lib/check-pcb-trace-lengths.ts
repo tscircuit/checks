@@ -1,4 +1,5 @@
 import { getPcbTraceLength } from "./util/get-pcb-trace-length"
+import { createDirectPortToPourLengthMeasurer } from "./util/get-direct-port-to-pour-length"
 import type {
   AnyCircuitElement,
   PcbPort,
@@ -106,6 +107,9 @@ export const checkPcbTraceLengths = (
   )
   const pcbTracesBySourceTraceId = getPcbTracesBySourceTraceId(circuitJson)
   const errors: PcbTraceTooLongError[] = []
+  let measureDirectPortToPour:
+    | ReturnType<typeof createDirectPortToPourLengthMeasurer>
+    | undefined
 
   for (const [sourceTraceId, pcbTraces] of pcbTracesBySourceTraceId) {
     const pcbTrace = pcbTraces[0]!
@@ -115,10 +119,20 @@ export const checkPcbTraceLengths = (
     const maximumTraceLength = sourceTrace.max_length
     if (typeof maximumTraceLength !== "number") continue
 
-    const actualTraceLength = pcbTraces.reduce(
+    let actualTraceLength = pcbTraces.reduce(
       (sum, trace) => sum + getPcbTraceLength(trace),
       0,
     )
+    if (
+      actualTraceLength > maximumTraceLength + 1e-9 &&
+      sourceTrace.connected_source_port_ids.length === 1 &&
+      sourceTrace.connected_source_net_ids.length > 0
+    ) {
+      measureDirectPortToPour ??=
+        createDirectPortToPourLengthMeasurer(circuitJson)
+      const directLength = measureDirectPortToPour(sourceTrace, pcbTraces)
+      if (directLength !== undefined) actualTraceLength = directLength
+    }
     if (actualTraceLength <= maximumTraceLength + 1e-9) continue
 
     errors.push({
