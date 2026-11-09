@@ -61,7 +61,9 @@ test("the missing-refdes hint recommends an unresolved placeholder", async () =>
     renderReferenceCase({ name: "MP4", label: "{NAME}" }),
   ])
   expect(cases.map((result) => result.warnings.length)).toEqual([1, 1, 0, 0])
-  expect(cases[0].warnings[0].message).toContain('name="{REFDES}"')
+  expect(cases[0].warnings[0].message).toContain(
+    '<schematictext text="{REF}" />',
+  )
   expect(cases[1].symbolTexts).toEqual(["{REFDES}"])
   expect(cases[2].symbolTexts).toEqual(["MP3"])
   expect(cases[3].symbolTexts).toEqual(["MP4"])
