@@ -1,3 +1,4 @@
+import { checkPcbBoardSupport } from "./check-pcb-board-support"
 import { checkPcbTraceStyle } from "./check-pcb-trace-style"
 import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
 import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
@@ -61,6 +62,7 @@ export async function runAllPlacementChecks(
     ...checkViasInPads(circuitJson),
     ...checkPcbComponentsOutOfBoard(circuitJson),
     ...checkPcbComponentOverCutout(circuitJson),
+    ...checkPcbBoardSupport(circuitJson),
     ...checkCopperToCutoutClearance(circuitJson, {
       elementTypes: [
         "pcb_via",
