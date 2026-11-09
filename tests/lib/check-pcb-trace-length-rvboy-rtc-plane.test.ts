@@ -113,7 +113,9 @@ test("RVboy C_RTC_OUT stops at the ground plane before the route continues to an
         return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${errors.length ? "#ffcc00" : measured ? "#88ff88" : "#aaa"}" stroke-width="6" ${measured ? "" : 'stroke-dasharray="10 7"'}/>`
       })
       .join("")
-    const contact = screen(route[firstVia])
+    const contactPoint = route[firstVia]
+    if (contactPoint.route_type !== "via") throw new Error("Missing plane via")
+    const contact = screen(contactPoint)
     return svg
       .replace(
         "<style></style>",
