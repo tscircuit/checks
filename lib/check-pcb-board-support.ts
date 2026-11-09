@@ -14,6 +14,9 @@ export interface PcbBoardSupportError extends PcbPlacementError {
   pcb_panel_id?: PcbPanel["pcb_panel_id"]
   support_count: number
   center: { x: number; y: number }
+  /** Affected region bounds, in circuit-world millimeters. */
+  width?: number
+  height?: number
 }
 
 /** Detect severely unsupported mouse-bite regions from emitted manufacturing
@@ -148,6 +151,8 @@ export function checkPcbBoardSupport(
           : { pcb_board_id: board.pcb_board_id }),
         support_count: directions.length,
         center: { x: center.x, y: center.y },
+        width: region.box.xmax - region.box.xmin,
+        height: region.box.ymax - region.box.ymin,
         message: `${label} is poorly supported: ${directions.length < 2 ? `only ${directions.length} surviving mouse-bite tab(s)` : "all surviving mouse-bite tabs attach along one side"}. Add support on another side or a solid carrier rail; neighboring routing slots may have removed intended tabs.`,
       })
     }

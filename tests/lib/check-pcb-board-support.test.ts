@@ -28,6 +28,8 @@ test("manual TSX panel: detect four boards hanging from one side", () => {
   )
   for (const error of errors) {
     expect(error.support_count).toBe(2)
+    expect(error.width).toBeGreaterThan(20)
+    expect(error.height).toBeGreaterThan(20)
     expect(error.message).toContain(
       "all surviving mouse-bite tabs attach along one side",
     )
