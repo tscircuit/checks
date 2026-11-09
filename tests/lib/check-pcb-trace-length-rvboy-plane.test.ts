@@ -28,7 +28,7 @@ test("RVboy C_SOC_54 measures its direct ground drop instead of an unrelated gro
   const before = JSON.stringify(circuit)
   expect(traces).toHaveLength(2)
   expect(
-    createDirectPortToPourLengthMeasurer(circuit)(source, traces),
+    createDirectPortToPourLengthMeasurer(circuit)(source, traces)?.length,
   ).toBeCloseTo(2.245, 6)
   expect(
     checkPcbTraceLengths(circuit).some(

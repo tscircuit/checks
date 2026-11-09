@@ -111,7 +111,18 @@ test("port-to-plane length requires real copper contact and retains genuine viol
   const tooShort = makeCircuit()
   tooShort.find((e) => e.type === "source_trace")!.max_length = 2
   expect(checkPcbTraceLengths(tooShort)).toMatchObject([
-    { actual_trace_length: 2.25, maximum_trace_length: 2 },
+    {
+      pcb_trace_id: "local_drop",
+      actual_trace_length: 2.25,
+      maximum_trace_length: 2,
+    },
+  ])
+  expect(checkPcbTraceLengths([...tooShort].reverse())).toMatchObject([
+    {
+      pcb_trace_id: "local_drop",
+      actual_trace_length: 2.25,
+      maximum_trace_length: 2,
+    },
   ])
   const negatives: Array<
     (circuit: AnyCircuitElement[]) => AnyCircuitElement[]

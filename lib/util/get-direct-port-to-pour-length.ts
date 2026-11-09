@@ -16,7 +16,7 @@ export function createDirectPortToPourLengthMeasurer(
   const touchesPour = getPourContactTester(circuit, connectivity)
   const ports = circuit.filter((element) => element.type === "pcb_port")
   const vias = circuit.filter((element) => element.type === "pcb_via")
-  return (source: SourceTrace, traces: PcbTrace[]): number | undefined => {
+  return (source: SourceTrace, traces: PcbTrace[]) => {
     if (
       source.connected_source_port_ids.length !== 1 ||
       source.connected_source_net_ids.length === 0
@@ -33,7 +33,7 @@ export function createDirectPortToPourLengthMeasurer(
     const sourcePorts = ports.filter(
       (port) => port.source_port_id === source.connected_source_port_ids[0],
     )
-    let shortest = Infinity
+    let shortest: { length: number; trace: PcbTrace } | undefined
     for (const trace of traces) {
       const route =
         trace.route[0]?.route_type === "via"
@@ -88,8 +88,10 @@ export function createDirectPortToPourLengthMeasurer(
         if (a.route_type !== "wire" || b.route_type !== "wire") continue
         length += Math.hypot(b.x - a.x, b.y - a.y)
       }
-      shortest = Math.min(shortest, length)
+      if (Number.isFinite(length) && length < (shortest?.length ?? Infinity)) {
+        shortest = { length, trace }
+      }
     }
-    return Number.isFinite(shortest) ? shortest : undefined
+    return shortest
   }
 }

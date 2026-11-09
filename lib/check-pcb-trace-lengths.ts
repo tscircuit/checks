@@ -112,7 +112,7 @@ export const checkPcbTraceLengths = (
     | undefined
 
   for (const [sourceTraceId, pcbTraces] of pcbTracesBySourceTraceId) {
-    const pcbTrace = pcbTraces[0]!
+    let pcbTrace = pcbTraces[0]!
     const sourceTrace = sourceTracesById.get(sourceTraceId)
     if (!sourceTrace) continue
 
@@ -130,8 +130,11 @@ export const checkPcbTraceLengths = (
     ) {
       measureDirectPortToPour ??=
         createDirectPortToPourLengthMeasurer(circuitJson)
-      const directLength = measureDirectPortToPour(sourceTrace, pcbTraces)
-      if (directLength !== undefined) actualTraceLength = directLength
+      const directDrop = measureDirectPortToPour(sourceTrace, pcbTraces)
+      if (directDrop) {
+        actualTraceLength = directDrop.length
+        pcbTrace = directDrop.trace
+      }
     }
     if (actualTraceLength <= maximumTraceLength + 1e-9) continue
 
