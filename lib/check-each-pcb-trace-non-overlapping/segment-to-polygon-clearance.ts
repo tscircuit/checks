@@ -115,6 +115,18 @@ export const getPolygonPointsForPad = (pad: PolygonalPad): Point[] => {
     })
   }
 
+  if (
+    pad.type === "pcb_plated_hole" &&
+    pad.shape === "hole_with_polygon_pad" &&
+    Array.isArray(pad.pad_outline) &&
+    pad.pad_outline.length >= 3
+  ) {
+    return pad.pad_outline.map((point) => ({
+      x: pad.x + point.x,
+      y: pad.y + point.y,
+    }))
+  }
+
   throw new Error(
     `Expected polygonal pad geometry, got ${pad.type} with shape "${pad.shape}"`,
   )
