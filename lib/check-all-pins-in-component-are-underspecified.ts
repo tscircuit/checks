@@ -8,6 +8,10 @@ import type {
 } from "circuit-json"
 
 const PIN_ATTRIBUTE_KEYS = [
+  "is_passive",
+  "is_input",
+  "is_output",
+  "is_bidirectional",
   "must_be_connected",
   "provides_power",
   "requires_power",
