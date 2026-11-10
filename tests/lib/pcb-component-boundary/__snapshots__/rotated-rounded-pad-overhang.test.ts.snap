@@ -1,9 +1,0 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
-
-exports[`a rotated rounded pad crossing the board edge reports its overhang 1`] = `
-{
-  "messages": [
-    "Component unnamed component extends outside board boundaries by 0.55mm. Try moving it 0.55mm left to fit within the board edge.",
-  ],
-}
-`;

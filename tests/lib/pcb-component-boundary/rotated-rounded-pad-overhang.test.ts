@@ -45,9 +45,9 @@ test("a rotated rounded pad crossing the board edge reports its overhang", () =>
   const diagnostics = checkPcbComponentsOutOfBoard(elements)
   expect(diagnostics).toHaveLength(1)
   expect(diagnostics[0]?.type).toBe("pcb_component_outside_board_error")
-  expect({
-    messages: diagnostics.map((d) => d.message),
-  }).toMatchSnapshot()
+  expect(diagnostics[0]?.message).toBe(
+    "Component unnamed component extends outside board boundaries by 0.55mm. Try moving it 0.55mm left to fit within the board edge.",
+  )
   expect(
     convertCircuitJsonToPcbSvg([...elements, ...diagnostics], {
       shouldDrawErrors: true,
