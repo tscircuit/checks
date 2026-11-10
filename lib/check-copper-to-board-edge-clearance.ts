@@ -12,7 +12,7 @@ type CopperElement = Extract<
   { type: "pcb_via" | "pcb_smtpad" | "pcb_plated_hole" | "pcb_copper_pour" }
 >
 
-const GEOMETRY_EPSILON = 1e-9
+const COPPER_TO_BOARD_EDGE_TOLERANCE_MM = 1e-5
 
 const getCopperElementLabel = (element: CopperElement): string => {
   if (element.type === "pcb_via") return "Via"
@@ -103,7 +103,10 @@ export function checkCopperToBoardEdgeClearance(
           ...geometry.shapes.map((shape) => boardPolygon.distanceTo(shape)[0]),
         )
       : 0
-    if (isInside && clearance + GEOMETRY_EPSILON >= requiredClearance) {
+    if (
+      isInside &&
+      clearance + COPPER_TO_BOARD_EDGE_TOLERANCE_MM >= requiredClearance
+    ) {
       continue
     }
 
