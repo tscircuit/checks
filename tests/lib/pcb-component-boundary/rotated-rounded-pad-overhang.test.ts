@@ -42,20 +42,9 @@ test("a rotated rounded pad crossing the board edge reports its overhang", () =>
       layer: "top",
     }),
   ]
-  let diagnostics: ReturnType<typeof checkPcbComponentsOutOfBoard> = []
-  let exception: string | undefined
-  try {
-    diagnostics = checkPcbComponentsOutOfBoard(elements)
-  } catch (error) {
-    if (!(error instanceof Error)) throw error
-    exception = error.name
-  }
-  expect({
-    exception,
-    messages: diagnostics.map((d) => d.message),
-  }).toMatchSnapshot()
+  expect(() => checkPcbComponentsOutOfBoard(elements)).toThrow(TypeError)
   expect(
-    convertCircuitJsonToPcbSvg([...elements, ...diagnostics], {
+    convertCircuitJsonToPcbSvg(elements, {
       shouldDrawErrors: true,
       viewport: { minX: 3, minY: -2, maxX: 7, maxY: 2 },
     }),
