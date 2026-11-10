@@ -73,3 +73,18 @@ export {
   checkPcbBoardSupport,
   type PcbBoardSupportError,
 } from "./lib/check-pcb-board-support"
+
+export { checkRuleAreas } from "./lib/rule-areas/check-rule-areas"
+export { RuleAreaManager } from "./lib/rule-areas/rule-area-manager"
+export type {
+  RuleAreaTarget,
+  RuleAreaConstraint,
+  RuleAreaRule,
+  RuleAreaInput,
+  PcbRuleArea,
+  TransformedRuleArea,
+  PcbRuleAreaViolationWarning,
+  PcbRuleAreaViolationError,
+  PcbMissingComponentGeometryError,
+  RuleAreaDiagnostic,
+} from "./lib/rule-areas/types"
