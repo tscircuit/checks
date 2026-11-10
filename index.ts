@@ -68,3 +68,8 @@ export { checkHoleTraceClearance } from "./lib/check-hole-trace-clearance"
 export { checkPcbRoutingConstraints } from "./lib/check-pcb-routing-constraints"
 
 export * from "./lib/check-pcb-trace-style"
+
+export {
+  checkPcbBoardSupport,
+  type PcbBoardSupportError,
+} from "./lib/check-pcb-board-support"
