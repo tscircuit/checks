@@ -21,13 +21,28 @@ import {
   getPadToPadGap,
   getPads,
 } from "./check-pad-clearance/common"
+import {
+  type ClearanceMatrix,
+  type NetClassClearanceManager,
+  type NetClassDefinition,
+  createNetClassClearanceManager,
+} from "./net-classes"
 
 export function checkViaPadClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
     minClearance,
-  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
+    netClasses,
+    clearanceMatrix,
+    clearanceManager,
+  }: {
+    connMap?: ConnectivityMap
+    minClearance?: number
+    netClasses?: NetClassDefinition[]
+    clearanceMatrix?: ClearanceMatrix
+    clearanceManager?: NetClassClearanceManager
+  } = {},
 ): PcbPadPadClearanceError[] {
   const vias = circuitJson.filter(
     (element): element is PcbVia => element.type === "pcb_via",
@@ -41,6 +56,12 @@ export function checkViaPadClearance(
     getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
     jlcMinTolerances.min_pad_edge_to_pad_edge_clearance!
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  clearanceManager ??= createNetClassClearanceManager(circuitJson, {
+    connMap,
+    minClearance: requiredClearance,
+    netClasses,
+    clearanceMatrix,
+  })
 
   const padIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,
@@ -50,9 +71,13 @@ export function checkViaPadClearance(
   const errors: PcbPadPadClearanceError[] = []
 
   for (const via of vias) {
+    const searchRadius = clearanceManager.getMaxClearanceForId(
+      via.pcb_via_id,
+      requiredClearance,
+    )
     const nearbyPads = padIndex.getObjectsInBounds(
       getPadBounds(via),
-      requiredClearance,
+      searchRadius,
     )
 
     for (const pad of nearbyPads) {
@@ -67,15 +92,20 @@ export function checkViaPadClearance(
       if (connMap.areIdsConnected(via.pcb_via_id, padId)) continue
 
       const gap = getPadToPadGap(via, pad)
-      if (gap + EPSILON >= requiredClearance) continue
+      const effectiveClearance = clearanceManager.getRequiredClearance(
+        via.pcb_via_id,
+        padId,
+        requiredClearance,
+      )
+      if (gap + EPSILON >= effectiveClearance) continue
 
       errors.push({
         type: "pcb_pad_pad_clearance_error",
         pcb_pad_pad_clearance_error_id: `via_pad_clearance_${via.pcb_via_id}_${padId}`,
         error_type: "pcb_pad_pad_clearance_error",
-        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and pad ${getReadableNameForElement(circuitJson, padId)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(requiredClearance)})`,
+        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and pad ${getReadableNameForElement(circuitJson, padId)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(effectiveClearance)})`,
         pcb_pad_ids: [via.pcb_via_id, padId],
-        minimum_clearance: requiredClearance,
+        minimum_clearance: effectiveClearance,
         actual_clearance: gap,
         center: getViaPadClearanceCenter(via, pad),
       })

@@ -30,6 +30,12 @@ import {
   SpatialObjectIndex,
 } from "lib/data-structures/SpatialIndex"
 import {
+  type ClearanceMatrix,
+  type NetClassClearanceManager,
+  type NetClassDefinition,
+  createNetClassClearanceManager,
+} from "../net-classes"
+import {
   DEFAULT_TRACE_MARGIN,
   DEFAULT_TRACE_THICKNESS,
   EPSILON,
@@ -61,9 +67,15 @@ export function checkEachPcbTraceNonOverlapping(
   {
     connMap,
     minClearance,
+    netClasses,
+    clearanceMatrix,
+    clearanceManager,
   }: {
     connMap?: ConnectivityMap
     minClearance?: number
+    netClasses?: NetClassDefinition[]
+    clearanceMatrix?: ClearanceMatrix
+    clearanceManager?: NetClassClearanceManager
   } = {},
 ): (PcbTraceError | PcbKeepoutOverlapWarning)[] {
   const errors: (PcbTraceError | PcbKeepoutOverlapWarning)[] =
@@ -74,6 +86,12 @@ export function checkEachPcbTraceNonOverlapping(
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     DEFAULT_TRACE_MARGIN
+  clearanceManager ??= createNetClassClearanceManager(circuitJson, {
+    connMap,
+    minClearance,
+    netClasses,
+    clearanceMatrix,
+  })
 
   const pcbTraces = cju(circuitJson).pcb_trace.list()
   const pcbTraceSegments = pcbTraces.flatMap((pcbTrace) => {
@@ -186,11 +204,14 @@ export function checkEachPcbTraceNonOverlapping(
 
   // For each segment, check it if overlaps with anything collidable
   for (const segmentA of pcbTraceSegments) {
-    const requiredMargin = minClearance
+    const searchMargin = clearanceManager.getMaxClearanceForId(
+      segmentA.pcb_trace_id,
+      minClearance,
+    )
     const bounds = getCollidableBounds(segmentA)
     const nearbyObjects = spatialIndex.getObjectsInBounds(
       bounds,
-      requiredMargin + segmentA.thickness / 2,
+      searchMargin + segmentA.thickness / 2,
     )
     if (segmentA.x1 === segmentA.x2 && segmentA.y1 === segmentA.y2) continue
 
@@ -228,7 +249,12 @@ export function checkEachPcbTraceNonOverlapping(
           ) -
           segmentA.thickness / 2 -
           segmentB.thickness / 2
-        if (gap > minClearance - EPSILON) continue
+        const requiredClearance = clearanceManager.getRequiredClearance(
+          segmentA.pcb_trace_id,
+          segmentB.pcb_trace_id,
+          minClearance,
+        )
+        if (gap > requiredClearance - EPSILON) continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`
         const pcb_trace_error_id_reverse = `overlap_${segmentB.pcb_trace_id}_${segmentA.pcb_trace_id}`
@@ -338,7 +364,12 @@ export function checkEachPcbTraceNonOverlapping(
           getCollidableBounds(obj),
         ) -
         segmentA.thickness / 2
-      if (gap + EPSILON < requiredMargin) {
+      const requiredClearance = clearanceManager.getRequiredClearance(
+        segmentA.pcb_trace_id,
+        primaryObjId,
+        minClearance,
+      )
+      if (gap + EPSILON < requiredClearance) {
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
         if (errorIds.has(pcb_trace_error_id)) continue
         errorIds.add(pcb_trace_error_id)

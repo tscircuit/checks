@@ -3,7 +3,10 @@ import { checkPcbTraceStyle } from "./check-pcb-trace-style"
 import { checkPcbRoutingConstraints } from "./check-pcb-routing-constraints"
 import { checkSourceTracesMatchPcbTraceThickness } from "./check-source-traces-match-pcb-trace-thickness"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import {
+  type ConnectivityMap,
+  getFullConnectivityMapFromCircuitJson,
+} from "circuit-json-to-connectivity-map"
 import { addStartAndEndPortIdsIfMissing } from "./add-start-and-end-port-ids-if-missing"
 import { checkCopperPourIslands } from "./check-copper-pour-islands"
 import { checkCopperPourShorts } from "./check-copper-pour-shorts"
@@ -52,11 +55,40 @@ import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-termi
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
+import {
+  type ClearanceMatrix,
+  type NetClassClearanceManager,
+  type NetClassDefinition,
+  createNetClassClearanceManager,
+} from "./net-classes"
+
+export interface PlacementCheckOptions {
+  consolidateOverlaps?: boolean
+  connMap?: ConnectivityMap
+  minClearance?: number
+  netClasses?: NetClassDefinition[]
+  clearanceMatrix?: ClearanceMatrix
+  clearanceManager?: NetClassClearanceManager
+}
+
+export interface RoutingCheckOptions {
+  connMap?: ConnectivityMap
+  minClearance?: number
+  netClasses?: NetClassDefinition[]
+  clearanceMatrix?: ClearanceMatrix
+  clearanceManager?: NetClassClearanceManager
+}
+
+export type AllCheckOptions = PlacementCheckOptions & RoutingCheckOptions
 
 export async function runAllPlacementChecks(
   circuitJson: AnyCircuitElement[],
-  { consolidateOverlaps = true } = {},
+  options: PlacementCheckOptions = {},
 ) {
+  const { consolidateOverlaps = true } = options
+  const clearanceManager =
+    options.clearanceManager ??
+    createNetClassClearanceManager(circuitJson, options)
   const errors = [
     ...checkCopperToBoardEdgeClearance(circuitJson),
     ...checkViasInPads(circuitJson),
@@ -76,7 +108,10 @@ export async function runAllPlacementChecks(
     ...checkPcbCourtyardOverKeepout(circuitJson),
     ...checkPcbComponentOverlap(circuitJson),
     ...checkPcbComponentsMissingCourtyard(circuitJson),
-    ...checkPadPadClearance(circuitJson),
+    ...checkPadPadClearance(circuitJson, {
+      ...options,
+      clearanceManager,
+    }),
     ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
@@ -114,14 +149,24 @@ export async function runAllPinSpecificationChecks(
   ]
 }
 
-export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllRoutingChecks(
+  circuitJson: AnyCircuitElement[],
+  options: RoutingCheckOptions = {},
+) {
   // Infer endpoint IDs before taking connectivity snapshots. Keep these maps
   // local to this pass so edits to the same circuit array cannot leave stale data.
   addStartAndEndPortIdsIfMissing(circuitJson)
   const connectivity = {
-    connMap: getFullConnectivityMapFromCircuitJson(circuitJson),
+    connMap:
+      options.connMap ?? getFullConnectivityMapFromCircuitJson(circuitJson),
     pcbConnectivityMap: createIndexedPcbConnectivityMap(circuitJson),
   }
+  const clearanceManager =
+    options.clearanceManager ??
+    createNetClassClearanceManager(circuitJson, {
+      ...options,
+      connMap: connectivity.connMap,
+    })
   return [
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson, connectivity),
     ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
@@ -135,27 +180,57 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkPcbBusLengthSkew(circuitJson),
     ...checkPcbRoutingConstraints(circuitJson),
     ...checkPcbTraceViaCounts(circuitJson),
-    ...checkEachPcbTraceNonOverlapping(circuitJson, connectivity),
+    ...checkEachPcbTraceNonOverlapping(circuitJson, {
+      ...connectivity,
+      ...options,
+      clearanceManager,
+    }),
     ...checkCopperPourShorts(circuitJson, connectivity),
     ...checkCopperPourIslands(circuitJson, connectivity),
-    ...checkPadTraceClearance(circuitJson, connectivity),
+    ...checkPadTraceClearance(circuitJson, {
+      ...connectivity,
+      ...options,
+      clearanceManager,
+    }),
     ...checkHoleTraceClearance(circuitJson),
-    ...checkViaTraceClearance(circuitJson, connectivity),
-    ...checkViaPadClearance(circuitJson, connectivity),
+    ...checkViaTraceClearance(circuitJson, {
+      ...connectivity,
+      ...options,
+      clearanceManager,
+    }),
+    ...checkViaPadClearance(circuitJson, {
+      ...connectivity,
+      ...options,
+      clearanceManager,
+    }),
     ...checkSameNetViaSpacing(circuitJson, connectivity),
-    ...checkDifferentNetViaSpacing(circuitJson, connectivity),
+    ...checkDifferentNetViaSpacing(circuitJson, {
+      ...connectivity,
+      ...options,
+      clearanceManager,
+    }),
     ...checkTracesAreContiguous(circuitJson, connectivity),
     ...checkDanglingTraces(circuitJson, connectivity),
     ...checkPcbTracesOutOfBoard(circuitJson),
   ]
 }
 
-export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllChecks(
+  circuitJson: AnyCircuitElement[],
+  options: AllCheckOptions = {},
+) {
+  const connMap =
+    options.connMap ?? getFullConnectivityMapFromCircuitJson(circuitJson)
+  const clearanceManager =
+    options.clearanceManager ??
+    createNetClassClearanceManager(circuitJson, { ...options, connMap })
+  const sharedOptions = { ...options, connMap, clearanceManager }
+
   return [
-    ...(await runAllPlacementChecks(circuitJson)),
+    ...(await runAllPlacementChecks(circuitJson, sharedOptions)),
     ...(await runAllSchematicChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
-    ...(await runAllRoutingChecks(circuitJson)),
+    ...(await runAllRoutingChecks(circuitJson, sharedOptions)),
   ]
 }

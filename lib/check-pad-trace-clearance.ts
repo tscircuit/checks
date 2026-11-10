@@ -19,13 +19,28 @@ import {
   getTraceSegments,
   isTraceObstacleOverlap,
 } from "./check-pad-clearance/common"
+import {
+  type ClearanceMatrix,
+  type NetClassClearanceManager,
+  type NetClassDefinition,
+  createNetClassClearanceManager,
+} from "./net-classes"
 
 export function checkPadTraceClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
     minClearance,
-  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
+    netClasses,
+    clearanceMatrix,
+    clearanceManager,
+  }: {
+    connMap?: ConnectivityMap
+    minClearance?: number
+    netClasses?: NetClassDefinition[]
+    clearanceMatrix?: ClearanceMatrix
+    clearanceManager?: NetClassClearanceManager
+  } = {},
 ): PcbPadTraceClearanceError[] {
   const pads = getPads(circuitJson)
   const segments = getTraceSegments(circuitJson)
@@ -36,6 +51,12 @@ export function checkPadTraceClearance(
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     jlcMinTolerances.min_trace_to_pad_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  clearanceManager ??= createNetClassClearanceManager(circuitJson, {
+    connMap,
+    minClearance,
+    netClasses,
+    clearanceMatrix,
+  })
   const spatialIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,
     getBounds: getPadBounds,
@@ -49,9 +70,15 @@ export function checkPadTraceClearance(
   const overlappingPairIds = new Set<string>()
 
   for (const segment of segments) {
+    const searchRadius =
+      clearanceManager.getMaxClearanceForId(
+        segment.pcb_trace_id,
+        minClearance!,
+      ) +
+      segment.thickness / 2
     const nearbyPads = spatialIndex.getObjectsInBounds(
       getCollidableBounds(segment),
-      minClearance! + segment.thickness / 2,
+      searchRadius,
     )
 
     for (const pad of nearbyPads) {
@@ -66,16 +93,21 @@ export function checkPadTraceClearance(
         continue
       }
       if (overlappingPairIds.has(pairId)) continue
-      if (gap + EPSILON >= minClearance!) continue
+      const requiredClearance = clearanceManager.getRequiredClearance(
+        segment.pcb_trace_id,
+        padId,
+        minClearance!,
+      )
+      if (gap + EPSILON >= requiredClearance) continue
 
       const nextError: PcbPadTraceClearanceError = {
         type: "pcb_pad_trace_clearance_error" as const,
         pcb_pad_trace_clearance_error_id: `pad_trace_clearance_${pairId}`,
         error_type: "pcb_pad_trace_clearance_error",
-        message: `Pad ${getReadableNameForElement(circuitJson, padId)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
+        message: `Pad ${getReadableNameForElement(circuitJson, padId)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(requiredClearance)})`,
         pcb_pad_id: padId,
         pcb_trace_id: segment.pcb_trace_id,
-        minimum_clearance: minClearance,
+        minimum_clearance: requiredClearance,
         actual_clearance: gap,
         center,
       }

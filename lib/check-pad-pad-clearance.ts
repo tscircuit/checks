@@ -17,13 +17,28 @@ import {
   getPads,
 } from "./check-pad-clearance/common"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
+import {
+  type ClearanceMatrix,
+  type NetClassClearanceManager,
+  type NetClassDefinition,
+  createNetClassClearanceManager,
+} from "./net-classes"
 
 export function checkPadPadClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
     minClearance,
-  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
+    netClasses,
+    clearanceMatrix,
+    clearanceManager,
+  }: {
+    connMap?: ConnectivityMap
+    minClearance?: number
+    netClasses?: NetClassDefinition[]
+    clearanceMatrix?: ClearanceMatrix
+    clearanceManager?: NetClassClearanceManager
+  } = {},
 ): PcbPadPadClearanceError[] {
   const pads = getPads(circuitJson)
   if (pads.length < 2) return []
@@ -33,6 +48,12 @@ export function checkPadPadClearance(
     getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
     jlcMinTolerances.min_pad_edge_to_pad_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  clearanceManager ??= createNetClassClearanceManager(circuitJson, {
+    connMap,
+    minClearance,
+    netClasses,
+    clearanceMatrix,
+  })
   const spatialIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,
     getBounds: getPadBounds,
@@ -43,9 +64,13 @@ export function checkPadPadClearance(
 
   for (const padA of pads) {
     const padAId = getPrimaryId(padA)
+    const searchRadius = clearanceManager.getMaxClearanceForId(
+      padAId,
+      minClearance!,
+    )
     const nearbyPads = spatialIndex.getObjectsInBounds(
       getPadBounds(padA),
-      minClearance,
+      searchRadius,
     )
 
     for (const padB of nearbyPads) {
@@ -62,7 +87,12 @@ export function checkPadPadClearance(
 
       const pairId = [padAId, padBId].sort().join("_")
       const gap = getPadToPadGap(padA, padB)
-      if (gap + EPSILON >= minClearance!) continue
+      const requiredClearance = clearanceManager.getRequiredClearance(
+        padAId,
+        padBId,
+        minClearance!,
+      )
+      if (gap + EPSILON >= requiredClearance) continue
       const centerA = getPadCenter(padA)
       const centerB = getPadCenter(padB)
 
@@ -70,9 +100,9 @@ export function checkPadPadClearance(
         type: "pcb_pad_pad_clearance_error",
         pcb_pad_pad_clearance_error_id: `pad_pad_clearance_${pairId}`,
         error_type: "pcb_pad_pad_clearance_error",
-        message: `Pads ${getReadableNameForElement(circuitJson, padAId)} and ${getReadableNameForElement(circuitJson, padBId)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
+        message: `Pads ${getReadableNameForElement(circuitJson, padAId)} and ${getReadableNameForElement(circuitJson, padBId)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(requiredClearance)})`,
         pcb_pad_ids: [padAId, padBId] as [string, string],
-        minimum_clearance: minClearance,
+        minimum_clearance: requiredClearance,
         actual_clearance: gap,
         center: {
           x: (centerA.x + centerB.x) / 2,

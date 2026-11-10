@@ -18,13 +18,28 @@ import {
   getTraceSegments,
   isTraceObstacleOverlap,
 } from "./check-pad-clearance/common"
+import {
+  type ClearanceMatrix,
+  type NetClassClearanceManager,
+  type NetClassDefinition,
+  createNetClassClearanceManager,
+} from "./net-classes"
 
 export function checkViaTraceClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
     minClearance,
-  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
+    netClasses,
+    clearanceMatrix,
+    clearanceManager,
+  }: {
+    connMap?: ConnectivityMap
+    minClearance?: number
+    netClasses?: NetClassDefinition[]
+    clearanceMatrix?: ClearanceMatrix
+    clearanceManager?: NetClassClearanceManager
+  } = {},
 ): PcbViaTraceClearanceError[] {
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   const segments = getTraceSegments(circuitJson).map((segment) => ({
@@ -48,6 +63,12 @@ export function checkViaTraceClearance(
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     jlcMinTolerances.min_trace_to_pad_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  clearanceManager ??= createNetClassClearanceManager(circuitJson, {
+    connMap,
+    minClearance,
+    netClasses,
+    clearanceMatrix,
+  })
   const errors = new Map<
     string,
     { error: PcbViaTraceClearanceError; gap: number }
@@ -56,13 +77,17 @@ export function checkViaTraceClearance(
 
   for (const via of vias) {
     const layers = getLayersOfPcbElement(via)
+    const searchMargin = clearanceManager.getMaxClearanceForId(
+      via.pcb_via_id,
+      minClearance!,
+    )
     const finiteBounds =
       Number.isFinite(via.x) &&
       Number.isFinite(via.y) &&
       Number.isFinite(via.outer_diameter) &&
-      Number.isFinite(minClearance)
+      Number.isFinite(searchMargin)
     const radius =
-      Math.max(0, via.outer_diameter / 2) + Math.max(0, minClearance!) + EPSILON
+      Math.max(0, via.outer_diameter / 2) + Math.max(0, searchMargin) + EPSILON
     for (const segment of segments) {
       const expansion = radius + segment.radius
       // Conservative bounds retain every overlap and clearance hit.
@@ -87,16 +112,21 @@ export function checkViaTraceClearance(
         continue
       }
       if (overlappingPairIds.has(pairId)) continue
-      if (gap + EPSILON >= minClearance!) continue
+      const requiredClearance = clearanceManager.getRequiredClearance(
+        segment.pcb_trace_id,
+        via.pcb_via_id,
+        minClearance!,
+      )
+      if (gap + EPSILON >= requiredClearance) continue
 
       const nextError: PcbViaTraceClearanceError = {
         type: "pcb_via_trace_clearance_error",
         pcb_via_trace_clearance_error_id: `via_trace_clearance_${pairId}`,
         error_type: "pcb_via_trace_clearance_error",
-        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
+        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(requiredClearance)})`,
         pcb_via_id: via.pcb_via_id,
         pcb_trace_id: segment.pcb_trace_id,
-        minimum_clearance: minClearance,
+        minimum_clearance: requiredClearance,
         actual_clearance: gap,
         center,
       }
