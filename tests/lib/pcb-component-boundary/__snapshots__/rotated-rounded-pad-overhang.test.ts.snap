@@ -1,0 +1,8 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`a rotated rounded pad crossing the board edge reports its overhang 1`] = `
+{
+  "exception": "TypeError",
+  "messages": [],
+}
+`;
