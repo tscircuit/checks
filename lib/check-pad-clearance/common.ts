@@ -194,15 +194,16 @@ const getRoundedPadCore = (pad: CopperClearanceElement) => {
       }
       return { core, radius: 0 }
     }
+    const core = {
+      ...pad,
+      width: pad.width - 2 * radius,
+      height: pad.height - 2 * radius,
+      corner_radius: 0,
+      rect_border_radius: 0,
+    } as unknown as PcbSmtPad
+    delete (core as any).border_radius
     return {
-      core: {
-        ...pad,
-        width: pad.width - 2 * radius,
-        height: pad.height - 2 * radius,
-        corner_radius: 0,
-        rect_border_radius: 0,
-        border_radius: 0,
-      } as PcbSmtPad,
+      core,
       radius,
     }
   }

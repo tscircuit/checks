@@ -4,7 +4,7 @@ import {
   checkSchematicPlacement,
   runAllChecks,
   runAllSchematicChecks,
-} from "../.."
+} from "../../index"
 import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 
 test("does not misclassify a 2-pin ferrite bead (L3, MH1608-601Y) as a crystal", async () => {
