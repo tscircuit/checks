@@ -121,10 +121,17 @@ export const getPolygonPointsForPad = (pad: PolygonalPad): Point[] => {
     Array.isArray(pad.pad_outline) &&
     pad.pad_outline.length >= 3
   ) {
-    return pad.pad_outline.map((point) => ({
-      x: pad.x + point.x,
-      y: pad.y + point.y,
-    }))
+    const ccwRotation =
+      "ccw_rotation" in pad && typeof pad.ccw_rotation === "number"
+        ? pad.ccw_rotation
+        : 0
+    return pad.pad_outline.map((point) => {
+      const rotated = rotatePoint(point, ccwRotation)
+      return {
+        x: pad.x + rotated.x,
+        y: pad.y + rotated.y,
+      }
+    })
   }
 
   throw new Error(
