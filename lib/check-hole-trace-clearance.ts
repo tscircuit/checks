@@ -40,11 +40,20 @@ export function checkHoleTraceClearance(
   if (!Number.isFinite(required) || required < 0) {
     throw new Error("Trace-to-hole clearance must be finite and non-negative")
   }
+  const boardPadClearance = getBoardDrcValue(
+    board,
+    "min_trace_to_pad_edge_clearance",
+  )
   const minPadClearance =
-    getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
-    jlcMinTolerances.min_trace_to_pad_edge_clearance!
+    boardPadClearance ?? jlcMinTolerances.min_trace_to_pad_edge_clearance!
   const checkVias =
-    minClearance !== undefined || boardHoleClearance !== undefined
+    minClearance !== undefined ||
+    (boardHoleClearance !== undefined &&
+      (boardPadClearance === undefined ||
+        boardPadClearance >=
+          jlcMinTolerances.min_trace_to_pad_edge_clearance! ||
+        boardHoleClearance !==
+          jlcMinTolerances.min_trace_to_hole_edge_clearance))
   const holes = getHoleGeometries(circuitJson)
   if (holes.length === 0) return []
   let resolvedConnMap = connMap
