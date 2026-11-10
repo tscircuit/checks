@@ -13,6 +13,9 @@ type CopperElement = Extract<
 >
 
 const GEOMETRY_EPSILON = 1e-9
+// @tscircuit/copper-pour-solver quantizes input and output polygon vertices
+// onto a 1e-6 mm grid, which can shift an inset edge inward by up to ~sqrt(2) * 1e-6 mm.
+const COPPER_POUR_SOLVER_GRID_EPSILON = 2e-6
 
 const getCopperElementLabel = (element: CopperElement): string => {
   if (element.type === "pcb_via") return "Via"
@@ -103,7 +106,11 @@ export function checkCopperToBoardEdgeClearance(
           ...geometry.shapes.map((shape) => boardPolygon.distanceTo(shape)[0]),
         )
       : 0
-    if (isInside && clearance + GEOMETRY_EPSILON >= requiredClearance) {
+    const clearanceTolerance =
+      element.type === "pcb_copper_pour"
+        ? COPPER_POUR_SOLVER_GRID_EPSILON
+        : GEOMETRY_EPSILON
+    if (isInside && clearance + clearanceTolerance >= requiredClearance) {
       continue
     }
 

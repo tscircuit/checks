@@ -304,6 +304,79 @@ test("accepts copper pours at or above the required board-edge clearance", () =>
   expect(checkCopperToBoardEdgeClearance([rectangularBoard, pour])).toEqual([])
 })
 
+test("tolerates 1e-6 mm solver-grid rounding on copper pours without relaxing other copper checks", () => {
+  const solverGridShortfallMm = 1.078e-6
+  const roundedPourEdgeX = 4.8 + solverGridShortfallMm
+
+  const gridRoundedPour: PcbCopperPour = {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "solver_grid_rounded_pour",
+    shape: "brep",
+    brep_shape: {
+      outer_ring: {
+        vertices: [
+          { x: -4.8, y: -4.8 },
+          { x: roundedPourEdgeX, y: -4.8 },
+          { x: roundedPourEdgeX, y: 4.8 },
+          { x: -4.8, y: 4.8 },
+        ],
+      },
+      inner_rings: [],
+    },
+    layer: "top",
+    covered_with_solder_mask: true,
+  }
+
+  expect(
+    checkCopperToBoardEdgeClearance([rectangularBoard, gridRoundedPour]),
+  ).toEqual([])
+
+  const violatingPour: PcbCopperPour = {
+    ...gridRoundedPour,
+    pcb_copper_pour_id: "pour_beyond_grid_tolerance",
+    brep_shape: {
+      outer_ring: {
+        vertices: [
+          { x: -4.8, y: -4.8 },
+          { x: 4.8 + 0.001, y: -4.8 },
+          { x: 4.8 + 0.001, y: 4.8 },
+          { x: -4.8, y: 4.8 },
+        ],
+      },
+      inner_rings: [],
+    },
+  }
+
+  const pourViolations = checkCopperToBoardEdgeClearance([
+    rectangularBoard,
+    violatingPour,
+  ])
+  expect(pourViolations).toHaveLength(1)
+  expect(pourViolations[0].pcb_placement_error_id).toContain(
+    "pour_beyond_grid_tolerance",
+  )
+
+  const padWithPourScaleShortfall: PcbSmtPad = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "pad_micro_shortfall",
+    shape: "rect",
+    x: 4.3 + solverGridShortfallMm,
+    y: 0,
+    width: 1,
+    height: 1,
+    layer: "top",
+  }
+
+  const padViolations = checkCopperToBoardEdgeClearance([
+    rectangularBoard,
+    padWithPourScaleShortfall,
+  ])
+  expect(padViolations).toHaveLength(1)
+  expect(padViolations[0].pcb_placement_error_id).toContain(
+    "pad_micro_shortfall",
+  )
+})
+
 test("reports copper pours through runAllPlacementChecks", async () => {
   const errors = await runAllPlacementChecks([
     rectangularBoard,
