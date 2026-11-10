@@ -31,8 +31,9 @@ test("measures wire, via, and through-pad segments without skipping or double co
   }
   expect(getPcbTraceLength(route)).toBeCloseTo(16.6)
   expect(getPcbTraceLength({ ...route, trace_length: 20 })).toBe(20)
-  expect(
-    checkPcbBusLengthSkew([bus(), route, trace("b", 10)])[0]!
-      .actual_length_skew,
-  ).toBeCloseTo(6.6)
+  const error = checkPcbBusLengthSkew([bus(), route, trace("b", 10)])[0]!
+  expect(error.type).toBe("pcb_bus_length_skew_error")
+  if (error.type !== "pcb_bus_length_skew_error")
+    throw new Error("Expected bus skew")
+  expect(error.actual_length_skew).toBeCloseTo(6.6)
 })

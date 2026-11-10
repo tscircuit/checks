@@ -1,4 +1,5 @@
 import Flatbush from "flatbush"
+import type { CircuitJsonWithDifferentialPairs } from "./util/differential-pair-types"
 import {
   pcb_bus_routing_constraint_error,
   pcb_bus_routing_constraint_warning,
@@ -34,8 +35,6 @@ export const hasSourceBusRoutingConstraints = (bus: SourceBus) =>
     bus.pcb_spacing_to_other_signals,
     bus.target_impedance_min,
     bus.target_impedance_max,
-    bus.target_differential_impedance_min,
-    bus.target_differential_impedance_max,
   ].some((v) => v !== undefined)
 
 type Finding = PcbBusRoutingConstraintError | PcbBusRoutingConstraintWarning
@@ -43,10 +42,14 @@ type Finding = PcbBusRoutingConstraintError | PcbBusRoutingConstraintWarning
  * Measures complete planar routes, never cached lengths or guessed via depths.
  * Missing physical inputs yield warnings rather than an electrical pass. */
 export function checkPcbRoutingConstraints(
-  circuit: AnyCircuitElement[],
+  input: CircuitJsonWithDifferentialPairs,
 ): Finding[] {
+  // Pair records are handled exclusively by checkPcbBusLengthSkew.
+  const circuit = input as AnyCircuitElement[]
   const findings: Finding[] = []
-  const buses = circuit.filter((e): e is SourceBus => e.type === "source_bus")
+  const buses = circuit.filter(
+    (e): e is SourceBus => e.type === "source_bus" && !e.differential_pair,
+  )
   const sources = new Map(
     circuit
       .filter((e): e is SourceTrace => e.type === "source_trace")
@@ -109,18 +112,6 @@ export function checkPcbRoutingConstraints(
   index?.finish()
   const separation = (spacing: SourceBusTraceSpacing, width: number) =>
     typeof spacing === "number" ? spacing : spacing.width_multiplier * width
-  const pairPartners = new Set(
-    buses
-      .filter((b) => b.differential_pair)
-      .map((b) =>
-        [
-          b.differential_pair!.positive_source_trace_id,
-          b.differential_pair!.negative_source_trace_id,
-        ]
-          .sort()
-          .join("|"),
-      ),
-  )
 
   for (const bus of buses) {
     if (!hasSourceBusRoutingConstraints(bus)) continue
@@ -298,12 +289,7 @@ export function checkPcbRoutingConstraints(
         ) ?? []) {
           const { trace, segment: b } = copper[k]!,
             otherId = trace.source_trace_id
-          if (
-            id === otherId ||
-            a.layer !== b.layer ||
-            (otherId && pairPartners.has([id, otherId].sort().join("|")))
-          )
-            continue
+          if (id === otherId || a.layer !== b.layer) continue
           // Different source traces on the same net are the same electrical signal.
           if (
             otherId &&
@@ -341,33 +327,27 @@ export function checkPcbRoutingConstraints(
         }
       }
     }
-    for (const [target, min, max] of [
-      [
-        bus.target_impedance,
-        bus.target_impedance_min,
-        bus.target_impedance_max,
-      ],
-      [
-        bus.target_differential_impedance,
-        bus.target_differential_impedance_min,
-        bus.target_differential_impedance_max,
-      ],
-    ]) {
-      if ([target, min, max].every((v) => v === undefined)) continue
+    const impedanceTarget = bus.target_impedance
+    const impedanceMin = bus.target_impedance_min
+    const impedanceMax = bus.target_impedance_max
+    if (
+      [impedanceTarget, impedanceMin, impedanceMax].some((v) => v !== undefined)
+    ) {
       if (
-        target !== undefined &&
-        ((min !== undefined && target < min - EPS) ||
-          (max !== undefined && target > max + EPS))
-      )
+        impedanceTarget !== undefined &&
+        ((impedanceMin !== undefined && impedanceTarget < impedanceMin - EPS) ||
+          (impedanceMax !== undefined && impedanceTarget > impedanceMax + EPS))
+      ) {
         reportError(
           {
             routing_rule: "impedance_target",
-            target_impedance: target,
-            minimum_impedance: min,
-            maximum_impedance: max,
+            target_impedance: impedanceTarget,
+            minimum_impedance: impedanceMin,
+            maximum_impedance: impedanceMax,
           },
           "declared impedance target is outside its bounds",
         )
+      }
       reportWarning(
         "physical_impedance",
         "actual impedance requires physical stackup analysis; declared targets are not measured impedance",

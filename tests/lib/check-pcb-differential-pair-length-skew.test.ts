@@ -123,3 +123,110 @@ test("unnamed pair and hop diagnostics do not leak IDs", () => {
   expect(coverage[0]!.message).toContain("unnamed trace")
   expect(coverage[0]!.message).not.toMatch(/source_|pcb_|subcircuit_/)
 })
+
+test("split pieces and routed pad traversal are summed exactly once per hop", () => {
+  const { circuit, traces } = pairFixture([10], [5])
+  const first = traces[0]!
+  first.route = [
+    { route_type: "wire", x: 0, y: 2, layer: "top", width: 0.2 },
+    {
+      route_type: "through_pad",
+      start: { x: 2, y: 2 },
+      end: { x: 5, y: 2 },
+      start_layer: "top",
+      end_layer: "bottom",
+      width: 1,
+    },
+  ]
+  circuit.push({
+    ...first,
+    pcb_trace_id: "pcb_trace_P1_second_piece",
+    route: [
+      { route_type: "wire", x: 5, y: 2, layer: "bottom", width: 0.2 },
+      { route_type: "wire", x: 10, y: 2, layer: "bottom", width: 0.2 },
+    ],
+  })
+  const errors = checkPcbBusLengthSkew(circuit)
+  expect(errors).toHaveLength(1)
+  expect(errors[0]).toMatchObject({
+    actual_length_skew: 5,
+    differential_pair_lengths: { positive_length: 10, negative_length: 5 },
+    pcb_trace_ids: [
+      first.pcb_trace_id,
+      "pcb_trace_P1_second_piece",
+      traces[1]!.pcb_trace_id,
+    ],
+  })
+})
+
+test("disconnected or duplicated owned copper yields coverage, not skew", () => {
+  for (const disconnected of [true, false]) {
+    const { circuit, traces } = pairFixture([5], [5])
+    const piece = structuredClone(traces[0]!)
+    piece.pcb_trace_id = "pcb_trace_extra"
+    if (disconnected) {
+      for (const point of piece.route)
+        if (point.route_type === "wire") point.x += 20
+    }
+    circuit.push(piece)
+    expect(checkPcbBusLengthSkew(circuit)).toMatchObject([
+      { type: "pcb_autorouting_error", message: expect.stringContaining("P1") },
+    ])
+  }
+})
+
+test("missing one of a hop's split pieces cannot pass as a short route", () => {
+  const { circuit, traces } = pairFixture([5], [5])
+  const end = traces[0]!.route[1]!
+  if (end.route_type === "wire") end.x = 2
+  expect(checkPcbBusLengthSkew(circuit)).toMatchObject([
+    { type: "pcb_autorouting_error" },
+  ])
+})
+
+test("pair checks keep all copper even when a piece names both endpoint ports", () => {
+  const { circuit, traces } = pairFixture([5], [5])
+  const first = traces[0]!.route[0]!
+  const last = traces[0]!.route[1]!
+  if (first.route_type === "wire") first.start_pcb_port_id = "pcb_port_P1_a"
+  if (last.route_type === "wire") last.end_pcb_port_id = "pcb_port_P1_b"
+  circuit.push({
+    ...traces[0]!,
+    pcb_trace_id: "pcb_trace_disconnected_piece",
+    route: [
+      { route_type: "wire", x: 20, y: 2, layer: "top", width: 0.2 },
+      { route_type: "wire", x: 25, y: 2, layer: "top", width: 0.2 },
+    ],
+  })
+  expect(checkPcbBusLengthSkew(circuit)).toMatchObject([
+    { type: "pcb_autorouting_error" },
+  ])
+})
+
+test("pair input accepts the temporary public type without a caller cast", () => {
+  const { circuit, bus } = pairFixture([5], [10])
+  const input = [...circuit.filter((e) => e.type !== "source_bus"), bus]
+  const errors = checkPcbBusLengthSkew(input)
+  expect(errors).toHaveLength(1)
+  if (errors[0]!.type !== "pcb_bus_length_skew_error")
+    throw new Error("Expected pair skew")
+  expect(errors[0]!.differential_pair_lengths).toEqual({
+    positive_length: 5,
+    negative_length: 10,
+  })
+  Object.assign(bus, {
+    length_match_source_trace_ids: [],
+    pcb_trace_spacing: 100,
+  })
+  expect(checkPcbBusLengthSkew(input)).toEqual(errors)
+  expect(checkPcbRoutingConstraints(input)).toEqual([])
+})
+
+test("duplicate hop membership is ambiguous coverage, never double-counted", () => {
+  const { circuit, bus, positiveIds } = pairFixture([5], [5])
+  bus.differential_pair.positive_source_trace_ids.push(positiveIds[0]!)
+  bus.source_trace_ids.splice(1, 0, positiveIds[0]!)
+  expect(checkPcbBusLengthSkew(circuit)).toMatchObject([
+    { type: "pcb_autorouting_error" },
+  ])
+})

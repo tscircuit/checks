@@ -11,6 +11,10 @@ import { checkPcbBusLengthSkew } from "./check-pcb-bus-length-skew"
 import { consolidatePcbOverlapErrors } from "./consolidate-pcb-overlap-errors"
 import { checkSameNameNetsAreConnected } from "./check-same-name-nets-are-connected"
 import type { AnyCircuitElement } from "circuit-json"
+import type {
+  CircuitJsonWithDifferentialPairs,
+  PcbBusLengthSkewErrorWithLaneLengths,
+} from "./util/differential-pair-types"
 import { checkAllPinsInComponentAreUnderspecified } from "./check-all-pins-in-component-are-underspecified"
 import { checkConnectorAccessibleOrientation } from "./check-connector-accessible-orientation"
 import { checkCopperToBoardEdgeClearance } from "./check-copper-to-board-edge-clearance"
@@ -114,7 +118,10 @@ export async function runAllPinSpecificationChecks(
   ]
 }
 
-export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllRoutingChecks(
+  input: CircuitJsonWithDifferentialPairs,
+) {
+  const circuitJson = input as AnyCircuitElement[]
   // Infer endpoint IDs before taking connectivity snapshots. Keep these maps
   // local to this pass so edits to the same circuit array cannot leave stale data.
   addStartAndEndPortIdsIfMissing(circuitJson)
@@ -150,7 +157,8 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   ]
 }
 
-export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllChecks(input: CircuitJsonWithDifferentialPairs) {
+  const circuitJson = input as AnyCircuitElement[]
   return [
     ...(await runAllPlacementChecks(circuitJson)),
     ...(await runAllSchematicChecks(circuitJson)),
