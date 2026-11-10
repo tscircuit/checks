@@ -42,16 +42,10 @@ test("a rotated rounded pad crossing the board edge reports its overhang", () =>
       layer: "top",
     }),
   ]
-  let diagnostics: ReturnType<typeof checkPcbComponentsOutOfBoard> = []
-  let exception: string | undefined
-  try {
-    diagnostics = checkPcbComponentsOutOfBoard(elements)
-  } catch (error) {
-    if (!(error instanceof Error)) throw error
-    exception = error.name
-  }
+  const diagnostics = checkPcbComponentsOutOfBoard(elements)
+  expect(diagnostics).toHaveLength(1)
+  expect(diagnostics[0]?.type).toBe("pcb_component_outside_board_error")
   expect({
-    exception,
     messages: diagnostics.map((d) => d.message),
   }).toMatchSnapshot()
   expect(

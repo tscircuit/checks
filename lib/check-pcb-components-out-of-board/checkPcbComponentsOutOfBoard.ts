@@ -139,7 +139,11 @@ function computeOverlapDistance(
         ? Math.ceil(edge.shape.sweep / (Math.PI / 32))
         : 2
     for (let i = 0; i <= samples; i++) {
-      const point = edge.pointAtLength((edge.length * i) / samples)!
+      // Multiplying before dividing can round the last sample beyond the arc.
+      const point =
+        i === samples
+          ? edge.end
+          : edge.pointAtLength(edge.length * (i / samples))!
       if (!boardPoly.contains(point)) {
         maxDistance = Math.max(maxDistance, boardPoly.distanceTo(point)[0])
       }
