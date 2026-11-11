@@ -2,24 +2,42 @@ import { hasSourceBusRoutingConstraints } from "./check-pcb-routing-constraints"
 import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import type {
   AnyCircuitElement,
-  PcbBusLengthSkewError,
+  PcbAutoroutingError,
   SourceBus,
 } from "circuit-json"
 import { getPcbTracesBySourceTraceId } from "./check-pcb-trace-lengths"
 import { getPcbTraceLength } from "./util/get-pcb-trace-length"
+import { checkPcbDifferentialPairLengthSkew } from "./check-pcb-differential-pair-length-skew"
+import type {
+  CircuitJsonWithDifferentialPairs,
+  PcbBusLengthSkewErrorWithLaneLengths,
+  SourceDifferentialPairBus,
+} from "./util/differential-pair-types"
 
-/** Compare total routed lengths of resolved bus members. Unrouted members are
- * left to connectivity checks, never treated as zero-length routes.
- */
+/** Pairs compare complete planar lane sums. Ordinary buses retain their
+ * individual member metric and leave unrouted members to connectivity checks. */
 export const checkPcbBusLengthSkew = (
-  circuitJson: AnyCircuitElement[],
-): PcbBusLengthSkewError[] => {
+  input: CircuitJsonWithDifferentialPairs,
+): Array<PcbBusLengthSkewErrorWithLaneLengths | PcbAutoroutingError> => {
+  // Legacy helpers do not interpret differential_pair; bridge the old types
+  // only here until circuit-json publishes the plural variant.
+  const circuitJson = input as AnyCircuitElement[]
   const buses = circuitJson.filter(
     (e): e is SourceBus => e.type === "source_bus",
   )
   const tracesBySource = getPcbTracesBySourceTraceId(circuitJson)
-  const errors: PcbBusLengthSkewError[] = []
+  const errors: Array<
+    PcbBusLengthSkewErrorWithLaneLengths | PcbAutoroutingError
+  > = []
   for (const bus of buses) {
+    if (bus.differential_pair) {
+      const error = checkPcbDifferentialPairLengthSkew(
+        bus as unknown as SourceDifferentialPairBus,
+        circuitJson,
+      )
+      if (error) errors.push(error)
+      continue
+    }
     if (
       bus.max_length_skew === undefined ||
       hasSourceBusRoutingConstraints(bus)

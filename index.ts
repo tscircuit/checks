@@ -73,3 +73,9 @@ export {
   checkPcbBoardSupport,
   type PcbBoardSupportError,
 } from "./lib/check-pcb-board-support"
+
+export type {
+  SourceDifferentialPairBus,
+  CircuitJsonWithDifferentialPairs,
+  PcbBusLengthSkewErrorWithLaneLengths,
+} from "./lib/util/differential-pair-types"

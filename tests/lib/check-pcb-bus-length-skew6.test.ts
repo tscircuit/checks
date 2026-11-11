@@ -16,5 +16,9 @@ test("routing pipeline emits the bus error", async () => {
     (await runAllRoutingChecks(circuit)).filter(
       (e) => e.type === "pcb_bus_length_skew_error",
     ),
-  ).toEqual(checkPcbBusLengthSkew(circuit))
+  ).toEqual(
+    checkPcbBusLengthSkew(circuit).filter(
+      (e) => e.type === "pcb_bus_length_skew_error",
+    ),
+  )
 })

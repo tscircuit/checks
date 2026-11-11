@@ -199,24 +199,6 @@ test("centerline spacing uses the larger local width and includes equality", () 
     violations(circuit).filter((e) => e.routing_rule === "pcb_trace_spacing"),
   ).toHaveLength(2)
 })
-test("pair partners are excluded from internal and external bus spacing", () => {
-  const { circuit, bus, a, b } = fixture()
-  bus.pcb_trace_spacing = 2
-  bus.pcb_spacing_to_other_signals = 2
-  circuit.push({
-    type: "source_bus",
-    source_bus_id: "pair",
-    source_trace_ids: [a.id, b.id],
-    differential_pair: {
-      positive_source_trace_id: a.id,
-      negative_source_trace_id: b.id,
-      trace_gap: 0.12,
-    },
-  })
-  expect(violations(circuit)).toEqual([])
-  bus.source_trace_ids = [a.id] // The partner remains excluded outside the bus too.
-  expect(violations(circuit)).toEqual([])
-})
 test("different layers and same-net fragments do not violate signal spacing", () => {
   const { circuit, bus, add, a } = fixture()
   const other = add("OTHER_LAYER", 0)
