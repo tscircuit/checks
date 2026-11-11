@@ -53,6 +53,7 @@ export {
   runAllRoutingChecks,
   runAllSchematicChecks,
 } from "./lib/run-all-checks"
+export type { RunChecksOptions } from "./lib/run-all-checks"
 
 export { checkConnectorAccessibleOrientation } from "./lib/check-connector-accessible-orientation"
 export { checkTestPointAccessibility } from "./lib/check-testpoint-accessibility"

@@ -17,14 +17,17 @@ import { hasAutoroutingError } from "./util/has-autorouting-error"
  * Check that each source_trace which connects source ports has at least one
  * pcb_trace associated with it, or its ports physically joined through a
  * same-net copper pour. Otherwise return an error for that source_trace.
- * Returns nothing when the circuit has a pcb_autorouting_error.
+ * With includeCascadingErrors: false, returns nothing when the circuit has a
+ * pcb_autorouting_error, which already explains the missing traces.
  */
 function checkSourceTracesHavePcbTraces(
   circuitJson: AnyCircuitElement[],
-  { connMap }: { connMap?: ConnectivityMap } = {},
+  {
+    connMap,
+    includeCascadingErrors = true,
+  }: { connMap?: ConnectivityMap; includeCascadingErrors?: boolean } = {},
 ): PcbTraceMissingError[] {
-  // The autorouting error already reports that routing did not complete.
-  if (hasAutoroutingError(circuitJson)) return []
+  if (!includeCascadingErrors && hasAutoroutingError(circuitJson)) return []
 
   const errors: PcbTraceMissingError[] = []
   const sourceTraces = circuitJson.filter(
