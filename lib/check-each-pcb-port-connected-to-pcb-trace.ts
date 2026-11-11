@@ -16,6 +16,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { getReadableNameForPort } from "./util/get-readable-names"
 import { getCopperPourConnectivity } from "./copper-pour-connectivity/get-copper-pour-connectivity"
+import { hasAutoroutingError } from "./util/has-autorouting-error"
 
 function checkEachPcbPortConnectedToPcbTraces(
   circuitJson: AnyCircuitElement[],
@@ -50,6 +51,10 @@ function checkEachPcbPortConnectedToPcbTraces(
     center: { x: point.x, y: point.y },
     message: `Port [${getReadableNameForPort(circuitJson, port.pcb_port_id)}] on ${padLayers.join(", ")} is not connected to trace [${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)}] on ${point.layer}: missing via connection.`,
   }))
+
+  // Missing traces are explained by the autorouting error. Layer mismatches
+  // above are about traces that do exist, so they are still reported.
+  if (hasAutoroutingError(circuitJson)) return errors
 
   // Generate the connectivity map from the circuit
   const connectivityMap =
