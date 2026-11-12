@@ -11,8 +11,16 @@ import type {
   PcbCourtyardPolygon,
   PcbCourtyardRect,
 } from "circuit-json"
-import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import {
+  type ConnectivityMap,
+  getFullConnectivityMapFromCircuitJson,
+} from "circuit-json-to-connectivity-map"
 import { getPadToPadGap } from "lib/check-pad-clearance/common"
+import {
+  type NetTieDefinition,
+  type NetTieManager,
+  getOrCreateNetTieManager,
+} from "lib/net-ties"
 import {
   getReadableNameForElementId,
   getReadableNameForPort,
@@ -70,6 +78,15 @@ const formatOverlapElementDescription = (
  */
 export function checkPcbComponentOverlap(
   circuitJson: AnyCircuitElement[],
+  {
+    connMap: inputConnMap,
+    netTieManager,
+    netTies,
+  }: {
+    connMap?: ConnectivityMap
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): PcbComponentOverlapError[] {
   const errors: PcbComponentOverlapError[] = []
 
@@ -82,7 +99,13 @@ export function checkPcbComponentOverlap(
   )
 
   // Build connectivity map to check if components are electrically connected
-  const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+  const connMap =
+    inputConnMap ?? getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, {
+    connMap,
+    netTieManager,
+    netTies,
+  })
 
   // Get all overlappable elements
   const smtPads = cju(circuitJson).pcb_smtpad.list()
@@ -196,7 +219,8 @@ export function checkPcbComponentOverlap(
           if (
             elem1.type === "pcb_smtpad" &&
             elem2.type === "pcb_smtpad" &&
-            connMap.areIdsConnected(id1, id2)
+            (connMap.areIdsConnected(id1, id2) ||
+              netTieMgr.arePadElementsExempt(elem1, elem2, 0))
           ) {
             continue
           }

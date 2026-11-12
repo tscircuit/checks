@@ -6,6 +6,7 @@ import type {
   SourcePort,
   SourceComponentBase,
 } from "circuit-json"
+import { isNetTieComponentRecord } from "./net-ties"
 
 const PIN_ATTRIBUTE_KEYS = [
   "is_passive",
@@ -79,6 +80,10 @@ export function checkAllPinsInComponentAreUnderspecified(
 
   for (const component of sourceComponents) {
     if (component.ftype !== "simple_chip") continue
+    if (
+      isNetTieComponentRecord(component as unknown as Record<string, unknown>)
+    )
+      continue
 
     const componentPorts =
       portsByComponent.get(component.source_component_id) ?? []
