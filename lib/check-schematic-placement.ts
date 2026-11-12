@@ -17,6 +17,8 @@ const enabledIssueTypes = [
   "ParallelRcNotAligned",
   "ComponentOverlap",
   "SchematicTextCollision",
+  "TraceCanBeSimplifiedByMovingComponent",
+  "ConnectorPositionCausesTraceDetours",
 ] as const
 
 export function checkSchematicPlacement(
@@ -70,6 +72,39 @@ export function checkSchematicPlacement(
       let stylingIssueType: string
       let message: string
       switch (issue.lineItemType) {
+        case "TraceCanBeSimplifiedByMovingComponent": {
+          const targetId = issue.targetComponent.schematicComponentId
+          const componentName = getReadableNameForElementId(
+            circuitJson,
+            targetId ?? "",
+          )
+          return createWarning({
+            schematicComponentId: targetId,
+            stylingIssueType: "trace_can_be_simplified_by_moving_component",
+            suffix: `_${issue.schematicTraceId}`,
+            message: `Move ${componentName} to schX=${issue.newSchX}, schY=${issue.newSchY} to reduce the connected trace from ${issue.currentTurnCount} turns to ${issue.suggestedTurnCount}. Preserve pin connections and reroute attached traces.`,
+          })
+        }
+        case "ConnectorPositionCausesTraceDetours": {
+          const connectorId = issue.connectorSchematicBox.schematicComponentId
+          const connectorName = getReadableNameForElementId(
+            circuitJson,
+            connectorId ?? "",
+          )
+          const connectedNames = issue.connectedComponents
+            .map((box) =>
+              getReadableNameForElementId(
+                circuitJson,
+                box.schematicComponentId ?? "",
+              ),
+            )
+            .join(", ")
+          return createWarning({
+            schematicComponentId: connectorId,
+            stylingIssueType: "connector_position_causes_trace_detours",
+            message: `Move ${connectorName} to schX=${issue.newSchX}, schY=${issue.newSchY} so its signal pins face ${connectedNames}. Preserve rotation, pin assignments and electrical connections, and reroute attached traces and rail labels.`,
+          })
+        }
         case "ComponentOverlap": {
           const firstId = issue.firstComponent.schematicComponentId
           const secondId = issue.secondComponent.schematicComponentId
