@@ -42,7 +42,7 @@ async function createPullResistorCircuit(
         resistance="10k"
         schX={-6}
         schY={corrected ? -3 : 3}
-        schRotation={90}
+        schRotation={270}
       />
       <trace name="reset_pullup" from=".U1 > .RESET_N" to=".R1 > .pin2" />
       <trace name="pullup_supply" from=".R1 > .pin1" to="net.VCC" />

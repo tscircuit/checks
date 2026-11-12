@@ -19,6 +19,8 @@ const enabledIssueTypes = [
   "SchematicTextCollision",
   "TraceCanBeSimplifiedByMovingComponent",
   "ConnectorPositionCausesTraceDetours",
+  "NetLabelCollision",
+  "ComponentBranchesOutOfOrder",
 ] as const
 
 export function checkSchematicPlacement(
@@ -72,6 +74,66 @@ export function checkSchematicPlacement(
       let stylingIssueType: string
       let message: string
       switch (issue.lineItemType) {
+        case "NetLabelCollision":
+          // This analyzer emits one aggregate per sheet, with component names.
+          // Resolve only unambiguous names on that sheet, never across sheets.
+          return issue.pairs.flatMap((pair) => {
+            const first = db.schematic_component
+              .list()
+              .filter(
+                (p) =>
+                  p.schematic_sheet_id === issue.schematicSheetId &&
+                  (db.source_component.get(p.source_component_id ?? "")?.name ??
+                    "") === pair.comp1Name,
+              )
+            const second = db.schematic_component
+              .list()
+              .filter(
+                (p) =>
+                  p.schematic_sheet_id === issue.schematicSheetId &&
+                  (db.source_component.get(p.source_component_id ?? "")?.name ??
+                    "") === pair.comp2Name,
+              )
+            if (first.length !== 1 || second.length !== 1) return []
+            const firstId = first[0]!.schematic_component_id
+            const secondId = second[0]!.schematic_component_id
+            if (!firstId || !secondId || firstId === secondId) return []
+            const firstName = getReadableNameForElementId(circuitJson, firstId)
+            const secondName = getReadableNameForElementId(
+              circuitJson,
+              secondId,
+            )
+            return createWarning({
+              schematicComponentId: firstId,
+              stylingIssueType: "net_label_collision",
+              suffix: `_${secondId}`,
+              message: `Net labels attached to ${firstName} or ${secondName} overlap the other component or its labels. Separate the components and their attached labels, preserving pin connections and rerouting affected traces.`,
+            })
+          })
+        case "ComponentBranchesOutOfOrder": {
+          const hostId = issue.hostSchematicBox.schematicComponentId
+          const hostName = getReadableNameForElementId(
+            circuitJson,
+            hostId ?? "",
+          )
+          const firstId = issue.firstComponentSchematicBox.schematicComponentId
+          const secondId =
+            issue.secondComponentSchematicBox.schematicComponentId
+          const firstName = getReadableNameForElementId(
+            circuitJson,
+            firstId ?? "",
+          )
+          const secondName = getReadableNameForElementId(
+            circuitJson,
+            secondId ?? "",
+          )
+          return createWarning({
+            schematicComponentId: hostId,
+            stylingIssueType: "component_branches_out_of_order",
+            suffix: `_${firstId}_${secondId}`,
+            message: `Reorder ${firstName} and ${secondName} to follow their connected pins on ${hostName}, avoiding crossed wires. Preserve component symbols, pin assignments and polarity; leave room for labels and reroute both branches without moving the host pins.`,
+          })
+        }
         case "TraceCanBeSimplifiedByMovingComponent": {
           const targetId = issue.targetComponent.schematicComponentId
           const componentName = getReadableNameForElementId(
@@ -156,7 +218,10 @@ export function checkSchematicPlacement(
             schematicComponentId ?? "",
           )
           stylingIssueType = "inverted_rails"
-          message = `${componentName} has its positive-supply pin facing down. Rotate ${componentName} by 180° so that pin faces up, preserving pin connections, and reroute attached traces.`
+          message =
+            issue.railType === "ground"
+              ? `${componentName} has its ground pin facing up. Rotate ${componentName} by 180° so that pin faces down, preserving pin connections, and reroute attached traces.`
+              : `${componentName} has its positive-supply pin facing down. Rotate ${componentName} by 180° so that pin faces up, preserving pin connections, and reroute attached traces.`
           break
         }
         case "RegulatorCapacitorsOnWrongSides": {
