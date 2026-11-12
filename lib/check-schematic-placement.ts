@@ -1,4 +1,5 @@
 import { getReadableNameForElementId } from "lib/util/get-readable-names"
+import { getSchematicAnnotationComponentIds } from "lib/util/get-schematic-annotation-component-ids"
 import { analyzeSchematicPlacement } from "@tscircuit/circuit-json-schematic-placement-analysis/analysis"
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
@@ -14,6 +15,8 @@ const enabledIssueTypes = [
   "VoltageDividerSupplyResistorBelowGroundResistor",
   "SeriesLedChainNotOrdered",
   "ParallelRcNotAligned",
+  "ComponentOverlap",
+  "SchematicTextCollision",
   "TraceCanBeSimplifiedByMovingComponent",
   "ConnectorPositionCausesTraceDetours",
 ] as const
@@ -25,31 +28,68 @@ export function checkSchematicPlacement(
     issueTypes: enabledIssueTypes,
   })
   const db = cju(circuitJson)
+  const createWarning = ({
+    schematicComponentId,
+    stylingIssueType,
+    message,
+    suffix = "",
+  }: {
+    schematicComponentId?: string
+    stylingIssueType: string
+    message: string
+    suffix?: string
+  }): SchematicComponentStylingWarning[] => {
+    if (!schematicComponentId) return []
+    const component = db.schematic_component.get(schematicComponentId)
+    if (!component) return []
+    const group = component.schematic_group_id
+      ? db.schematic_group.get(component.schematic_group_id)
+      : undefined
+    return [
+      {
+        type: "schematic_component_styling_warning",
+        schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponentId}_${stylingIssueType}${suffix}`,
+        warning_type: "schematic_component_styling_warning",
+        styling_issue_type: stylingIssueType,
+        message,
+        schematic_component_id: schematicComponentId,
+        source_component_id: component.source_component_id,
+        schematic_sheet_id: component.schematic_sheet_id,
+        subcircuit_id: component.subcircuit_id ?? group?.subcircuit_id,
+        schematic_port_ids: db.schematic_port
+          .list()
+          .filter(
+            (port) => port.schematic_component_id === schematicComponentId,
+          )
+          .map((port) => port.schematic_port_id),
+      },
+    ]
+  }
   return analysis
     .getIssues()
     .flatMap((issue): SchematicComponentStylingWarning[] => {
       let schematicComponentId: string | undefined
       let stylingIssueType: string
       let message: string
-      let warningIdSuffix = ""
       switch (issue.lineItemType) {
         case "TraceCanBeSimplifiedByMovingComponent": {
-          schematicComponentId = issue.targetComponent.schematicComponentId
+          const targetId = issue.targetComponent.schematicComponentId
           const componentName = getReadableNameForElementId(
             circuitJson,
-            schematicComponentId ?? "",
+            targetId ?? "",
           )
-          stylingIssueType = "trace_can_be_simplified_by_moving_component"
-          warningIdSuffix = `_${issue.schematicTraceId}`
-          message = `Move ${componentName} to schX=${issue.newSchX}, schY=${issue.newSchY} to reduce the connected trace from ${issue.currentTurnCount} turns to ${issue.suggestedTurnCount}. Preserve pin connections and reroute attached traces.`
-          break
+          return createWarning({
+            schematicComponentId: targetId,
+            stylingIssueType: "trace_can_be_simplified_by_moving_component",
+            suffix: `_${issue.schematicTraceId}`,
+            message: `Move ${componentName} to schX=${issue.newSchX}, schY=${issue.newSchY} to reduce the connected trace from ${issue.currentTurnCount} turns to ${issue.suggestedTurnCount}. Preserve pin connections and reroute attached traces.`,
+          })
         }
         case "ConnectorPositionCausesTraceDetours": {
-          schematicComponentId =
-            issue.connectorSchematicBox.schematicComponentId
+          const connectorId = issue.connectorSchematicBox.schematicComponentId
           const connectorName = getReadableNameForElementId(
             circuitJson,
-            schematicComponentId ?? "",
+            connectorId ?? "",
           )
           const connectedNames = issue.connectedComponents
             .map((box) =>
@@ -59,9 +99,55 @@ export function checkSchematicPlacement(
               ),
             )
             .join(", ")
-          stylingIssueType = "connector_position_causes_trace_detours"
-          message = `Move ${connectorName} to schX=${issue.newSchX}, schY=${issue.newSchY} so its signal pins face ${connectedNames}. Preserve rotation, pin assignments and electrical connections, and reroute attached traces and rail labels.`
-          break
+          return createWarning({
+            schematicComponentId: connectorId,
+            stylingIssueType: "connector_position_causes_trace_detours",
+            message: `Move ${connectorName} to schX=${issue.newSchX}, schY=${issue.newSchY} so its signal pins face ${connectedNames}. Preserve rotation, pin assignments and electrical connections, and reroute attached traces and rail labels.`,
+          })
+        }
+        case "ComponentOverlap": {
+          const firstId = issue.firstComponent.schematicComponentId
+          const secondId = issue.secondComponent.schematicComponentId
+          if (!firstId || !secondId) return []
+          return createWarning({
+            schematicComponentId: firstId,
+            stylingIssueType: "component_overlap",
+            suffix: `_${secondId}`,
+            message: `${getReadableNameForElementId(circuitJson, firstId)} overlaps ${getReadableNameForElementId(circuitJson, secondId)}. Separate their schematic bodies, preserving pin connections and rerouting attached traces.`,
+          })
+        }
+        case "SchematicTextCollision": {
+          const componentIds = new Set([
+            ...getSchematicAnnotationComponentIds(
+              circuitJson,
+              issue.schematicTextId,
+            ),
+            ...getSchematicAnnotationComponentIds(
+              circuitJson,
+              issue.collidingObject.id,
+            ),
+          ])
+          const textName = getReadableNameForElementId(
+            circuitJson,
+            issue.schematicTextId,
+          )
+          const targetName =
+            issue.collidingObject.type === "trace"
+              ? "a trace"
+              : getReadableNameForElementId(
+                  circuitJson,
+                  issue.collidingObject.id,
+                )
+          // Component styling warnings require an actual component association.
+          // Standalone text-only collisions remain available in the analyzer.
+          return [...componentIds].flatMap((id) =>
+            createWarning({
+              schematicComponentId: id,
+              stylingIssueType: "schematic_text_collision",
+              suffix: `_${issue.schematicTextId}_${issue.collidingObject.id}`,
+              message: `Text "${textName}" overlaps ${targetName}. Reposition the text or adjust its owning trace's label placement to leave the visible text area clear.`,
+            }),
+          )
         }
         case "TwoPinComponentHasInvertedRails": {
           schematicComponentId = issue.schematicBox.schematicComponentId
@@ -145,30 +231,6 @@ export function checkSchematicPlacement(
         default:
           return []
       }
-      if (!schematicComponentId) return []
-      const component = db.schematic_component.get(schematicComponentId)
-      if (!component) return []
-      const group = component.schematic_group_id
-        ? db.schematic_group.get(component.schematic_group_id)
-        : undefined
-      return [
-        {
-          type: "schematic_component_styling_warning",
-          schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponentId}_${stylingIssueType}${warningIdSuffix}`,
-          warning_type: "schematic_component_styling_warning",
-          styling_issue_type: stylingIssueType,
-          message,
-          schematic_component_id: schematicComponentId,
-          source_component_id: component.source_component_id,
-          schematic_sheet_id: component.schematic_sheet_id,
-          subcircuit_id: component.subcircuit_id ?? group?.subcircuit_id,
-          schematic_port_ids: db.schematic_port
-            .list()
-            .filter(
-              (port) => port.schematic_component_id === schematicComponentId,
-            )
-            .map((port) => port.schematic_port_id),
-        },
-      ]
+      return createWarning({ schematicComponentId, stylingIssueType, message })
     })
 }
