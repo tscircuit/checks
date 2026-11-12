@@ -5,8 +5,36 @@ import {
   runAllChecks,
   runAllSchematicChecks,
 } from "../.."
-import { createTraceSimplificationCircuit } from "../fixtures/schematic-routing-placement"
+import { Circuit } from "tscircuit"
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
+
+async function createTraceSimplificationCircuit(resistorX = 0) {
+  const circuit = new Circuit()
+  circuit.pcbDisabled = true
+  circuit.add(
+    <board>
+      <chip
+        name="U1"
+        schX={0}
+        schY={0}
+        schPinArrangement={{
+          rightSide: { pins: ["pin1"], direction: "top-to-bottom" },
+        }}
+      />
+      <resistor
+        name="R1"
+        resistance="100k"
+        schX={resistorX}
+        schY={2}
+        schRotation={90}
+      />
+      <trace from=".U1 > .pin1" to=".R1 > .pin1" />
+    </board>,
+  )
+  await circuit.renderUntilSettled()
+  return normalizeFixtureSourcePorts(circuit.getCircuitJson())
+}
 
 test("reports trace simplification with stable component references and clears the corrected route", async () => {
   const json = await createTraceSimplificationCircuit()

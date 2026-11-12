@@ -5,8 +5,39 @@ import {
   runAllChecks,
   runAllSchematicChecks,
 } from "../.."
-import { createConnectorDetourCircuit } from "../fixtures/schematic-routing-placement"
+import { Circuit } from "tscircuit"
+import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
+
+async function createConnectorDetourCircuit(connectorX = 7) {
+  const circuit = new Circuit()
+  circuit.pcbDisabled = true
+  circuit.add(
+    <board schTraceAutoLabelEnabled={false} schMaxTraceDistance={100}>
+      <pinheader
+        name="J1"
+        pinCount={3}
+        schX={connectorX}
+        schY={0}
+        schPinArrangement={{
+          rightSide: { pins: [1, 2, 3], direction: "top-to-bottom" },
+        }}
+      />
+      {[1, 2, 3].map((pin) => (
+        <resistor
+          key={pin}
+          name={`R${pin}`}
+          resistance="1k"
+          schX={-5}
+          schY={8 - 4 * pin}
+          connections={{ pin1: `.J1 > .pin${pin}` }}
+        />
+      ))}
+    </board>,
+  )
+  await circuit.renderUntilSettled()
+  return normalizeFixtureSourcePorts(circuit.getCircuitJson())
+}
 
 test("reports connector detours through both entry points without moving components or changing connections", async () => {
   const json = await createConnectorDetourCircuit()
