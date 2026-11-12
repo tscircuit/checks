@@ -1,12 +1,38 @@
 import { expect, test } from "bun:test"
-import { schematic_component_styling_warning } from "circuit-json"
+import {
+  type AnyCircuitElement,
+  schematic_component_styling_warning,
+} from "circuit-json"
 import {
   checkSchematicPlacement,
   runAllChecks,
   runAllSchematicChecks,
 } from "../.."
 import { containsCircuitJsonId } from "lib/util/get-readable-names"
-import { createSchematicBoxes } from "../fixtures/schematic-collisions"
+
+function createSchematicBoxes({
+  positions = [0, 0.4, 0.8],
+  sheet = "sheet_a",
+}: { positions?: number[]; sheet?: string } = {}): AnyCircuitElement[] {
+  return positions.flatMap((x, i): AnyCircuitElement[] => [
+    {
+      type: "source_component",
+      source_component_id: `source_component_${sheet}_${i}`,
+      name: `U${i + 1}`,
+      ftype: "simple_chip",
+    },
+    {
+      type: "schematic_component",
+      schematic_component_id: `schematic_component_${sheet}_${i}`,
+      source_component_id: `source_component_${sheet}_${i}`,
+      schematic_sheet_id: sheet,
+      subcircuit_id: `subcircuit_${sheet}`,
+      center: { x, y: 0 },
+      size: { width: 2, height: 2 },
+      is_box_with_pins: true,
+    },
+  ])
+}
 
 test("reports every overlapping component pair with unique IDs and correct sheet scope", async () => {
   const json = createSchematicBoxes()
