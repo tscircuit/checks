@@ -1,4 +1,5 @@
 import { getReadableNameForElementId } from "lib/util/get-readable-names"
+import { getSchematicAnnotationComponentIds } from "lib/util/get-schematic-annotation-component-ids"
 import { analyzeSchematicPlacement } from "@tscircuit/circuit-json-schematic-placement-analysis/analysis"
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
@@ -14,6 +15,10 @@ const enabledIssueTypes = [
   "VoltageDividerSupplyResistorBelowGroundResistor",
   "SeriesLedChainNotOrdered",
   "ParallelRcNotAligned",
+  "ComponentOverlap",
+  "SchematicTextCollision",
+  "TraceCanBeSimplifiedByMovingComponent",
+  "ConnectorPositionCausesTraceDetours",
   "NetLabelCollision",
   "ComponentBranchesOutOfOrder",
 ] as const
@@ -68,7 +73,6 @@ export function checkSchematicPlacement(
       let schematicComponentId: string | undefined
       let stylingIssueType: string
       let message: string
-      let suffix = ""
       switch (issue.lineItemType) {
         case "NetLabelCollision":
           // This analyzer emits one aggregate per sheet, with component names.
@@ -107,10 +111,10 @@ export function checkSchematicPlacement(
             })
           })
         case "ComponentBranchesOutOfOrder": {
-          schematicComponentId = issue.hostSchematicBox.schematicComponentId
+          const hostId = issue.hostSchematicBox.schematicComponentId
           const hostName = getReadableNameForElementId(
             circuitJson,
-            schematicComponentId ?? "",
+            hostId ?? "",
           )
           const firstId = issue.firstComponentSchematicBox.schematicComponentId
           const secondId =
@@ -123,10 +127,89 @@ export function checkSchematicPlacement(
             circuitJson,
             secondId ?? "",
           )
-          stylingIssueType = "component_branches_out_of_order"
-          suffix = `_${firstId}_${secondId}`
-          message = `Reorder ${firstName} and ${secondName} to follow their connected pins on ${hostName}, avoiding crossed wires. Preserve component symbols, pin assignments and polarity; leave room for labels and reroute both branches without moving the host pins.`
-          break
+          return createWarning({
+            schematicComponentId: hostId,
+            stylingIssueType: "component_branches_out_of_order",
+            suffix: `_${firstId}_${secondId}`,
+            message: `Reorder ${firstName} and ${secondName} to follow their connected pins on ${hostName}, avoiding crossed wires. Preserve component symbols, pin assignments and polarity; leave room for labels and reroute both branches without moving the host pins.`,
+          })
+        }
+        case "TraceCanBeSimplifiedByMovingComponent": {
+          const targetId = issue.targetComponent.schematicComponentId
+          const componentName = getReadableNameForElementId(
+            circuitJson,
+            targetId ?? "",
+          )
+          return createWarning({
+            schematicComponentId: targetId,
+            stylingIssueType: "trace_can_be_simplified_by_moving_component",
+            suffix: `_${issue.schematicTraceId}`,
+            message: `Move ${componentName} to schX=${issue.newSchX}, schY=${issue.newSchY} to reduce the connected trace from ${issue.currentTurnCount} turns to ${issue.suggestedTurnCount}. Preserve pin connections and reroute attached traces.`,
+          })
+        }
+        case "ConnectorPositionCausesTraceDetours": {
+          const connectorId = issue.connectorSchematicBox.schematicComponentId
+          const connectorName = getReadableNameForElementId(
+            circuitJson,
+            connectorId ?? "",
+          )
+          const connectedNames = issue.connectedComponents
+            .map((box) =>
+              getReadableNameForElementId(
+                circuitJson,
+                box.schematicComponentId ?? "",
+              ),
+            )
+            .join(", ")
+          return createWarning({
+            schematicComponentId: connectorId,
+            stylingIssueType: "connector_position_causes_trace_detours",
+            message: `Move ${connectorName} to schX=${issue.newSchX}, schY=${issue.newSchY} so its signal pins face ${connectedNames}. Preserve rotation, pin assignments and electrical connections, and reroute attached traces and rail labels.`,
+          })
+        }
+        case "ComponentOverlap": {
+          const firstId = issue.firstComponent.schematicComponentId
+          const secondId = issue.secondComponent.schematicComponentId
+          if (!firstId || !secondId) return []
+          return createWarning({
+            schematicComponentId: firstId,
+            stylingIssueType: "component_overlap",
+            suffix: `_${secondId}`,
+            message: `${getReadableNameForElementId(circuitJson, firstId)} overlaps ${getReadableNameForElementId(circuitJson, secondId)}. Separate their schematic bodies, preserving pin connections and rerouting attached traces.`,
+          })
+        }
+        case "SchematicTextCollision": {
+          const componentIds = new Set([
+            ...getSchematicAnnotationComponentIds(
+              circuitJson,
+              issue.schematicTextId,
+            ),
+            ...getSchematicAnnotationComponentIds(
+              circuitJson,
+              issue.collidingObject.id,
+            ),
+          ])
+          const textName = getReadableNameForElementId(
+            circuitJson,
+            issue.schematicTextId,
+          )
+          const targetName =
+            issue.collidingObject.type === "trace"
+              ? "a trace"
+              : getReadableNameForElementId(
+                  circuitJson,
+                  issue.collidingObject.id,
+                )
+          // Component styling warnings require an actual component association.
+          // Standalone text-only collisions remain available in the analyzer.
+          return [...componentIds].flatMap((id) =>
+            createWarning({
+              schematicComponentId: id,
+              stylingIssueType: "schematic_text_collision",
+              suffix: `_${issue.schematicTextId}_${issue.collidingObject.id}`,
+              message: `Text "${textName}" overlaps ${targetName}. Reposition the text or adjust its owning trace's label placement to leave the visible text area clear.`,
+            }),
+          )
         }
         case "TwoPinComponentHasInvertedRails": {
           schematicComponentId = issue.schematicBox.schematicComponentId
@@ -213,11 +296,6 @@ export function checkSchematicPlacement(
         default:
           return []
       }
-      return createWarning({
-        schematicComponentId,
-        stylingIssueType,
-        message,
-        suffix,
-      })
+      return createWarning({ schematicComponentId, stylingIssueType, message })
     })
 }
