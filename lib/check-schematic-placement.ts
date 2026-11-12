@@ -14,6 +14,8 @@ const enabledIssueTypes = [
   "VoltageDividerSupplyResistorBelowGroundResistor",
   "SeriesLedChainNotOrdered",
   "ParallelRcNotAligned",
+  "TraceCanBeSimplifiedByMovingComponent",
+  "ConnectorPositionCausesTraceDetours",
 ] as const
 
 export function checkSchematicPlacement(
@@ -29,7 +31,38 @@ export function checkSchematicPlacement(
       let schematicComponentId: string | undefined
       let stylingIssueType: string
       let message: string
+      let warningIdSuffix = ""
       switch (issue.lineItemType) {
+        case "TraceCanBeSimplifiedByMovingComponent": {
+          schematicComponentId = issue.targetComponent.schematicComponentId
+          const componentName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          stylingIssueType = "trace_can_be_simplified_by_moving_component"
+          warningIdSuffix = `_${issue.schematicTraceId}`
+          message = `Move ${componentName} to schX=${issue.newSchX}, schY=${issue.newSchY} to reduce the connected trace from ${issue.currentTurnCount} turns to ${issue.suggestedTurnCount}. Preserve pin connections and reroute attached traces.`
+          break
+        }
+        case "ConnectorPositionCausesTraceDetours": {
+          schematicComponentId =
+            issue.connectorSchematicBox.schematicComponentId
+          const connectorName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          const connectedNames = issue.connectedComponents
+            .map((box) =>
+              getReadableNameForElementId(
+                circuitJson,
+                box.schematicComponentId ?? "",
+              ),
+            )
+            .join(", ")
+          stylingIssueType = "connector_position_causes_trace_detours"
+          message = `Move ${connectorName} to schX=${issue.newSchX}, schY=${issue.newSchY} so its signal pins face ${connectedNames}. Preserve rotation, pin assignments and electrical connections, and reroute attached traces and rail labels.`
+          break
+        }
         case "TwoPinComponentHasInvertedRails": {
           schematicComponentId = issue.schematicBox.schematicComponentId
           const componentName = getReadableNameForElementId(
@@ -121,7 +154,7 @@ export function checkSchematicPlacement(
       return [
         {
           type: "schematic_component_styling_warning",
-          schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponentId}_${stylingIssueType}`,
+          schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponentId}_${stylingIssueType}${warningIdSuffix}`,
           warning_type: "schematic_component_styling_warning",
           styling_issue_type: stylingIssueType,
           message,
