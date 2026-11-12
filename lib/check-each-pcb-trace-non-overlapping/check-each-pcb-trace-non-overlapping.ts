@@ -37,6 +37,11 @@ import {
   getPcbBoard,
 } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import {
+  type NetTieDefinition,
+  type NetTieManager,
+  getOrCreateNetTieManager,
+} from "../net-ties"
 import { getClosestPointBetweenSegmentAndBounds } from "./getClosestPointBetweenSegmentAndBounds"
 import { getClosestPointBetweenSegments } from "./getClosestPointBetweenSegments"
 import {
@@ -61,15 +66,24 @@ export function checkEachPcbTraceNonOverlapping(
   {
     connMap,
     minClearance,
+    netTieManager,
+    netTies,
   }: {
     connMap?: ConnectivityMap
     minClearance?: number
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
   } = {},
 ): (PcbTraceError | PcbKeepoutOverlapWarning)[] {
   const errors: (PcbTraceError | PcbKeepoutOverlapWarning)[] =
     checkPcbTraceSelfShorts(circuitJson)
   addStartAndEndPortIdsIfMissing(circuitJson)
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, {
+    connMap,
+    netTieManager,
+    netTies,
+  })
   const board = getPcbBoard(circuitJson)
   minClearance ??=
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
@@ -229,6 +243,8 @@ export function checkEachPcbTraceNonOverlapping(
           segmentA.thickness / 2 -
           segmentB.thickness / 2
         if (gap > minClearance - EPSILON) continue
+        if (netTieMgr.isSegmentPairExempt(segmentA, segmentB, minClearance))
+          continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${segmentB.pcb_trace_id}`
         const pcb_trace_error_id_reverse = `overlap_${segmentB.pcb_trace_id}_${segmentA.pcb_trace_id}`
@@ -273,6 +289,12 @@ export function checkEachPcbTraceNonOverlapping(
       ) {
         const { gap, center } = getTraceObstacleClearance(segmentA, obj)
         if (!isTraceObstacleOverlap(gap)) continue
+        if (
+          netTieMgr.isSegmentObstacleExempt(segmentA, obj, minClearance, {
+            overlapOnly: true,
+          })
+        )
+          continue
 
         const pcb_trace_error_id = `overlap_${segmentA.pcb_trace_id}_${primaryObjId}`
         if (errorIds.has(pcb_trace_error_id)) continue

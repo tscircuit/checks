@@ -21,13 +21,25 @@ import {
   getPadToPadGap,
   getPads,
 } from "./check-pad-clearance/common"
+import {
+  type NetTieDefinition,
+  type NetTieManager,
+  getOrCreateNetTieManager,
+} from "./net-ties"
 
 export function checkViaPadClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
     minClearance,
-  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
+    netTieManager,
+    netTies,
+  }: {
+    connMap?: ConnectivityMap
+    minClearance?: number
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): PcbPadPadClearanceError[] {
   const vias = circuitJson.filter(
     (element): element is PcbVia => element.type === "pcb_via",
@@ -41,6 +53,11 @@ export function checkViaPadClearance(
     getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
     jlcMinTolerances.min_pad_edge_to_pad_edge_clearance!
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, {
+    connMap,
+    netTieManager,
+    netTies,
+  })
 
   const padIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,
@@ -65,6 +82,7 @@ export function checkViaPadClearance(
         continue
       }
       if (connMap.areIdsConnected(via.pcb_via_id, padId)) continue
+      if (netTieMgr.arePadElementsExempt(via, pad, requiredClearance)) continue
 
       const gap = getPadToPadGap(via, pad)
       if (gap + EPSILON >= requiredClearance) continue

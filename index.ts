@@ -73,3 +73,11 @@ export {
   checkPcbBoardSupport,
   type PcbBoardSupportError,
 } from "./lib/check-pcb-board-support"
+export {
+  NetTieManager,
+  getOrCreateNetTieManager,
+  parseNetTiePadGroups,
+  type NetTieDefinition,
+  type RawPadGroupInput,
+  type ResolvedNetTieGroup,
+} from "./lib/net-ties"

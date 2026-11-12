@@ -10,6 +10,11 @@ import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 
 import { routePointTouchesPad } from "../util/route-point-touches-pad"
 import {
+  type NetTieDefinition,
+  type NetTieManager,
+  getOrCreateNetTieManager,
+} from "../net-ties"
+import {
   createEndpointContactContext,
   endpointTouchesNetCopper,
   getTerminalWireSegment,
@@ -80,9 +85,18 @@ function getDanglingEndpoints(
 /** Reports exposed trace endpoints, independently of required-port connectivity. */
 export function checkDanglingTraces(
   circuitJson: AnyCircuitElement[],
-  options: { connMap?: ConnectivityMap } = {},
+  options: {
+    connMap?: ConnectivityMap
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): PcbTraceError[] {
   const ctx = createEndpointContactContext(circuitJson, options.connMap)
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, {
+    connMap: ctx.connMap ?? options.connMap,
+    netTieManager: options.netTieManager,
+    netTies: options.netTies,
+  })
   const sourceTracesById = new Map<SourceTraceId, SourceTrace>()
   const sourcePortIdsWithPcbPorts = new Set<SourcePortId>()
   for (const element of circuitJson) {
@@ -114,6 +128,11 @@ export function checkDanglingTraces(
       { trace, hasExpectedPorts },
       ctx,
     )) {
+      if (
+        netTieMgr.isTraceEndpointAnchoredByNetTie(trace, point, circuitJson)
+      ) {
+        continue
+      }
       const traceName = getReadableNameForPcbTrace(
         circuitJson,
         trace.pcb_trace_id,

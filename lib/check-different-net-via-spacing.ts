@@ -12,13 +12,25 @@ import {
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { distance } from "lib/util/distance"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
+import {
+  type NetTieDefinition,
+  type NetTieManager,
+  getOrCreateNetTieManager,
+} from "./net-ties"
 
 export function checkDifferentNetViaSpacing(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
     minClearance,
-  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
+    netTieManager,
+    netTies,
+  }: {
+    connMap?: ConnectivityMap
+    minClearance?: number
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): PcbViaClearanceError[] {
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   if (vias.length < 2) return []
@@ -30,6 +42,11 @@ export function checkDifferentNetViaSpacing(
     getBoardDrcValue(board, "min_pad_edge_to_pad_edge_clearance") ??
     jlcMinTolerances.min_pad_edge_to_pad_edge_clearance!
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, {
+    connMap,
+    netTieManager,
+    netTies,
+  })
   const errors: PcbViaClearanceError[] = []
   const reported = new Set<string>()
 
@@ -39,6 +56,14 @@ export function checkDifferentNetViaSpacing(
       const viaB = vias[j]
       // TODO: It is a very inefficient piece of code, the way to fix it is to use flatbush.
       if (connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
+      if (
+        netTieMgr.areDifferentNetViasExempt(
+          viaA,
+          viaB,
+          Math.max(minClearance!, minCopperClearance),
+        )
+      )
+        continue
       const centerDistance = distance(viaA, viaB)
       let gap = centerDistance - viaA.hole_diameter / 2 - viaB.hole_diameter / 2
       let minimumClearance = minClearance!
