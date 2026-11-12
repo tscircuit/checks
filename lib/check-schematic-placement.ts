@@ -14,6 +14,8 @@ const enabledIssueTypes = [
   "VoltageDividerSupplyResistorBelowGroundResistor",
   "SeriesLedChainNotOrdered",
   "ParallelRcNotAligned",
+  "NetLabelCollision",
+  "ComponentBranchesOutOfOrder",
 ] as const
 
 export function checkSchematicPlacement(
@@ -23,13 +25,109 @@ export function checkSchematicPlacement(
     issueTypes: enabledIssueTypes,
   })
   const db = cju(circuitJson)
+  const createWarning = ({
+    schematicComponentId,
+    stylingIssueType,
+    message,
+    suffix = "",
+  }: {
+    schematicComponentId?: string
+    stylingIssueType: string
+    message: string
+    suffix?: string
+  }): SchematicComponentStylingWarning[] => {
+    if (!schematicComponentId) return []
+    const component = db.schematic_component.get(schematicComponentId)
+    if (!component) return []
+    const group = component.schematic_group_id
+      ? db.schematic_group.get(component.schematic_group_id)
+      : undefined
+    return [
+      {
+        type: "schematic_component_styling_warning",
+        schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponentId}_${stylingIssueType}${suffix}`,
+        warning_type: "schematic_component_styling_warning",
+        styling_issue_type: stylingIssueType,
+        message,
+        schematic_component_id: schematicComponentId,
+        source_component_id: component.source_component_id,
+        schematic_sheet_id: component.schematic_sheet_id,
+        subcircuit_id: component.subcircuit_id ?? group?.subcircuit_id,
+        schematic_port_ids: db.schematic_port
+          .list()
+          .filter(
+            (port) => port.schematic_component_id === schematicComponentId,
+          )
+          .map((port) => port.schematic_port_id),
+      },
+    ]
+  }
   return analysis
     .getIssues()
     .flatMap((issue): SchematicComponentStylingWarning[] => {
       let schematicComponentId: string | undefined
       let stylingIssueType: string
       let message: string
+      let suffix = ""
       switch (issue.lineItemType) {
+        case "NetLabelCollision":
+          // This analyzer emits one aggregate per sheet, with component names.
+          // Resolve only unambiguous names on that sheet, never across sheets.
+          return issue.pairs.flatMap((pair) => {
+            const first = db.schematic_component
+              .list()
+              .filter(
+                (p) =>
+                  p.schematic_sheet_id === issue.schematicSheetId &&
+                  (db.source_component.get(p.source_component_id ?? "")?.name ??
+                    "") === pair.comp1Name,
+              )
+            const second = db.schematic_component
+              .list()
+              .filter(
+                (p) =>
+                  p.schematic_sheet_id === issue.schematicSheetId &&
+                  (db.source_component.get(p.source_component_id ?? "")?.name ??
+                    "") === pair.comp2Name,
+              )
+            if (first.length !== 1 || second.length !== 1) return []
+            const firstId = first[0]!.schematic_component_id
+            const secondId = second[0]!.schematic_component_id
+            if (!firstId || !secondId || firstId === secondId) return []
+            const firstName = getReadableNameForElementId(circuitJson, firstId)
+            const secondName = getReadableNameForElementId(
+              circuitJson,
+              secondId,
+            )
+            return createWarning({
+              schematicComponentId: firstId,
+              stylingIssueType: "net_label_collision",
+              suffix: `_${secondId}`,
+              message: `Net labels attached to ${firstName} or ${secondName} overlap the other component or its labels. Separate the components and their attached labels, preserving pin connections and rerouting affected traces.`,
+            })
+          })
+        case "ComponentBranchesOutOfOrder": {
+          schematicComponentId = issue.hostSchematicBox.schematicComponentId
+          const hostName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          const firstId = issue.firstComponentSchematicBox.schematicComponentId
+          const secondId =
+            issue.secondComponentSchematicBox.schematicComponentId
+          const firstName = getReadableNameForElementId(
+            circuitJson,
+            firstId ?? "",
+          )
+          const secondName = getReadableNameForElementId(
+            circuitJson,
+            secondId ?? "",
+          )
+          stylingIssueType = "component_branches_out_of_order"
+          suffix = `_${firstId}_${secondId}`
+          message = `Reorder ${firstName} and ${secondName} to follow their connected pins on ${hostName}, avoiding crossed wires. Preserve component symbols, pin assignments and polarity; leave room for labels and reroute both branches without moving the host pins.`
+          break
+        }
         case "TwoPinComponentHasInvertedRails": {
           schematicComponentId = issue.schematicBox.schematicComponentId
           const componentName = getReadableNameForElementId(
@@ -37,7 +135,10 @@ export function checkSchematicPlacement(
             schematicComponentId ?? "",
           )
           stylingIssueType = "inverted_rails"
-          message = `${componentName} has its positive-supply pin facing down. Rotate ${componentName} by 180° so that pin faces up, preserving pin connections, and reroute attached traces.`
+          message =
+            issue.railType === "ground"
+              ? `${componentName} has its ground pin facing up. Rotate ${componentName} by 180° so that pin faces down, preserving pin connections, and reroute attached traces.`
+              : `${componentName} has its positive-supply pin facing down. Rotate ${componentName} by 180° so that pin faces up, preserving pin connections, and reroute attached traces.`
           break
         }
         case "RegulatorCapacitorsOnWrongSides": {
@@ -112,30 +213,11 @@ export function checkSchematicPlacement(
         default:
           return []
       }
-      if (!schematicComponentId) return []
-      const component = db.schematic_component.get(schematicComponentId)
-      if (!component) return []
-      const group = component.schematic_group_id
-        ? db.schematic_group.get(component.schematic_group_id)
-        : undefined
-      return [
-        {
-          type: "schematic_component_styling_warning",
-          schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponentId}_${stylingIssueType}`,
-          warning_type: "schematic_component_styling_warning",
-          styling_issue_type: stylingIssueType,
-          message,
-          schematic_component_id: schematicComponentId,
-          source_component_id: component.source_component_id,
-          schematic_sheet_id: component.schematic_sheet_id,
-          subcircuit_id: component.subcircuit_id ?? group?.subcircuit_id,
-          schematic_port_ids: db.schematic_port
-            .list()
-            .filter(
-              (port) => port.schematic_component_id === schematicComponentId,
-            )
-            .map((port) => port.schematic_port_id),
-        },
-      ]
+      return createWarning({
+        schematicComponentId,
+        stylingIssueType,
+        message,
+        suffix,
+      })
     })
 }
