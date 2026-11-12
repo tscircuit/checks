@@ -95,6 +95,27 @@ test("a shared inner-layer pour joins the two through-via escapes", () => {
   expect(checkTracesAreContiguous(withPour().circuit)).toEqual([])
 })
 
+const withEndLayersOnly = <T extends { type: string }>(circuit: T[]) => {
+  for (const element of circuit) {
+    if (element.type === "pcb_via") {
+      ;(element as unknown as { layers: string[] }).layers = ["top", "bottom"]
+    }
+  }
+  return circuit
+}
+
+test("a through via listing only its end layers still connects an inner-layer trace", () => {
+  expect(
+    checkTracesAreContiguous(withEndLayersOnly(structuredClone(fixture))),
+  ).toEqual([])
+})
+
+test("through vias listing only their end layers still join through an inner-layer pour", () => {
+  expect(
+    checkTracesAreContiguous(withEndLayersOnly(withPour().circuit)),
+  ).toEqual([])
+})
+
 test("a pour cutout around a via leaves that escape disconnected", () => {
   const { circuit, pour } = withPour()
   pour.brep_shape.inner_rings.push({
