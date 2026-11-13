@@ -30,3 +30,19 @@ export const getBoardDrcValue = <K extends keyof ManufacturingDrcProperties>(
   board: PcbBoard | undefined,
   key: K,
 ): ManufacturingDrcProperties[K] => board?.[key]
+
+/**
+ * JLCPCB builds vias with a pad at least 0.1mm larger than the drill, i.e. a
+ * 0.05mm annular ring (min_via_pad_diameter - min_via_hole_diameter) / 2.
+ */
+export const DEFAULT_MIN_VIA_ANNULAR_RING =
+  (jlcMinTolerances.min_via_pad_diameter! -
+    jlcMinTolerances.min_via_hole_diameter!) /
+  2
+
+/**
+ * Smallest plated through-hole annular ring JLCPCB lists (1oz copper). Their
+ * capabilities page also quotes 0.15mm and 0.25mm, so this only flags rings
+ * that no listed process accepts.
+ */
+export const DEFAULT_MIN_PLATED_HOLE_ANNULAR_RING = 0.13
