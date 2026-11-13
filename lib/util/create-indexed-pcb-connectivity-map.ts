@@ -8,6 +8,7 @@ import {
 import Flatbush from "flatbush"
 import { getViaAndPourConnections } from "./get-via-and-pour-connections"
 import { getTouchingSmtPadConnections } from "./get-touching-smt-pad-connections"
+import type { NetTieDefinition, NetTieManager } from "../net-ties"
 
 type TraceSegmentBounds = {
   traceIndex: number
@@ -21,6 +22,10 @@ type TraceSegmentBounds = {
 /** Physical trace connectivity, including plated via barrels and copper pours. */
 export function createIndexedPcbConnectivityMap(
   circuitJson: AnyCircuitElement[],
+  options: {
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): PcbConnectivityMap {
   // Construct empty to avoid the dependency's all-pairs scan. Keep its exact
   // intersection predicate and query methods, including cross-net contacts.
@@ -114,7 +119,7 @@ export function createIndexedPcbConnectivityMap(
       connections.push(connection)
   }
   connections.push(...getViaAndPourConnections(circuitJson))
-  connections.push(...getTouchingSmtPadConnections(circuitJson))
+  connections.push(...getTouchingSmtPadConnections(circuitJson, options))
   map.connMap = new ConnectivityMap(findConnectedNetworks(connections))
   return map
 }

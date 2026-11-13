@@ -1,4 +1,5 @@
 import type { SourceComponentBase, SourcePort } from "circuit-json"
+import { isNetTieComponentRecord } from "../net-ties"
 
 /**
  * Power and ground pin-role checks only apply when a chip exposes enough
@@ -11,4 +12,5 @@ export const shouldCheckChipPowerGroundPins = (
   ports: SourcePort[],
 ): boolean =>
   component.ftype === "simple_chip" &&
+  !isNetTieComponentRecord(component as unknown as Record<string, unknown>) &&
   ports.filter((port) => port.do_not_connect !== true).length >= 2

@@ -7,11 +7,22 @@ import {
   convertCircuitJsonToFlattenJs,
   type FlattenElement,
 } from "@tscircuit/circuit-json-to-flattenjs"
-import type { AnyCircuitElement, PcbPlacementError } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  LayerRef,
+  PcbPlacementError,
+} from "circuit-json"
 import {
   type ConnectivityMap,
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
+import { EPSILON } from "lib/drc-defaults"
+import {
+  type NetTieDefinition,
+  type NetTieManager,
+  expandBounds,
+  getOrCreateNetTieManager,
+} from "./net-ties"
 
 /** Filled polygons include their holes, so copper wholly in a cutout is safe. */
 function touchesPour(
@@ -60,10 +71,23 @@ function hasBoundaryAtPoint(
 /** Detect accidental copper contact, rather than enforcing a clearance margin. */
 export function checkCopperPourShorts(
   circuitJson: AnyCircuitElement[],
-  { connMap }: { connMap?: ConnectivityMap } = {},
+  {
+    connMap,
+    netTieManager,
+    netTies,
+  }: {
+    connMap?: ConnectivityMap
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): PcbPlacementError[] {
   if (!circuitJson.some((e) => e.type === "pcb_copper_pour")) return []
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, {
+    connMap,
+    netTieManager,
+    netTies,
+  })
   const { elements: copper } = convertCircuitJsonToFlattenJs(circuitJson, {
     elementTypes: [
       "pcb_smtpad",
@@ -124,11 +148,39 @@ export function checkCopperPourShorts(
       )
         continue
       const id = `copper_pour_short_${[pour.elementId, other.elementId].sort().join("_")}`
-      if (
-        errors.has(id) ||
-        !pour.shapes.some((shape) => touchesPour(shape, otherShape))
-      )
-        continue
+      if (errors.has(id)) continue
+
+      const matchingTieGroups = netTieMgr.findMatchingGroups({
+        idA: pour.elementId,
+        idB: other.elementId,
+        layers: pour.layer ? [pour.layer as LayerRef] : undefined,
+        explicitNetA: netId ?? undefined,
+        explicitNetB:
+          other.sourceElement.type === "pcb_copper_pour"
+            ? (other.sourceElement.source_net_id ?? undefined)
+            : undefined,
+      })
+
+      const hasUnexemptShort = pour.shapes.some((shape) => {
+        if (!touchesPour(shape, otherShape)) return false
+        if (matchingTieGroups.length === 0) return true
+
+        let clipped = shape
+        for (const group of matchingTieGroups) {
+          if (clipped.isEmpty()) break
+          const b = expandBounds(
+            group.bounds,
+            Math.max(0, group.clearanceMargin) + EPSILON,
+          )
+          const tieBox = new Flatten.Polygon(
+            new Flatten.Box(b.minX, b.minY, b.maxX, b.maxY).toPoints(),
+          )
+          clipped = Flatten.BooleanOperations.subtract(clipped, tieBox)
+        }
+        return !clipped.isEmpty() && touchesPour(clipped, otherShape)
+      })
+
+      if (!hasUnexemptShort) continue
       errors.set(id, {
         type: "pcb_placement_error",
         pcb_placement_error_id: id,

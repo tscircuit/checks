@@ -1,16 +1,26 @@
 import type { AnyCircuitElement, PcbSmtPad } from "circuit-json"
 import Flatbush from "flatbush"
 import { getPadBounds, getPadToPadGap } from "../check-pad-clearance/common"
+import {
+  type NetTieDefinition,
+  type NetTieManager,
+  getOrCreateNetTieManager,
+} from "../net-ties"
 
 /** Connect source contacts sharing actual SMT copper on the same PCB layer. */
 export function getTouchingSmtPadConnections(
   circuitJson: AnyCircuitElement[],
+  options: {
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): string[][] {
   const pads = circuitJson.filter(
     (element): element is PcbSmtPad =>
       element.type === "pcb_smtpad" && Boolean(element.pcb_port_id),
   )
   if (pads.length < 2) return []
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, options)
 
   const epsilon = 1e-9
   const bounds = pads.map(getPadBounds)
@@ -36,6 +46,7 @@ export function getTouchingSmtPadConnections(
         continue
       // Bounds only select candidates: rotated/round pads must touch in copper.
       if (getPadToPadGap(pad, other) <= epsilon) {
+        if (netTieMgr.areSmtPadsCrossNetTied(pad, other)) continue
         connections.push([pad.pcb_port_id!, other.pcb_port_id!])
       }
     }

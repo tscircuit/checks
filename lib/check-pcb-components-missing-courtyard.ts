@@ -3,6 +3,7 @@ import type {
   PcbComponent,
   PcbComponentMissingCourtyardWarning,
 } from "circuit-json"
+import { isNetTieComponentRecord } from "./net-ties"
 import { getReadableNameForComponent } from "./util/get-readable-names"
 
 const courtyardTypes = new Set([
@@ -24,7 +25,10 @@ export function checkPcbComponentsMissingCourtyard(
       }
       if (
         element.type === "source_component" &&
-        element.ftype === "simple_test_point"
+        (element.ftype === "simple_test_point" ||
+          isNetTieComponentRecord(
+            element as unknown as Record<string, unknown>,
+          ))
       ) {
         return [element.source_component_id]
       }
@@ -48,6 +52,9 @@ export function checkPcbComponentsMissingCourtyard(
     .filter(
       (component) =>
         !componentIdsWithCourtyards.has(component.pcb_component_id) &&
+        !isNetTieComponentRecord(
+          component as unknown as Record<string, unknown>,
+        ) &&
         (!component.source_component_id ||
           !courtyardExemptSourceIds.has(component.source_component_id)),
     )
