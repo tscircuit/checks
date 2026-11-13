@@ -311,3 +311,68 @@ test("reports unsupported cutout geometry without throwing or exposing IDs", () 
   )
   expect(errors[0].message).not.toContain("pcb_cutout_patterned")
 })
+
+test("checks copper-to-cutout clearance against each element's owning board regardless of board order", () => {
+  const relaxedBoard: PcbBoard = {
+    ...board,
+    pcb_board_id: "board_relaxed",
+    subcircuit_id: "sub_relaxed",
+    center: { x: 0, y: 0 },
+    min_board_edge_clearance: 0.2,
+  }
+  const strictBoard: PcbBoard = {
+    ...board,
+    pcb_board_id: "board_strict",
+    subcircuit_id: "sub_strict",
+    center: { x: 25, y: 0 },
+    min_board_edge_clearance: 0.5,
+  }
+  const strictCutout: PcbCutout = {
+    type: "pcb_cutout",
+    pcb_cutout_id: "cutout_strict",
+    subcircuit_id: "sub_strict",
+    shape: "rect",
+    center: { x: 25, y: 0 },
+    width: 2,
+    height: 1,
+  }
+  // Cutout top edge at y = 0.5; trace centerline at y = 1.05 with width 0.4 -> bottom edge at y = 0.85 -> 0.35mm gap
+  const strictTrace: PcbTrace = {
+    type: "pcb_trace",
+    pcb_trace_id: "trace_strict",
+    subcircuit_id: "sub_strict",
+    route: [
+      { route_type: "wire", x: 23, y: 1.05, width: 0.4, layer: "top" },
+      { route_type: "wire", x: 27, y: 1.05, width: 0.4, layer: "top" },
+    ],
+  }
+  const relaxedCutout: PcbCutout = {
+    ...cutout,
+    pcb_cutout_id: "cutout_relaxed",
+    subcircuit_id: "sub_relaxed",
+  }
+  const relaxedTrace: PcbTrace = {
+    ...horizontalTrace(1.05),
+    pcb_trace_id: "trace_relaxed",
+    subcircuit_id: "sub_relaxed",
+  }
+
+  for (const boards of [
+    [relaxedBoard, strictBoard],
+    [strictBoard, relaxedBoard],
+  ]) {
+    const errors = checkCopperToCutoutClearance([
+      ...boards,
+      relaxedCutout,
+      relaxedTrace,
+      strictCutout,
+      strictTrace,
+    ])
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toMatchObject({
+      pcb_placement_error_id: "copper_to_cutout_trace_strict_cutout_strict",
+      minimum_clearance: 0.5,
+    })
+    expect((errors[0] as any).actual_clearance).toBeCloseTo(0.35, 6)
+  }
+})
