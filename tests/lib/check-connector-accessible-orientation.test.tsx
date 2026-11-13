@@ -314,3 +314,67 @@ test("pin headers ignore inferred side entry but retain explicit right-angle war
   ])
   expect(warnings).toHaveLength(1)
 })
+
+test("imported generic-chip vertical headers ignore inferred side entry unless insertion_direction is explicit", async () => {
+  const circuit = new Circuit()
+  circuit.add(
+    <board width={50} height={48} routingDisabled>
+      <chip
+        name="J1"
+        manufacturerPartNumber="Header2.54mm 1*8P"
+        supplierPartNumbers={{ jlcpcb: ["C49256"] }}
+        pcbY={-21}
+        pinLabels={Object.fromEntries(
+          Array.from({ length: 8 }, (_, i) => [`pin${i + 1}`, [`pin${i + 1}`]]),
+        )}
+        footprint={
+          <footprint>
+            <platedhole
+              portHints={["pin1"]}
+              pcbX={-8.89}
+              pcbY={0}
+              holeWidth={1}
+              holeHeight={1}
+              outerWidth={1.5}
+              outerHeight={1.5}
+              rectPad
+              shape="pill"
+            />
+            {Array.from({ length: 7 }, (_, i) => (
+              <platedhole
+                portHints={[`pin${i + 2}`]}
+                pcbX={-8.89 + (i + 1) * 2.54}
+                pcbY={0}
+                outerDiameter={1.5}
+                holeDiameter={1}
+                shape="circle"
+              />
+            ))}
+          </footprint>
+        }
+      />
+    </board>,
+  )
+
+  await circuit.renderUntilSettled()
+  const json = circuit.getCircuitJson()
+  const header = json.find((e) => e.type === "pcb_component")!
+
+  const withInferredCenter = json.map((e) =>
+    e.type === "pcb_component" && e.pcb_component_id === header.pcb_component_id
+      ? { ...e, cable_insertion_center: { x: 0, y: -19.33 } }
+      : e,
+  )
+  expect(checkConnectorAccessibleOrientation(withInferredCenter)).toHaveLength(
+    0,
+  )
+
+  const withExplicitInwardDirection = withInferredCenter.map((e) =>
+    e.type === "pcb_component" && e.pcb_component_id === header.pcb_component_id
+      ? { ...e, insertion_direction: "from_top" as const }
+      : e,
+  )
+  expect(
+    checkConnectorAccessibleOrientation(withExplicitInwardDirection),
+  ).toHaveLength(1)
+})
