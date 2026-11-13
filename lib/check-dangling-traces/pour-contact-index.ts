@@ -8,6 +8,7 @@ import { getPourPolygon, getViaPolygon } from "@tscircuit/circuit-json-util"
 import type { AnyCircuitElement, LayerRef } from "circuit-json"
 import type { ConnectivityMap } from "circuit-json-to-connectivity-map"
 import { createCopperPolygonContactTester } from "../copper-pour-connectivity/create-copper-polygon-contact-tester"
+import { polygonContainsPoint } from "../util/polygon-contains-point"
 
 // Board XY coordinates in mm are scaled up before polygon operations.
 const POLYGON_SCALE = 1e6
@@ -73,7 +74,9 @@ export function getPourContactTester(
         contact.center.x * POLYGON_SCALE,
         contact.center.y * POLYGON_SCALE,
       )
-      return pours.some((pour) => pour.polygon.contains(contactPoint))
+      return pours.some((pour) =>
+        polygonContainsPoint(pour.polygon, contactPoint),
+      )
     }
     if (pours.length === 0) return false
     const contactPolygon = getContactCopperPolygon(contact)
