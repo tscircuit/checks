@@ -3,11 +3,13 @@ import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
 import {
   all_layers,
   type AnyCircuitElement,
+  type PcbBoard,
   type PcbTraceError,
 } from "circuit-json"
 import { getClosestPointBetweenSegments } from "./check-each-pcb-trace-non-overlapping/getClosestPointBetweenSegments"
 import type { PcbTraceSegment } from "./check-each-pcb-trace-non-overlapping/getCollidableBounds"
 import { getPcbPortIdsConnectedToTraces } from "./check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
+import { getBoardOwnerResolver } from "./util/get-board-owner-resolver"
 
 type Segment = PcbTraceSegment & {
   startDistance: number
@@ -22,11 +24,23 @@ export function checkPcbTraceSelfShorts(
   const matchedSourceTraceIds = new Set(
     circuitJson.flatMap((element) =>
       element.type === "source_bus" && element.max_length_skew !== undefined
-        ? element.source_trace_ids
+        ? [
+            ...element.source_trace_ids,
+            ...(element.length_match_source_trace_ids ?? []),
+          ]
         : [],
     ),
   )
   const db = cju(circuitJson)
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
+  const defaultBoard = circuitJson.find(
+    (e): e is PcbBoard => e.type === "pcb_board",
+  )
+  const boardsById = new Map<string, PcbBoard>(
+    circuitJson.flatMap((e) =>
+      e.type === "pcb_board" ? [[e.pcb_board_id, e] as const] : [],
+    ),
+  )
   const errors: PcbTraceError[] = []
   for (const trace of circuitJson) {
     if (trace.type !== "pcb_trace") continue
@@ -121,7 +135,10 @@ export function checkPcbTraceSelfShorts(
     // not cross. Use route position to distinguish the intentional entry/exit
     // from contact that bypasses a detour.
     if (!shortCenter) {
-      const board = circuitJson.find((e) => e.type === "pcb_board")
+      const traceBoardId = getBoardOwner(trace)
+      const board =
+        (traceBoardId ? boardsById.get(traceBoardId) : undefined) ??
+        defaultBoard
       const stack = [
         "top",
         ...all_layers
@@ -132,15 +149,18 @@ export function checkPcbTraceSelfShorts(
       vias: for (let i = 0; i < trace.route.length; i++) {
         const point = trace.route[i]!
         if (point.route_type !== "via") continue
-        const materialized = db.pcb_via
-          .list()
-          .find(
-            (via) =>
-              (via.pcb_trace_id === trace.pcb_trace_id ||
-                (!via.pcb_trace_id &&
-                  via.source_trace_id === trace.source_trace_id)) &&
-              Math.hypot(via.x - point.x, via.y - point.y) <= 1e-9,
+        const materialized = db.pcb_via.list().find((via) => {
+          const viaBoardId = getBoardOwner(via)
+          if (traceBoardId && viaBoardId && traceBoardId !== viaBoardId) {
+            return false
+          }
+          return (
+            (via.pcb_trace_id === trace.pcb_trace_id ||
+              (!via.pcb_trace_id &&
+                via.source_trace_id === trace.source_trace_id)) &&
+            Math.hypot(via.x - point.x, via.y - point.y) <= 1e-9
           )
+        })
         const diameter = materialized?.outer_diameter ?? point.outer_diameter
         if (
           diameter === undefined ||

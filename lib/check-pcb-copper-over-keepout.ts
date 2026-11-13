@@ -13,6 +13,7 @@ import {
   getPads,
 } from "./check-pad-clearance/common"
 import { EPSILON } from "./drc-defaults"
+import { getBoardOwnerResolver } from "./util/get-board-owner-resolver"
 import { getReadableNameForComponent } from "./util/get-readable-names"
 import { getLayersOfPcbElement } from "./util/getLayersOfPcbElement"
 
@@ -62,15 +63,28 @@ export function checkPcbCopperOverKeepout(
     ...getPads(circuitJson),
     ...(cju(circuitJson).pcb_via.list() as PcbVia[]),
   ]
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
   const errors = new Map<string, PcbPlacementError | PcbKeepoutOverlapWarning>()
 
   for (const keepout of keepouts) {
+    const keepoutBoardId = getBoardOwner(keepout)
+    const keepoutComponentId =
+      "pcb_component_id" in keepout &&
+      typeof keepout.pcb_component_id === "string"
+        ? keepout.pcb_component_id
+        : undefined
     const excludedComponentIds = new Set(
       keepout.excluded_pcb_component_ids ?? [],
     )
+    if (keepoutComponentId) excludedComponentIds.add(keepoutComponentId)
 
     for (const copperElement of copper) {
       if (keepout.allow_placements && copperElement.type !== "pcb_via") continue
+
+      const copperBoardId = getBoardOwner(copperElement)
+      if (keepoutBoardId && copperBoardId && keepoutBoardId !== copperBoardId) {
+        continue
+      }
 
       const copperComponentId =
         "pcb_component_id" in copperElement
