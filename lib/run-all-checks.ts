@@ -52,6 +52,7 @@ import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-termi
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
+import { checkRuleAreas } from "./rule-areas/check-rule-areas"
 
 export async function runAllPlacementChecks(
   circuitJson: AnyCircuitElement[],
@@ -81,9 +82,10 @@ export async function runAllPlacementChecks(
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
   ]
-  return consolidateOverlaps
+  const consolidated = consolidateOverlaps
     ? consolidatePcbOverlapErrors(circuitJson, errors)
     : errors
+  return [...consolidated, ...checkRuleAreas(circuitJson)]
 }
 
 export async function runAllNetlistChecks(circuitJson: AnyCircuitElement[]) {
