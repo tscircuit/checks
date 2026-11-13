@@ -56,7 +56,7 @@ test("errors when a PCB trace exceeds its source trace maximum length", () => {
     {
       type: "pcb_trace_too_long_error",
       pcb_trace_too_long_error_id:
-        "pcb_trace_too_long_error_overlength_pcb_trace",
+        "pcb_trace_too_long_error_overlength_source_trace_overlength_pcb_trace",
       error_type: "pcb_trace_too_long_error",
       message: "PCB trace is 12.00mm long, exceeding the 10mm maximum",
       pcb_trace_id: "overlength_pcb_trace",
