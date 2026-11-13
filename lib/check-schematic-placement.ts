@@ -1,11 +1,11 @@
-import { getReadableNameForElementId } from "lib/util/get-readable-names"
-import { getSchematicAnnotationComponentIds } from "lib/util/get-schematic-annotation-component-ids"
 import { analyzeSchematicPlacement } from "@tscircuit/circuit-json-schematic-placement-analysis/analysis"
 import { cju } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   SchematicComponentStylingWarning,
 } from "circuit-json"
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
+import { getSchematicAnnotationComponentIds } from "lib/util/get-schematic-annotation-component-ids"
 
 // Enable reviewed placement findings individually as schematic warnings.
 const enabledIssueTypes = [
@@ -21,7 +21,93 @@ const enabledIssueTypes = [
   "ConnectorPositionCausesTraceDetours",
   "NetLabelCollision",
   "ComponentBranchesOutOfOrder",
+  "CrystalNotCenteredOverLoadCapacitors",
 ] as const
+
+export function isCrystalComponent(
+  sourceComponent?: AnyCircuitElement | null,
+): boolean {
+  if (!sourceComponent || sourceComponent.type !== "source_component") {
+    return false
+  }
+
+  // Explicit crystal or resonator ftype
+  if ("ftype" in sourceComponent) {
+    const ftype = (sourceComponent as any).ftype
+    if (
+      ftype === "simple_crystal" ||
+      ftype === "simple_resonator" ||
+      ftype === "crystal" ||
+      ftype === "resonator"
+    ) {
+      return true
+    }
+  }
+
+  // Explicit role
+  if (
+    "role" in sourceComponent &&
+    typeof sourceComponent.role === "string" &&
+    (sourceComponent.role === "crystal" ||
+      sourceComponent.role === "resonator" ||
+      sourceComponent.role === "oscillator")
+  ) {
+    return true
+  }
+
+  // Explicit symbol_name
+  if (
+    "symbol_name" in sourceComponent &&
+    typeof sourceComponent.symbol_name === "string" &&
+    /crystal|resonator|oscillator/i.test(sourceComponent.symbol_name)
+  ) {
+    return true
+  }
+
+  // Explicit description
+  if (
+    "description" in sourceComponent &&
+    typeof sourceComponent.description === "string" &&
+    /crystal|resonator|oscillator/i.test(sourceComponent.description)
+  ) {
+    return true
+  }
+
+  const name =
+    typeof sourceComponent.name === "string" ? sourceComponent.name : ""
+  const mpn =
+    "manufacturer_part_number" in sourceComponent &&
+    typeof sourceComponent.manufacturer_part_number === "string"
+      ? sourceComponent.manufacturer_part_number
+      : ""
+  const supplierParts =
+    "supplier_part_numbers" in sourceComponent &&
+    sourceComponent.supplier_part_numbers &&
+    typeof sourceComponent.supplier_part_numbers === "object"
+      ? Object.values(sourceComponent.supplier_part_numbers).flat().join(" ")
+      : ""
+  const combined = `${name} ${mpn} ${supplierParts}`
+
+  // Ferrite beads, inductors, resistors, capacitors, chips, etc. are NOT crystals
+  if (/MH1608|ferrite|bead|inductor/i.test(combined)) {
+    return false
+  }
+
+  if (/^(L|FB|R|C|D|U|J|P|TP)\d*$/i.test(name)) {
+    return false
+  }
+
+  // Reference designators commonly indicating crystals / resonators
+  if (/^(Y|XTAL|OSC)\d*$/i.test(name)) {
+    return true
+  }
+
+  if (/^X\d+$/i.test(name) && !/connector|header/i.test(combined)) {
+    return true
+  }
+
+  return false
+}
 
 export function checkSchematicPlacement(
   circuitJson: AnyCircuitElement[],
@@ -291,6 +377,33 @@ export function checkSchematicPlacement(
           )
           stylingIssueType = "parallel_rc_not_aligned"
           message = `${resistorName} and ${capacitorName} share chip-pin and ground connections but are not drawn as adjacent parallel branches. Place their shared connections at matching ends, preserving pin connections and capacitor polarity, and reroute affected traces.`
+          break
+        }
+        case "CrystalNotCenteredOverLoadCapacitors": {
+          schematicComponentId = issue.crystalSchematicBox.schematicComponentId
+          const sourceComponentId = issue.crystalSchematicBox.sourceComponentId
+          const sourceComponent = sourceComponentId
+            ? db.source_component.get(sourceComponentId)
+            : undefined
+
+          if (!isCrystalComponent(sourceComponent)) {
+            return []
+          }
+
+          const crystalName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          const firstCapacitorName = getReadableNameForElementId(
+            circuitJson,
+            issue.firstLoadCapacitorSchematicBox.schematicComponentId ?? "",
+          )
+          const secondCapacitorName = getReadableNameForElementId(
+            circuitJson,
+            issue.secondLoadCapacitorSchematicBox.schematicComponentId ?? "",
+          )
+          stylingIssueType = "crystal_not_centered_over_load_capacitors"
+          message = `${crystalName} is not centered between load capacitors ${firstCapacitorName} and ${secondCapacitorName}. Move ${crystalName} so it is centered between them and aligned with their load-side pins.`
           break
         }
         default:

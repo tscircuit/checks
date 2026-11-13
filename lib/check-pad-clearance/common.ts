@@ -175,32 +175,88 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
 // At the maximum radius its inset collapses, so use the existing pill geometry.
 const getRoundedPadCore = (pad: CopperClearanceElement) => {
   if (
-    pad.type !== "pcb_smtpad" ||
-    (pad.shape !== "rect" && pad.shape !== "rotated_rect") ||
-    !pad.corner_radius ||
-    pad.corner_radius <= 0
-  )
-    return null
+    pad.type === "pcb_smtpad" &&
+    (pad.shape === "rect" || pad.shape === "rotated_rect")
+  ) {
+    const rawRadius =
+      pad.corner_radius ??
+      (pad as any).rect_border_radius ??
+      (pad as any).border_radius
+    if (!rawRadius || rawRadius <= 0) return null
 
-  const radius = Math.min(pad.corner_radius, pad.width / 2, pad.height / 2)
-  if (radius === Math.min(pad.width, pad.height) / 2) {
-    const core: PcbSmtPad = {
-      ...pad,
-      shape: "rotated_pill",
-      radius,
-      ccw_rotation: pad.shape === "rotated_rect" ? pad.ccw_rotation : 0,
+    const radius = Math.min(rawRadius, pad.width / 2, pad.height / 2)
+    if (radius === Math.min(pad.width, pad.height) / 2) {
+      const core: PcbSmtPad = {
+        ...pad,
+        shape: "rotated_pill",
+        radius,
+        ccw_rotation: pad.shape === "rotated_rect" ? pad.ccw_rotation : 0,
+      }
+      return { core, radius: 0 }
     }
-    return { core, radius: 0 }
-  }
-  return {
-    core: {
+    const core = {
       ...pad,
       width: pad.width - 2 * radius,
       height: pad.height - 2 * radius,
       corner_radius: 0,
-    },
-    radius,
+      rect_border_radius: 0,
+    } as unknown as PcbSmtPad
+    delete (core as any).border_radius
+    return {
+      core,
+      radius,
+    }
   }
+
+  if (
+    pad.type === "pcb_plated_hole" &&
+    "rect_pad_width" in pad &&
+    "rect_pad_height" in pad
+  ) {
+    const rawRadius =
+      (pad as any).corner_radius ??
+      (pad as any).rect_border_radius ??
+      (pad as any).border_radius
+    if (!rawRadius || rawRadius <= 0) return null
+
+    const width = (pad as any).rect_pad_width as number
+    const height = (pad as any).rect_pad_height as number
+    const radius = Math.min(rawRadius, width / 2, height / 2)
+    const ccwRotation =
+      "rect_ccw_rotation" in pad && typeof pad.rect_ccw_rotation === "number"
+        ? pad.rect_ccw_rotation
+        : 0
+
+    if (radius === Math.min(width, height) / 2) {
+      const core: PcbSmtPad = {
+        type: "pcb_smtpad",
+        shape: "rotated_pill",
+        pcb_smtpad_id: pad.pcb_plated_hole_id,
+        x: pad.x,
+        y: pad.y,
+        width,
+        height,
+        radius,
+        ccw_rotation: ccwRotation,
+        layer: pad.layers?.[0] ?? "top",
+      }
+      return { core, radius: 0 }
+    }
+    const core: PcbSmtPad = {
+      type: "pcb_smtpad",
+      shape: ccwRotation ? "rotated_rect" : "rect",
+      pcb_smtpad_id: pad.pcb_plated_hole_id,
+      x: pad.x,
+      y: pad.y,
+      width: width - 2 * radius,
+      height: height - 2 * radius,
+      ccw_rotation: ccwRotation,
+      layer: pad.layers?.[0] ?? "top",
+    }
+    return { core, radius }
+  }
+
+  return null
 }
 
 export const getPadToPadGap = (
@@ -389,21 +445,24 @@ export const getTraceObstacleClearance = (
   obstacle: TraceClearanceObstacle,
 ): { gap: number; center: { x: number; y: number } } => {
   const rounded = getRoundedPadCore(obstacle)
-  if (rounded) obstacle = rounded.core
+  const effectiveObstacle = rounded ? rounded.core : obstacle
   const obstacleRadius = rounded?.radius ?? 0
   const start = { x: segment.x1, y: segment.y1 }
   const end = { x: segment.x2, y: segment.y2 }
   const traceRadius = segment.thickness / 2
 
-  if (obstacle.type === "pcb_via" || isCircularPad(obstacle)) {
+  if (
+    effectiveObstacle.type === "pcb_via" ||
+    isCircularPad(effectiveObstacle)
+  ) {
     const circle =
-      obstacle.type === "pcb_via"
+      effectiveObstacle.type === "pcb_via"
         ? {
-            x: obstacle.x,
-            y: obstacle.y,
-            radius: obstacle.outer_diameter / 2,
+            x: effectiveObstacle.x,
+            y: effectiveObstacle.y,
+            radius: effectiveObstacle.outer_diameter / 2,
           }
-        : getCircleShape(obstacle)
+        : getCircleShape(effectiveObstacle)
     const closestPoint = pointToSegmentClosestPoint(circle, start, end)
 
     return {
@@ -417,8 +476,8 @@ export const getTraceObstacleClearance = (
     }
   }
 
-  if (isPillPad(obstacle)) {
-    const clearance = getSegmentToPillClearance(segment, obstacle)
+  if (isPillPad(effectiveObstacle)) {
+    const clearance = getSegmentToPillClearance(segment, effectiveObstacle)
     return {
       gap: clearance.distance - traceRadius - clearance.radius,
       center: getCenterBetweenCopperEdges({
@@ -433,7 +492,7 @@ export const getTraceObstacleClearance = (
   const clearance = getSegmentToPolygonClearanceFromPoints(
     start,
     end,
-    getPolygonShape(obstacle).points,
+    getPolygonShape(effectiveObstacle).points,
   )
   return {
     gap: clearance.distance - traceRadius - obstacleRadius,
