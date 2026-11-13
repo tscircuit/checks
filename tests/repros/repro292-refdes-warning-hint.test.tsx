@@ -53,15 +53,22 @@ const renderReferenceCase = async ({
 const escapeSvgText = (text: string) =>
   text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 
-test("the missing-refdes hint recommends an unresolved placeholder", async () => {
+test("the missing-refdes hint resolves to working reference text", async () => {
+  const missingReference = await renderReferenceCase({ name: "MP1" })
+  const suggestedPlaceholder = missingReference.warnings[0].message.match(
+    /<schematictext text="([^"]+)" \/>/,
+  )?.[1]
+  expect(suggestedPlaceholder).toBe("{REF}")
   const cases = await Promise.all([
-    renderReferenceCase({ name: "MP1" }),
+    Promise.resolve(missingReference),
     renderReferenceCase({ name: "MP2", label: "{REFDES}" }),
-    renderReferenceCase({ name: "MP3", label: "{REF}" }),
+    renderReferenceCase({ name: "MP3", label: suggestedPlaceholder }),
     renderReferenceCase({ name: "MP4", label: "{NAME}" }),
   ])
   expect(cases.map((result) => result.warnings.length)).toEqual([1, 1, 0, 0])
-  expect(cases[0].warnings[0].message).toContain('name="{REFDES}"')
+  expect(cases[0].warnings[0].message).toContain(
+    '<schematictext text="{REF}" />',
+  )
   expect(cases[1].symbolTexts).toEqual(["{REFDES}"])
   expect(cases[2].symbolTexts).toEqual(["MP3"])
   expect(cases[3].symbolTexts).toEqual(["MP4"])

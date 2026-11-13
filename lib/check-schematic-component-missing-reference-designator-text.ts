@@ -120,7 +120,7 @@ export function checkSchematicComponentMissingReferenceDesignatorText(
       type: "schematic_component_styling_warning",
       schematic_component_styling_warning_id: `schematic_component_styling_warning_${schematicComponent.schematic_component_id}_missing_reference_designator_text`,
       warning_type: "schematic_component_styling_warning",
-      message: `${readableComponentName} is missing schematic reference designator text. For a custom symbol, add name="{REFDES}" inside the symbol.`,
+      message: `${readableComponentName} is missing schematic reference designator text. For a custom symbol, add <schematictext text="{REF}" /> inside the symbol.`,
       schematic_component_id: schematicComponent.schematic_component_id,
       styling_issue_type: "missing_reference_designator_text",
       source_component_id: schematicComponent.source_component_id,

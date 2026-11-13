@@ -113,7 +113,7 @@ const MotorDriverCircuit = ({ referenceText }: { referenceText?: string }) => (
   </board>
 )
 
-test("Watchy motor M1 renders REFDES literally and keeps the missing-reference warning", async () => {
+test("Watchy motor M1 displays its reference after following the warning advice", async () => {
   const circuit = new Circuit()
   circuit.pcbDisabled = true
   circuit.add(<MotorDriverCircuit referenceText="{REFDES}" />)
@@ -170,10 +170,10 @@ test("Watchy motor M1 renders REFDES literally and keeps the missing-reference w
       source_component_id: motor.source_component_id,
       styling_issue_type: "missing_reference_designator_text",
       message:
-        'M1 is missing schematic reference designator text. For a custom symbol, add name="{REFDES}" inside the symbol.',
+        'M1 is missing schematic reference designator text. For a custom symbol, add <schematictext text="{REF}" /> inside the symbol.',
     },
   ])
-  for (const referenceText of [undefined, "{REF}", "{NAME}"]) {
+  for (const referenceText of [undefined, "{NAME}"]) {
     const referenceCircuit = new Circuit()
     referenceCircuit.pcbDisabled = true
     referenceCircuit.add(<MotorDriverCircuit referenceText={referenceText} />)
@@ -195,8 +195,29 @@ test("Watchy motor M1 renders REFDES literally and keeps the missing-reference w
       ).toBe(true)
     }
   }
+  const suggestedPlaceholder = warnings[0].message.match(
+    /<schematictext text="([^"]+)" \/>/,
+  )?.[1]
+  expect(suggestedPlaceholder).toBe("{REF}")
+  const correctedCircuit = new Circuit()
+  correctedCircuit.pcbDisabled = true
+  correctedCircuit.add(
+    <MotorDriverCircuit referenceText={suggestedPlaceholder} />,
+  )
+  await correctedCircuit.renderUntilSettled()
+  const correctedCircuitJson = correctedCircuit.getCircuitJson()
+  expect(
+    checkSchematicComponentMissingReferenceDesignatorText(correctedCircuitJson),
+  ).toEqual([])
+  expect(
+    correctedCircuitJson.flatMap((element) =>
+      element.type === "schematic_text" && element.schematic_symbol_id
+        ? [element.text]
+        : [],
+    ),
+  ).toEqual(["M1", "Vibration Motor"])
   await expect(
-    convertCircuitJsonToSchematicSvg([...circuitJson, ...warnings]).replace(
+    convertCircuitJsonToSchematicSvg(correctedCircuitJson).replace(
       /[ \t]+$/gm,
       "",
     ),
