@@ -12,7 +12,7 @@ import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "./drc-defaults"
 import { SpatialObjectIndex } from "./data-structures/SpatialIndex"
 
-/** Checks trace copper against physical non-plated holes on every copper layer. */
+/** Checks trace copper against physical non-plated holes and via drill holes on every copper layer. */
 export function checkHoleTraceClearance(
   circuitJson: AnyCircuitElement[],
   { minClearance }: { minClearance?: number } = {},
@@ -73,12 +73,14 @@ export function checkHoleTraceClearance(
       )
       for (const geometry of candidates) {
         const hole = geometry.sourceElement
-        if (hole.type !== "pcb_hole") continue
+        if (hole.type !== "pcb_hole" && hole.type !== "pcb_via") continue
         const { gap, center } = getTraceHoleClearance(
           { x1: a.x, y1: a.y, x2: b.x, y2: b.y, thickness: halfWidth * 2 },
           geometry,
         )
-        const pairId = `${trace.pcb_trace_id}_${hole.pcb_hole_id}`
+        const holeId =
+          hole.type === "pcb_via" ? hole.pcb_via_id : hole.pcb_hole_id
+        const pairId = `${trace.pcb_trace_id}_${holeId}`
         if (isTraceObstacleOverlap(gap)) {
           errors.delete(pairId)
           overlappingPairIds.add(pairId)
@@ -87,6 +89,10 @@ export function checkHoleTraceClearance(
         if (overlappingPairIds.has(pairId)) continue
         if (gap + 1e-6 >= required) continue
         if ((errors.get(pairId)?.gap ?? Infinity) <= gap) continue
+        const holeDesc =
+          hole.type === "pcb_via"
+            ? `via drill hole ${getReadableNameForElementId(circuitJson, hole.pcb_via_id)}`
+            : `non-plated hole ${getReadableNameForElementId(circuitJson, hole.pcb_hole_id)}`
         errors.set(pairId, {
           gap,
           error: {
@@ -95,12 +101,10 @@ export function checkHoleTraceClearance(
             pcb_trace_error_id: `overlap_${pairId}`,
             pcb_trace_id: trace.pcb_trace_id,
             source_trace_id: trace.source_trace_id ?? "",
-            pcb_component_ids: hole.pcb_component_id
-              ? [hole.pcb_component_id]
-              : [],
+            pcb_component_ids: hole.pcb_component_id ? [hole.pcb_component_id] : [],
             pcb_port_ids: [],
             center,
-            message: `Trace ${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)} is too close to non-plated hole ${getReadableNameForElementId(circuitJson, hole.pcb_hole_id)} (gap: ${gap.toFixed(6)}mm, required: ${required}mm)`,
+            message: `Trace ${getReadableNameForTrace(circuitJson, trace.pcb_trace_id)} is too close to ${holeDesc} (gap: ${gap.toFixed(6)}mm, required: ${required}mm)`,
           },
         })
       }
