@@ -4,6 +4,7 @@ import type {
   PcbComponent,
   PcbCourtyardCircle,
   PcbCourtyardOutline,
+  PcbCourtyardPill,
   PcbCourtyardPolygon,
   PcbCourtyardRect,
   PcbPlacementError,
@@ -14,6 +15,7 @@ import { getReadableNameForComponent } from "./util/get-readable-names"
 type CourtyardElement =
   | PcbCourtyardCircle
   | PcbCourtyardOutline
+  | PcbCourtyardPill
   | PcbCourtyardPolygon
   | PcbCourtyardRect
 
@@ -22,6 +24,7 @@ const isCourtyardElement = (
 ): element is CourtyardElement =>
   element.type === "pcb_courtyard_circle" ||
   element.type === "pcb_courtyard_outline" ||
+  element.type === "pcb_courtyard_pill" ||
   element.type === "pcb_courtyard_polygon" ||
   element.type === "pcb_courtyard_rect"
 
@@ -33,6 +36,16 @@ const isPointInsideCourtyard = (
     const dx = point.x - courtyard.center.x
     const dy = point.y - courtyard.center.y
     return dx * dx + dy * dy <= courtyard.radius * courtyard.radius
+  }
+
+  if (courtyard.type === "pcb_courtyard_pill") {
+    const dx =
+      Math.abs(point.x - courtyard.center.x) -
+      (courtyard.width / 2 - courtyard.radius)
+    const dy =
+      Math.abs(point.y - courtyard.center.y) -
+      (courtyard.height / 2 - courtyard.radius)
+    return Math.hypot(Math.max(0, dx), Math.max(0, dy)) <= courtyard.radius
   }
 
   if (courtyard.type === "pcb_courtyard_rect") {
