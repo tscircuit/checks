@@ -9,6 +9,61 @@ import { getReadableNameForComponent } from "./util/get-readable-names"
 
 type FacingDirection = "x-" | "x+" | "y+" | "y-"
 
+const INTERNAL_FLEX_CONNECTOR_PATTERN =
+  /\b(fpc|ffc|zif|fh\d{2}[a-z]*-\d+s|mezzanine|board[-_\s]?to[-_\s]?board|b2b)\b/i
+
+function hasExplicitInternalConnectorOptOut(
+  element: Record<string, unknown> | undefined,
+): boolean {
+  if (!element) return false
+  if (
+    element.internal === true ||
+    element.is_internal === true ||
+    element.is_internal_connector === true ||
+    element.internal_connector === true ||
+    element.suppress_accessible_orientation_warning === true ||
+    element.ignore_accessible_orientation_warning === true
+  ) {
+    return true
+  }
+  if (
+    element.accessible_from_board_edge === false ||
+    element.is_accessible_from_board_edge === false ||
+    element.requires_board_edge_access === false ||
+    element.must_be_accessible_from_board_edge === false
+  ) {
+    return true
+  }
+  if (
+    element.insertion_direction === "internal" ||
+    element.mating_region === "internal"
+  ) {
+    return true
+  }
+  return false
+}
+
+function isInferredInternalFlexConnector(
+  component: PcbComponent,
+  sourceComponent: Record<string, unknown> | undefined,
+): boolean {
+  const candidates = [
+    sourceComponent?.manufacturer_part_number,
+    sourceComponent?.footprint_library_name,
+    sourceComponent?.description,
+    (component as unknown as Record<string, unknown>).footprint_library_name,
+  ]
+  for (const value of candidates) {
+    if (
+      typeof value === "string" &&
+      INTERNAL_FLEX_CONNECTOR_PATTERN.test(value)
+    ) {
+      return true
+    }
+  }
+  return false
+}
+
 function getFacingDirectionFromInsertionDirection(
   component: PcbComponent,
 ): FacingDirection | null {
@@ -88,21 +143,39 @@ export function checkConnectorAccessibleOrientation(
     (el): el is PcbComponent => el.type === "pcb_component",
   )
 
-  const pinHeaderSourceIds = new Set(
-    circuitJson
-      .filter(
-        (el) =>
-          el.type === "source_component" && el.ftype === "simple_pin_header",
+  const sourceComponentsById = new Map<string, Record<string, unknown>>()
+  const pinHeaderSourceIds = new Set<string>()
+  for (const el of circuitJson) {
+    if (el.type === "source_component") {
+      sourceComponentsById.set(
+        el.source_component_id,
+        el as unknown as Record<string, unknown>,
       )
-      .map((el) => el.source_component_id),
-  )
+      if (el.ftype === "simple_pin_header") {
+        pinHeaderSourceIds.add(el.source_component_id)
+      }
+    }
+  }
 
   for (const component of components) {
-    // A pin header is normally accessed perpendicular to the PCB. Only an
-    // explicit insertion direction can establish that it is a right-angle part.
+    const sourceComponent = component.source_component_id
+      ? sourceComponentsById.get(component.source_component_id)
+      : undefined
+    if (
+      hasExplicitInternalConnectorOptOut(
+        component as unknown as Record<string, unknown>,
+      ) ||
+      hasExplicitInternalConnectorOptOut(sourceComponent)
+    ) {
+      continue
+    }
+    // A pin header or internal flex/FPC socket is normally accessed from inside
+    // the board outline. Only an explicit insertion direction establishes that
+    // it requires board-edge access.
     if (
       !component.insertion_direction &&
-      pinHeaderSourceIds.has(component.source_component_id)
+      (pinHeaderSourceIds.has(component.source_component_id) ||
+        isInferredInternalFlexConnector(component, sourceComponent))
     )
       continue
     const facingDirection = getFacingDirection(component)
