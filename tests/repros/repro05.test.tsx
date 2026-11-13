@@ -957,5 +957,15 @@ test("type-c footprint mounting holes inside own courtyard do not cause placemen
   const pcb_trace_errors = errors.filter(
     (error) => error.type === "pcb_trace_error",
   )
-  expect(pcb_trace_errors).toHaveLength(0)
+  // This pre-existing fixture has a real 0.155636 mm via-drill clearance
+  // violation between different nets. It is separate from the mounting-hole
+  // courtyard behavior under test and must no longer be silently ignored.
+  const viaDrillErrors = pcb_trace_errors.filter((error) =>
+    error.pcb_trace_error_id.startsWith("via_drill_clearance_"),
+  )
+  expect(viaDrillErrors).toHaveLength(1)
+  expect(viaDrillErrors[0]!.message).toContain("0.155636mm")
+  expect(
+    pcb_trace_errors.filter((error) => !viaDrillErrors.includes(error)),
+  ).toHaveLength(0)
 })
