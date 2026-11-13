@@ -73,3 +73,11 @@ export {
   checkPcbBoardSupport,
   type PcbBoardSupportError,
 } from "./lib/check-pcb-board-support"
+
+export {
+  NetClassClearanceManager,
+  createNetClassClearanceManager,
+  type NetClassDefinition,
+  type ClearanceMatrix,
+  type NetClassClearanceOptions,
+} from "./lib/net-classes"
