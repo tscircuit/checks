@@ -314,3 +314,135 @@ test("pin headers ignore inferred side entry but retain explicit right-angle war
   ])
   expect(warnings).toHaveLength(1)
 })
+
+test("skips connectors marked accessible_from_board_edge: false while still checking external connectors", () => {
+  const board: AnyCircuitElement = {
+    type: "pcb_board",
+    pcb_board_id: "board",
+    center: { x: 0, y: 0 },
+    width: 40,
+    height: 30,
+    thickness: 1.6,
+    num_layers: 2,
+    material: "fr4",
+  }
+  const internalSource: AnyCircuitElement = {
+    type: "source_component",
+    source_component_id: "src_internal",
+    ftype: "simple_connector",
+    name: "J_DISP",
+  }
+  const internalPcb = {
+    type: "pcb_component" as const,
+    pcb_component_id: "pcb_internal",
+    source_component_id: "src_internal",
+    center: { x: 0, y: -12 },
+    width: 10,
+    height: 3,
+    layer: "top" as const,
+    rotation: 0,
+    insertion_direction: "from_left" as const,
+    accessible_from_board_edge: false,
+    obstructs_within_bounds: true,
+  }
+  const externalSource: AnyCircuitElement = {
+    type: "source_component",
+    source_component_id: "src_usb",
+    ftype: "simple_connector",
+    name: "J_USB",
+    standard: "usb_c",
+  }
+  const externalPcb: Extract<AnyCircuitElement, { type: "pcb_component" }> = {
+    type: "pcb_component",
+    pcb_component_id: "pcb_usb",
+    source_component_id: "src_usb",
+    center: { x: 0, y: -12 },
+    width: 9,
+    height: 7,
+    layer: "top",
+    rotation: 0,
+    insertion_direction: "from_left",
+    obstructs_within_bounds: true,
+  }
+
+  const warnings = checkConnectorAccessibleOrientation([
+    board,
+    internalSource,
+    internalPcb as AnyCircuitElement,
+    externalSource,
+    externalPcb,
+  ])
+
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0]?.pcb_component_id).toBe("pcb_usb")
+  expect(warnings[0]).toMatchObject({
+    facing_direction: "x-",
+    recommended_facing_direction: "y-",
+  })
+})
+
+test("skips internal FPC/FFC board-to-flex sockets such as FH34SRJ and KiCad FFC-FPC footprints", () => {
+  const board: AnyCircuitElement = {
+    type: "pcb_board",
+    pcb_board_id: "board",
+    center: { x: 0, y: 0 },
+    width: 40,
+    height: 30,
+    thickness: 1.0,
+    num_layers: 4,
+    material: "fr4",
+  }
+  const fh34Source: AnyCircuitElement = {
+    type: "source_component",
+    source_component_id: "src_fh34",
+    ftype: "simple_connector",
+    name: "J_FLEX1",
+    manufacturer_part_number: "FH34SRJ-34S-0.5SH(50)",
+  }
+  const fh34Pcb: Extract<AnyCircuitElement, { type: "pcb_component" }> = {
+    type: "pcb_component",
+    pcb_component_id: "pcb_fh34",
+    source_component_id: "src_fh34",
+    center: { x: 0, y: -12 },
+    width: 18.5,
+    height: 3.8,
+    layer: "top",
+    rotation: 0,
+    insertion_direction: "from_left",
+    obstructs_within_bounds: true,
+  }
+  const kicadFpcSource: AnyCircuitElement = {
+    type: "source_component",
+    source_component_id: "src_kicad_fpc",
+    ftype: "simple_connector",
+    name: "J_FLEX2",
+  }
+  const kicadFpcPcb: Extract<AnyCircuitElement, { type: "pcb_component" }> = {
+    type: "pcb_component",
+    pcb_component_id: "pcb_kicad_fpc",
+    source_component_id: "src_kicad_fpc",
+    center: { x: 2, y: -12 },
+    width: 12,
+    height: 4,
+    layer: "top",
+    rotation: 0,
+    insertion_direction: "from_left",
+    metadata: {
+      kicad_footprint: {
+        footprintName:
+          "Connector_FFC-FPC:Hirose_FH12-24S-0.5SH_1x24-1MP_P0.50mm_Horizontal",
+      },
+    },
+    obstructs_within_bounds: true,
+  }
+
+  expect(
+    checkConnectorAccessibleOrientation([
+      board,
+      fh34Source,
+      fh34Pcb,
+      kicadFpcSource,
+      kicadFpcPcb,
+    ]),
+  ).toHaveLength(0)
+})
