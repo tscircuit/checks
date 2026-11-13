@@ -22,21 +22,18 @@ test("XT60 connector: existing vias and reported via-in-pad errors", async () =>
   ).toMatchSvgSnapshot(import.meta.path)
 })
 
-test.failing(
-  "detects all four source vias on JC3's polygon copper extensions",
-  () => {
-    expect(
-      checkViasInPads(circuit)
-        .map((error) => error.pcb_placement_error_id)
-        .sort(),
-    ).toEqual([
-      "via_in_pad_pcb_via_100_pcb_plated_hole_32",
-      "via_in_pad_pcb_via_101_pcb_plated_hole_32",
-      "via_in_pad_pcb_via_84_pcb_plated_hole_34",
-      "via_in_pad_pcb_via_85_pcb_plated_hole_34",
-    ])
-  },
-)
+test("detects all four source vias on JC3's polygon copper extensions", () => {
+  expect(
+    checkViasInPads(circuit)
+      .map((error) => error.pcb_placement_error_id)
+      .sort(),
+  ).toEqual([
+    "via_in_pad_pcb_via_100_pcb_plated_hole_32",
+    "via_in_pad_pcb_via_101_pcb_plated_hole_32",
+    "via_in_pad_pcb_via_84_pcb_plated_hole_34",
+    "via_in_pad_pcb_via_85_pcb_plated_hole_34",
+  ])
+})
 
 test("allows the original same-net vias when the board permits via-in-pad", () => {
   const allowed = circuit.map((element) =>
