@@ -3,6 +3,8 @@ import { getReadableNameForElementId as getReadableNameForElement } from "lib/ut
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type {
   AnyCircuitElement,
+  PcbBoard,
+  PcbTrace,
   PcbVia,
   PcbViaTraceClearanceError,
 } from "circuit-json"
@@ -12,6 +14,7 @@ import {
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
 import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import { getBoardOwnerResolver } from "lib/util/get-board-owner-resolver"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   getTraceObstacleClearance,
@@ -43,10 +46,22 @@ export function checkViaTraceClearance(
   }))
   if (vias.length === 0 || segments.length === 0) return []
 
-  const board = getPcbBoard(circuitJson)
-  minClearance ??=
+  const defaultBoard = getPcbBoard(circuitJson)
+  const boardsById = new Map<string, PcbBoard>(
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_board" ? [[el.pcb_board_id, el] as const] : [],
+    ),
+  )
+  const tracesById = new Map<string, PcbTrace>(
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_trace" ? [[el.pcb_trace_id, el] as const] : [],
+    ),
+  )
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
+  const getRequiredClearance = (board: PcbBoard | undefined): number =>
+    minClearance ??
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
-    jlcMinTolerances.min_trace_to_pad_edge_clearance
+    jlcMinTolerances.min_trace_to_pad_edge_clearance!
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
   const errors = new Map<
     string,
@@ -56,14 +71,25 @@ export function checkViaTraceClearance(
 
   for (const via of vias) {
     const layers = getLayersOfPcbElement(via)
-    const finiteBounds =
-      Number.isFinite(via.x) &&
-      Number.isFinite(via.y) &&
-      Number.isFinite(via.outer_diameter) &&
-      Number.isFinite(minClearance)
-    const radius =
-      Math.max(0, via.outer_diameter / 2) + Math.max(0, minClearance!) + EPSILON
+    const viaBoardId = getBoardOwner(via)
     for (const segment of segments) {
+      const trace = tracesById.get(segment.pcb_trace_id)
+      const traceBoardId = trace ? getBoardOwner(trace) : undefined
+      if (viaBoardId && traceBoardId && viaBoardId !== traceBoardId) continue
+      const ownerBoardId = viaBoardId ?? traceBoardId
+      const owningBoard =
+        (ownerBoardId ? boardsById.get(ownerBoardId) : undefined) ??
+        defaultBoard
+      const requiredClearance = getRequiredClearance(owningBoard)
+      const finiteBounds =
+        Number.isFinite(via.x) &&
+        Number.isFinite(via.y) &&
+        Number.isFinite(via.outer_diameter) &&
+        Number.isFinite(requiredClearance)
+      const radius =
+        Math.max(0, via.outer_diameter / 2) +
+        Math.max(0, requiredClearance) +
+        EPSILON
       const expansion = radius + segment.radius
       // Conservative bounds retain every overlap and clearance hit.
       if (
@@ -87,16 +113,16 @@ export function checkViaTraceClearance(
         continue
       }
       if (overlappingPairIds.has(pairId)) continue
-      if (gap + EPSILON >= minClearance!) continue
+      if (gap + EPSILON >= requiredClearance) continue
 
       const nextError: PcbViaTraceClearanceError = {
         type: "pcb_via_trace_clearance_error",
         pcb_via_trace_clearance_error_id: `via_trace_clearance_${pairId}`,
         error_type: "pcb_via_trace_clearance_error",
-        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(minClearance!)})`,
+        message: `Via ${getReadableNameForElement(circuitJson, via.pcb_via_id)} and trace ${getReadableNameForElement(circuitJson, segment.pcb_trace_id)} are too close (clearance: ${formatMm(gap)}, minimum: ${formatMm(requiredClearance)})`,
         pcb_via_id: via.pcb_via_id,
         pcb_trace_id: segment.pcb_trace_id,
-        minimum_clearance: minClearance,
+        minimum_clearance: requiredClearance,
         actual_clearance: gap,
         center,
       }
