@@ -8,24 +8,36 @@ import {
 } from "./check-hole-clearance/common"
 import { isTraceObstacleOverlap } from "./check-pad-clearance/common"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
-import type { AnyCircuitElement, PcbTraceError } from "circuit-json"
+import type { AnyCircuitElement, PcbBoard, PcbTraceError } from "circuit-json"
 import { getBoardDrcValue, getPcbBoard } from "./drc-defaults"
 import { SpatialObjectIndex } from "./data-structures/SpatialIndex"
+import { getBoardOwnerResolver } from "./util/get-board-owner-resolver"
 
 /** Checks trace copper against physical non-plated holes on every copper layer. */
 export function checkHoleTraceClearance(
   circuitJson: AnyCircuitElement[],
   { minClearance }: { minClearance?: number } = {},
 ): PcbTraceError[] {
-  const required =
-    minClearance ??
-    getBoardDrcValue(
-      getPcbBoard(circuitJson),
-      "min_trace_to_hole_edge_clearance",
-    ) ??
-    jlcMinTolerances.min_trace_to_hole_edge_clearance!
-  if (!Number.isFinite(required) || required < 0) {
-    throw new Error("Trace-to-hole clearance must be finite and non-negative")
+  const defaultBoard = getPcbBoard(circuitJson)
+  const boardsById = new Map<string, PcbBoard>(
+    circuitJson.flatMap((el) =>
+      el.type === "pcb_board" ? [[el.pcb_board_id, el] as const] : [],
+    ),
+  )
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
+  const getRequiredClearance = (board: PcbBoard | undefined): number => {
+    const required =
+      minClearance ??
+      getBoardDrcValue(board, "min_trace_to_hole_edge_clearance") ??
+      jlcMinTolerances.min_trace_to_hole_edge_clearance!
+    if (!Number.isFinite(required) || required < 0) {
+      throw new Error("Trace-to-hole clearance must be finite and non-negative")
+    }
+    return required
+  }
+  let maxRequired = getRequiredClearance(defaultBoard)
+  for (const board of boardsById.values()) {
+    maxRequired = Math.max(maxRequired, getRequiredClearance(board))
   }
   const holes = getHoleGeometries(circuitJson)
   if (holes.length === 0) return []
@@ -43,6 +55,7 @@ export function checkHoleTraceClearance(
   const overlappingPairIds = new Set<string>()
   for (const trace of circuitJson) {
     if (trace.type !== "pcb_trace") continue
+    const traceBoardId = getBoardOwner(trace)
     for (let i = 1; i < trace.route.length; i++) {
       const a = trace.route[i - 1]!
       const b = trace.route[i]!
@@ -69,11 +82,16 @@ export function checkHoleTraceClearance(
           maxX: Math.max(a.x, b.x),
           maxY: Math.max(a.y, b.y),
         },
-        required + halfWidth,
+        maxRequired + halfWidth,
       )
       for (const geometry of candidates) {
         const hole = geometry.sourceElement
         if (hole.type !== "pcb_hole") continue
+        const ownerBoardId = getBoardOwner(hole) ?? traceBoardId
+        const owningBoard =
+          (ownerBoardId ? boardsById.get(ownerBoardId) : undefined) ??
+          defaultBoard
+        const required = getRequiredClearance(owningBoard)
         const { gap, center } = getTraceHoleClearance(
           { x1: a.x, y1: a.y, x2: b.x, y2: b.y, thickness: halfWidth * 2 },
           geometry,

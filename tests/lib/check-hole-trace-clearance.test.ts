@@ -1,6 +1,11 @@
 import { expect, test } from "bun:test"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
-import type { AnyCircuitElement, PcbHole, PcbTrace } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  PcbBoard,
+  PcbHole,
+  PcbTrace,
+} from "circuit-json"
 import { checkHoleTraceClearance } from "../../index"
 import {
   checkEachPcbTraceNonOverlapping,
@@ -213,4 +218,86 @@ test("trace-to-hole clearance uses the drill edge and copper width on every laye
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
+})
+
+test("multi-board trace-to-hole clearance uses each element's owning board rule regardless of board order", () => {
+  const leftBoard: PcbBoard = {
+    type: "pcb_board",
+    pcb_board_id: "left",
+    subcircuit_id: "left_subcircuit",
+    center: { x: -10, y: 0 },
+    width: 10,
+    height: 10,
+    thickness: 1.6,
+    num_layers: 2,
+    material: "fr4",
+    min_trace_to_hole_edge_clearance: 0.2,
+  }
+  const rightBoard: PcbBoard = {
+    ...leftBoard,
+    pcb_board_id: "right",
+    subcircuit_id: "right_subcircuit",
+    center: { x: 10, y: 0 },
+    min_trace_to_hole_edge_clearance: 0.5,
+  }
+  const rightHole: PcbHole = {
+    type: "pcb_hole",
+    pcb_hole_id: "right_hole",
+    subcircuit_id: "right_subcircuit",
+    hole_shape: "circle",
+    hole_diameter: 1,
+    x: 10,
+    y: 0,
+  }
+  const rightTrace: PcbTrace = {
+    type: "pcb_trace",
+    pcb_trace_id: "right_trace",
+    subcircuit_id: "right_subcircuit",
+    route: [
+      { route_type: "wire", x: 9, y: 0.9, layer: "top", width: 0.2 },
+      { route_type: "wire", x: 11, y: 0.9, layer: "top", width: 0.2 },
+    ],
+  }
+  const leftHole: PcbHole = {
+    type: "pcb_hole",
+    pcb_hole_id: "left_hole",
+    subcircuit_id: "left_subcircuit",
+    hole_shape: "circle",
+    hole_diameter: 1,
+    x: -10,
+    y: 0,
+  }
+  const leftTrace: PcbTrace = {
+    type: "pcb_trace",
+    pcb_trace_id: "left_trace",
+    subcircuit_id: "left_subcircuit",
+    route: [
+      { route_type: "wire", x: -11, y: 0.9, layer: "top", width: 0.2 },
+      { route_type: "wire", x: -9, y: 0.9, layer: "top", width: 0.2 },
+    ],
+  }
+
+  const forwardErrors = checkHoleTraceClearance([
+    leftBoard,
+    rightBoard,
+    leftHole,
+    leftTrace,
+    rightHole,
+    rightTrace,
+  ])
+  const reversedErrors = checkHoleTraceClearance([
+    rightBoard,
+    leftBoard,
+    leftHole,
+    leftTrace,
+    rightHole,
+    rightTrace,
+  ])
+
+  expect(forwardErrors).toHaveLength(1)
+  expect(forwardErrors[0]?.pcb_trace_id).toBe("right_trace")
+  expect(forwardErrors[0]?.message).toContain(
+    "gap: 0.300000mm, required: 0.5mm",
+  )
+  expect(reversedErrors).toEqual(forwardErrors)
 })
