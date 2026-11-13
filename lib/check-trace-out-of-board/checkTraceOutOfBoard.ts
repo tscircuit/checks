@@ -1,4 +1,5 @@
 import { cju } from "@tscircuit/circuit-json-util"
+import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 import type { Point, Polygon } from "@tscircuit/math-utils"
 import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
 import type {
@@ -7,8 +8,8 @@ import type {
   PcbTrace,
   PcbTraceError,
 } from "circuit-json"
-import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
-import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
+import { getBoardDrcValue } from "lib/drc-defaults"
+import { getBoardOwnerResolver } from "lib/util/get-board-owner-resolver"
 
 /**
  * Default margin for trace clearance from board edge (in mm)
@@ -63,20 +64,39 @@ export function checkPcbTracesOutOfBoard(
   config: TraceBoardCheckConfig = {},
 ): PcbTraceError[] {
   const errors: PcbTraceError[] = []
-  const board = getPcbBoard(circuitJson)
-  if (!board) return errors
-  const margin =
-    config.margin ??
-    getBoardDrcValue(board, "min_board_edge_clearance") ??
-    jlcMinTolerances.min_board_edge_clearance
-  const boardPoints = getBoardPolygonPoints(board)
-  if (!boardPoints) return errors
+  const boards = circuitJson.filter(
+    (element): element is PcbBoard => element.type === "pcb_board",
+  )
+  if (boards.length === 0) return errors
+
+  const boardsById = new Map(boards.map((board) => [board.pcb_board_id, board]))
+  const boardPolygons = new Map<PcbBoard["pcb_board_id"], Polygon | null>()
+  const getBoardOwner = getBoardOwnerResolver(circuitJson)
 
   // Get all PCB traces
   const pcbTraces = cju(circuitJson).pcb_trace.list()
 
   for (const trace of pcbTraces) {
     if (trace.route.length < 2) continue
+
+    const boardId = getBoardOwner(trace)
+    const board = boardId
+      ? boardsById.get(boardId)
+      : boards.length === 1
+        ? boards[0]
+        : undefined
+    if (!board) continue
+
+    if (!boardPolygons.has(board.pcb_board_id)) {
+      boardPolygons.set(board.pcb_board_id, getBoardPolygonPoints(board))
+    }
+    const boardPoints = boardPolygons.get(board.pcb_board_id)
+    if (!boardPoints) continue
+
+    const margin =
+      config.margin ??
+      getBoardDrcValue(board, "min_board_edge_clearance") ??
+      jlcMinTolerances.min_board_edge_clearance
 
     // Check each segment of the trace
     for (let i = 0; i < trace.route.length - 1; i++) {
@@ -131,3 +151,5 @@ export function checkPcbTracesOutOfBoard(
 
   return errors
 }
+
+export { checkPcbTracesOutOfBoard as checkTraceOutOfBoard }

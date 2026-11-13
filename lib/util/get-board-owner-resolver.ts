@@ -26,6 +26,13 @@ export function getBoardOwnerResolver(circuitJson: AnyCircuitElement[]) {
         : [],
     ),
   )
+  const traces = new Map(
+    circuitJson.flatMap((element) =>
+      element.type === "pcb_trace"
+        ? [[element.pcb_trace_id, element] as const]
+        : [],
+    ),
+  )
   return (element: AnyCircuitElement): string | undefined => {
     if ("pcb_board_id" in element && element.pcb_board_id)
       return element.pcb_board_id
@@ -40,9 +47,14 @@ export function getBoardOwnerResolver(circuitJson: AnyCircuitElement[]) {
         : undefined
     if (component?.positioned_relative_to_pcb_board_id)
       return component.positioned_relative_to_pcb_board_id
+    const trace =
+      "pcb_trace_id" in element && element.pcb_trace_id
+        ? traces.get(element.pcb_trace_id)
+        : undefined
     let subcircuitId =
       ("subcircuit_id" in element ? element.subcircuit_id : undefined) ??
-      component?.subcircuit_id
+      component?.subcircuit_id ??
+      trace?.subcircuit_id
     const visited = new Set<string>()
     while (subcircuitId && !visited.has(subcircuitId)) {
       const boardId = boardsBySubcircuit.get(subcircuitId)
