@@ -14,9 +14,13 @@ export const getHoleGeometries = (
   circuitJson: AnyCircuitElement[],
 ): FlattenElement[] =>
   convertCircuitJsonToFlattenJs(
-    circuitJson.filter((e) => e.type === "pcb_hole"),
+    circuitJson.filter((e) => e.type === "pcb_hole" || e.type === "pcb_via"),
     {
-      elementTypes: ["pcb_hole"],
+      // pcb_via drill holes must be covered too: via→track clearance
+      // violations are otherwise invisible to checkHoleTraceClearance
+      // (and to runAllRoutingChecks), while kicad-cli pcb drc flags them
+      // as hole_clearance errors (JLCPCB 0.2 mm).
+      elementTypes: ["pcb_hole", "pcb_via"],
       strict: true,
       curveTolerance: 1e-6,
     },
@@ -28,14 +32,18 @@ export const getTraceHoleClearance = (
   geometry: FlattenElement,
 ): { gap: number; center: { x: number; y: number } } => {
   const hole = geometry.sourceElement
-  if (hole.type !== "pcb_hole") {
+  if (hole.type !== "pcb_hole" && hole.type !== "pcb_via") {
     throw new Error(`Expected hole geometry`)
   }
   const a = new Point(trace.x1, trace.y1)
   const b = new Point(trace.x2, trace.y2)
   let distance = Infinity
   let center = pointToSegmentClosestPoint(hole, a, b)
-  if (hole.hole_shape === "circle") {
+  // pcb_via has no hole_shape field and is always circular
+  if (
+    hole.type === "pcb_via" ||
+    (hole.type === "pcb_hole" && hole.hole_shape === "circle")
+  ) {
     distance = pointToSegmentDistance(hole, a, b) - hole.hole_diameter / 2
   } else {
     const segment = new Segment(a, b)
