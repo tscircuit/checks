@@ -115,6 +115,32 @@ test("preserves ordinary same-net routing without a matching constraint", () => 
   expect(checkPcbTraceSelfShorts(circuit(crossing).slice(1))).toEqual([])
 })
 
+test("detects self-shorts on traces referenced via length_match_source_trace_ids or target_length", () => {
+  const withLengthMatchIds: AnyCircuitElement[] = [
+    {
+      type: "source_bus",
+      source_bus_id: "bus",
+      source_trace_ids: ["other_trace"],
+      length_match_source_trace_ids: ["source"],
+      max_length_skew: 0.1,
+    },
+    ...circuit(crossing).slice(1),
+  ]
+  expect(checkPcbTraceSelfShorts(withLengthMatchIds)).toHaveLength(1)
+
+  const withTargetLength: AnyCircuitElement[] = [
+    {
+      type: "source_bus",
+      source_bus_id: "bus_target",
+      source_trace_ids: ["source"],
+      target_length: 10,
+      length_tolerance: 0.5,
+    },
+    ...circuit(crossing).slice(1),
+  ]
+  expect(checkPcbTraceSelfShorts(withTargetLength)).toHaveLength(1)
+})
+
 test("existing overlap and routing checks include self-shorts", async () => {
   for (const errors of [
     checkEachPcbTraceNonOverlapping(circuit(crossing)),
