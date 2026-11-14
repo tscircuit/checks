@@ -1,20 +1,23 @@
 import { expect, test } from "bun:test"
-import { RootCircuit } from "tscircuit"
+import { readFileSync } from "node:fs"
+import { gunzipSync } from "node:zlib"
+import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbComponentOverlap } from "lib/check-pcb-components-overlap/checkPcbComponentOverlap"
-import { ButterStickPowerInput } from "../fixtures/butterstick-power-input"
 
-test("ButterStick C165 touches U18's same-net annulus without touching its drill", async () => {
-  const circuit = new RootCircuit()
-  circuit.add(<ButterStickPowerInput />)
-  await circuit.renderUntilSettled()
-  const elements = circuit
-    .getCircuitJson()
-    .filter((element) => element.type !== "pcb_footprint_overlap_error")
-  const errors = checkPcbComponentOverlap(elements)
+test("ButterStick C165 touches U18's same-net annulus without touching its drill", () => {
+  // Zoom the same complete native circuit used by the full-board snapshot.
+  const circuit: AnyCircuitElement[] = JSON.parse(
+    gunzipSync(
+      readFileSync(
+        new URL("../assets/butterstick-placement.json.gz", import.meta.url),
+      ),
+    ).toString(),
+  )
+  const errors = checkPcbComponentOverlap(circuit)
   expect(errors).toHaveLength(1)
   expect(
-    convertCircuitJsonToPcbSvg([...elements, ...errors], {
+    convertCircuitJsonToPcbSvg([...circuit, ...errors], {
       backgroundColor: "white",
       colorOverrides: {
         substrate: "#ffffff",
