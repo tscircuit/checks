@@ -15,7 +15,7 @@ test("ButterStick C165 touches U18's same-net annulus without touching its drill
     ).toString(),
   )
   const errors = checkPcbComponentOverlap(circuit)
-  expect(errors).toHaveLength(1)
+  expect(errors).toHaveLength(0)
   expect(
     convertCircuitJsonToPcbSvg([...circuit, ...errors], {
       backgroundColor: "white",

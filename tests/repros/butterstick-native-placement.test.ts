@@ -5,7 +5,7 @@ import type { AnyCircuitElement } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { checkPcbComponentOverlap } from "lib/check-pcb-components-overlap/checkPcbComponentOverlap"
 
-test("ButterStick native full board reports its same-net annulus contact", () => {
+test("ButterStick native full board accepts its same-net annulus contact", () => {
   // All 350 native components and 349 nets; only existing copper was removed.
   // https://github.com/butterstick-fpga/butterstick-hardware/blob/0694ddfa9824a07f0c6c6981186e45f80187659c/hardware/ButterStick_r1.0/ButterStick.kicad_pcb
   const circuit: AnyCircuitElement[] = JSON.parse(
@@ -22,7 +22,8 @@ test("ButterStick native full board reports its same-net annulus contact", () =>
     circuit.filter((element) => element.type === "source_net"),
   ).toHaveLength(349)
   const errors = checkPcbComponentOverlap(circuit)
-  expect(errors).toHaveLength(1)
+  expect(errors).toHaveLength(0)
+  expect(checkPcbComponentOverlap(circuit.toReversed())).toHaveLength(0)
   expect(
     convertCircuitJsonToPcbSvg([...circuit, ...errors], {
       backgroundColor: "white",
