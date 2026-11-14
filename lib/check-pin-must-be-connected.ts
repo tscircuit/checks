@@ -49,26 +49,33 @@ export function checkPinMustBeConnected(
     }
   }
 
-  // Build a map of internally connected port groups for each component
-  const componentInternalConnections = new Map<string, string[][]>()
+  // Collect all internally connected port groups from components and internal connection elements
+  const internalPortGroups: string[][] = []
   for (const component of sourceComponents) {
     if (
       "internally_connected_source_port_ids" in component &&
       component.internally_connected_source_port_ids
     ) {
-      componentInternalConnections.set(
-        component.source_component_id,
-        component.internally_connected_source_port_ids,
-      )
+      internalPortGroups.push(...component.internally_connected_source_port_ids)
+    }
+  }
+  for (const element of circuitJson) {
+    if (element.type === "source_component_internal_connection") {
+      internalPortGroups.push(element.source_port_ids)
     }
   }
 
-  // For each internal group, if any port is connected, mark all ports in the group as connected
-  for (const internalGroups of componentInternalConnections.values()) {
-    for (const group of internalGroups) {
+  // Propagate connectivity across internal groups until no new ports are added
+  let addedConnectedPort = true
+  while (addedConnectedPort) {
+    addedConnectedPort = false
+    for (const group of internalPortGroups) {
       if (group.some((portId) => connectedPortIds.has(portId))) {
         for (const portId of group) {
-          connectedPortIds.add(portId)
+          if (!connectedPortIds.has(portId)) {
+            connectedPortIds.add(portId)
+            addedConnectedPort = true
+          }
         }
       }
     }

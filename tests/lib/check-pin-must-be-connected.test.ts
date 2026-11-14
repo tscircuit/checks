@@ -106,6 +106,52 @@ describe("checkPinMustBeConnected", () => {
     expect(errors).toHaveLength(0)
   })
 
+  test("returns no error when pin with must_be_connected is connected via source_component_internal_connection or chained internal groups", () => {
+    const circuitJson: AnyCircuitElement[] = [
+      {
+        type: "source_component",
+        source_component_id: "component_1",
+        name: "U1",
+        internally_connected_source_port_ids: [["port_1", "port_2"]],
+      } as any,
+      {
+        type: "source_component_internal_connection",
+        source_component_internal_connection_id: "internal_conn_1",
+        source_component_id: "component_1",
+        source_port_ids: ["port_2", "port_3"],
+      } as any,
+      {
+        type: "source_port",
+        source_port_id: "port_1",
+        source_component_id: "component_1",
+        name: "pin1",
+        must_be_connected: true,
+      } as any,
+      {
+        type: "source_port",
+        source_port_id: "port_2",
+        source_component_id: "component_1",
+        name: "pin2",
+      } as any,
+      {
+        type: "source_port",
+        source_port_id: "port_3",
+        source_component_id: "component_1",
+        name: "pin3",
+        must_be_connected: true,
+      } as any,
+      {
+        type: "source_trace",
+        source_trace_id: "trace_1",
+        connected_source_port_ids: ["port_3", "port_4"],
+        connected_source_net_ids: [],
+      } as any,
+    ]
+
+    const errors = checkPinMustBeConnected(circuitJson)
+    expect(errors).toHaveLength(0)
+  })
+
   test("returns errors for multiple unconnected pins with must_be_connected", () => {
     const circuitJson: AnyCircuitElement[] = [
       {
