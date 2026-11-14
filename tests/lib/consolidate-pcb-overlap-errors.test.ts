@@ -165,3 +165,60 @@ test("does not merge distinct pairs that share a component", () => {
   ])
   expect(summaries.map((e) => e.related_errors?.length)).toEqual([2, 2])
 })
+
+test("does not leak raw pcb_component or source_component IDs in consolidated messages", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_component",
+      pcb_component_id: "pcb_component_private_1",
+      source_component_id: "source_component_private_1",
+      center: { x: 0, y: 0 },
+      width: 2,
+      height: 2,
+      layer: "top",
+      rotation: 0,
+      obstructs_within_bounds: true,
+    },
+    {
+      type: "source_component",
+      source_component_id: "source_component_private_1",
+      name: "source_component_private_1",
+      ftype: "simple_chip",
+    },
+    {
+      type: "pcb_component",
+      pcb_component_id: "pcb_component_private_2",
+      source_component_id: "source_component_missing",
+      center: { x: 0.5, y: 0 },
+      width: 2,
+      height: 2,
+      layer: "top",
+      rotation: 0,
+      obstructs_within_bounds: true,
+    },
+  ]
+  const errors: PcbComponentOverlapError[] = [
+    {
+      type: "pcb_footprint_overlap_error",
+      error_type: "pcb_footprint_overlap_error",
+      pcb_error_id: "overlap_1",
+      message: "Overlap 1",
+      pcb_component_ids: ["pcb_component_private_1", "pcb_component_private_2"],
+    },
+    {
+      type: "pcb_footprint_overlap_error",
+      error_type: "pcb_footprint_overlap_error",
+      pcb_error_id: "overlap_2",
+      message: "Overlap 2",
+      pcb_component_ids: ["pcb_component_private_1", "pcb_component_private_2"],
+    },
+  ]
+  const [summary] = consolidatePcbOverlapErrors(
+    circuitJson,
+    errors,
+  ) as PcbComponentOverlapError[]
+  expect(summary.message).toContain(
+    "unnamed component overlaps unnamed component",
+  )
+  expect(summary.message).not.toMatch(/\b(?:pcb|source)_component_private_/i)
+})
