@@ -121,3 +121,107 @@ test("allows a test point on the opposite PCB side", async () => {
     ),
   ).toHaveLength(0)
 })
+
+test("ignores courtyards of components marked do_not_place", () => {
+  expect(
+    checkTestPointAccessibility([
+      {
+        type: "source_component",
+        source_component_id: "src_u1",
+        name: "J_DEBUG",
+        ftype: "simple_chip",
+      },
+      {
+        type: "source_component",
+        source_component_id: "src_tp1",
+        name: "TP1",
+        ftype: "simple_test_point",
+        footprint_variant: "pad",
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_u1",
+        source_component_id: "src_u1",
+        center: { x: 0, y: 0 },
+        width: 6,
+        height: 4,
+        layer: "top",
+        rotation: 0,
+        obstructs_within_bounds: true,
+        do_not_place: true,
+      },
+      {
+        type: "pcb_courtyard_rect",
+        pcb_courtyard_rect_id: "cy_u1",
+        pcb_component_id: "pcb_u1",
+        center: { x: 0, y: 0 },
+        width: 6,
+        height: 4,
+        layer: "top",
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_tp1",
+        source_component_id: "src_tp1",
+        center: { x: 1, y: 0 },
+        width: 1.2,
+        height: 1.2,
+        layer: "top",
+        rotation: 0,
+        obstructs_within_bounds: false,
+      },
+    ]),
+  ).toHaveLength(0)
+})
+
+test("ignores test points marked do_not_place", () => {
+  expect(
+    checkTestPointAccessibility([
+      {
+        type: "source_component",
+        source_component_id: "src_u1",
+        name: "U1",
+        ftype: "simple_chip",
+      },
+      {
+        type: "source_component",
+        source_component_id: "src_tp1",
+        name: "TP1",
+        ftype: "simple_test_point",
+        footprint_variant: "pad",
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_u1",
+        source_component_id: "src_u1",
+        center: { x: 0, y: 0 },
+        width: 6,
+        height: 4,
+        layer: "top",
+        rotation: 0,
+        obstructs_within_bounds: true,
+      },
+      {
+        type: "pcb_courtyard_rect",
+        pcb_courtyard_rect_id: "cy_u1",
+        pcb_component_id: "pcb_u1",
+        center: { x: 0, y: 0 },
+        width: 6,
+        height: 4,
+        layer: "top",
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_tp1",
+        source_component_id: "src_tp1",
+        center: { x: 1, y: 0 },
+        width: 1.2,
+        height: 1.2,
+        layer: "top",
+        rotation: 0,
+        obstructs_within_bounds: false,
+        do_not_place: true,
+      },
+    ]),
+  ).toHaveLength(0)
+})
