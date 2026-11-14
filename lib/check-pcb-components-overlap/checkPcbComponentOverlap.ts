@@ -12,6 +12,7 @@ import type {
   PcbCourtyardRect,
 } from "circuit-json"
 import { getFullConnectivityMapFromCircuitJson } from "circuit-json-to-connectivity-map"
+import { getPadToPadGap } from "lib/check-pad-clearance/common"
 import {
   getReadableNameForElementId,
   getReadableNameForPort,
@@ -198,6 +199,32 @@ export function checkPcbComponentOverlap(
             connMap.areIdsConnected(id1, id2)
           ) {
             continue
+          }
+
+          const smtPad =
+            elem1.type === "pcb_smtpad"
+              ? elem1
+              : elem2.type === "pcb_smtpad"
+                ? elem2
+                : undefined
+          const platedHole =
+            elem1.type === "pcb_plated_hole"
+              ? elem1
+              : elem2.type === "pcb_plated_hole"
+                ? elem2
+                : undefined
+          if (
+            smtPad &&
+            platedHole?.shape === "circle" &&
+            connMap.areIdsConnected(id1, id2)
+          ) {
+            // Same-net copper can join the annulus, but the drill must still
+            // clear the SMT land. Circular plated holes have concentric drills.
+            const drill = {
+              ...platedHole,
+              outer_diameter: platedHole.hole_diameter,
+            }
+            if (getPadToPadGap(smtPad, drill) > 0) continue
           }
 
           // Check if element bounds overlap
