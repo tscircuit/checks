@@ -237,7 +237,7 @@ export function checkPcbComponentsOutOfBoard(
   const errors: PcbComponentOutsideBoardError[] = []
 
   for (const c of components) {
-    if (c.is_allowed_to_be_off_board) continue
+    if (c.do_not_place || c.is_allowed_to_be_off_board) continue
 
     const boardId = getBoardOwner(c)
     // Older single-board exports can omit ownership. Multiple boards require
