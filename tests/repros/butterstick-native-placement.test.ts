@@ -26,7 +26,6 @@ test("ButterStick native full board reports its same-net annulus contact", () =>
   expect(
     convertCircuitJsonToPcbSvg([...circuit, ...errors], {
       backgroundColor: "white",
-      renderSolderMask: false,
       colorOverrides: {
         substrate: "#ffffff",
         copper: { top: "#dc2626", bottom: "#2563eb" },

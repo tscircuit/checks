@@ -16,7 +16,6 @@ test("ButterStick C165 touches U18's same-net annulus without touching its drill
   expect(
     convertCircuitJsonToPcbSvg([...elements, ...errors], {
       backgroundColor: "white",
-      renderSolderMask: false,
       colorOverrides: {
         substrate: "#ffffff",
         copper: { top: "#dc2626", bottom: "#2563eb" },
