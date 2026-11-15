@@ -1,4 +1,4 @@
-import { getReadableNameForElementId } from "lib/util/get-readable-names"
+import * as Flatten from "@flatten-js/core"
 import { doBoundsOverlap } from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
@@ -6,9 +6,9 @@ import type {
   PcbCutout,
   PcbPlacementError,
 } from "circuit-json"
-import * as Flatten from "@flatten-js/core"
-import { applyToPoint, rotateDEG } from "transformation-matrix"
+import { getReadableNameForElementId } from "lib/util/get-readable-names"
 import { getReadableNameForComponent } from "lib/util/get-readable-names"
+import { applyToPoint, rotateDEG } from "transformation-matrix"
 
 const CUTOUT_CIRCLE_SEGMENTS = 32
 
@@ -149,6 +149,7 @@ export function checkPcbComponentOverCutout(
       center: component.center,
       width: component.width,
       height: component.height,
+      rotation: component.rotation ?? 0,
     })
     for (const { cutout, polygon: cutoutPolygon } of cutoutPolygons) {
       if (cutout.pcb_component_id === component.pcb_component_id) continue
