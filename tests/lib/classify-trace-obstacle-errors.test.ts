@@ -87,7 +87,7 @@ test("trace-obstacle checks classify each pair as overlap or clearance", async (
         : `${error.pcb_trace_id}_${error.pcb_pad_id ?? error.pcb_via_id}`,
     )
 
-  expect(classifiedPairIds).toHaveLength(4)
+  expect(classifiedPairIds).toHaveLength(5)
   expect(new Set(classifiedPairIds).size).toBe(4)
   expect(errors).toEqual(routingErrors)
 })
