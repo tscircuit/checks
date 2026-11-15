@@ -35,29 +35,49 @@ export function checkSameNetViaSpacing(
     for (let j = i + 1; j < vias.length; j++) {
       const viaA = vias[i]
       const viaB = vias[j]
+      if (viaA.pcb_via_id === viaB.pcb_via_id) continue
       // TODO: It is a very inefficient piece of code, the way to fix it is to use flatbush.
-      if (viasAreAtSameLocation(viaA, viaB)) continue
+      if (viasAreAtSameLocation(viaA, viaB)) {
+        const sharedLayers = viaA.layers.filter((layer) =>
+          viaB.layers.includes(layer),
+        )
+        const isStackedBlindViaHandoff =
+          Boolean(board?.allow_blind_and_buried_vias) &&
+          sharedLayers.length <= 1 &&
+          (viaA.layers.length !== viaB.layers.length ||
+            !viaA.layers.every((layer) => viaB.layers.includes(layer)))
+        if (isStackedBlindViaHandoff) continue
+      }
       if (!connMap.areIdsConnected(viaA.pcb_via_id, viaB.pcb_via_id)) continue
+      const isConcentricDuplicate = viasAreAtSameLocation(viaA, viaB)
       const gap =
         distance(viaA, viaB) - viaA.hole_diameter / 2 - viaB.hole_diameter / 2
-      if (gap + EPSILON >= minClearance!) continue
+      if (!isConcentricDuplicate && gap + EPSILON >= minClearance!) continue
       const pairId = [viaA.pcb_via_id, viaB.pcb_via_id].sort().join("_")
       if (reported.has(pairId)) continue
       reported.add(pairId)
       errors.push({
         type: "pcb_via_clearance_error",
         pcb_error_id: `same_net_vias_close_${pairId}`,
-        message: `Vias ${getReadableNameForElement(
-          circuitJson,
-          viaA.pcb_via_id,
-        )} and ${getReadableNameForElement(
-          circuitJson,
-          viaB.pcb_via_id,
-        )} are too close together (gap: ${gap.toFixed(3)}mm)`,
+        message: isConcentricDuplicate
+          ? `Vias ${getReadableNameForElement(
+              circuitJson,
+              viaA.pcb_via_id,
+            )} and ${getReadableNameForElement(
+              circuitJson,
+              viaB.pcb_via_id,
+            )} are concentric duplicate vias at (${viaA.x.toFixed(3)}mm, ${viaA.y.toFixed(3)}mm)`
+          : `Vias ${getReadableNameForElement(
+              circuitJson,
+              viaA.pcb_via_id,
+            )} and ${getReadableNameForElement(
+              circuitJson,
+              viaB.pcb_via_id,
+            )} are too close together (gap: ${gap.toFixed(3)}mm)`,
         error_type: "pcb_via_clearance_error",
         pcb_via_ids: [viaA.pcb_via_id, viaB.pcb_via_id],
         minimum_clearance: minClearance,
-        actual_clearance: gap,
+        actual_clearance: isConcentricDuplicate ? 0 : gap,
         pcb_center: {
           x: (viaA.x + viaB.x) / 2,
           y: (viaA.y + viaB.y) / 2,

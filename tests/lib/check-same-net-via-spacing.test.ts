@@ -88,4 +88,34 @@ describe("checkSameNetViaSpacing", () => {
     const errors = checkSameNetViaSpacing(soup)
     expect(errors).toHaveLength(0)
   })
+
+  test("returns error when two distinct same-net vias are concentric duplicates at the same location", () => {
+    const soup: AnyCircuitElement[] = [
+      { type: "pcb_trace", pcb_trace_id: "trace1", route: [] },
+      {
+        type: "pcb_via",
+        pcb_via_id: "via1",
+        pcb_trace_id: "trace1",
+        x: 1.5,
+        y: -2.0,
+        hole_diameter: 0.3,
+        outer_diameter: 0.6,
+        layers: ["top", "bottom"],
+      },
+      {
+        type: "pcb_via",
+        pcb_via_id: "via2",
+        pcb_trace_id: "trace1",
+        x: 1.5,
+        y: -2.0,
+        hole_diameter: 0.3,
+        outer_diameter: 0.6,
+        layers: ["top", "bottom"],
+      },
+    ]
+    const errors = checkSameNetViaSpacing(soup)
+    expect(errors).toHaveLength(1)
+    expect(errors[0].message).toContain("are concentric duplicate vias")
+    expect(errors[0].actual_clearance).toBe(0)
+  })
 })

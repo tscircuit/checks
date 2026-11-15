@@ -21,3 +21,23 @@ test("reports a via whose center overlaps an SMD pad when its net is unresolved"
   expect(errors[0]).not.toHaveProperty("center")
   expect(await runAllPlacementChecks(circuitJson)).toContainEqual(errors[0])
 })
+
+test("exempts thermal vias inside an exposed thermal pad by default while still flagging signal pads", () => {
+  const thermalPad: AnyCircuitElement = {
+    ...rectPad,
+    pcb_smtpad_id: "pcb_smtpad_thermal",
+    width: 2.6,
+    height: 2.6,
+    port_hints: ["thermalpad", "29", "pin29", "EP", "EPAD"],
+  }
+  const circuitJson: AnyCircuitElement[] = [
+    makeBoard(false),
+    thermalPad,
+    viaInRectPad,
+  ]
+
+  expect(checkViasInPads(circuitJson)).toEqual([])
+  expect(
+    checkViasInPads(circuitJson, { allowThermalPadVias: false }),
+  ).toHaveLength(1)
+})
