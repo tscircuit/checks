@@ -15,6 +15,10 @@ test("repro02 should report the J_SWD pin1 hole overlap", async () => {
     }),
   ).toMatchSvgSnapshot(import.meta.path)
 
+  // Missing courtyards no longer hide this component-body overlap.
+  expect(serializedPlacementIssues).toContain(
+    "Bounds of U_DRV overlap with bounds of R_AWAKE_PU",
+  )
   expect(serializedPlacementIssues).toContain("pcb_plated_hole_4")
   expect(serializedPlacementIssues).toContain("pcb_hole_0")
 })
