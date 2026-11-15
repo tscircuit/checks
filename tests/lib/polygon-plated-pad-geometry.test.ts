@@ -201,94 +201,81 @@ const makeTrace = (
 })
 
 for (const placement of placements) {
-  test.failing(
-    `Polygon plated-pad geometry: detects foreign copper beyond the drill: ${placement.name}`,
-    () => {
-      const { onCopper, horizontalTrace } = placement
-      const viaCircuit = makeCircuit(placement, [makeVia(onCopper)])
-      const viaInPadErrors = checkViasInPads(viaCircuit)
-      const viaPadErrors = checkViaPadClearance(viaCircuit)
-      const padErrors = checkPadPadClearance(
-        makeCircuit(placement, [makePad(onCopper)]),
-      )
-      const traceCircuit = makeCircuit(placement, [
-        makeTrace(onCopper, horizontalTrace),
-      ])
-      expect({
-        viaInPad: viaInPadErrors.length,
-        viaPad: viaPadErrors.length,
-        padPad: padErrors.length,
-        traceOverlap: checkEachPcbTraceNonOverlapping(traceCircuit).length,
-      }).toEqual({ viaInPad: 1, viaPad: 1, padPad: 1, traceOverlap: 1 })
-      expect(viaPadErrors[0].pcb_pad_ids).toEqual([
-        "probe_via",
-        pad.pcb_plated_hole_id,
-      ])
-      expect(padErrors[0].pcb_pad_ids).toContain(pad.pcb_plated_hole_id)
-      expect(checkPadTraceClearance(traceCircuit)).toEqual([])
-    },
-  )
+  test(`Polygon plated-pad geometry: detects foreign copper beyond the drill: ${placement.name}`, () => {
+    const { onCopper, horizontalTrace } = placement
+    const viaCircuit = makeCircuit(placement, [makeVia(onCopper)])
+    const viaInPadErrors = checkViasInPads(viaCircuit)
+    const viaPadErrors = checkViaPadClearance(viaCircuit)
+    const padErrors = checkPadPadClearance(
+      makeCircuit(placement, [makePad(onCopper)]),
+    )
+    const traceCircuit = makeCircuit(placement, [
+      makeTrace(onCopper, horizontalTrace),
+    ])
+    expect({
+      viaInPad: viaInPadErrors.length,
+      viaPad: viaPadErrors.length,
+      padPad: padErrors.length,
+      traceOverlap: checkEachPcbTraceNonOverlapping(traceCircuit).length,
+    }).toEqual({ viaInPad: 1, viaPad: 1, padPad: 1, traceOverlap: 1 })
+    expect(viaPadErrors[0].pcb_pad_ids).toEqual([
+      "probe_via",
+      pad.pcb_plated_hole_id,
+    ])
+    expect(padErrors[0].pcb_pad_ids).toContain(pad.pcb_plated_hole_id)
+    expect(checkPadTraceClearance(traceCircuit)).toEqual([])
+  })
 
-  test.failing(
-    `Polygon plated-pad geometry: measures 0.05mm copper clearance: ${placement.name}`,
-    () => {
-      const { nearCopper, horizontalTrace } = placement
-      const via = makeVia(nearCopper)
-      if (horizontalTrace) via.y += 0.1
-      else via.x -= 0.1
-      const viaCircuit = makeCircuit(placement, [via])
-      expect(checkViasInPads(viaCircuit)).toEqual([])
-      const viaErrors = checkViaPadClearance(viaCircuit)
-      expect(viaErrors).toHaveLength(1)
-      expect(viaErrors[0].actual_clearance).toBeCloseTo(0.05, 6)
-      const padErrors = checkPadPadClearance(
-        makeCircuit(placement, [makePad(nearCopper)]),
-      )
-      expect(padErrors).toHaveLength(1)
-      expect(padErrors[0].actual_clearance).toBeCloseTo(0.05, 6)
-      const traceCircuit = makeCircuit(placement, [
-        makeTrace(nearCopper, horizontalTrace),
-      ])
-      const traceErrors = checkPadTraceClearance(traceCircuit)
-      expect(traceErrors).toHaveLength(1)
-      expect(traceErrors[0].actual_clearance).toBeCloseTo(0.05, 6)
-      expect(checkEachPcbTraceNonOverlapping(traceCircuit)).toEqual([])
-    },
-  )
+  test(`Polygon plated-pad geometry: measures 0.05mm copper clearance: ${placement.name}`, () => {
+    const { nearCopper, horizontalTrace } = placement
+    const via = makeVia(nearCopper)
+    if (horizontalTrace) via.y += 0.1
+    else via.x -= 0.1
+    const viaCircuit = makeCircuit(placement, [via])
+    expect(checkViasInPads(viaCircuit)).toEqual([])
+    const viaErrors = checkViaPadClearance(viaCircuit)
+    expect(viaErrors).toHaveLength(1)
+    expect(viaErrors[0].actual_clearance).toBeCloseTo(0.05, 6)
+    const padErrors = checkPadPadClearance(
+      makeCircuit(placement, [makePad(nearCopper)]),
+    )
+    expect(padErrors).toHaveLength(1)
+    expect(padErrors[0].actual_clearance).toBeCloseTo(0.05, 6)
+    const traceCircuit = makeCircuit(placement, [
+      makeTrace(nearCopper, horizontalTrace),
+    ])
+    const traceErrors = checkPadTraceClearance(traceCircuit)
+    expect(traceErrors).toHaveLength(1)
+    expect(traceErrors[0].actual_clearance).toBeCloseTo(0.05, 6)
+    expect(checkEachPcbTraceNonOverlapping(traceCircuit)).toEqual([])
+  })
 }
 
-test.failing(
-  "same-net copper stays exempt, while a via drill in the pad still needs permission",
-  () => {
-    const placement = placements[1]
-    const viaCircuit = makeCircuit(
-      placement,
-      [makeVia(placement.onCopper)],
-      true,
-    )
-    expect(checkViaPadClearance(viaCircuit)).toEqual([])
-    expect(checkViasInPads(viaCircuit)).toHaveLength(1)
-    expect(
-      checkViasInPads(
-        viaCircuit.map((e) =>
-          e.type === "pcb_board" ? { ...e, is_via_in_pad_allowed: true } : e,
-        ),
+test("same-net copper stays exempt, while a via drill in the pad still needs permission", () => {
+  const placement = placements[1]
+  const viaCircuit = makeCircuit(placement, [makeVia(placement.onCopper)], true)
+  expect(checkViaPadClearance(viaCircuit)).toEqual([])
+  expect(checkViasInPads(viaCircuit)).toHaveLength(1)
+  expect(
+    checkViasInPads(
+      viaCircuit.map((e) =>
+        e.type === "pcb_board" ? { ...e, is_via_in_pad_allowed: true } : e,
       ),
-    ).toEqual([])
-    expect(
-      checkPadPadClearance(
-        makeCircuit(placement, [makePad(placement.onCopper)], true),
-      ),
-    ).toEqual([])
-    const traceCircuit = makeCircuit(
-      placement,
-      [makeTrace(placement.onCopper, false)],
-      true,
-    )
-    expect(checkEachPcbTraceNonOverlapping(traceCircuit)).toEqual([])
-    expect(checkPadTraceClearance(traceCircuit)).toEqual([])
-  },
-)
+    ),
+  ).toEqual([])
+  expect(
+    checkPadPadClearance(
+      makeCircuit(placement, [makePad(placement.onCopper)], true),
+    ),
+  ).toEqual([])
+  const traceCircuit = makeCircuit(
+    placement,
+    [makeTrace(placement.onCopper, false)],
+    true,
+  )
+  expect(checkEachPcbTraceNonOverlapping(traceCircuit)).toEqual([])
+  expect(checkPadTraceClearance(traceCircuit)).toEqual([])
+})
 
 test("the rounded end's empty bounding-box corner is not copper", () => {
   const placement = placements[0]
@@ -312,35 +299,29 @@ test("the rounded end's empty bounding-box corner is not copper", () => {
   expect(checkPadTraceClearance(traceCircuit)).toEqual([])
 })
 
-test.failing(
-  "via copper contact without drill intrusion does not count as via-in-pad",
-  () => {
-    const placement = placements[1]
-    const circuit = makeCircuit(placement, [makeVia(placement.nearCopper)])
-    expect(checkViasInPads(circuit)).toEqual([])
-    const errors = checkViaPadClearance(circuit)
-    expect(errors).toHaveLength(1)
-    expect(errors[0].actual_clearance).toBe(0)
-  },
-)
+test("via copper contact without drill intrusion does not count as via-in-pad", () => {
+  const placement = placements[1]
+  const circuit = makeCircuit(placement, [makeVia(placement.nearCopper)])
+  expect(checkViasInPads(circuit)).toEqual([])
+  const errors = checkViaPadClearance(circuit)
+  expect(errors).toHaveLength(1)
+  expect(errors[0].actual_clearance).toBe(0)
+})
 
-test.failing(
-  "polygon-pad diagnostics use a readable pin name and an honest unnamed fallback",
-  () => {
-    const placement = placements[0]
-    const circuit = makeCircuit(placement, [makeVia(placement.onCopper)])
-    const named = checkViasInPads(circuit)
-    expect(named[0]?.message).toContain("J1")
-    const unnamed = checkViasInPads([
-      {
-        ...placement.hole,
-        pcb_component_id: undefined,
-        pcb_port_id: undefined,
-      },
-      makeVia(placement.onCopper),
-    ])
-    expect(unnamed).toHaveLength(1)
-    expect(unnamed[0].message).toContain("through-hole pad")
-    expect(unnamed[0].message).not.toContain(pad.pcb_plated_hole_id)
-  },
-)
+test("polygon-pad diagnostics use a readable pin name and an honest unnamed fallback", () => {
+  const placement = placements[0]
+  const circuit = makeCircuit(placement, [makeVia(placement.onCopper)])
+  const named = checkViasInPads(circuit)
+  expect(named[0]?.message).toContain("J1")
+  const unnamed = checkViasInPads([
+    {
+      ...placement.hole,
+      pcb_component_id: undefined,
+      pcb_port_id: undefined,
+    },
+    makeVia(placement.onCopper),
+  ])
+  expect(unnamed).toHaveLength(1)
+  expect(unnamed[0].message).toContain("through-hole pad")
+  expect(unnamed[0].message).not.toContain(pad.pcb_plated_hole_id)
+})

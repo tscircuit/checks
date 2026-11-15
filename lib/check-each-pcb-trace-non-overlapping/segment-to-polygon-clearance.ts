@@ -98,6 +98,13 @@ export const getPolygonPointsForPad = (pad: PolygonalPad): Point[] => {
     }
   }
 
+  if (pad.type === "pcb_plated_hole" && pad.shape === "hole_with_polygon_pad") {
+    return pad.pad_outline.map((point) => {
+      const rotated = rotatePoint(point, pad.ccw_rotation ?? 0)
+      return { x: pad.x + rotated.x, y: pad.y + rotated.y }
+    })
+  }
+
   if (
     pad.type === "pcb_plated_hole" &&
     "rect_pad_width" in pad &&
