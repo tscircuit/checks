@@ -787,7 +787,7 @@ test("type-c footprint mounting holes inside own courtyard do not cause placemen
       height={`${BOARD_H}mm`}
       layers={2}
       autorouter="auto-local"
-      minTraceWidth="0.5mm"
+      minTraceWidth="0.25mm"
       nominalTraceWidth="0.25mm"
       minTraceToPadEdgeClearance="0.05mm"
       minPadEdgeToPadEdgeClearance="0.05mm"
