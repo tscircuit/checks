@@ -18,7 +18,9 @@ Inspect the microSD connector at (-16.4, -17.5), rotated 270°. Its left-facing
 mouth is nearer the actual left edge (8.6 mm) than the bottom (11.5 mm).
 The declared 75 × 55 rectangle centered on (0,0) instead suggests 21.1 mm left
 and 10 mm bottom. `getBoardBounds` prioritizes that rectangle over the outline.
-The reproduction records the erroneous recommendation to face down.
+The reproduction branch records the erroneous recommendation to face down.
+The stacked fix accepts microSD in both panels, retaining the HDMI warning
+until its footprint declares the physical insertion direction.
 
 HDMI at (44.625, -20), 0°, is a separate control: its physical mouth faces right,
 but the pad-only heuristic guesses left. `<footprint insertionDirection="from_right">`
