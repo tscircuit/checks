@@ -324,3 +324,19 @@ export function endpointTouchesNetCopper(
     { connMap, viaContactIndex: getCachedViaContactIndex(ctx) },
   )
 }
+
+/** Check a zero-length terminal landing against an actual connected via. */
+export function terminalLandingTouchesVia(
+  trace: PcbTrace,
+  point: PcbTraceWireRoutePoint,
+  width: number,
+  ctx: EndpointContactContext,
+): boolean {
+  return endpointTouchesVia(
+    { trace, point, width },
+    {
+      connMap: getCachedConnMap(ctx),
+      viaContactIndex: getCachedViaContactIndex(ctx),
+    },
+  )
+}
