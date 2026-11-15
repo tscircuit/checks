@@ -30,7 +30,7 @@ test("repro: pushbutton schematic contacts resolve to the same net", async () =>
     {
       type: "source_component_misconfigured_error",
       message:
-        "Switch SW1_WAKE has both schematic contacts connected to the same net. Check internallyConnectedPins and the footprint pin mapping.",
+        "SW1_WAKE: contacts SW1_WAKE.pin1 and SW1_WAKE.pin2 are electrically connected. Check the wiring and internal pin mapping; the two switch contacts must be on separate nets.",
       source_component_ids: ["source_component_2"],
       source_port_ids: ["source_port_15", "source_port_16"],
       is_fatal: true,
