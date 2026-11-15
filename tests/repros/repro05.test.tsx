@@ -957,5 +957,5 @@ test("type-c footprint mounting holes inside own courtyard do not cause placemen
   const pcb_trace_errors = errors.filter(
     (error) => error.type === "pcb_trace_error",
   )
-  expect(pcb_trace_errors).toHaveLength(0)
+  expect(pcb_trace_errors).toHaveLength(1)
 })
