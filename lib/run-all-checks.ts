@@ -49,6 +49,7 @@ import { checkTestPointAccessibility } from "./check-testpoint-accessibility"
 import { checkPcbTracesOutOfBoard } from "./check-trace-out-of-board/checkTraceOutOfBoard"
 import { checkTracesAreContiguous } from "./check-traces-are-contiguous/check-traces-are-contiguous"
 import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-terminal-switch-contacts-on-different-nets"
+import { checkViaAndHoleAnnularRing } from "./check-via-and-hole-annular-ring"
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
@@ -142,6 +143,7 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     ...checkHoleTraceClearance(circuitJson),
     ...checkViaTraceClearance(circuitJson, connectivity),
     ...checkViaPadClearance(circuitJson, connectivity),
+    ...checkViaAndHoleAnnularRing(circuitJson),
     ...checkSameNetViaSpacing(circuitJson, connectivity),
     ...checkDifferentNetViaSpacing(circuitJson, connectivity),
     ...checkTracesAreContiguous(circuitJson, connectivity),
