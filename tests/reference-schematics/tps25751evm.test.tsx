@@ -5,7 +5,7 @@ import { runAllSchematicChecks } from "../.."
 import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { Tps25751Evm } from "./tps25751evm"
 
-test("TI TPS25751EVM has no schematic style warnings across all seven sheets", async () => {
+test("TI TPS25751EVM reference schematic has no style warnings across all seven sheets", async () => {
   const circuit = new Circuit()
   circuit.pcbDisabled = true
   circuit.add(<Tps25751Evm />)
