@@ -33,6 +33,13 @@ export { checkPadPadClearance } from "./lib/check-pad-pad-clearance"
 export { checkPadTraceClearance } from "./lib/check-pad-trace-clearance"
 export { checkViaTraceClearance } from "./lib/check-via-trace-clearance"
 export { checkViaPadClearance } from "./lib/check-via-pad-clearance"
+export { checkViaAndHoleAnnularRing } from "./lib/check-via-and-hole-annular-ring"
+export {
+  getPlatedHoleAnnularRing,
+  getViaAnnularRing,
+  type AnnularRingMeasurement,
+  type AnnularRingResult,
+} from "./lib/util/annular-ring-geometry"
 export { checkViasInPads } from "./lib/check-vias-in-pads"
 export { dedupePcbDrcErrors } from "./lib/dedupe-pcb-drc-errors"
 export { checkPinMustBeConnected } from "./lib/check-pin-must-be-connected"
