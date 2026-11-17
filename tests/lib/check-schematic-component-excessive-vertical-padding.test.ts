@@ -146,6 +146,7 @@ describe("checkSchematicComponentExcessiveVerticalPadding", () => {
     expect(warnings.map((warning) => warning.styling_issue_type)).toEqual([
       "excessive_top_padding",
       "excessive_bottom_padding",
+      "schematic_box_too_wide",
     ])
   })
 })

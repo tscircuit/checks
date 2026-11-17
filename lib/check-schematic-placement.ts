@@ -21,6 +21,9 @@ const enabledIssueTypes = [
   "ConnectorPositionCausesTraceDetours",
   "NetLabelCollision",
   "ComponentBranchesOutOfOrder",
+  "GenericSchematicBoxTooWide",
+  "PinHeaderSchematicBoxTooWide",
+  "SchematicPinPaddingToEdgeTooLarge",
 ] as const
 
 export function checkSchematicPlacement(
@@ -74,6 +77,37 @@ export function checkSchematicPlacement(
       let stylingIssueType: string
       let message: string
       switch (issue.lineItemType) {
+        case "GenericSchematicBoxTooWide":
+        case "PinHeaderSchematicBoxTooWide": {
+          schematicComponentId = issue.schematicBox.schematicComponentId
+          const componentName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          stylingIssueType = "schematic_box_too_wide"
+          message = `${componentName} has excessive horizontal space inside its schematic box. Reduce schWidth to ${issue.suggestedSchWidth}, preserving pin connections and rerouting attached traces.`
+          break
+        }
+        case "SchematicPinPaddingToEdgeTooLarge": {
+          schematicComponentId = issue.schematicBox.schematicComponentId
+          const componentName = getReadableNameForElementId(
+            circuitJson,
+            schematicComponentId ?? "",
+          )
+          const dimensions = [
+            issue.suggestedSchWidth === undefined
+              ? ""
+              : `schWidth=${issue.suggestedSchWidth}`,
+            issue.suggestedSchHeight === undefined
+              ? ""
+              : `schHeight=${issue.suggestedSchHeight}`,
+          ]
+            .filter(Boolean)
+            .join(", ")
+          stylingIssueType = "schematic_pin_padding_to_edge_too_large"
+          message = `${componentName} has excessive space between its pin banks and schematic box edges. Set ${dimensions}, keeping pins on their assigned sides, preserving pin connections and rerouting attached traces.`
+          break
+        }
         case "NetLabelCollision":
           // This analyzer emits one aggregate per sheet, with component names.
           // Resolve only unambiguous names on that sheet, never across sheets.
