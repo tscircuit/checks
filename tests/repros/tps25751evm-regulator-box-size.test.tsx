@@ -84,7 +84,17 @@ test("checks TI TPS25751EVM regulator box sizing", async () => {
   await circuit.renderUntilSettled()
   const circuitJson = normalizeFixtureSourcePorts(circuit.getCircuitJson())
   const warnings = await runAllSchematicChecks(circuitJson)
-  expect(warnings).toEqual([])
+  expect(warnings).toHaveLength(2)
+  expect(warnings).toMatchObject([
+    {
+      type: "schematic_component_styling_warning",
+      styling_issue_type: "schematic_box_too_wide",
+    },
+    {
+      type: "schematic_component_styling_warning",
+      styling_issue_type: "schematic_pin_padding_to_edge_too_large",
+    },
+  ])
   expect(
     convertCircuitJsonToSchematicSvg([...circuitJson, ...warnings], {
       width: 1200,
