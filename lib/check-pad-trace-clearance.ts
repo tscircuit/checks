@@ -19,13 +19,25 @@ import {
   getTraceSegments,
   isTraceObstacleOverlap,
 } from "./check-pad-clearance/common"
+import {
+  type NetTieDefinition,
+  type NetTieManager,
+  getOrCreateNetTieManager,
+} from "./net-ties"
 
 export function checkPadTraceClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
     minClearance,
-  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
+    netTieManager,
+    netTies,
+  }: {
+    connMap?: ConnectivityMap
+    minClearance?: number
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): PcbPadTraceClearanceError[] {
   const pads = getPads(circuitJson)
   const segments = getTraceSegments(circuitJson)
@@ -36,6 +48,11 @@ export function checkPadTraceClearance(
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     jlcMinTolerances.min_trace_to_pad_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, {
+    connMap,
+    netTieManager,
+    netTies,
+  })
   const spatialIndex = new SpatialObjectIndex<PadElement>({
     objects: pads,
     getBounds: getPadBounds,
@@ -58,6 +75,8 @@ export function checkPadTraceClearance(
       const padId = getPrimaryId(pad)
       if (!getLayersOfPcbElement(pad as any).includes(segment.layer)) continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, padId)) continue
+      if (netTieMgr.isSegmentObstacleExempt(segment, pad, minClearance!))
+        continue
       const pairId = `${padId}_${segment.pcb_trace_id}`
       const { gap, center } = getTraceObstacleClearance(segment, pad)
       if (isTraceObstacleOverlap(gap)) {

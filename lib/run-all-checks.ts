@@ -52,11 +52,17 @@ import { checkTwoTerminalSwitchContactsOnDifferentNets } from "./check-two-termi
 import { checkViaPadClearance } from "./check-via-pad-clearance"
 import { checkViaTraceClearance } from "./check-via-trace-clearance"
 import { checkViasInPads } from "./check-vias-in-pads"
+import { type NetTieDefinition, NetTieManager } from "./net-ties"
 
 export async function runAllPlacementChecks(
   circuitJson: AnyCircuitElement[],
-  { consolidateOverlaps = true } = {},
+  {
+    consolidateOverlaps = true,
+    netTies,
+  }: { consolidateOverlaps?: boolean; netTies?: NetTieDefinition[] } = {},
 ) {
+  const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieManager = new NetTieManager(circuitJson, { connMap, netTies })
   const errors = [
     ...checkCopperToBoardEdgeClearance(circuitJson),
     ...checkViasInPads(circuitJson),
@@ -74,9 +80,13 @@ export async function runAllPlacementChecks(
     ...checkPcbCopperOverKeepout(circuitJson),
     ...checkPcbBendZonePlacement(circuitJson),
     ...checkPcbCourtyardOverKeepout(circuitJson),
-    ...checkPcbComponentOverlap(circuitJson),
+    ...checkPcbComponentOverlap(circuitJson, {
+      connMap,
+      netTieManager,
+      netTies,
+    }),
     ...checkPcbComponentsMissingCourtyard(circuitJson),
-    ...checkPadPadClearance(circuitJson),
+    ...checkPadPadClearance(circuitJson, { connMap, netTieManager, netTies }),
     ...checkCourtyardOverlap(circuitJson),
     ...checkConnectorAccessibleOrientation(circuitJson),
     ...checkTestPointAccessibility(circuitJson),
@@ -114,13 +124,23 @@ export async function runAllPinSpecificationChecks(
   ]
 }
 
-export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllRoutingChecks(
+  circuitJson: AnyCircuitElement[],
+  { netTies }: { netTies?: NetTieDefinition[] } = {},
+) {
   // Infer endpoint IDs before taking connectivity snapshots. Keep these maps
   // local to this pass so edits to the same circuit array cannot leave stale data.
   addStartAndEndPortIdsIfMissing(circuitJson)
+  const connMap = getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieManager = new NetTieManager(circuitJson, { connMap, netTies })
   const connectivity = {
-    connMap: getFullConnectivityMapFromCircuitJson(circuitJson),
-    pcbConnectivityMap: createIndexedPcbConnectivityMap(circuitJson),
+    connMap,
+    pcbConnectivityMap: createIndexedPcbConnectivityMap(circuitJson, {
+      netTieManager,
+      netTies,
+    }),
+    netTieManager,
+    netTies,
   }
   return [
     ...checkEachPcbPortConnectedToPcbTraces(circuitJson, connectivity),
@@ -150,12 +170,15 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   ]
 }
 
-export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllChecks(
+  circuitJson: AnyCircuitElement[],
+  options: { netTies?: NetTieDefinition[] } = {},
+) {
   return [
-    ...(await runAllPlacementChecks(circuitJson)),
+    ...(await runAllPlacementChecks(circuitJson, options)),
     ...(await runAllSchematicChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
-    ...(await runAllRoutingChecks(circuitJson)),
+    ...(await runAllRoutingChecks(circuitJson, options)),
   ]
 }

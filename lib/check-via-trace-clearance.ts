@@ -18,13 +18,25 @@ import {
   getTraceSegments,
   isTraceObstacleOverlap,
 } from "./check-pad-clearance/common"
+import {
+  type NetTieDefinition,
+  type NetTieManager,
+  getOrCreateNetTieManager,
+} from "./net-ties"
 
 export function checkViaTraceClearance(
   circuitJson: AnyCircuitElement[],
   {
     connMap,
     minClearance,
-  }: { connMap?: ConnectivityMap; minClearance?: number } = {},
+    netTieManager,
+    netTies,
+  }: {
+    connMap?: ConnectivityMap
+    minClearance?: number
+    netTieManager?: NetTieManager
+    netTies?: NetTieDefinition[]
+  } = {},
 ): PcbViaTraceClearanceError[] {
   const vias = circuitJson.filter((el) => el.type === "pcb_via") as PcbVia[]
   const segments = getTraceSegments(circuitJson).map((segment) => ({
@@ -48,6 +60,11 @@ export function checkViaTraceClearance(
     getBoardDrcValue(board, "min_trace_to_pad_edge_clearance") ??
     jlcMinTolerances.min_trace_to_pad_edge_clearance
   connMap ??= getFullConnectivityMapFromCircuitJson(circuitJson)
+  const netTieMgr = getOrCreateNetTieManager(circuitJson, {
+    connMap,
+    netTieManager,
+    netTies,
+  })
   const errors = new Map<
     string,
     { error: PcbViaTraceClearanceError; gap: number }
@@ -77,6 +94,8 @@ export function checkViaTraceClearance(
         continue
       if (!layers.includes(segment.layer)) continue
       if (connMap.areIdsConnected(segment.pcb_trace_id, via.pcb_via_id))
+        continue
+      if (netTieMgr.isSegmentObstacleExempt(segment, via, minClearance!))
         continue
 
       const pairId = `${via.pcb_via_id}_${segment.pcb_trace_id}`
