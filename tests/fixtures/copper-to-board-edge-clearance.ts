@@ -167,3 +167,28 @@ export const equivalentPassingGeometry: AnyCircuitElement[] = [
     layers: ["top", "bottom"],
   },
 ]
+
+const measuredClearanceShortfallMm = 1.078e-6
+const roundedPourEdgeX = 4.8 + measuredClearanceShortfallMm
+
+export const solverGridRoundedPour: AnyCircuitElement[] = [
+  board(),
+  {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "solver_grid_rounded_pour",
+    shape: "brep",
+    brep_shape: {
+      outer_ring: {
+        vertices: [
+          { x: -4.8, y: -4.8 },
+          { x: roundedPourEdgeX, y: -4.8 },
+          { x: roundedPourEdgeX, y: 4.8 },
+          { x: -4.8, y: 4.8 },
+        ],
+      },
+      inner_rings: [],
+    },
+    layer: "top",
+    covered_with_solder_mask: true,
+  },
+]
