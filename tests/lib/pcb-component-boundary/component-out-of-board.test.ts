@@ -29,3 +29,12 @@ test("rectangular board: component inside/outside", () => {
     convertCircuitJsonToPcbSvg(rectBoardJson as AnyCircuitElement[]),
   ).toMatchSvgSnapshot(import.meta.path)
 })
+
+test("ignores components marked do_not_place when checking board boundaries", () => {
+  const circuitJson = (rectBoardJson as AnyCircuitElement[]).map((el) =>
+    el.type === "pcb_component" && el.pcb_component_id === "pcb_component_0"
+      ? { ...el, do_not_place: true }
+      : el,
+  )
+  expect(checkPcbComponentsOutOfBoard(circuitJson)).toEqual([])
+})
