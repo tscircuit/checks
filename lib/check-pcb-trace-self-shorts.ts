@@ -21,8 +21,15 @@ export function checkPcbTraceSelfShorts(
 ): PcbTraceError[] {
   const matchedSourceTraceIds = new Set(
     circuitJson.flatMap((element) =>
-      element.type === "source_bus" && element.max_length_skew !== undefined
-        ? element.source_trace_ids
+      element.type === "source_bus" &&
+      (element.max_length_skew !== undefined ||
+        element.length_match_source_trace_ids !== undefined ||
+        element.min_length !== undefined ||
+        element.target_length !== undefined)
+        ? [
+            ...element.source_trace_ids,
+            ...(element.length_match_source_trace_ids ?? []),
+          ]
         : [],
     ),
   )
