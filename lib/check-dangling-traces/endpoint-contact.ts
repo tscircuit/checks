@@ -1,21 +1,36 @@
 import { CONTACT_EPSILON_MM, type ConnectivityNetId } from "./types"
 import type { AnyCircuitElement, LayerRef, PcbTrace } from "circuit-json"
+import { getPrimaryId } from "@tscircuit/circuit-json-util"
 import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import {
   getFullConnectivityMapFromCircuitJson,
   type ConnectivityMap,
 } from "circuit-json-to-connectivity-map"
-import type {
-  PcbPad,
-  PcbTraceRoutePoint,
+import { isPointInPad } from "../check-traces-are-contiguous/is-point-in-pad"
+import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import {
+  endpointCopperOverlapsPad,
+  type PcbPad,
+  type PcbTraceRoutePoint,
 } from "../util/route-point-touches-pad"
 import { getPourContactTester } from "./pour-contact-index"
-import { endpointTouchesVia, getViaContactIndex } from "./via-contact-index"
+import {
+  endpointTouchesVia,
+  getViaContactIndex,
+  terminalViaHasOnwardCopper,
+} from "./via-contact-index"
 
 export type PcbTraceWireRoutePoint = Extract<
   PcbTraceRoutePoint,
   { route_type: "wire" }
 >
+export type PcbTraceViaRoutePoint = Extract<
+  PcbTraceRoutePoint,
+  { route_type: "via" }
+>
+export type PcbTraceEndpointPoint =
+  | PcbTraceWireRoutePoint
+  | PcbTraceViaRoutePoint
 export type TraceEndpoint = "start" | "end"
 
 /** The first non-zero-length wire segment reached from a trace endpoint. */
@@ -75,6 +90,52 @@ function getStraightRunEnd({
     runEnd = nextPoint
   }
   return runEnd
+}
+
+/** A route of only vias and zero-length wires has no copper that can dangle. */
+export function routeHasLateralWire(trace: PcbTrace): boolean {
+  return trace.route.some((point, index) => {
+    const next = trace.route[index + 1]
+    return (
+      next &&
+      point.route_type === "wire" &&
+      next.route_type === "wire" &&
+      point.layer === next.layer &&
+      Math.hypot(point.x - next.x, point.y - next.y) > CONTACT_EPSILON_MM
+    )
+  })
+}
+
+/** The via a route stops at, allowing for zero-length wires around it. */
+export function getTerminalVia(
+  trace: PcbTrace,
+  endpoint: TraceEndpoint,
+): PcbTraceViaRoutePoint | undefined {
+  const { route } = trace
+  let index = 0
+  let step = 1
+  if (endpoint === "end") {
+    index = route.length - 1
+    step = -1
+  }
+  const outerPoint = route[index]!
+  if (outerPoint.route_type !== "wire" && outerPoint.route_type !== "via") {
+    return undefined
+  }
+  for (; index >= 0 && index < route.length; index += step) {
+    const point = route[index]!
+    if (point.route_type !== "wire" && point.route_type !== "via") {
+      return undefined
+    }
+    if (
+      Math.hypot(point.x - outerPoint.x, point.y - outerPoint.y) >
+      CONTACT_EPSILON_MM
+    ) {
+      return undefined
+    }
+    if (point.route_type === "via") return point
+  }
+  return undefined
 }
 
 export function getTerminalWireSegment(
@@ -279,6 +340,47 @@ function getCachedViaContactIndex(ctx: EndpointContactContext) {
   return ctx.viaContactIndex
 }
 
+/** Tests whether a via a route stops at reaches copper beyond that route. */
+export function terminalViaReachesNetCopper(
+  { trace, via }: { trace: PcbTrace; via: PcbTraceViaRoutePoint },
+  ctx: EndpointContactContext,
+): boolean {
+  return terminalViaHasOnwardCopper(
+    { trace, via },
+    {
+      connMap: getCachedConnMap(ctx),
+      viaContactIndex: getCachedViaContactIndex(ctx),
+    },
+  )
+}
+
+function endpointCopperTouchesNetPad(
+  {
+    netId,
+    point,
+    terminalSegment,
+  }: {
+    netId: ConnectivityNetId
+    point: PcbTraceWireRoutePoint
+    terminalSegment: TerminalWireSegment
+  },
+  ctx: EndpointContactContext,
+): boolean {
+  const connMap = getCachedConnMap(ctx)
+  return ctx.portPads.some(
+    (pad) =>
+      connMap.getNetConnectedToId(getPrimaryId(pad)) === netId &&
+      getLayersOfPcbElement(pad).includes(point.layer) &&
+      // Contact at the base of a stub leaving this pad cannot justify its free tip.
+      !isPointInPad(terminalSegment.inwardPoint, pad) &&
+      endpointCopperOverlapsPad({
+        point,
+        pad,
+        endpointCopperWidth: terminalSegment.width,
+      }),
+  )
+}
+
 /** Tests whether a wire endpoint touches other same-net copper (board XY, mm). */
 export function endpointTouchesNetCopper(
   {
@@ -294,6 +396,13 @@ export function endpointTouchesNetCopper(
 ): boolean {
   const connMap = getCachedConnMap(ctx)
   const netId = connMap.getNetConnectedToId(trace.pcb_trace_id)
+
+  if (
+    netId &&
+    endpointCopperTouchesNetPad({ netId, point, terminalSegment }, ctx)
+  ) {
+    return true
+  }
 
   const touchesPour = getCachedPourContactTester(ctx)
   if (

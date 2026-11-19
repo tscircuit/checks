@@ -10,6 +10,7 @@ import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import { getPads, getPadToPadGap } from "../check-pad-clearance/common"
 import { isPointInPad } from "./is-point-in-pad"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import { getViaBarrelLayers } from "../util/get-via-barrel-layers"
 
 type ViaContact = {
   x: number
@@ -110,7 +111,7 @@ export function getViaContactIndex(
   for (const via of vias) {
     if (!Number.isFinite(via.outer_diameter) || via.outer_diameter <= 0)
       continue
-    add(via.pcb_via_id, getLayersOfPcbElement(via), {
+    add(via.pcb_via_id, getViaBarrelLayers(via, stack), {
       x: via.x,
       y: via.y,
       ownerTraceId: via.pcb_trace_id,

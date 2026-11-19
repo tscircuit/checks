@@ -18,6 +18,7 @@ import { getPads, getPadToPadGap } from "../check-pad-clearance/common"
 import type { getPourContactTester } from "./pour-contact-index"
 import { isPointInPad } from "../check-traces-are-contiguous/is-point-in-pad"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import { getViaBarrelLayers } from "../util/get-via-barrel-layers"
 import type { PcbTraceRoutePoint } from "../util/route-point-touches-pad"
 
 /** Via copper in board XY coordinates (mm). */
@@ -58,14 +59,17 @@ function getBoardLayerStack(circuitJson: AnyCircuitElement[]) {
   return boardLayerStack
 }
 
-function getPcbViaCoppers(vias: PcbVia[]): ViaCopper[] {
+function getPcbViaCoppers(
+  vias: PcbVia[],
+  boardLayerStack: string[],
+): ViaCopper[] {
   return vias
     .filter(
       (via) => Number.isFinite(via.outer_diameter) && via.outer_diameter > 0,
     )
     .map((via) => ({
       id: via.pcb_via_id,
-      layers: getLayersOfPcbElement(via),
+      layers: getViaBarrelLayers(via, boardLayerStack),
       x: via.x,
       y: via.y,
       radius: via.outer_diameter / 2,
@@ -184,7 +188,7 @@ export function getViaContactIndex(ctx: ViaContactContext): ViaContactIndex {
   const traces = circuitJson.filter((element) => element.type === "pcb_trace")
   const vias = circuitJson.filter((element) => element.type === "pcb_via")
   const viaCoppers = [
-    ...getPcbViaCoppers(vias),
+    ...getPcbViaCoppers(vias, getBoardLayerStack(circuitJson)),
     ...getRouteViaCoppers({ traces, vias }, ctx),
   ]
   const viaContactIndex: ViaContactIndex = new Map()
@@ -236,6 +240,42 @@ export function getViaContactIndex(ctx: ViaContactContext): ViaContactIndex {
   return viaContactIndex
 }
 
+function viaContactHasOnwardConnection(contact: ViaContact, trace: PcbTrace) {
+  return (
+    contact.touchesPadOrPour ||
+    [...contact.touchingTraceIds].some(
+      (traceId) => traceId !== trace.pcb_trace_id,
+    )
+  )
+}
+
+/** A route that stops at a via needs that via to reach copper beyond the route. */
+export function terminalViaHasOnwardCopper(
+  {
+    trace,
+    via,
+  }: {
+    trace: PcbTrace
+    via: Extract<PcbTraceRoutePoint, { route_type: "via" }>
+  },
+  {
+    connMap,
+    viaContactIndex,
+  }: { connMap: ConnectivityMap; viaContactIndex: ViaContactIndex },
+): boolean {
+  const netId = connMap.getNetConnectedToId(trace.pcb_trace_id)
+  if (!netId) return false
+  const contactsByLayer = viaContactIndex.get(netId)
+  const contacts = [via.from_layer, via.to_layer].flatMap(
+    (layer) => contactsByLayer?.get(layer as PcbCopperLayer) ?? [],
+  )
+  return contacts.some(
+    (contact) =>
+      Math.hypot(via.x - contact.viaCopper.x, via.y - contact.viaCopper.y) <=
+        CONTACT_EPSILON_MM && viaContactHasOnwardConnection(contact, trace),
+  )
+}
+
 /** A via connects an endpoint only when it also reaches other copper. */
 export function endpointTouchesVia(
   {
@@ -256,20 +296,16 @@ export function endpointTouchesVia(
   const netId = connMap.getNetConnectedToId(trace.pcb_trace_id)
   if (!netId) return false
   const viaContacts = viaContactIndex.get(netId)?.get(point.layer) ?? []
-  return viaContacts.some(
-    ({ viaCopper, touchesPadOrPour, touchingTraceIds }) => {
-      const hasOnwardConnection =
-        touchesPadOrPour ||
-        [...touchingTraceIds].some((traceId) => traceId !== trace.pcb_trace_id)
-      if (!hasOnwardConnection) return false
-      let contactDistance = 0
-      if (viaCopper.radius !== undefined) {
-        contactDistance = viaCopper.radius + width / 2
-      }
-      return (
-        Math.hypot(point.x - viaCopper.x, point.y - viaCopper.y) <=
-        contactDistance + CONTACT_EPSILON_MM
-      )
-    },
-  )
+  return viaContacts.some((contact) => {
+    if (!viaContactHasOnwardConnection(contact, trace)) return false
+    const { viaCopper } = contact
+    let contactDistance = 0
+    if (viaCopper.radius !== undefined) {
+      contactDistance = viaCopper.radius + width / 2
+    }
+    return (
+      Math.hypot(point.x - viaCopper.x, point.y - viaCopper.y) <=
+      contactDistance + CONTACT_EPSILON_MM
+    )
+  })
 }
