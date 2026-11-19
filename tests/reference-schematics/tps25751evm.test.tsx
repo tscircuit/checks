@@ -6,7 +6,7 @@ import { runAllSchematicChecks } from "../.."
 import { normalizeFixtureSourcePorts } from "../fixtures/normalize-fixture-source-ports"
 import { Tps25751Evm } from "./tps25751evm"
 
-test("TI TPS25751EVM schematic emits only the known box sizing warnings across all seven sheets", async () => {
+test("TI TPS25751EVM reference schematic reports the expected warnings across all seven sheets", async () => {
   const circuit = new Circuit()
   circuit.pcbDisabled = true
   circuit.add(<Tps25751Evm />)
