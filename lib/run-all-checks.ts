@@ -114,7 +114,19 @@ export async function runAllPinSpecificationChecks(
   ]
 }
 
-export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
+export type RunChecksOptions = {
+  /**
+   * Include errors that only restate an earlier failure, such as one
+   * pcb_port_not_connected_error per port left unrouted after a
+   * pcb_autorouting_error. Defaults to true.
+   */
+  includeCascadingErrors?: boolean
+}
+
+export async function runAllRoutingChecks(
+  circuitJson: AnyCircuitElement[],
+  { includeCascadingErrors = true }: RunChecksOptions = {},
+) {
   // Infer endpoint IDs before taking connectivity snapshots. Keep these maps
   // local to this pass so edits to the same circuit array cannot leave stale data.
   addStartAndEndPortIdsIfMissing(circuitJson)
@@ -123,8 +135,14 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
     pcbConnectivityMap: createIndexedPcbConnectivityMap(circuitJson),
   }
   return [
-    ...checkEachPcbPortConnectedToPcbTraces(circuitJson, connectivity),
-    ...checkSourceTracesHavePcbTraces(circuitJson, connectivity),
+    ...checkEachPcbPortConnectedToPcbTraces(circuitJson, {
+      ...connectivity,
+      includeCascadingErrors,
+    }),
+    ...checkSourceTracesHavePcbTraces(circuitJson, {
+      ...connectivity,
+      includeCascadingErrors,
+    }),
     ...checkSourceTracesMatchPcbTraceThickness(circuitJson),
     ...checkPcbBendZoneTraces(circuitJson),
     ...checkCopperToCutoutClearance(circuitJson, {
@@ -150,12 +168,15 @@ export async function runAllRoutingChecks(circuitJson: AnyCircuitElement[]) {
   ]
 }
 
-export async function runAllChecks(circuitJson: AnyCircuitElement[]) {
+export async function runAllChecks(
+  circuitJson: AnyCircuitElement[],
+  options: RunChecksOptions = {},
+) {
   return [
     ...(await runAllPlacementChecks(circuitJson)),
     ...(await runAllSchematicChecks(circuitJson)),
     ...(await runAllNetlistChecks(circuitJson)),
     ...(await runAllPinSpecificationChecks(circuitJson)),
-    ...(await runAllRoutingChecks(circuitJson)),
+    ...(await runAllRoutingChecks(circuitJson, options)),
   ]
 }
