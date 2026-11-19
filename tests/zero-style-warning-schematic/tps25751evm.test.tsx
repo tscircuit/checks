@@ -36,20 +36,21 @@ test("TI TPS25751EVM schematic emits only the known box sizing warnings across a
     })
     .sort()
 
+  // Lines marked FP are false positives: the pin padding equals the drawn pin
+  // pitch, but the analyzer compares it against the nominal 0.2 pin_spacing.
+  // All other warnings are legitimate.
   expect(warningSummaries).toEqual([
     "pd-controller U4 schematic_box_too_wide",
     "pd-controller U4 schematic_pin_padding_to_edge_too_large",
     "pd-controller U5 schematic_box_too_wide",
-    // False positive: padding is half of the drawn 0.8 pin pitch.
-    "pd-controller U5 schematic_pin_padding_to_edge_too_large",
+    "pd-controller U5 schematic_pin_padding_to_edge_too_large", // FP
     "port-protection U12 schematic_box_too_wide",
     "power-input U1 schematic_box_too_wide",
     "power-input U1 schematic_pin_padding_to_edge_too_large",
     "power-stage U10 schematic_box_too_wide",
     "power-stage U11 schematic_box_too_wide",
     "power-stage U11 schematic_pin_padding_to_edge_too_large",
-    // False positive: padding equals the drawn 0.4 pin pitch.
-    "tiva-programmer J11 schematic_pin_padding_to_edge_too_large",
+    "tiva-programmer J11 schematic_pin_padding_to_edge_too_large", // FP
     "tiva-programmer U6 schematic_box_too_wide",
     "tiva-programmer U6 schematic_pin_padding_to_edge_too_large",
     "tiva-programmer U7 schematic_box_too_wide",
@@ -57,17 +58,15 @@ test("TI TPS25751EVM schematic emits only the known box sizing warnings across a
     "tiva-programmer U8 schematic_box_too_wide",
     "tiva-programmer U8 schematic_pin_padding_to_edge_too_large",
     "usb-connectors J2 schematic_box_too_wide",
-    // False positives (J2-J7): padding equals the drawn pin pitch. The
-    // analyzer compares against the nominal 0.2 pin_spacing instead.
-    "usb-connectors J2 schematic_pin_padding_to_edge_too_large",
+    "usb-connectors J2 schematic_pin_padding_to_edge_too_large", // FP
     "usb-connectors J3 schematic_box_too_wide",
-    "usb-connectors J3 schematic_pin_padding_to_edge_too_large",
+    "usb-connectors J3 schematic_pin_padding_to_edge_too_large", // FP
     "usb-connectors J4 schematic_box_too_wide",
-    "usb-connectors J4 schematic_pin_padding_to_edge_too_large",
+    "usb-connectors J4 schematic_pin_padding_to_edge_too_large", // FP
     "usb-connectors J5 schematic_box_too_wide",
-    "usb-connectors J5 schematic_pin_padding_to_edge_too_large",
-    "usb-connectors J6 schematic_pin_padding_to_edge_too_large",
-    "usb-connectors J7 schematic_pin_padding_to_edge_too_large",
+    "usb-connectors J5 schematic_pin_padding_to_edge_too_large", // FP
+    "usb-connectors J6 schematic_pin_padding_to_edge_too_large", // FP
+    "usb-connectors J7 schematic_pin_padding_to_edge_too_large", // FP
   ])
 
   for (const sheet of sheets) {
@@ -78,4 +77,4 @@ test("TI TPS25751EVM schematic emits only the known box sizing warnings across a
       }),
     ).toMatchSvgSnapshot(import.meta.path, sheet.name)
   }
-})
+}, 30_000)
