@@ -31,7 +31,14 @@ export function checkNoPowerPinDefined(
   for (const component of sourceComponents) {
     const componentPorts =
       portsByComponent.get(component.source_component_id) ?? []
-    if (!shouldCheckChipPowerGroundPins(component, componentPorts)) continue
+    if (
+      !shouldCheckChipPowerGroundPins(
+        component,
+        componentPorts,
+        "requires_power",
+      )
+    )
+      continue
 
     // Passive packages such as mechanical encoders have no supply pin.
     const allConnectablePinsPassive = componentPorts

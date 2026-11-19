@@ -3,7 +3,7 @@
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
-  "version": "0.0.279",
+  "version": "0.0.282",
   "repository": {
     "type": "git",
     "url": "https://github.com/tscircuit/checks"
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
-    "@tscircuit/circuit-json-schematic-placement-analysis": "https://codeload.github.com/tscircuit/circuit-json-schematic-placement-analysis/tar.gz/27e166a82a855cf160dabadda7637904b49c8ea3",
+    "@tscircuit/circuit-json-schematic-placement-analysis": "https://codeload.github.com/tscircuit/circuit-json-schematic-placement-analysis/tar.gz/45604feaa3f67a17a95cc73bfe4a4c6a402f8f0d",
     "@tscircuit/jlcpcb-manufacturing-specs": "git+https://github.com/tscircuit/jlcpcb-manufacturing-specs#23260504fceffff2d64bf11720f74e974d1d9321",
     "@tscircuit/log-soup": "^1.0.2",
     "@types/bun": "^1.2.8",
