@@ -6,6 +6,13 @@ import {
 } from "circuit-json"
 import { checkCopperPourIslands, runAllRoutingChecks } from "../../index"
 import am3352Island from "../fixtures/am3352-ground-pour-island.json"
+import {
+  collinearHole,
+  padHeight,
+  padWidth,
+  padY,
+  safePadX,
+} from "../fixtures/collinear-pour-hole"
 
 const square = (r: number) => [
   { x: -r, y: -r },
@@ -300,4 +307,42 @@ test("wire-to-via route segments connect fill to emitted via copper", () => {
     ],
   }
   expect(check(pour, trace, { ...via, x: 4 }, padRecords(true)[1])).toEqual([])
+})
+
+test("a same-net pad inside a collinear-vertex cutout hole does not anchor an isolated pour", () => {
+  const holePour = {
+    ...pour,
+    brep_shape: {
+      outer_ring: {
+        vertices: [
+          { x: -10, y: 25 },
+          { x: 10, y: 25 },
+          { x: 10, y: 40 },
+          { x: -10, y: 40 },
+        ],
+      },
+      inner_rings: [{ vertices: collinearHole }],
+    },
+  }
+  const enclosedPad = {
+    type: "pcb_smtpad",
+    pcb_smtpad_id: "pcb_smtpad_enclosed",
+    pcb_port_id: "pcb_port_ground",
+    shape: "rect",
+    x: safePadX,
+    y: padY,
+    width: padWidth,
+    height: padHeight,
+    layer: "top",
+  }
+  expect(
+    check(holePour, enclosedPad, ...padRecords(true), {
+      type: "pcb_port",
+      pcb_port_id: "pcb_port_ground",
+      source_port_id: "source_port_ground",
+      x: safePadX,
+      y: padY,
+      layers: ["top"],
+    }),
+  ).toHaveLength(1)
 })

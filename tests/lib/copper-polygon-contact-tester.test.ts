@@ -1,8 +1,15 @@
 import { expect, test } from "bun:test"
 import { createRequire } from "node:module"
-import { Box, Circle, Point, Polygon } from "@flatten-js/core"
+import { Arc, Box, Circle, Point, Polygon, Segment } from "@flatten-js/core"
 import { copperPolygonsTouch } from "@tscircuit/circuit-json-util"
 import { createCopperPolygonContactTester } from "lib/copper-pour-connectivity/create-copper-polygon-contact-tester"
+import {
+  collinearHole,
+  padHeight,
+  padWidth,
+  padY,
+  safePadX,
+} from "../fixtures/collinear-pour-hole"
 
 const scale = 1e6
 const tolerance = 1e-7 * scale
@@ -102,4 +109,42 @@ test("indexed contact matches the old predicate for seeded mixed curved and rota
       expect(touches(shapes[j], shapes[i])).toBe(expected)
     }
   }
+})
+
+test("does not report false contact across collinear hole vertices or grazing arc tangent rays", () => {
+  const touches = createCopperPolygonContactTester(tolerance)
+  const pourWithCollinearHole = new Polygon()
+  pourWithCollinearHole.addFace(new Box(-10, 25, 10, 40))
+  pourWithCollinearHole.addFace(
+    [...collinearHole].reverse().map(({ x, y }) => new Point(x, y)),
+  )
+  const scaledPour = pourWithCollinearHole.scale(scale, scale)
+  const enclosedPad = rectangle(
+    safePadX - padWidth / 2,
+    padY - padHeight / 2,
+    padWidth,
+    padHeight,
+  )
+  expect(touches(scaledPour, enclosedPad)).toBe(false)
+  expect(touches(enclosedPad, scaledPour)).toBe(false)
+  expect(touches(foreign(scaledPour), foreign(enclosedPad))).toBe(false)
+
+  // A wide trace cap whose top tangent lies 1e-6 scaled units above a distant
+  // pour vertex inside its bounding box is still separated by 0.5 mm.
+  const wideCap = new Polygon()
+  wideCap.addFace([
+    new Arc(new Point(5e6, 9e6 - 1e5 + 1e-6), 1e5, 0, Math.PI, true),
+    new Segment(new Point(5e6 - 1e5, 9e6 - 1e5 + 1e-6), new Point(-60e6, -3e6)),
+    new Segment(new Point(-60e6, -3e6), new Point(5e6 + 1e5, 9e6 - 1e5 + 1e-6)),
+  ])
+  const separatedPour = new Polygon([
+    new Point(-56.8e6, 9e6),
+    new Point(-63e6, 9e6),
+    new Point(-63e6, 14.5e6),
+    new Point(10e6, 14.5e6),
+    new Point(10e6, 9.5e6),
+    new Point(-56.8e6, 9.5e6),
+  ])
+  expect(touches(wideCap, separatedPour)).toBe(false)
+  expect(touches(separatedPour, wideCap)).toBe(false)
 })

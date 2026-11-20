@@ -284,3 +284,58 @@ test("containment works in both directions when boundaries do not intersect", ()
   expect(check(pour, pad)).toHaveLength(1)
   expect(check(pour, { ...pad, width: 1, height: 1 })).toHaveLength(1)
 })
+
+test("does not report a false pour short when a pour vertex lies 1e-6 mm below a distant trace cap tangent (#588)", () => {
+  const distantPour = {
+    type: "pcb_copper_pour",
+    pcb_copper_pour_id: "pcb_copper_pour_0",
+    shape: "brep",
+    layer: "top",
+    source_net_id: "source_net_0",
+    brep_shape: {
+      outer_ring: {
+        vertices: [
+          { x: -56.8, y: 9 },
+          { x: -63, y: 9 },
+          { x: -63, y: 14.5 },
+          { x: 10, y: 14.5 },
+          { x: 10, y: 9.5 },
+          { x: -56.8, y: 9.5 },
+        ],
+      },
+      inner_rings: [],
+    },
+  }
+  const grazingRayTrace = {
+    type: "pcb_trace",
+    pcb_trace_id: "pcb_trace_0",
+    route: [
+      {
+        route_type: "wire",
+        x: -7.11539641921472,
+        y: -3.14,
+        width: 0.15,
+        layer: "top",
+      },
+      {
+        route_type: "wire",
+        x: 4.94960458078528,
+        y: 8.925001,
+        width: 0.15,
+        layer: "top",
+      },
+    ],
+  }
+  // Nearest copper is 0.499999 mm away (trace cap top y = 9.000001 vs pour y = 9.5).
+  expect(check(distantPour, grazingRayTrace)).toEqual([])
+  // Real contact control when the trace cap reaches y = 9.5 + 0.075 > 9.5.
+  expect(
+    check(distantPour, {
+      ...grazingRayTrace,
+      route: [
+        grazingRayTrace.route[0],
+        { ...grazingRayTrace.route[1], y: 9.45 },
+      ],
+    }),
+  ).toHaveLength(1)
+})
