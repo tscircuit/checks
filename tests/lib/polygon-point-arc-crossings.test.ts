@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { createRequire } from "node:module"
 import * as Flatten from "@flatten-js/core"
 import { polygonContainsPoint } from "../../lib/util/polygon-contains-point"
 
@@ -86,4 +87,35 @@ test("analytic arc crossings preserve tangencies and segment joins in both direc
       }
     }
   }
+})
+
+test("handles counter-clockwise arcs ending at 2π with sub-tolerance join roundoff and foreign Flatten instances", (): void => {
+  const poly = new Flatten.Polygon()
+  poly.addFace([
+    new Flatten.Arc(new Flatten.Point(0, 0), 1, Math.PI, 0, true),
+    new Flatten.Segment(new Flatten.Point(1, -1e-8), new Flatten.Point(1, 0.5)),
+    new Flatten.Segment(new Flatten.Point(1, 0.5), new Flatten.Point(-1, 0)),
+  ])
+  expect(polygonContainsPoint(poly, new Flatten.Point(0, -5e-9))).toBe(true)
+  expect(polygonContainsPoint(poly, new Flatten.Point(0.5, -5e-9))).toBe(true)
+  expect(polygonContainsPoint(poly, new Flatten.Point(-2, -5e-9))).toBe(false)
+
+  const other = createRequire(import.meta.url)(
+    "@flatten-js/core",
+  ) as typeof Flatten
+  const foreignPoly = new other.Polygon(
+    poly.toJSON() as ConstructorParameters<typeof Flatten.Polygon>[0],
+  )
+  expect(
+    polygonContainsPoint(
+      foreignPoly as unknown as Flatten.Polygon,
+      new Flatten.Point(0.5, -5e-9),
+    ),
+  ).toBe(true)
+  expect(
+    polygonContainsPoint(
+      foreignPoly as unknown as Flatten.Polygon,
+      new Flatten.Point(-2, -5e-9),
+    ),
+  ).toBe(false)
 })
