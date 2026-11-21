@@ -58,15 +58,10 @@ test("offset outline exposes a false microSD warning independently of HDMI metad
     const warnings = circuitJson.filter(
       (e) => e.type === "pcb_connector_not_in_accessible_orientation_warning",
     )
-    // Records the bug on the reproduction branch: microSD already opens left.
-    expect(warnings).toHaveLength(explicit ? 1 : 2)
-    expect(warnings[0]).toMatchObject({
-      pcb_component_id: components[0].pcb_component_id,
-      facing_direction: "x-",
-      recommended_facing_direction: "y-",
-    })
+    // microSD faces the actual nearest edge, with or without explicit metadata.
+    expect(warnings).toHaveLength(explicit ? 0 : 1)
     if (!explicit) {
-      expect(warnings[1]).toMatchObject({
+      expect(warnings[0]).toMatchObject({
         pcb_component_id: components[1].pcb_component_id,
         facing_direction: "x-",
         recommended_facing_direction: "x+",
