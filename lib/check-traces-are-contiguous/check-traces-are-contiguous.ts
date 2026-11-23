@@ -149,25 +149,6 @@ function getEndpointTraceCopperWidth(
   // test would overestimate their endpoint copper.
   if (trace.route_thickness_mode === "interpolated") return undefined
 
-  const endpointPoint =
-    trace.route[endpoint === "start" ? 0 : trace.route.length - 1]
-  const adjacentPoint =
-    trace.route[endpoint === "start" ? 1 : trace.route.length - 2]
-  // A coincident layer transition still has endpoint copper through its barrel.
-  // The via-contact index separately checks electrical ownership and layer span.
-  if (
-    endpointPoint?.route_type === "wire" &&
-    adjacentPoint?.route_type === "via" &&
-    Math.hypot(
-      endpointPoint.x - adjacentPoint.x,
-      endpointPoint.y - adjacentPoint.y,
-    ) <= TRACE_SEGMENT_GEOMETRY_EPSILON &&
-    Number.isFinite(endpointPoint.width) &&
-    endpointPoint.width > 0
-  ) {
-    return endpointPoint.width
-  }
-
   let segmentStartIndex = endpoint === "start" ? 0 : trace.route.length - 2
   const indexStep = endpoint === "start" ? 1 : -1
 
@@ -712,25 +693,23 @@ function checkTracesAreContiguous(
       const firstIsConnected =
         firstConnectsToAnyPad ||
         firstConnectsToLogicallyConnectedTraceCopper ||
-        (firstEndpointTraceCopperWidth !== undefined &&
-          endpointTouchesVia({
-            point: firstPoint,
-            width: firstEndpointTraceCopperWidth,
-            ownerTrace: trace,
-            index: getViaIndex(),
-            connectivity: getFullConnectivityMap(),
-          }))
+        endpointTouchesVia({
+          point: firstPoint,
+          width: firstEndpointTraceCopperWidth ?? 0,
+          ownerTrace: trace,
+          index: getViaIndex(),
+          connectivity: getFullConnectivityMap(),
+        })
       const lastIsConnected =
         lastConnectsToAnyPad ||
         lastConnectsToLogicallyConnectedTraceCopper ||
-        (lastEndpointTraceCopperWidth !== undefined &&
-          endpointTouchesVia({
-            point: lastPoint,
-            width: lastEndpointTraceCopperWidth,
-            ownerTrace: trace,
-            index: getViaIndex(),
-            connectivity: getFullConnectivityMap(),
-          }))
+        endpointTouchesVia({
+          point: lastPoint,
+          width: lastEndpointTraceCopperWidth ?? 0,
+          ownerTrace: trace,
+          index: getViaIndex(),
+          connectivity: getFullConnectivityMap(),
+        })
       const endpointsAreSame =
         firstPoint.route_type === "wire" &&
         lastPoint.route_type === "wire" &&

@@ -150,5 +150,55 @@ test("net-owned routes recognize a coincident endpoint via without accepting gap
         (error) => error.pcb_trace_id === "carrier",
       ),
     ).toBe(true)
+    const wideEndpoint = carrier(reverse)
+    wideEndpoint.source_trace_id = "carrier_source"
+    wideEndpoint.route = wideEndpoint.route.map((point) =>
+      point.route_type === "wire" && point.layer === "inner1"
+        ? { ...point, width: 1 }
+        : point,
+    )
+    const requiredPad: AnyCircuitElement[] = [
+      {
+        type: "source_trace",
+        source_trace_id: "carrier_source",
+        connected_source_port_ids: ["nearby_source", "destination"],
+        connected_source_net_ids: ["shared_net"],
+      },
+      {
+        type: "pcb_port",
+        pcb_port_id: "nearby_port",
+        source_port_id: "nearby_source",
+        x: 0.4,
+        y: 0,
+        layers: ["inner1"],
+      },
+      {
+        type: "pcb_smtpad",
+        pcb_smtpad_id: "nearby_pad",
+        pcb_port_id: "nearby_port",
+        shape: "rect",
+        x: 0.4,
+        y: 0,
+        width: 0.1,
+        height: 0.1,
+        layer: "inner1",
+      },
+    ]
+    // A zero-length wire at the barrel does not create a disk of wire.width.
+    expect(
+      checkTracesAreContiguous([...circuit, ...requiredPad, wideEndpoint]).some(
+        (error) =>
+          error.pcb_trace_id === "carrier" &&
+          error.pcb_port_ids?.includes("nearby_port"),
+      ),
+    ).toBe(true)
+    const centeredPad = requiredPad.map((element) =>
+      element.type === "pcb_port" || element.type === "pcb_smtpad"
+        ? { ...element, x: 0 }
+        : element,
+    )
+    expect(
+      checkTracesAreContiguous([...circuit, ...centeredPad, wideEndpoint]),
+    ).toEqual([])
   }
 })
