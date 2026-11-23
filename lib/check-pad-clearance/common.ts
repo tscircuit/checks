@@ -171,36 +171,86 @@ const getPolygonShape = (pad: CopperClearanceElement) => {
   }
 }
 
-// A rounded rectangle is an inset rectangle expanded by corner_radius.
+// A rounded rectangle is an inset rectangle expanded by corner/border radius.
 // At the maximum radius its inset collapses, so use the existing pill geometry.
-const getRoundedPadCore = (pad: CopperClearanceElement) => {
-  if (
-    pad.type !== "pcb_smtpad" ||
-    (pad.shape !== "rect" && pad.shape !== "rotated_rect") ||
-    !pad.corner_radius ||
-    pad.corner_radius <= 0
-  )
-    return null
+export const getRoundedPadCore = (pad: CopperClearanceElement) => {
+  const isSmtRectPad =
+    pad.type === "pcb_smtpad" &&
+    (pad.shape === "rect" || pad.shape === "rotated_rect")
+  const isPlatedHoleRectPad =
+    pad.type === "pcb_plated_hole" &&
+    "rect_pad_width" in pad &&
+    "rect_pad_height" in pad
 
-  const radius = Math.min(pad.corner_radius, pad.width / 2, pad.height / 2)
-  if (radius === Math.min(pad.width, pad.height) / 2) {
-    const core: PcbSmtPad = {
-      ...pad,
-      shape: "rotated_pill",
-      radius,
-      ccw_rotation: pad.shape === "rotated_rect" ? pad.ccw_rotation : 0,
-    }
+  if (!isSmtRectPad && !isPlatedHoleRectPad) return null
+
+  const rawRadius = isSmtRectPad
+    ? (pad.corner_radius ?? pad.rect_border_radius)
+    : pad.rect_border_radius
+  if (!rawRadius || rawRadius <= 0) return null
+
+  const width = isSmtRectPad ? pad.width : pad.rect_pad_width
+  const height = isSmtRectPad ? pad.height : pad.rect_pad_height
+  if (width <= 0 || height <= 0) return null
+
+  const ccwRotation = isSmtRectPad
+    ? pad.shape === "rotated_rect"
+      ? pad.ccw_rotation
+      : 0
+    : "rect_ccw_rotation" in pad && typeof pad.rect_ccw_rotation === "number"
+      ? pad.rect_ccw_rotation
+      : 0
+  const radius = Math.min(rawRadius, width / 2, height / 2)
+
+  if (radius === Math.min(width, height) / 2) {
+    const core: PcbSmtPad = isSmtRectPad
+      ? {
+          ...pad,
+          shape: "rotated_pill",
+          radius,
+          ccw_rotation: ccwRotation,
+        }
+      : {
+          type: "pcb_smtpad",
+          pcb_smtpad_id: pad.pcb_plated_hole_id,
+          shape: "rotated_pill",
+          x: pad.x,
+          y: pad.y,
+          width,
+          height,
+          radius,
+          ccw_rotation: ccwRotation,
+          layer: pad.layers[0] ?? "top",
+        }
     return { core, radius: 0 }
   }
-  return {
-    core: {
-      ...pad,
-      width: pad.width - 2 * radius,
-      height: pad.height - 2 * radius,
-      corner_radius: 0,
-    },
-    radius,
-  }
+
+  const insetWidth = width - 2 * radius
+  const insetHeight = height - 2 * radius
+  const core: PcbSmtPad = isSmtRectPad
+    ? {
+        ...pad,
+        width: insetWidth,
+        height: insetHeight,
+        corner_radius: 0,
+        rect_border_radius: 0,
+      }
+    : {
+        type: "pcb_smtpad",
+        pcb_smtpad_id: pad.pcb_plated_hole_id,
+        x: pad.x,
+        y: pad.y,
+        width: insetWidth,
+        height: insetHeight,
+        corner_radius: 0,
+        rect_border_radius: 0,
+        layer: pad.layers[0] ?? "top",
+        ...(ccwRotation !== 0
+          ? { shape: "rotated_rect" as const, ccw_rotation: ccwRotation }
+          : { shape: "rect" as const }),
+      }
+
+  return { core, radius }
 }
 
 export const getPadToPadGap = (
