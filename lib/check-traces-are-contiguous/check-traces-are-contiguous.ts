@@ -149,6 +149,19 @@ function getEndpointTraceCopperWidth(
   // test would overestimate their endpoint copper.
   if (trace.route_thickness_mode === "interpolated") return undefined
 
+  const endpointPoint = trace.route[endpoint === "start" ? 0 : trace.route.length - 1]
+  const adjacentPoint = trace.route[endpoint === "start" ? 1 : trace.route.length - 2]
+  // A coincident layer transition still has endpoint copper through its barrel.
+  // The via-contact index separately checks electrical ownership and layer span.
+  if (
+    endpointPoint?.route_type === "wire" &&
+    adjacentPoint?.route_type === "via" &&
+    Math.hypot(endpointPoint.x - adjacentPoint.x, endpointPoint.y - adjacentPoint.y) <= TRACE_SEGMENT_GEOMETRY_EPSILON &&
+    Number.isFinite(endpointPoint.width) && endpointPoint.width > 0
+  ) {
+    return endpointPoint.width
+  }
+
   let segmentStartIndex = endpoint === "start" ? 0 : trace.route.length - 2
   const indexStep = endpoint === "start" ? 1 : -1
 
