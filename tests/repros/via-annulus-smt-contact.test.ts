@@ -11,9 +11,5 @@ test("LCD_DE via annulus lands on the edge of the connector pad", () => {
       showErrorsInTextOverlay: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
-  // Reproduces both false positives on main.
-  expect(errors.map((error) => error.type)).toEqual([
-    "pcb_port_not_connected_error",
-    "pcb_trace_error",
-  ])
+  expect(errors).toEqual([])
 })
