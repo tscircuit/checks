@@ -47,7 +47,12 @@ function lcdEscape(
       name: "P14",
       port_hints: ["14"],
     },
-    { type: "source_net", source_net_id: "net", name: "LCD_DE" },
+    {
+      type: "source_net",
+      source_net_id: "net",
+      name: "LCD_DE",
+      member_source_group_ids: [],
+    },
     {
       type: "source_trace",
       source_trace_id: "source_trace",
