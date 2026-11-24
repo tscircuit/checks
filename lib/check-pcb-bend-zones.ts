@@ -4,16 +4,18 @@ import {
   getReadableNameForTrace,
 } from "lib/util/get-readable-names"
 import { getPrimaryId } from "@tscircuit/circuit-json-util"
-import type {
-  AnyCircuitElement,
-  PCBKeepout,
-  PcbBend,
-  PcbBoard,
-  PcbPlacementError,
-  PcbStiffener,
-  PcbTraceError,
-  PcbVia,
-  Point,
+import {
+  all_layers,
+  type AnyCircuitElement,
+  type PCBKeepout,
+  type PcbBend,
+  type PcbBoard,
+  type PcbPlacementError,
+  type PcbStiffener,
+  type PcbTrace,
+  type PcbTraceError,
+  type PcbVia,
+  type Point,
 } from "circuit-json"
 import {
   getRotatedRectPoints,
@@ -22,6 +24,52 @@ import {
 import { getPads, getPadToPadGap } from "./check-pad-clearance/common"
 
 const GEOMETRY_EPSILON = 1e-9
+const INNER_LAYERS = all_layers.filter((layer) => layer.startsWith("inner"))
+
+function getBoardLayerStack(board: PcbBoard): string[] {
+  return [
+    "top",
+    ...INNER_LAYERS.slice(0, Math.max(0, board.num_layers - 2)),
+    ...(board.num_layers === 1 ? [] : ["bottom"]),
+  ]
+}
+
+function getRouteContactOnLayer(
+  point: PcbTrace["route"][number],
+  layer: string,
+  side: "incoming" | "outgoing",
+  stack: string[],
+): Point | undefined {
+  if (point.route_type === "wire") {
+    return point.layer === layer ? point : undefined
+  }
+  if (point.route_type === "through_pad") {
+    if (side === "incoming") {
+      return point.end_layer === layer
+        ? point.end
+        : point.start_layer === layer
+          ? point.start
+          : undefined
+    }
+    return point.start_layer === layer
+      ? point.start
+      : point.end_layer === layer
+        ? point.end
+        : undefined
+  }
+  const fromIndex = stack.indexOf(point.from_layer)
+  const toIndex = stack.indexOf(point.to_layer)
+  const targetIndex = stack.indexOf(layer)
+  if (fromIndex >= 0 && toIndex >= 0 && targetIndex >= 0) {
+    return targetIndex >= Math.min(fromIndex, toIndex) &&
+      targetIndex <= Math.max(fromIndex, toIndex)
+      ? point
+      : undefined
+  }
+  return point.from_layer === layer || point.to_layer === layer
+    ? point
+    : undefined
+}
 
 function getBendZones(circuitJson: AnyCircuitElement[]) {
   const boards = new Map(
@@ -194,8 +242,9 @@ export function checkPcbBendZoneTraces(
   for (const trace of circuitJson) {
     if (trace.type !== "pcb_trace") continue
     const boardId = getBoardOwner(trace)
-    for (const { bend, tangent, keepout } of zones) {
+    for (const { bend, board, tangent, keepout } of zones) {
       if (boardId && boardId !== bend.pcb_board_id) continue
+      const stack = getBoardLayerStack(board)
       let violation: { center: Point; reason: string } | undefined
       for (let i = 1; i < trace.route.length; i++) {
         const a = trace.route[i - 1]!
@@ -203,34 +252,8 @@ export function checkPcbBendZoneTraces(
         const wire =
           a.route_type === "wire" ? a : b.route_type === "wire" ? b : undefined
         if (!wire) continue
-        const aPoint =
-          a.route_type === "through_pad"
-            ? a.end_layer === wire.layer
-              ? a.end
-              : a.start_layer === wire.layer
-                ? a.start
-                : undefined
-            : a.route_type === "wire"
-              ? a.layer === wire.layer
-                ? a
-                : undefined
-              : a.to_layer === wire.layer
-                ? a
-                : undefined
-        const bPoint =
-          b.route_type === "through_pad"
-            ? b.start_layer === wire.layer
-              ? b.start
-              : b.end_layer === wire.layer
-                ? b.end
-                : undefined
-            : b.route_type === "wire"
-              ? b.layer === wire.layer
-                ? b
-                : undefined
-              : b.from_layer === wire.layer
-                ? b
-                : undefined
+        const aPoint = getRouteContactOnLayer(a, wire.layer, "incoming", stack)
+        const bPoint = getRouteContactOnLayer(b, wire.layer, "outgoing", stack)
         if (!aPoint || !bPoint) continue
         const dx = bPoint.x - aPoint.x
         const dy = bPoint.y - aPoint.y
@@ -282,15 +305,21 @@ export function checkPcbBendZoneTraces(
         }
         const previous = trace.route[previousIndex]
         const next = trace.route[nextIndex]
-        if (
-          previous?.route_type !== "wire" ||
-          next?.route_type !== "wire" ||
-          previous.layer !== point.layer ||
-          next.layer !== point.layer
-        )
-          continue
-        const incoming = { x: point.x - previous.x, y: point.y - previous.y }
-        const outgoing = { x: next.x - point.x, y: next.y - point.y }
+        const previousContact = previous
+          ? getRouteContactOnLayer(previous, point.layer, "incoming", stack)
+          : undefined
+        const nextContact = next
+          ? getRouteContactOnLayer(next, point.layer, "outgoing", stack)
+          : undefined
+        if (!previousContact || !nextContact) continue
+        const incoming = {
+          x: point.x - previousContact.x,
+          y: point.y - previousContact.y,
+        }
+        const outgoing = {
+          x: nextContact.x - point.x,
+          y: nextContact.y - point.y,
+        }
         const lengths =
           Math.hypot(incoming.x, incoming.y) *
           Math.hypot(outgoing.x, outgoing.y)
@@ -300,13 +329,12 @@ export function checkPcbBendZoneTraces(
         const cross =
           (incoming.x * outgoing.y - incoming.y * outgoing.x) / lengths
         if (dot > 0 && Math.abs(cross) <= GEOMETRY_EPSILON) continue
+        const incomingWidth =
+          previous?.route_type === "wire"
+            ? Math.max(previous.width, previous.end_width ?? 0)
+            : Math.max(point.width, point.start_width ?? 0)
         const radius =
-          Math.max(
-            previous.width,
-            previous.end_width ?? 0,
-            point.width,
-            point.start_width ?? 0,
-          ) / 2
+          Math.max(incomingWidth, point.width, point.start_width ?? 0) / 2
         const clearance = getSegmentToPolygonClearanceFromPoints(
           point,
           point,
