@@ -21,6 +21,19 @@ export const DEFAULT_PAD_PAD_CLEARANCE =
 
 export const EPSILON = 0.005
 
+/**
+ * JLCPCB's via process requires the pad to be at least 0.1mm larger than the
+ * drill — a 0.05mm annular ring on each side of the hole.
+ */
+export const DEFAULT_MIN_VIA_ANNULAR_RING = 0.05
+
+/**
+ * Smallest plated through-hole annular ring JLCPCB lists for their standard
+ * process (they also quote 0.15mm and 0.25mm tiers), so this only flags
+ * rings no listed process accepts.
+ */
+export const DEFAULT_MIN_PLATED_HOLE_ANNULAR_RING = 0.13
+
 export const getPcbBoard = (
   circuitJson: AnyCircuitElement[],
 ): PcbBoard | undefined =>
