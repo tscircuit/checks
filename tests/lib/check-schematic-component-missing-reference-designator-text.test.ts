@@ -14,7 +14,7 @@ test("warns when the component has no reference designator text", () => {
         "schematic_component_styling_warning_schematic_component_1_missing_reference_designator_text",
       warning_type: "schematic_component_styling_warning",
       message:
-        'U1 is missing schematic reference designator text. For a custom symbol, add name="{REFDES}" inside the symbol.',
+        'U1 is missing schematic reference designator text. For a custom symbol, add <schematictext text="{REF}" /> inside the symbol.',
       schematic_component_id: "schematic_component_1",
       styling_issue_type: "missing_reference_designator_text",
       source_component_id: "source_component_1",
@@ -22,4 +22,12 @@ test("warns when the component has no reference designator text", () => {
       subcircuit_id: undefined,
     },
   ])
+})
+
+test("does not warn when the component has matching reference designator text", () => {
+  const warnings = checkSchematicComponentMissingReferenceDesignatorText(
+    createReferenceDesignatorCircuitJson({ name: "U1", texts: ["U1"] }),
+  )
+
+  expect(warnings).toHaveLength(0)
 })
