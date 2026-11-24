@@ -124,11 +124,7 @@ test("LCD_DE via annulus lands on the edge of the connector pad", () => {
       showErrorsInTextOverlay: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
-  // Reproduces both false positives on main.
-  expect(errors.map((error) => error.type)).toEqual([
-    "pcb_port_not_connected_error",
-    "pcb_trace_error",
-  ])
+  expect(errors).toEqual([])
 })
 
 test("a 0.01 mm air gap or a buried via leaves the top pad open", () => {
@@ -141,4 +137,51 @@ test("a 0.01 mm air gap or a buried via leaves the top pad open", () => {
       "pcb_trace_error",
     ])
   }
+})
+
+test("a stale endpoint ID on a separate same-net island cannot reach the landing", () => {
+  const circuit = lcdEscape()
+  circuit.unshift({
+    type: "pcb_trace",
+    pcb_trace_id: "isolated",
+    source_trace_id: "source_trace",
+    route: [
+      {
+        route_type: "wire",
+        x: -1,
+        y: 0.5,
+        layer: "top",
+        width: 0.1,
+        start_pcb_port_id: "port",
+      },
+      { route_type: "wire", x: -0.5, y: 0.5, layer: "top", width: 0.1 },
+    ],
+  })
+  expect(
+    checkTracesAreContiguous(circuit).map((e) => e.pcb_trace_id),
+  ).toContain("isolated")
+})
+
+test("copper entirely inside the drill misses the annulus", () => {
+  const circuit = lcdEscape()
+  for (const el of circuit) {
+    if (el.type === "pcb_smtpad" && el.shape === "rect") {
+      el.width = el.height = 0.01
+      el.x = 0.946
+      el.y = -0.067
+    }
+    if (el.type === "pcb_port") {
+      el.x = 0.946
+      el.y = -0.067
+    }
+  }
+  expect(checkTracesAreContiguous(circuit).map((e) => e.pcb_port_ids)).toEqual([
+    ["port"],
+  ])
+})
+
+test("route-only via copper can also land on the top pad", () => {
+  expect(checkEscape(lcdEscape().filter((e) => e.type !== "pcb_via"))).toEqual(
+    [],
+  )
 })
