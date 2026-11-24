@@ -1,6 +1,10 @@
 import type { PcbSmtPad, PcbPlatedHole } from "circuit-json"
 import { pointToSegmentDistance } from "@tscircuit/math-utils"
 import {
+  getRoundedPadCore,
+  getTraceObstacleClearance,
+} from "lib/check-pad-clearance/common"
+import {
   getPillCenterLineForPad,
   getPolygonPointsForPad,
 } from "lib/check-each-pcb-trace-non-overlapping/segment-to-polygon-clearance"
@@ -61,6 +65,25 @@ export function isPointInPad(
   point: { x: number; y: number },
   pad: PcbSmtPad | PcbPlatedHole,
 ): boolean {
+  const rounded = getRoundedPadCore(pad)
+  if (rounded) {
+    if (rounded.radius === 0) {
+      return isPointInPad(point, rounded.core)
+    }
+    return (
+      getTraceObstacleClearance(
+        {
+          x1: point.x,
+          y1: point.y,
+          x2: point.x,
+          y2: point.y,
+          thickness: rounded.radius * 2,
+        },
+        rounded.core,
+      ).gap <= POINT_IN_PAD_TOLERANCE_MM
+    )
+  }
+
   if (pad.type === "pcb_smtpad") {
     if (pad.shape === "circle") {
       return (
