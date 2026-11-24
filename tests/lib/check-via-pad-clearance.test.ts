@@ -89,3 +89,51 @@ test("checkViaPadClearance reports an escape via too close to an unrelated fine-
 
   expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
+
+test("checkViaPadClearance prioritizes min_via_edge_to_pad_edge_clearance over min_pad_edge_to_pad_edge_clearance", () => {
+  const circuitJson: AnyCircuitElement[] = [
+    {
+      type: "pcb_board",
+      pcb_board_id: "board1",
+      center: { x: 0, y: 0 },
+      width: 20,
+      height: 10,
+      thickness: 1.6,
+      num_layers: 2,
+      material: "fr4",
+      min_via_edge_to_pad_edge_clearance: 0.2,
+      min_pad_edge_to_pad_edge_clearance: 0.1,
+    },
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad1",
+      shape: "rect",
+      x: 0.825,
+      y: 0,
+      width: 0.85,
+      height: 0.9,
+      layer: "top",
+    },
+    {
+      type: "pcb_via",
+      pcb_via_id: "via1",
+      x: 1.675,
+      y: 0,
+      hole_diameter: 0.3,
+      outer_diameter: 0.6,
+      layers: ["top", "bottom"],
+    },
+  ]
+
+  // Pad right edge: 0.825 + 0.85/2 = 1.25mm
+  // Via left edge: 1.675 - 0.6/2 = 1.375mm
+  // Clearance gap: 1.375 - 1.25 = 0.125mm
+  // 0.125mm is > min_pad_edge_to_pad_edge_clearance (0.1mm),
+  // but < min_via_edge_to_pad_edge_clearance (0.2mm).
+  // Therefore, checkViaPadClearance must report an error with minimum: 0.2mm.
+  const errors = checkViaPadClearance(circuitJson)
+
+  expect(errors).toHaveLength(1)
+  expect(errors[0].minimum_clearance).toBe(0.2)
+  expect(errors[0].message).toContain("minimum: 0.2mm")
+})
