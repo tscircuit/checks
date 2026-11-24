@@ -651,25 +651,23 @@ function checkTracesAreContiguous(
       const firstIsConnected =
         firstConnectsToAnyPad ||
         firstConnectsToLogicallyConnectedTraceCopper ||
-        (firstEndpointTraceCopperWidth !== undefined &&
-          endpointTouchesVia({
-            point: firstPoint,
-            width: firstEndpointTraceCopperWidth,
-            ownerTrace: trace,
-            index: getViaIndex(),
-            connectivity: getFullConnectivityMap(),
-          }))
+        endpointTouchesVia({
+          point: firstPoint,
+          width: firstEndpointTraceCopperWidth ?? 0,
+          ownerTrace: trace,
+          index: getViaIndex(),
+          connectivity: getFullConnectivityMap(),
+        })
       const lastIsConnected =
         lastConnectsToAnyPad ||
         lastConnectsToLogicallyConnectedTraceCopper ||
-        (lastEndpointTraceCopperWidth !== undefined &&
-          endpointTouchesVia({
-            point: lastPoint,
-            width: lastEndpointTraceCopperWidth,
-            ownerTrace: trace,
-            index: getViaIndex(),
-            connectivity: getFullConnectivityMap(),
-          }))
+        endpointTouchesVia({
+          point: lastPoint,
+          width: lastEndpointTraceCopperWidth ?? 0,
+          ownerTrace: trace,
+          index: getViaIndex(),
+          connectivity: getFullConnectivityMap(),
+        })
       const endpointsAreSame =
         firstPoint.route_type === "wire" &&
         lastPoint.route_type === "wire" &&

@@ -174,7 +174,8 @@ export function endpointTouchesVia({
   index: ViaContactIndex
   connectivity: ConnectivityMap
 }): boolean {
-  if (point.route_type !== "wire" || !Number.isFinite(width) || width <= 0)
+  // A point-only endpoint can contact a barrel without adding planar copper.
+  if (point.route_type !== "wire" || !Number.isFinite(width) || width < 0)
     return false
   const net = connectivity.getNetConnectedToId(ownerTrace.pcb_trace_id)
   if (!net) return false
