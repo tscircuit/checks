@@ -3,20 +3,16 @@ import {
   doSegmentsIntersect,
   isPointInsidePolygon,
 } from "@tscircuit/math-utils"
-import type {
-  AnyCircuitElement,
-  PcbCourtyardCircle,
-  PcbCourtyardOutline,
-  PcbCourtyardOverlapError,
-  PcbCourtyardRect,
-} from "circuit-json"
+import type { AnyCircuitElement, PcbCourtyardOverlapError } from "circuit-json"
 
-type CourtyardElement =
-  | PcbCourtyardRect
-  | PcbCourtyardCircle
-  | PcbCourtyardOutline
+import {
+  getPlacementEnvelopes,
+  type PlacementEnvelope,
+} from "../util/get-placement-envelopes"
 
-function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
+function getCourtyardPolygon(
+  el: PlacementEnvelope,
+): { x: number; y: number }[] {
   if (el.type === "pcb_courtyard_rect") {
     const hw = el.width / 2
     const hh = el.height / 2
@@ -44,7 +40,7 @@ function getCourtyardPolygon(el: CourtyardElement): { x: number; y: number }[] {
       }
     })
   }
-  return el.outline
+  return el.type === "pcb_courtyard_polygon" ? el.points : el.outline
 }
 
 function getComponentName(
@@ -74,7 +70,8 @@ function polygonsOverlap(polyA: Point[], polyB: Point[]): boolean {
 }
 
 /**
- * Check for overlapping PCB component courtyards.
+ * Check for overlapping PCB component courtyards, falling back to component
+ * bounds when a component has no courtyard.
  * Returns one error per pair of components whose courtyard elements overlap.
  */
 export function checkCourtyardOverlap(
@@ -88,17 +85,12 @@ export function checkCourtyardOverlap(
     ),
   )
 
-  const courtyards = circuitJson
-    .filter(
-      (el): el is CourtyardElement =>
-        el.type === "pcb_courtyard_rect" ||
-        el.type === "pcb_courtyard_circle" ||
-        el.type === "pcb_courtyard_outline",
-    )
-    .filter((el) => !doNotPlaceComponentIds.has(el.pcb_component_id))
+  const courtyards = getPlacementEnvelopes(circuitJson).filter(
+    (el) => !doNotPlaceComponentIds.has(el.pcb_component_id),
+  )
 
   // Group by component
-  const byComponent = new Map<string, CourtyardElement[]>()
+  const byComponent = new Map<string, PlacementEnvelope[]>()
   for (const el of courtyards) {
     const id = el.pcb_component_id
     if (!byComponent.has(id)) byComponent.set(id, [])
@@ -114,6 +106,8 @@ export function checkCourtyardOverlap(
       const idB = componentIds[j]
 
       let overlapping = false
+      let labelA = "Courtyard"
+      let labelB = "courtyard"
       outer: for (const a of byComponent.get(idA)!) {
         for (const b of byComponent.get(idB)!) {
           // Skip overlap check if courtyards are on different layers
@@ -124,6 +118,8 @@ export function checkCourtyardOverlap(
           const polyB = getCourtyardPolygon(b)
           if (polygonsOverlap(polyA, polyB)) {
             overlapping = true
+            labelA = a.usesComponentBounds ? "Bounds" : "Courtyard"
+            labelB = b.usesComponentBounds ? "bounds" : "courtyard"
             break outer
           }
         }
@@ -134,7 +130,7 @@ export function checkCourtyardOverlap(
           type: "pcb_courtyard_overlap_error",
           pcb_error_id: `pcb_courtyard_overlap_${idA}_${idB}`,
           error_type: "pcb_courtyard_overlap_error",
-          message: `Courtyard of ${getComponentName(circuitJson, idA)} overlaps with courtyard of ${getComponentName(circuitJson, idB)}`,
+          message: `${labelA} of ${getComponentName(circuitJson, idA)} ${labelA === "Bounds" ? "overlap" : "overlaps"} with ${labelB} of ${getComponentName(circuitJson, idB)}`,
           pcb_component_ids: [idA, idB],
         })
       }

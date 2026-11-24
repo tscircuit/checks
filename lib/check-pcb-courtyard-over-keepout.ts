@@ -7,10 +7,8 @@ import type {
 } from "circuit-json"
 import { getPadToPadGap } from "./check-pad-clearance/common"
 import { EPSILON } from "./drc-defaults"
-import {
-  courtyardToKeepout,
-  type CourtyardElement,
-} from "./util/courtyard-to-keepout"
+import { courtyardToKeepout } from "./util/courtyard-to-keepout"
+import { getPlacementEnvelopes } from "./util/get-placement-envelopes"
 
 /** Check component placement envelopes even when their copper clears a keepout. */
 export function checkPcbCourtyardOverKeepout(
@@ -25,19 +23,15 @@ export function checkPcbCourtyardOverKeepout(
     ),
   )
 
-  const courtyards = circuitJson.filter(
-    (el): el is CourtyardElement =>
-      el.type === "pcb_courtyard_rect" ||
-      el.type === "pcb_courtyard_circle" ||
-      el.type === "pcb_courtyard_outline" ||
-      el.type === "pcb_courtyard_polygon",
-  )
+  const courtyards = getPlacementEnvelopes(circuitJson)
   const errors = new Map<string, PcbPlacementError | PcbKeepoutOverlapWarning>()
   for (const courtyard of courtyards) {
     const componentId = courtyard.pcb_component_id
     const component = components.get(componentId)
     if (component?.do_not_place) continue
     const geometry = courtyardToKeepout(courtyard)
+    const label = courtyard.usesComponentBounds ? "Bounds" : "Courtyard"
+    const verb = courtyard.usesComponentBounds ? "overlap" : "overlaps"
     for (const keepout of keepouts) {
       if (!keepout.layers.includes(courtyard.layer)) continue
       if (keepout.excluded_pcb_component_ids?.includes(componentId)) continue
@@ -57,7 +51,7 @@ export function checkPcbCourtyardOverKeepout(
           pcb_keepout_overlap_warning_id: `pcb_keepout_overlap_warning_${id}`,
           pcb_keepout_id: keepout.pcb_keepout_id,
           pcb_component_ids: [componentId],
-          message: `Courtyard of ${name} overlaps advisory PCB keepout "${description}"`,
+          message: `${label} of ${name} ${verb} advisory PCB keepout "${description}"`,
           subcircuit_id,
         })
       } else {
@@ -65,7 +59,7 @@ export function checkPcbCourtyardOverKeepout(
           type: "pcb_placement_error",
           error_type: "pcb_placement_error",
           pcb_placement_error_id: id,
-          message: `Courtyard of ${name} overlaps PCB keepout "${description}"`,
+          message: `${label} of ${name} ${verb} PCB keepout "${description}"`,
           subcircuit_id,
         })
       }
