@@ -21,7 +21,7 @@ type TraceSegmentBounds = {
 /** Physical trace connectivity, including plated via barrels and copper pours. */
 export function createIndexedPcbConnectivityMap(
   circuitJson: AnyCircuitElement[],
-): PcbConnectivityMap {
+) {
   // Construct empty to avoid the dependency's all-pairs scan. Keep its exact
   // intersection predicate and query methods, including cross-net contacts.
   const map = new PcbConnectivityMap()
@@ -88,6 +88,7 @@ export function createIndexedPcbConnectivityMap(
       connections.push([traces[i].pcb_trace_id, traces[j].pcb_trace_id])
     }
   }
+  const traceIntersections = connections.slice()
   const layerConnectivity = createTracePortLayerConnectivity(circuitJson)
   const connectionsByPort = new Map<string, string[][]>()
   for (const trace of traces) {
@@ -113,8 +114,14 @@ export function createIndexedPcbConnectivityMap(
     for (const connection of connectionsByPort.get(portId) ?? [])
       connections.push(connection)
   }
-  connections.push(...getViaAndPourConnections(circuitJson))
-  connections.push(...getTouchingSmtPadConnections(circuitJson))
+  const copperContacts = [
+    ...getViaAndPourConnections(circuitJson),
+    ...getTouchingSmtPadConnections(circuitJson),
+  ]
+  connections.push(...copperContacts)
   map.connMap = new ConnectivityMap(findConnectedNetworks(connections))
-  return map
+  // Contiguity must prove pad contact independently of declared endpoint IDs.
+  return Object.assign(map, {
+    copperConnections: [...traceIntersections, ...copperContacts],
+  })
 }

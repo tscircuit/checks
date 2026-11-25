@@ -24,7 +24,8 @@ import { distance } from "../util/distance"
 import { getPcbPortIdsConnectedToRoutePoint } from "../check-each-pcb-trace-non-overlapping/getPcbPortIdsConnectedToTraces"
 
 import {
-  type ConnectivityMap,
+  ConnectivityMap,
+  findConnectedNetworks,
   getFullConnectivityMapFromCircuitJson,
   type PcbConnectivityMap,
 } from "circuit-json-to-connectivity-map"
@@ -308,7 +309,7 @@ function checkTracesAreContiguous(
     pcbConnectivityMap,
   }: {
     connMap?: ConnectivityMap
-    pcbConnectivityMap?: PcbConnectivityMap
+    pcbConnectivityMap?: PcbConnectivityMap & { copperConnections?: string[][] }
   } = {},
 ): PcbTraceError[] {
   const routeViaContext = createRouteViaContactContext(circuitJson)
@@ -381,17 +382,16 @@ function checkTracesAreContiguous(
     }
   }
 
-  const touchedPortIdsByTraceId = new Map<string, Set<PcbPortId>>()
-  const traceIdsByTouchedPortId = new Map<PcbPortId, Set<string>>()
+  const endpointContacts: string[][] = []
   const padBounds = new Map(
     [...padMap.values()].flat().map((pad) => [pad, getPadBounds(pad)] as const),
   )
   let bondedPortIds:
     | ReturnType<typeof getInternallyBondedPcbPortIds>
     | undefined
-  const getPortAndBondedPortIds = (pcbPortId: PcbPortId): PcbPortId[] => {
+  const getBondedPortIds = () => {
     bondedPortIds ??= getInternallyBondedPcbPortIds(circuitJson)
-    return [pcbPortId, ...(bondedPortIds.get(pcbPortId) ?? [])]
+    return bondedPortIds
   }
   let touchesPour: ReturnType<typeof getPourContactTester> | undefined
   // Whether a pour reaches any of the pad's copper. Pour islands have their own check.
@@ -446,63 +446,27 @@ function checkTracesAreContiguous(
       }
     }
 
-    touchedPortIdsByTraceId.set(trace.pcb_trace_id, touchedPortIds)
-    for (const pcbPortId of touchedPortIds) {
-      const traceIds = traceIdsByTouchedPortId.get(pcbPortId) ?? new Set()
-      traceIds.add(trace.pcb_trace_id)
-      traceIdsByTouchedPortId.set(pcbPortId, traceIds)
+    for (const portId of touchedPortIds) {
+      endpointContacts.push([trace.pcb_trace_id, portId])
     }
   }
 
-  const physicallyConnectedTracesByTraceId = new Map<string, PcbTrace[]>()
-  const getPhysicallyConnectedTraces = (startTrace: PcbTrace): PcbTrace[] => {
-    const cached = physicallyConnectedTracesByTraceId.get(
-      startTrace.pcb_trace_id,
-    )
-    if (cached) return cached
-
-    pcbConnectivityMap ??= createIndexedPcbConnectivityMap(circuitJson)
-    const connectedTraceIds = new Set<string>()
-    const pendingTraceIds = [startTrace.pcb_trace_id]
-
-    while (pendingTraceIds.length > 0) {
-      const traceId = pendingTraceIds.pop()!
-      if (connectedTraceIds.has(traceId)) continue
-      connectedTraceIds.add(traceId)
-
-      for (const connectedTrace of pcbConnectivityMap.getAllTracesConnectedToTrace(
-        traceId,
-      )) {
-        if (!connectedTraceIds.has(connectedTrace.pcb_trace_id)) {
-          pendingTraceIds.push(connectedTrace.pcb_trace_id)
-        }
-      }
-
-      for (const touchedPortId of touchedPortIdsByTraceId.get(traceId) ?? []) {
-        // Copper may continue through metal inside a component, such as the
-        // bonded legs of a push button.
-        for (const pcbPortId of getPortAndBondedPortIds(touchedPortId)) {
-          for (const touchingTraceId of traceIdsByTouchedPortId.get(
-            pcbPortId,
-          ) ?? []) {
-            if (!connectedTraceIds.has(touchingTraceId)) {
-              pendingTraceIds.push(touchingTraceId)
-            }
-          }
-        }
-      }
-    }
-
-    const connectedTraces = pcbTraces.filter((trace) =>
-      connectedTraceIds.has(trace.pcb_trace_id),
-    )
-    for (const trace of connectedTraces) {
-      physicallyConnectedTracesByTraceId.set(
-        trace.pcb_trace_id,
-        connectedTraces,
+  let copperMap: ConnectivityMap | undefined
+  const reachesPortThroughCopper = (traceId: string, portId: string) => {
+    if (!copperMap) {
+      const contacts =
+        pcbConnectivityMap?.copperConnections ??
+        createIndexedPcbConnectivityMap(circuitJson).copperConnections
+      // Copper may continue through metal inside a component, such as the
+      // bonded legs of a push button.
+      const bonds = [...getBondedPortIds()].flatMap(([pcbPortId, bonded]) =>
+        bonded.map((bondedPortId) => [pcbPortId, bondedPortId]),
+      )
+      copperMap = new ConnectivityMap(
+        findConnectedNetworks([...contacts, ...endpointContacts, ...bonds]),
       )
     }
-    return connectedTraces
+    return copperMap.areIdsConnected(traceId, portId)
   }
 
   for (const trace of pcbTraces) {
@@ -600,18 +564,8 @@ function checkTracesAreContiguous(
       // the physical copper graph only when reaching it needs other traces.
       if (isFirstPointConnected || isLastPointConnected) continue
 
-      const acceptablePortIds = getPortAndBondedPortIds(port.pcb_port_id)
-      const isConnectedByRoutedSourceTrace = getPhysicallyConnectedTraces(
-        trace,
-      ).some((candidateTrace) => {
-        const touchedPortIds = touchedPortIdsByTraceId.get(
-          candidateTrace.pcb_trace_id,
-        )
-        return acceptablePortIds.some((pcbPortId) =>
-          touchedPortIds?.has(pcbPortId),
-        )
-      })
-      if (isConnectedByRoutedSourceTrace) continue
+      if (reachesPortThroughCopper(trace.pcb_trace_id, port.pcb_port_id))
+        continue
       if (portPadTouchesNetPour(port.pcb_port_id, pads)) continue
 
       if (!isFirstPointConnected && !isLastPointConnected) {

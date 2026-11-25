@@ -42,7 +42,7 @@ async function createPullResistorCircuit(
         resistance="10k"
         schX={-6}
         schY={corrected ? -3 : 3}
-        schRotation={90}
+        schRotation={270}
       />
       <trace name="reset_pullup" from=".U1 > .RESET_N" to=".R1 > .pin2" />
       <trace name="pullup_supply" from=".R1 > .pin1" to="net.VCC" />
@@ -142,13 +142,8 @@ test("clears corrected placement and does not guess pull roles without pin metad
   expect(checkSchematicPlacement(before)).toEqual([])
 })
 
-test("describes an inverted pull-up supply pin without calling its signal pin ground", async () => {
+test("does not report a pull-up with its supply pin facing down as inverted rails", async () => {
+  // Inverted rails only apply to parts between a positive supply and ground.
   const circuitJson = await createPullResistorCircuit(true, 90)
-  const warnings = checkSchematicPlacement(circuitJson)
-  expect(warnings).toHaveLength(1)
-  expect(warnings[0]).toMatchObject({
-    styling_issue_type: "inverted_rails",
-    message:
-      "R1 has its positive-supply pin facing down. Rotate R1 by 180° so that pin faces up, preserving pin connections, and reroute attached traces.",
-  })
+  expect(checkSchematicPlacement(circuitJson)).toEqual([])
 })

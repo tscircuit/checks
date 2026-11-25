@@ -257,6 +257,7 @@ export const getReadableNameForElementId = (
     firstReadableName(
       [
         explicitName,
+        element.type === "schematic_text" ? element.text : undefined,
         description,
         getReadableNameForElement(circuitJson, elementId),
       ],

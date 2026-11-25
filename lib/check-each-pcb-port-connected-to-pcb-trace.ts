@@ -87,8 +87,22 @@ function checkEachPcbPortConnectedToPcbTraces(
         pcbPort.pcb_port_id,
       )
 
+      // Unattributed routes can establish physical attachment. When the
+      // island has named copper, it must include this port's intended net.
+      const assignedTraces = connectedPcbTraces.filter(
+        (trace) => trace.source_trace_id,
+      )
+      const reachesNet =
+        assignedTraces.length === 0
+          ? connectedPcbTraces.length > 0
+          : assignedTraces.some((trace) =>
+              connectivityMap.areIdsConnected(
+                trace.pcb_trace_id,
+                sourceTrace.source_trace_id,
+              ),
+            )
       if (
-        connectedPcbTraces.length === 0 &&
+        !reachesNet &&
         !getPourConnectivity().isPortConnectedToNet(
           pcbPort.pcb_port_id,
           sourceTrace.connected_source_net_ids,

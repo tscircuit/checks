@@ -9,6 +9,8 @@ import {
   circlePolygon,
   getPlatedHolePolygon,
   getPourPolygon,
+  getSmtPadPolygon,
+  getViaPolygon,
   getTraceSegmentPolygon,
 } from "@tscircuit/circuit-json-util"
 import Flatbush from "flatbush"
@@ -25,8 +27,8 @@ type Conductor = {
         end: Extract<PcbTraceRoutePoint, { route_type: "wire" }>
       }
   box: { xmin: number; ymin: number; xmax: number; ymax: number }
-  bridges: boolean
-  platedPort: boolean
+  kind: "via" | "pour" | "plated_port" | "smt_port" | "wire"
+  via?: PcbVia
 }
 
 /** Add physical barrel/pour edges in board-world mm. Logical net membership
@@ -58,8 +60,8 @@ export function getViaAndPourConnections(
     id: string,
     layers: string[],
     polygon: Polygon,
-    bridges = false,
-    platedPort = false,
+    kind: Conductor["kind"] = "wire",
+    via?: PcbVia,
   ) => {
     if (!polygon.isEmpty()) {
       const scaledPolygon = polygon.scale(scale, scale)
@@ -68,8 +70,8 @@ export function getViaAndPourConnections(
         layers,
         geometry: { polygon: scaledPolygon },
         box: scaledPolygon.box,
-        bridges,
-        platedPort,
+        kind,
+        via,
       })
     }
   }
@@ -107,10 +109,18 @@ export function getViaAndPourConnections(
         copper.pcb_via_id,
         getViaBarrelLayers(copper, stack),
         circlePolygon(copper, copper.outer_diameter / 2),
-        true,
+        "via",
+        copper,
       )
       if (copper.pcb_trace_id)
         connections.push([copper.pcb_via_id, copper.pcb_trace_id])
+    } else if (copper.type === "pcb_smtpad" && copper.pcb_port_id) {
+      add(
+        copper.pcb_port_id,
+        [copper.layer],
+        getSmtPadPolygon(copper),
+        "smt_port",
+      )
     } else if (copper.type === "pcb_plated_hole") {
       if (!copper.pcb_port_id) continue
       // Centered offsets can be omitted or explicitly undefined in memory.
@@ -130,15 +140,14 @@ export function getViaAndPourConnections(
             ? components.get(copper.pcb_component_id)?.rotation
             : 0,
         ),
-        true,
-        true,
+        "plated_port",
       )
     } else if (copper.type === "pcb_copper_pour") {
       add(
         copper.pcb_copper_pour_id,
         [copper.layer],
         getPourPolygon(copper),
-        true,
+        "pour",
       )
     } else if (copper.type === "pcb_trace") {
       if (copper.route_thickness_mode === "interpolated") continue
@@ -163,8 +172,7 @@ export function getViaAndPourConnections(
                 xmax: (Math.max(a.x, b.x) + radius) * scale,
                 ymax: (Math.max(a.y, b.y) + radius) * scale,
               },
-              bridges: false,
-              platedPort: false,
+              kind: "wire",
             })
           } else {
             add(
@@ -192,14 +200,15 @@ export function getViaAndPourConnections(
             x: a.x,
             y: a.y,
             outer_diameter: a.outer_diameter,
-            hole_diameter: 0,
+            hole_diameter: a.hole_diameter ?? 0,
             layers: stack.slice(Math.min(from, to), Math.max(from, to) + 1),
           } as PcbVia
           add(
             copper.pcb_trace_id,
             via.layers,
             circlePolygon(via, via.outer_diameter / 2),
-            true,
+            "via",
+            via,
           )
         }
       }
@@ -212,7 +221,8 @@ export function getViaAndPourConnections(
   }
   index.finish()
   for (const [i, a] of conductors.entries()) {
-    if (!a.bridges) continue
+    if (a.kind === "wire" || a.kind === "smt_port") continue
+    let annulus: Polygon | undefined
     const box = a.box
     for (const j of index.search(
       box.xmin - tolerance,
@@ -222,15 +232,27 @@ export function getViaAndPourConnections(
     )) {
       const b = conductors[j]
       if (
-        (a.platedPort && b.bridges) ||
-        (b.platedPort && a.bridges) ||
+        (a.kind === "plated_port" && b.kind !== "wire") ||
+        b.kind === "plated_port" ||
+        (b.kind === "smt_port" && a.kind !== "via") ||
         i === j ||
         a.id === b.id ||
-        (b.bridges && j < i) ||
+        ((b.kind === "via" || b.kind === "pour") && j < i) ||
         !a.layers.some((l) => b.layers.includes(l))
       )
         continue
-      if (touches(getPolygon(a), getPolygon(b))) connections.push([a.id, b.id])
+      // A pad must touch the annulus on its own layer. Copper entirely
+      // inside the drill cannot establish this connection.
+      if (b.kind === "smt_port" && a.via && a.via.hole_diameter > 0) {
+        annulus ??= getViaPolygon(
+          a.via,
+          a.via.outer_diameter,
+          a.via.hole_diameter,
+        ).scale(scale, scale)
+        if (touches(annulus, getPolygon(b))) connections.push([a.id, b.id])
+      } else if (touches(getPolygon(a), getPolygon(b))) {
+        connections.push([a.id, b.id])
+      }
     }
   }
   return connections

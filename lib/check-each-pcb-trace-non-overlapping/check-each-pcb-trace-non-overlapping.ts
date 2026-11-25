@@ -98,9 +98,12 @@ export function checkEachPcbTraceNonOverlapping(
         type: "pcb_trace_segment",
         pcb_trace_id: pcbTrace.pcb_trace_id,
         _pcbTrace: pcbTrace,
+        // A wire owns the outgoing segment; the next wire can start a wider
+        // segment without widening this one. Keep this segment's taper bounds.
         thickness: Math.max(
-          p1.route_type === "wire" ? (p1.width ?? DEFAULT_TRACE_THICKNESS) : 0,
-          p2.route_type === "wire" ? (p2.width ?? DEFAULT_TRACE_THICKNESS) : 0,
+          wire.width ?? DEFAULT_TRACE_THICKNESS,
+          wire.start_width ?? 0,
+          wire.end_width ?? 0,
         ),
         layer: wire.layer,
         x1: p1.x,
