@@ -59,27 +59,75 @@ function circlePolygon({
   )
 }
 
-function cutoutToPolygon(cutout: PcbCutout): Flatten.Polygon | null {
-  if (cutout.shape === "rect") {
-    return rectanglePolygon({
-      center: cutout.center,
-      width: cutout.width,
-      height: cutout.height,
-      rotation: cutout.rotation ?? 0,
-    })
+function pathCutoutToPolygons({
+  route,
+  slot_width,
+}: {
+  route: Array<{ x: number; y: number }>
+  slot_width: number
+}): Flatten.Polygon[] {
+  if (route.length === 0 || slot_width <= 0) return []
+
+  const radius = slot_width / 2
+  const polygons: Flatten.Polygon[] = []
+
+  for (const point of route) {
+    polygons.push(circlePolygon({ center: point, radius }))
   }
 
-  if (cutout.shape === "circle") {
-    return circlePolygon({ center: cutout.center, radius: cutout.radius })
-  }
+  for (let index = 0; index < route.length - 1; index++) {
+    const start = route[index]!
+    const end = route[index + 1]!
+    const dx = end.x - start.x
+    const dy = end.y - start.y
+    const length = Math.hypot(dx, dy)
+    if (length <= 0) continue
 
-  if (cutout.shape === "polygon") {
-    return new Flatten.Polygon(
-      cutout.points.map((point) => new Flatten.Point(point.x, point.y)),
+    polygons.push(
+      rectanglePolygon({
+        center: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 },
+        width: length,
+        height: slot_width,
+        rotation: (Math.atan2(dy, dx) * 180) / Math.PI,
+      }),
     )
   }
 
-  return null
+  return polygons
+}
+
+function cutoutToPolygons(cutout: PcbCutout): Flatten.Polygon[] {
+  if (cutout.shape === "rect") {
+    return [
+      rectanglePolygon({
+        center: cutout.center,
+        width: cutout.width,
+        height: cutout.height,
+        rotation: cutout.rotation ?? 0,
+      }),
+    ]
+  }
+
+  if (cutout.shape === "circle") {
+    return [circlePolygon({ center: cutout.center, radius: cutout.radius })]
+  }
+
+  if (cutout.shape === "polygon") {
+    return [
+      new Flatten.Polygon(
+        cutout.points.map((point) => new Flatten.Point(point.x, point.y)),
+      ),
+    ]
+  }
+
+  if (cutout.shape === "path") {
+    return pathCutoutToPolygons({
+      route: cutout.route,
+      slot_width: cutout.slot_width,
+    })
+  }
+
+  return []
 }
 
 function polygonBoxToBounds(polygon: Flatten.Polygon) {
@@ -132,11 +180,13 @@ export function checkPcbComponentOverCutout(
   if (cutouts.length === 0 || components.length === 0) return []
 
   const cutoutPolygons = cutouts
-    .map((cutout) => ({ cutout, polygon: cutoutToPolygon(cutout) }))
-    .filter(
-      (entry): entry is { cutout: PcbCutout; polygon: Flatten.Polygon } =>
-        entry.polygon !== null && entry.polygon.area() > 0,
-    )
+    .map((cutout) => ({
+      cutout,
+      polygons: cutoutToPolygons(cutout).filter(
+        (polygon) => polygon.area() > 0,
+      ),
+    }))
+    .filter((entry) => entry.polygons.length > 0)
   const errors: PcbPlacementError[] = []
 
   for (const component of components) {
@@ -150,9 +200,15 @@ export function checkPcbComponentOverCutout(
       width: component.width,
       height: component.height,
     })
-    for (const { cutout, polygon: cutoutPolygon } of cutoutPolygons) {
+    for (const { cutout, polygons } of cutoutPolygons) {
       if (cutout.pcb_component_id === component.pcb_component_id) continue
-      if (!doPolygonsOverlap(componentPolygon, cutoutPolygon)) continue
+      if (
+        !polygons.some((cutoutPolygon) =>
+          doPolygonsOverlap(componentPolygon, cutoutPolygon),
+        )
+      ) {
+        continue
+      }
 
       const componentName = getReadableNameForComponent(
         circuitJson,
