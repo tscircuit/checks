@@ -5,6 +5,7 @@ import type {
   AnySourceComponent,
   PcbComponentOutsideBoardError,
 } from "circuit-json"
+import { EPSILON } from "lib/drc-defaults"
 import { getReadableNameForComponent } from "lib/util/get-readable-names"
 import { getBoardOwnerResolver } from "lib/util/get-board-owner-resolver"
 import type { Point } from "@tscircuit/math-utils"
@@ -311,6 +312,7 @@ export function checkPcbComponentsOutOfBoard(
         computeOverlapDistance(polygon, boardPoly),
       ),
     )
+    if (overlapDistance <= EPSILON) continue
 
     const compName = getComponentName({ circuitJson, component: c })
     const overlapDistanceMm = Math.round(overlapDistance * 100) / 100

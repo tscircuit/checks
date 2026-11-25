@@ -35,10 +35,7 @@ const pad: AnyCircuitElement = pcb_smtpad.parse({
   layer: "top",
 })
 
-test("a component overhanging the board edge by less than the DRC epsilon reports a 0mm error", () => {
+test("a component overhanging the board edge by less than the DRC epsilon is not reported", () => {
   const diagnostics = checkPcbComponentsOutOfBoard([board, component, pad])
-  expect(diagnostics).toHaveLength(1)
-  expect(diagnostics[0]?.message).toBe(
-    "Component unnamed component extends outside board boundaries by 0mm. Try moving it 0mm up to fit within the board edge.",
-  )
+  expect(diagnostics).toEqual([])
 })
