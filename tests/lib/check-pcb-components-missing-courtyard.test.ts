@@ -113,6 +113,35 @@ describe("checkPcbComponentsMissingCourtyard", () => {
     expect(any_circuit_element.safeParse(warnings[0]).success).toBe(true)
   })
 
+  test.each([
+    { name: "", expected: "unnamed component" },
+    { name: "source_component_resistor", expected: "unnamed component" },
+    { name: "R1", expected: "R1" },
+  ])("uses readable source component names: $name", ({ name, expected }) => {
+    const circuitJson = [
+      {
+        type: "source_component",
+        source_component_id: "source_component_resistor",
+        ftype: "simple_resistor",
+        name,
+        resistance: 1000,
+        supplier_part_numbers: {},
+      },
+      {
+        type: "pcb_component",
+        pcb_component_id: "pcb_component_resistor",
+        source_component_id: "source_component_resistor",
+        center: { x: 0, y: 0 },
+      },
+    ] as unknown as AnyCircuitElement[]
+
+    const warnings = checkPcbComponentsMissingCourtyard(circuitJson)
+
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]?.message).toBe(`${expected} has no courtyard`)
+    expect(containsCircuitJsonId(warnings[0]!.message)).toBe(false)
+  })
+
   test("does not warn when a component has a courtyard", () => {
     const circuitJson = [
       {

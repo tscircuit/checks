@@ -52,17 +52,10 @@ export function checkPcbComponentsMissingCourtyard(
           !courtyardExemptSourceIds.has(component.source_component_id)),
     )
     .map((component) => {
-      const sourceComponent = component.source_component_id
-        ? circuitJson.find(
-            (element) =>
-              element.type === "source_component" &&
-              element.source_component_id === component.source_component_id,
-          )
-        : undefined
-      const componentName =
-        sourceComponent?.type === "source_component"
-          ? sourceComponent.name
-          : getReadableNameForComponent(circuitJson, component.pcb_component_id)
+      const componentName = getReadableNameForComponent(
+        circuitJson,
+        component.pcb_component_id,
+      )
 
       return {
         type: "pcb_component_missing_courtyard_warning" as const,
