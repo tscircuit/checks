@@ -1,8 +1,8 @@
 import type { PcbTraceSegment } from "./getCollidableBounds"
 
 export const getClosestPointBetweenSegments = (
-  segmentA: PcbTraceSegment,
-  segmentB: PcbTraceSegment,
+  segmentA: Pick<PcbTraceSegment, "x1" | "y1" | "x2" | "y2">,
+  segmentB: Pick<PcbTraceSegment, "x1" | "y1" | "x2" | "y2">,
 ): { x: number; y: number } => {
   // Define points for each segment
   const a1 = { x: segmentA.x1, y: segmentA.y1 }

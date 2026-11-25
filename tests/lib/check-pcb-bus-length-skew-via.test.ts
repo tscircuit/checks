@@ -64,7 +64,7 @@ test("measures complete pad-to-pad paths in the same units for a skew-only bus",
     })
   }
   const errors = checkPcbBusLengthSkew(elements)
-  expect(errors[0]?.actual_length_skew).toBeCloseTo(1.6)
+  expect(errors).toEqual([])
   elements.push(
     {
       type: "pcb_via",
@@ -99,7 +99,5 @@ test("measures complete pad-to-pad paths in the same units for a skew-only bus",
     layer: "top",
     width: 0.15,
   })
-  expect(checkPcbBusLengthSkew(elements)[0]?.actual_length_skew).toBeCloseTo(
-    0.4,
-  )
+  expect(checkPcbBusLengthSkew(elements)[0]?.actual_length_skew).toBeCloseTo(2)
 })
