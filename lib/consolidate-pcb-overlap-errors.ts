@@ -5,6 +5,7 @@ import type {
   PcbPadPadClearanceError,
   PcbCourtyardOverlapError,
 } from "circuit-json"
+import { getReadableNameForComponent } from "./util/get-readable-names"
 
 /** Additional diagnostic context supplied by checks; the base error remains
  * compatible with existing Circuit JSON renderers. */
@@ -90,12 +91,10 @@ export function consolidatePcbOverlapErrors(
     if (group.length < 2 || overlaps.length === 0) continue
     const componentIds: string[] = JSON.parse(key)
     const names = componentIds.map((id) => {
-      const component = elementById.get(id)
-      const source =
-        component?.type === "pcb_component"
-          ? elementById.get(component.source_component_id)
-          : undefined
-      return source?.type === "source_component" ? source.name : id
+      const name = getReadableNameForComponent(circuitJson, id)
+      return name === "unnamed element" || name === "unnamed pcb component"
+        ? "unnamed component"
+        : name
     })
     const counts = [
       [overlaps.length, "footprint overlap"],
