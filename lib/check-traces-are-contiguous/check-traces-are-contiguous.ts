@@ -3,6 +3,7 @@ import {
   getReadableNameForTrace as getReadableNameForPcbTrace,
 } from "lib/util/get-readable-names"
 import { getTracePortLayerMismatches } from "../util/trace-port-layer-connectivity"
+import { endpointCopperOverlapsPad } from "../util/route-point-touches-pad"
 import { createIndexedPcbConnectivityMap } from "lib/util/create-indexed-pcb-connectivity-map"
 import type {
   AnyCircuitElement,
@@ -28,7 +29,9 @@ import {
   getFullConnectivityMapFromCircuitJson,
   type PcbConnectivityMap,
 } from "circuit-json-to-connectivity-map"
+import { getPourContactTester } from "../check-dangling-traces/pour-contact-index"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
+import { getInternallyBondedPcbPortIds } from "./internally-bonded-ports"
 import { endpointTouchesVia, getViaContactIndex } from "./via-contact-index"
 import {
   createRouteViaContactContext,
@@ -74,34 +77,8 @@ function routePointTouchesPad({
   )
     return false
   if (isPointInPad(point, pad)) return true
-  if (
-    endpointCopperWidth === undefined ||
-    !Number.isFinite(endpointCopperWidth) ||
-    endpointCopperWidth <= 0 ||
-    !bounds
-  )
-    return false
-  const radius = endpointCopperWidth / 2
-  if (
-    point.x + radius <= bounds.minX ||
-    point.x - radius >= bounds.maxX ||
-    point.y + radius <= bounds.minY ||
-    point.y - radius >= bounds.maxY
-  )
-    return false
-  // The round copper cap can enter the pad while its center remains outside.
-  // Require actual overlap and use the adjacent segment's physical width.
-  const { gap } = getTraceObstacleClearance(
-    {
-      x1: point.x,
-      y1: point.y,
-      x2: point.x,
-      y2: point.y,
-      thickness: endpointCopperWidth,
-    },
-    pad,
-  )
-  return gap < -ENDPOINT_CONTACT_EPSILON
+  if (endpointCopperWidth === undefined || !bounds) return false
+  return endpointCopperOverlapsPad({ point, pad, endpointCopperWidth, bounds })
 }
 
 function getTraceWireSegmentsByNetAndLayer(
@@ -409,6 +386,34 @@ function checkTracesAreContiguous(
   const padBounds = new Map(
     [...padMap.values()].flat().map((pad) => [pad, getPadBounds(pad)] as const),
   )
+  let bondedPortIds:
+    | ReturnType<typeof getInternallyBondedPcbPortIds>
+    | undefined
+  const getBondedPortIds = () => {
+    bondedPortIds ??= getInternallyBondedPcbPortIds(circuitJson)
+    return bondedPortIds
+  }
+  let touchesPour: ReturnType<typeof getPourContactTester> | undefined
+  // Whether a pour reaches any of the pad's copper. Pour islands have their own check.
+  const portPadTouchesNetPour = (pcbPortId: PcbPortId, pads: PcbPad[]) => {
+    const netId = getFullConnectivityMap().getNetConnectedToId(pcbPortId)
+    if (!netId) return false
+    touchesPour ??= getPourContactTester(circuitJson, getFullConnectivityMap())
+    return pads.some((pad) => {
+      const bounds = padBounds.get(pad)
+      if (!bounds) return false
+      return touchesPour!({
+        netId,
+        layers: getLayersOfPcbElement(pad),
+        center: {
+          x: (bounds.minX + bounds.maxX) / 2,
+          y: (bounds.minY + bounds.maxY) / 2,
+        },
+        radius:
+          Math.min(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) / 2,
+      })
+    })
+  }
 
   // Route attribution can change when a logical net is converted into an MST.
   // Record the PCB ports each routed trace physically reaches so contiguity can
@@ -452,8 +457,13 @@ function checkTracesAreContiguous(
       const contacts =
         pcbConnectivityMap?.copperConnections ??
         createIndexedPcbConnectivityMap(circuitJson).copperConnections
+      // Copper may continue through metal inside a component, such as the
+      // bonded legs of a push button.
+      const bonds = [...getBondedPortIds()].flatMap(([pcbPortId, bonded]) =>
+        bonded.map((bondedPortId) => [pcbPortId, bondedPortId]),
+      )
       copperMap = new ConnectivityMap(
-        findConnectedNetworks([...contacts, ...endpointContacts]),
+        findConnectedNetworks([...contacts, ...endpointContacts, ...bonds]),
       )
     }
     return copperMap.areIdsConnected(traceId, portId)
@@ -556,6 +566,7 @@ function checkTracesAreContiguous(
 
       if (reachesPortThroughCopper(trace.pcb_trace_id, port.pcb_port_id))
         continue
+      if (portPadTouchesNetPour(port.pcb_port_id, pads)) continue
 
       if (!isFirstPointConnected && !isLastPointConnected) {
         traceName ??= getReadableNameForPcbTrace(

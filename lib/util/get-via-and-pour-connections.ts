@@ -15,6 +15,7 @@ import {
 } from "@tscircuit/circuit-json-util"
 import Flatbush from "flatbush"
 import { createCopperPolygonContactTester } from "../copper-pour-connectivity/create-copper-polygon-contact-tester"
+import { getViaBarrelLayers } from "./get-via-barrel-layers"
 
 type Conductor = {
   id: string
@@ -106,7 +107,7 @@ export function getViaAndPourConnections(
     if (copper.type === "pcb_via") {
       add(
         copper.pcb_via_id,
-        copper.layers,
+        getViaBarrelLayers(copper, stack),
         circlePolygon(copper, copper.outer_diameter / 2),
         "via",
         copper,

@@ -19,26 +19,6 @@ const POINT_ON_SEGMENT_TOLERANCE_MM = 1e-9
 // physical gaps outside the pad.
 const POINT_IN_PAD_TOLERANCE_MM = 1e-9
 
-function isPointOnSegment(
-  point: { x: number; y: number },
-  segment: { start: { x: number; y: number }; end: { x: number; y: number } },
-) {
-  const crossProduct =
-    (point.y - segment.start.y) * (segment.end.x - segment.start.x) -
-    (point.x - segment.start.x) * (segment.end.y - segment.start.y)
-  if (Math.abs(crossProduct) > POINT_ON_SEGMENT_TOLERANCE_MM) return false
-
-  const dotProduct =
-    (point.x - segment.start.x) * (segment.end.x - segment.start.x) +
-    (point.y - segment.start.y) * (segment.end.y - segment.start.y)
-  if (dotProduct < -POINT_ON_SEGMENT_TOLERANCE_MM) return false
-
-  const squaredLength =
-    (segment.end.x - segment.start.x) ** 2 +
-    (segment.end.y - segment.start.y) ** 2
-  return dotProduct <= squaredLength + POINT_ON_SEGMENT_TOLERANCE_MM
-}
-
 function isPointInPolygon(
   point: { x: number; y: number },
   polygon: Array<{ x: number; y: number }>,
@@ -47,7 +27,13 @@ function isPointInPolygon(
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
     const pi = polygon[i]
     const pj = polygon[j]
-    if (isPointOnSegment(point, { start: pi, end: pj })) return true
+    // Polygons may repeat a vertex or close their ring, which yields zero-length
+    // edges. A distance test stays correct for those at any board coordinate.
+    if (
+      pointToSegmentDistance(point, pi, pj) <= POINT_ON_SEGMENT_TOLERANCE_MM
+    ) {
+      return true
+    }
 
     const intersects =
       pi.y > point.y !== pj.y > point.y &&
