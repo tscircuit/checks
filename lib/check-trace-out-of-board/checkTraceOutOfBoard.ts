@@ -1,6 +1,10 @@
 import { cju } from "@tscircuit/circuit-json-util"
+import { convertCircuitJsonToFlattenJs } from "@tscircuit/circuit-json-to-flattenjs"
 import type { Point, Polygon } from "@tscircuit/math-utils"
-import { segmentToSegmentMinDistance } from "@tscircuit/math-utils"
+import {
+  isPointInsidePolygon,
+  segmentToSegmentMinDistance,
+} from "@tscircuit/math-utils"
 import type {
   AnyCircuitElement,
   PcbBoard,
@@ -10,16 +14,13 @@ import type {
 import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { jlcMinTolerances } from "@tscircuit/jlcpcb-manufacturing-specs"
 
-/**
- * Default margin for trace clearance from board edge (in mm)
- */
-const DEFAULT_BOARD_MARGIN = 0.2
+const GEOMETRY_EPSILON = 1e-9
 
 /**
  * Configuration for trace board boundary checking
  */
 export interface TraceBoardCheckConfig {
-  /** Minimum distance from trace center to board edge (in mm) */
+  /** Minimum distance from trace copper to board edge (in mm) */
   margin?: number
 }
 
@@ -54,6 +55,57 @@ function getBoardPolygonPoints(board: PcbBoard): Polygon | null {
   return null
 }
 
+function checkInterpolatedTrace({
+  board,
+  trace,
+  margin,
+}: {
+  board: PcbBoard
+  trace: PcbTrace
+  margin: number
+}): PcbTraceError[] {
+  // A taper has flat end caps and joined bends. A centerline buffer using either
+  // endpoint width can both miss real violations and reject legal copper.
+  const { elements } = convertCircuitJsonToFlattenJs([board, trace], {
+    elementTypes: ["pcb_board", "pcb_trace"],
+    includeDrillHoles: false,
+    strict: true,
+  })
+  const boardPolygon = elements.find(
+    (element) => element.elementType === "pcb_board",
+  )?.shapes[0]
+  if (!boardPolygon) return []
+
+  for (const geometry of elements) {
+    if (geometry.elementType !== "pcb_trace") continue
+    for (const shape of geometry.shapes) {
+      const isInside = boardPolygon.contains(shape)
+      const clearance = isInside ? boardPolygon.distanceTo(shape)[0] : 0
+      if (isInside && clearance + GEOMETRY_EPSILON >= margin) continue
+
+      return [
+        {
+          type: "pcb_trace_error",
+          error_type: "pcb_trace_error",
+          pcb_trace_error_id: `trace_too_close_to_board_${trace.pcb_trace_id}_interpolated`,
+          message: isInside
+            ? `Trace copper too close to board edge (${clearance.toFixed(3)}mm < ${margin.toFixed(3)}mm required)`
+            : "Trace copper is outside board outline",
+          pcb_trace_id: trace.pcb_trace_id,
+          source_trace_id: trace.source_trace_id || "",
+          center: {
+            x: (shape.box.xmin + shape.box.xmax) / 2,
+            y: (shape.box.ymin + shape.box.ymax) / 2,
+          },
+          pcb_component_ids: [],
+          pcb_port_ids: [],
+        },
+      ]
+    }
+  }
+  return []
+}
+
 /**
  * Check if any trace segment is too close to or outside the board outline
  * Uses segment-to-polygon distance with configurable margin
@@ -77,6 +129,10 @@ export function checkPcbTracesOutOfBoard(
 
   for (const trace of pcbTraces) {
     if (trace.route.length < 2) continue
+    if (trace.route_thickness_mode === "interpolated") {
+      errors.push(...checkInterpolatedTrace({ board, trace, margin: margin! }))
+      continue
+    }
 
     // Check each segment of the trace
     for (let i = 0; i < trace.route.length - 1; i++) {
@@ -109,12 +165,21 @@ export function checkPcbTracesOutOfBoard(
 
       const minimumDistance = traceWidth / 2 + margin!
 
-      if (minDistance < minimumDistance) {
+      // Distance alone is unsigned: a segment entirely outside the board can be
+      // far from every edge. Still check edge distance for segments that cross
+      // a concave notch even though both endpoints are inside.
+      const isOutside =
+        !isPointInsidePolygon(segmentStart, boardPoints) ||
+        !isPointInsidePolygon(segmentEnd, boardPoints)
+
+      if (isOutside || minDistance + GEOMETRY_EPSILON < minimumDistance) {
         const error: PcbTraceError = {
           type: "pcb_trace_error",
           error_type: "pcb_trace_error",
           pcb_trace_error_id: `trace_too_close_to_board_${trace.pcb_trace_id}_segment_${i}`,
-          message: `Trace too close to board edge (${minDistance.toFixed(3)}mm < ${minimumDistance.toFixed(3)}mm required, margin: ${margin}mm)`,
+          message: isOutside
+            ? "Trace is outside board outline"
+            : `Trace too close to board edge (${minDistance.toFixed(3)}mm < ${minimumDistance.toFixed(3)}mm required, margin: ${margin}mm)`,
           pcb_trace_id: trace.pcb_trace_id,
           source_trace_id: trace.source_trace_id || "",
           center: {
