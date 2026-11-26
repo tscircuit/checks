@@ -1,4 +1,5 @@
 import Flatbush from "flatbush"
+import { getBusLengthSkew } from "./util/get-bus-length-skew"
 import {
   pcb_bus_routing_constraint_error,
   pcb_bus_routing_constraint_warning,
@@ -184,7 +185,10 @@ export function checkPcbRoutingConstraints(
       complete(matchMembers, "route_geometry")
     ) {
       const lengths = matchMembers.map((id) => measure(id)!.length)
-      const skew = Math.max(...lengths) - Math.min(...lengths)
+      const skew = getBusLengthSkew({
+        lengths,
+        reference: bus.length_skew_reference,
+      })
       if (skew > bus.max_length_skew + EPS)
         reportError(
           {
