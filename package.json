@@ -47,6 +47,9 @@
     "typescript": "^5.5.3",
     "@tscircuit/circuit-json-util": "*"
   },
+  "overrides": {
+    "circuit-json": "https://pkg.pr.new/circuit-json@ba75338"
+  },
   "dependencies": {
     "flatbush": "^4.6.2"
   }
