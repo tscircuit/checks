@@ -7,6 +7,7 @@ import type {
 } from "circuit-json"
 import { getPcbTracesBySourceTraceId } from "./check-pcb-trace-lengths"
 import { getPcbTraceLength } from "./util/get-pcb-trace-length"
+import { getBusLengthSkew } from "./util/get-bus-length-skew"
 
 /** Compare total routed lengths of resolved bus members. Unrouted members are
  * left to connectivity checks, never treated as zero-length routes.
@@ -39,9 +40,10 @@ export const checkPcbBusLengthSkew = (
       ]
     })
     if (members.length < 2) continue
-    const skew =
-      Math.max(...members.map((m) => m.length)) -
-      Math.min(...members.map((m) => m.length))
+    const skew = getBusLengthSkew({
+      lengths: members.map((member) => member.length),
+      reference: bus.length_skew_reference,
+    })
     // Ignore rounding noise at the inclusive boundary.
     if (skew <= bus.max_length_skew + 1e-9) continue
     errors.push({
