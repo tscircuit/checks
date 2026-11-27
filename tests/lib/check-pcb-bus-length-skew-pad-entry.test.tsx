@@ -37,6 +37,8 @@ test("measures a strobe entering its receiver pad off center", async () => {
         from_layer: "top",
         to_layer: "bottom",
       },
+      { ...wire(-2, -1), layer: "bottom" },
+      { ...wire(2, -1), layer: "bottom" },
       { route_type: "via", x: 2, y: -1, from_layer: "bottom", to_layer: "top" },
       wire(3.8, -1),
     ],
