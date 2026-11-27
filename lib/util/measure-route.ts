@@ -1,3 +1,5 @@
+import { point, segment } from "@flatten-js/core"
+import { getSmtPadPolygon } from "@tscircuit/circuit-json-util"
 import type {
   AnyCircuitElement,
   PcbPort,
@@ -115,15 +117,37 @@ export function measureRoute(
     return
   const ends = [...nodes.entries()].filter(([, n]) => n.edges.size === 1)
   if (ends.length !== 2) return
-  const matches = (p: PcbPort, n: (typeof ends)[number][1]) =>
-    p.layers.includes(n.layer as PcbPort["layers"][number]) &&
-    Math.hypot(p.x - n.point.x, p.y - n.point.y) <= 1e-5
+  const padApproachLength = (port: PcbPort, end: (typeof ends)[number][1]) => {
+    if (!port.layers.includes(end.layer as PcbPort["layers"][number])) return
+    const distance = Math.hypot(port.x - end.point.x, port.y - end.point.y)
+    if (distance <= 1e-5) return 0
+    const center = point(port.x, port.y)
+    const tip = point(end.point.x, end.point.y)
+    for (const pad of circuit) {
+      if (
+        pad.type !== "pcb_smtpad" ||
+        pad.pcb_port_id !== port.pcb_port_id ||
+        pad.layer !== end.layer
+      )
+        continue
+      const copper = getSmtPadPolygon(pad)
+      if (!copper.contains(segment(center, tip))) continue
+      const neighbor = nodes.get([...end.edges][0]!)!
+      if (neighbor.layer !== end.layer) return distance
+      // Stop at the pin center if the wire runs past it inside the pad.
+      const wire = segment(tip, point(neighbor.point.x, neighbor.point.y))
+      return wire.contains(center) ? -distance : distance
+    }
+  }
   const [first, last] = ports.map((p) => p[0]!)
-  if (
-    !(matches(first!, ends[0]![1]) && matches(last!, ends[1]![1])) &&
-    !(matches(first!, ends[1]![1]) && matches(last!, ends[0]![1]))
-  )
-    return
+  const approachLengths = ends
+    .map(([, end], i) => {
+      const startMm = padApproachLength(first!, end)
+      const endMm = padApproachLength(last!, ends[1 - i]![1])
+      if (startMm !== undefined && endMm !== undefined) return startMm + endMm
+    })
+    .filter((mm): mm is number => mm !== undefined)
+  if (approachLengths.length !== 1) return
   const seen = new Set<string>(),
     pending = [ends[0]![0]]
   while (pending.length) {
@@ -136,7 +160,7 @@ export function measureRoute(
   return {
     length: segments.reduce(
       (s, e) => s + Math.hypot(e.a.x - e.b.x, e.a.y - e.b.y),
-      0,
+      approachLengths[0]!,
     ),
     manhattan: Math.abs(first!.x - last!.x) + Math.abs(first!.y - last!.y),
     segments,

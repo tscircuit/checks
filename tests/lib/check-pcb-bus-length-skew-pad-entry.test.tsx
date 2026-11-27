@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test"
 import type { PcbTrace, PcbTraceRoutePointWire } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { measureRoute } from "../../lib/util/measure-route"
 import { checkPcbBusLengthSkew } from "../../lib/check-pcb-bus-length-skew"
 import {
   LengthTestTerminal,
@@ -58,7 +59,7 @@ test("measures a strobe entering its receiver pad off center", async () => {
   }
 
   const [error] = checkPcbBusLengthSkew(circuitJson)
-  expect(error?.actual_length_skew).toBeCloseTo(3)
+  expect(error).toBeUndefined()
   circuitJson.push({
     type: "pcb_note_text",
     pcb_note_text_id: "measurement",
@@ -72,4 +73,19 @@ test("measures a strobe entering its receiver pad off center", async () => {
   await expect(
     convertCircuitJsonToPcbSvg(circuitJson, { includeVersion: false }),
   ).toMatchSvgSnapshot(import.meta.path)
+  const strobe = circuitJson.find(
+    (e) => e.type === "source_trace" && e.name === "DQS_N",
+  )
+  const track = circuitJson.find(
+    (e) => e.type === "pcb_trace" && e.pcb_trace_id === "DQS_N",
+  )
+  if (strobe?.type !== "source_trace" || track?.type !== "pcb_trace")
+    throw new Error("Missing DQS_N route")
+  const measureStrobe = () => measureRoute(strobe, [track], circuitJson)
+  expect(measureStrobe()?.length).toBeCloseTo(8)
+  track.route[track.route.length - 1] = wire(4.2, -1)
+  expect(measureStrobe()?.length).toBeCloseTo(8)
+  // The same route ending in the gap beside the receiver cannot be timed.
+  track.route[track.route.length - 1] = wire(3.4, -1)
+  expect(measureStrobe()).toBeUndefined()
 })
