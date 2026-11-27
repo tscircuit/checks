@@ -167,9 +167,11 @@ export function endpointTouchesVia({
   ownerTrace,
   index,
   connectivity,
+  allowOwnerVia = false,
 }: {
   point: PcbTrace["route"][number]
   width: number
+  allowOwnerVia?: boolean
   ownerTrace: PcbTrace
   index: ViaContactIndex
   connectivity: ConnectivityMap
@@ -179,7 +181,14 @@ export function endpointTouchesVia({
   const net = connectivity.getNetConnectedToId(ownerTrace.pcb_trace_id)
   if (!net) return false
   return (index.get(net)?.get(point.layer) ?? []).some((via) => {
-    if (via.ownerTraceId === ownerTrace.pcb_trace_id) return false
+    // An explicit terminal landing can use its own via when other copper
+    // continues through that barrel. A nearby self-owned via is not enough.
+    if (
+      via.ownerTraceId === ownerTrace.pcb_trace_id &&
+      (!allowOwnerVia ||
+        Math.hypot(point.x - via.x, point.y - via.y) > CONTACT_EPSILON)
+    )
+      return false
     // A lone via does not establish an onward connection. Its barrel must
     // reach a same-net pad or another nondegenerate trace on a physical layer.
     if (
