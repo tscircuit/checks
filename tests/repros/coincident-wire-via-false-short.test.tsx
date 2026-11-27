@@ -56,19 +56,23 @@ async function renderViaLanding(outerDiameter: number) {
   return [...records, vmot, ctrl] satisfies AnyCircuitElement[]
 }
 
-test("a coincident wire and via report a short across a clear top-layer gap", async () => {
+test("a coincident wire and via leave a clear top-layer gap", async () => {
   const circuitJson = await renderViaLanding(0.3)
   const errors = checkEachPcbTraceNonOverlapping(circuitJson, {
     minClearance: 0.1,
   })
-  expect(errors).toHaveLength(1)
-  expect(errors[0].message).toContain("accidental contact")
+  expect(errors).toEqual([])
 
   const enlargedVia = await renderViaLanding(0.8)
   const realErrors = checkEachPcbTraceNonOverlapping(enlargedVia, {
     minClearance: 0.1,
   })
-  expect(realErrors.some((error) => error.message.includes("via"))).toBe(true)
+  expect(realErrors).toEqual([
+    expect.objectContaining({
+      pcb_trace_id: "ctrl",
+      message: expect.stringMatching(/overlaps with.*via/),
+    }),
+  ])
 
   const countNote = {
     type: "pcb_note_text",
