@@ -86,6 +86,9 @@ export function checkEachPcbTraceNonOverlapping(
         (p2.route_type !== "wire" && p2.route_type !== "via")
       )
         continue
+      // Coincident route points add no wire copper. Physical vias are
+      // indexed separately with their actual diameters.
+      if (p1.x === p2.x && p1.y === p2.y) continue
       const wire = p1.route_type === "wire" ? p1 : p2
       if (wire.route_type !== "wire") continue
       if (
@@ -192,8 +195,6 @@ export function checkEachPcbTraceNonOverlapping(
       bounds,
       requiredMargin + segmentA.thickness / 2,
     )
-    if (segmentA.x1 === segmentA.x2 && segmentA.y1 === segmentA.y2) continue
-
     for (const obj of nearbyObjects) {
       // ignore obstacles not on the trace's layer (except vias)
       if (!getLayersOfPcbElement(obj).includes(segmentA.layer)) {
