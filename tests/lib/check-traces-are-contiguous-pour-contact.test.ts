@@ -72,11 +72,48 @@ const pour: PcbCopperPour = {
 test("net-level trace ending in a ground pour", () => {
   const circuit = [...board, pour]
   const errors = checkTracesAreContiguous(circuit)
-  expect(errors).toHaveLength(1)
-  expect(errors[0]?.center).toEqual({ x: 2, y: 0 })
+  expect(errors).toEqual([])
   expect(
     convertCircuitJsonToPcbSvg([...circuit, ...errors], {
       shouldDrawErrors: true,
     }),
   ).toMatchSvgSnapshot(import.meta.path)
+})
+
+test("a pour on another layer or net leaves the endpoint disconnected", () => {
+  for (const otherPour of [
+    { ...pour, layer: "bottom" as const },
+    { ...pour, source_net_id: "source_net_vcc" },
+  ]) {
+    const errors = checkTracesAreContiguous([...board, otherPour])
+    expect(errors.map((error) => error.center)).toEqual([{ x: 2, y: 0 }])
+  }
+})
+
+test("only the copper of a round trace end can bridge the gap to a pour", () => {
+  for (const [leftEdge, expectedErrors] of [
+    [2.1, 0],
+    [2.2, 1],
+  ]) {
+    const errors = checkTracesAreContiguous([
+      ...board,
+      { ...pour, center: { x: leftEdge + pour.width / 2, y: 0 } },
+    ])
+    expect(errors).toHaveLength(expectedErrors)
+  }
+})
+
+test("a flat-ended trace must reach the pour", () => {
+  const flatEnded = board.map((element) =>
+    element.type === "pcb_trace"
+      ? { ...element, route_thickness_mode: "interpolated" as const }
+      : element,
+  )
+  expect(checkTracesAreContiguous([...flatEnded, pour])).toEqual([])
+  expect(
+    checkTracesAreContiguous([
+      ...flatEnded,
+      { ...pour, center: { x: 4.1, y: 0 } },
+    ]),
+  ).toHaveLength(1)
 })

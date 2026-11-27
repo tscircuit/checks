@@ -30,6 +30,7 @@ import {
 } from "circuit-json-to-connectivity-map"
 import { getLayersOfPcbElement } from "../util/getLayersOfPcbElement"
 import { endpointTouchesVia, getViaContactIndex } from "./via-contact-index"
+import { getPourContactTester } from "../check-dangling-traces/pour-contact-index"
 import {
   createRouteViaContactContext,
   routeViaConnectsAdjacentWires,
@@ -388,6 +389,24 @@ function checkTracesAreContiguous(
     )
     return viaContactIndex
   }
+  let touchesPour: ReturnType<typeof getPourContactTester> | undefined
+  const endpointTouchesPour = (
+    trace: PcbTrace,
+    point: PcbTraceRoutePoint,
+    width = 0,
+  ) => {
+    if (point.route_type !== "wire") return false
+    const connectivity = getFullConnectivityMap()
+    const netId = connectivity.getNetConnectedToId(trace.pcb_trace_id)
+    if (!netId) return false
+    touchesPour ??= getPourContactTester(circuitJson, connectivity)
+    return touchesPour({
+      netId,
+      layers: [point.layer],
+      center: point,
+      radius: width / 2,
+    })
+  }
   const checkedSourceTraceIds = new Set<string>()
 
   for (const pad of pcbSmtPads) {
@@ -658,7 +677,8 @@ function checkTracesAreContiguous(
             ownerTrace: trace,
             index: getViaIndex(),
             connectivity: getFullConnectivityMap(),
-          }))
+          })) ||
+        endpointTouchesPour(trace, firstPoint, firstEndpointTraceCopperWidth)
       const lastIsConnected =
         lastConnectsToAnyPad ||
         lastConnectsToLogicallyConnectedTraceCopper ||
@@ -669,7 +689,8 @@ function checkTracesAreContiguous(
             ownerTrace: trace,
             index: getViaIndex(),
             connectivity: getFullConnectivityMap(),
-          }))
+          })) ||
+        endpointTouchesPour(trace, lastPoint, lastEndpointTraceCopperWidth)
       const endpointsAreSame =
         firstPoint.route_type === "wire" &&
         lastPoint.route_type === "wire" &&
