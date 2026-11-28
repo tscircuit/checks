@@ -416,7 +416,7 @@ test("MPU-6050 fixture has a V3V3 via within 0.1 mm of C3 GND", () => {
   )
 })
 
-test.failing("MPU-6050 via-to-pad clearance should be reported", () => {
+test("MPU-6050 via-to-pad clearance should be reported", () => {
   const { via, c3GndPad } = getViaAndC3GndPad()
   const errors = checkViaPadClearance(getFocusedCircuitJson(), { minClearance })
   expect(errors).toHaveLength(1)

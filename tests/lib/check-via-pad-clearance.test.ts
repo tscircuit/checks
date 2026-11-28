@@ -89,3 +89,83 @@ test("checkViaPadClearance reports an escape via too close to an unrelated fine-
 
   expect(svg).toMatchSvgSnapshot(import.meta.path)
 })
+
+test("checkViaPadClearance reports violations within 5um below minimum clearance and honors exact boundaries", () => {
+  const makeCircuit = (viaX: number): AnyCircuitElement[] => [
+    {
+      type: "pcb_smtpad",
+      pcb_smtpad_id: "pad_a",
+      shape: "rect",
+      x: 0,
+      y: 0,
+      width: 0.6,
+      height: 0.6,
+      layer: "top",
+    },
+    {
+      type: "pcb_via",
+      pcb_via_id: "via_a",
+      x: viaX,
+      y: 0,
+      hole_diameter: 0.3,
+      outer_diameter: 0.6,
+      layers: ["top", "bottom"],
+    },
+  ]
+
+  // Pad right edge is at x = 0.3; via copper radius is 0.3.
+  // At x = 0.6973 the gap is 0.0973mm (< 0.1mm by 2.7um).
+  const sub5umErrors = checkViaPadClearance(makeCircuit(0.6973), {
+    minClearance: 0.1,
+  })
+  expect(sub5umErrors).toHaveLength(1)
+  expect(sub5umErrors[0]?.pcb_pad_ids).toEqual(["via_a", "pad_a"])
+  expect(sub5umErrors[0]?.actual_clearance).toBeCloseTo(0.0973, 6)
+  expect(sub5umErrors[0]?.message).not.toMatch(/\b(?:via_a|pad_a)\b/)
+
+  // At x = 0.699 the gap is 0.099mm (< 0.1mm by 1um).
+  const sub1umErrors = checkViaPadClearance(makeCircuit(0.699), {
+    minClearance: 0.1,
+  })
+  expect(sub1umErrors).toHaveLength(1)
+  expect(sub1umErrors[0]?.actual_clearance).toBeCloseTo(0.099, 6)
+
+  // At x = 0.7 the exact gap is 0.1mm (0.7 - 0.3 - 0.3 = 0.09999999999999998 in IEEE-754).
+  expect(checkViaPadClearance(makeCircuit(0.7), { minClearance: 0.1 })).toEqual(
+    [],
+  )
+
+  // A small positive clearance requirement (< 0.005mm) still flags touching copper.
+  expect(
+    checkViaPadClearance(makeCircuit(0.6), { minClearance: 0.003 }),
+  ).toHaveLength(1)
+
+  // When minimum clearance is 0, a -0.002mm pill-pad copper overlap must still be reported.
+  const pillOverlapErrors = checkViaPadClearance(
+    [
+      {
+        type: "pcb_smtpad",
+        pcb_smtpad_id: "pill_pad",
+        shape: "pill",
+        x: 0,
+        y: 0,
+        width: 1.2,
+        height: 0.6,
+        radius: 0.3,
+        layer: "top",
+      },
+      {
+        type: "pcb_via",
+        pcb_via_id: "via_a",
+        x: 0.898,
+        y: 0,
+        hole_diameter: 0.3,
+        outer_diameter: 0.6,
+        layers: ["top", "bottom"],
+      },
+    ],
+    { minClearance: 0 },
+  )
+  expect(pillOverlapErrors).toHaveLength(1)
+  expect(pillOverlapErrors[0]?.actual_clearance).toBeCloseTo(-0.002, 6)
+})

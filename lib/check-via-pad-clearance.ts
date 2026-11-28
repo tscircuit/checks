@@ -12,7 +12,7 @@ import {
   getFullConnectivityMapFromCircuitJson,
 } from "circuit-json-to-connectivity-map"
 import { SpatialObjectIndex } from "lib/data-structures/SpatialIndex"
-import { EPSILON, getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
+import { getBoardDrcValue, getPcbBoard } from "lib/drc-defaults"
 import { getLayersOfPcbElement } from "lib/util/getLayersOfPcbElement"
 import {
   type PadElement,
@@ -21,6 +21,8 @@ import {
   getPadToPadGap,
   getPads,
 } from "./check-pad-clearance/common"
+
+const GEOMETRY_EPSILON = 1e-9
 
 export function checkViaPadClearance(
   circuitJson: AnyCircuitElement[],
@@ -68,7 +70,7 @@ export function checkViaPadClearance(
       if (connMap.areIdsConnected(via.pcb_via_id, padId)) continue
 
       const gap = getPadToPadGap(via, pad)
-      if (gap + EPSILON >= requiredClearance) continue
+      if (gap + GEOMETRY_EPSILON >= requiredClearance) continue
 
       errors.push({
         type: "pcb_pad_pad_clearance_error",
