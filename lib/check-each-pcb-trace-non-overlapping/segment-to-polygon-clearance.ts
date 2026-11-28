@@ -64,7 +64,7 @@ export const getPillCenterLineForPad = (pad: PillPad | PillHole) => {
     width = pad.outer_width
     height = pad.outer_height
     radius = Math.min(width, height) / 2
-    ccwRotation = pad.ccw_rotation
+    ccwRotation = pad.ccw_rotation ?? 0
   } else {
     width = pad.width
     height = pad.height
