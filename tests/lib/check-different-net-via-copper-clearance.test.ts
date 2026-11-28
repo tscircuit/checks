@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { pcb_board, type PcbVia } from "circuit-json"
+import { type PcbVia, pcb_board } from "circuit-json"
 import { checkDifferentNetViaSpacing } from "lib/check-different-net-via-spacing"
 
 const viaA: PcbVia = {
@@ -64,6 +64,37 @@ test("does not report copper overlap on separate copper layers", () => {
     { ...viaB, x: 0.398, layers: ["inner2", "bottom"] },
   ])
   expect(errors).toHaveLength(0)
+})
+
+test("does not report drill or copper clearance for coaxial blind vias on disjoint layer spans", () => {
+  const errors = checkDifferentNetViaSpacing([
+    { ...viaA, x: 0, layers: ["top", "inner1"] },
+    { ...viaB, x: 0, layers: ["inner2", "bottom"] },
+  ])
+  expect(errors).toHaveLength(0)
+})
+
+test("reports clearance when an endpoint-only through-via span crosses a buried via span", () => {
+  const errors = checkDifferentNetViaSpacing([
+    { ...viaA, x: 0, layers: ["top", "bottom"] },
+    { ...viaB, x: 0.45, layers: ["inner1", "inner2"] },
+  ])
+  expect(errors).toHaveLength(1)
+  expect(errors[0].actual_clearance).toBeCloseTo(0.05)
+})
+
+test("checks drill clearance for backdrilled through-hole vias without flagging removed inner copper pads", () => {
+  const drillErrors = checkDifferentNetViaSpacing([
+    { ...viaA, x: 0, through_hole: true, layers: ["top", "inner1"] },
+    { ...viaB, x: 0.25, layers: ["inner2", "bottom"] },
+  ])
+  expect(drillErrors).toHaveLength(1)
+
+  const copperOnly = checkDifferentNetViaSpacing([
+    { ...viaA, x: 0, through_hole: true, layers: ["top", "inner1"] },
+    { ...viaB, x: 0.45, layers: ["inner2", "bottom"] },
+  ])
+  expect(copperOnly).toHaveLength(0)
 })
 
 test("does not report same-net copper overlap", () => {
